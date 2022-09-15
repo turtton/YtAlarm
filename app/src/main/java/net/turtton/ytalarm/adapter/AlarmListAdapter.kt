@@ -10,7 +10,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.material.snackbar.Snackbar
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentAlarmList
 import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
@@ -43,7 +42,7 @@ class AlarmListAdapter(private val parentFragment: FragmentAlarmList) : ListAdap
         }
     }
 
-    class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val aramTime: TextView = view.findViewById(R.id.item_playlist_title)
         val aramType: TextView = view.findViewById(R.id.item_aram_type)
         val playlistName: TextView = view.findViewById(R.id.item_aram_playlist_name)

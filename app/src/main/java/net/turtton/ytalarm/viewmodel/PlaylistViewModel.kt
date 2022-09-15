@@ -14,7 +14,7 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         return repository.getPlaylistFromId(id).asLiveData()
     }
 
-    fun getFromIdAsync(id: Int): Deferred<Playlist>  = viewModelScope.async {
+    fun getFromIdAsync(id: Int): Deferred<Playlist> = viewModelScope.async {
         repository.getPlaylistFromIdSync(id)
     }
 
@@ -36,6 +36,8 @@ class PlaylistViewModelFactory(private val repository: DataRepository) : ViewMod
         if (modelClass.isAssignableFrom(PlaylistViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return PlaylistViewModel(repository) as T
-        } else throw IllegalStateException("Unknown ViewModel class")
+        } else {
+            throw IllegalStateException("Unknown ViewModel class")
+        }
     }
 }

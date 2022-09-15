@@ -57,7 +57,7 @@ class FragmentVideoPlayer : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        //FullScreen
+        // FullScreen
         if (Build.VERSION.SDK_INT >= 30) {
             val windowInsetsController = view.windowInsetsController!!
             windowInsetsController.systemBarsBehavior =
@@ -184,5 +184,4 @@ class FragmentVideoPlayer : Fragment() {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         insetsController.show(WindowInsetsCompat.Type.systemBars())
     }
-
 }

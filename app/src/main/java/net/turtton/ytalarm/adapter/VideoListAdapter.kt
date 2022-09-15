@@ -11,7 +11,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.material.snackbar.Snackbar
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentVideoPlayerArgs
 import net.turtton.ytalarm.structure.Video
@@ -29,7 +28,9 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
         holder.apply {
             title.text = data.title
             val isLocal = data.internalLink.startsWith("http")
-            domainOrSize.text = if (isLocal) data.domain else {
+            domainOrSize.text = if (isLocal) {
+                data.domain
+            } else {
                 itemView.context.getString(R.string.item_video_list_data_size, data.fileSize / 1024f / 1024f)
             }
             Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)

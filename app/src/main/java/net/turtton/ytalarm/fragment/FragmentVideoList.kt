@@ -113,7 +113,6 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
         }
     }
 
-
     override fun onDestroyView() {
         super.onDestroyView()
         val binding = (requireActivity() as MainActivity).binding
@@ -165,5 +164,4 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
             isAddVideoFabRotated = true
         }
     }
-
 }

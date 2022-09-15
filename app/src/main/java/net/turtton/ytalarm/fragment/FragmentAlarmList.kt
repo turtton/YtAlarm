@@ -38,7 +38,7 @@ class FragmentAlarmList : FragmentAbstractList() {
         val fab = (requireActivity() as MainActivity).binding.fab
         fab.shrink()
         fab.setOnClickListener {
-            //TODO: Create new Aram
+            // TODO: Create new Aram
             Snackbar.make(view, "Create!!", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
 

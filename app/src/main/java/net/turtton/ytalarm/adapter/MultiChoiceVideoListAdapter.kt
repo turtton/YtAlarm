@@ -12,7 +12,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.structure.Video
 
-class MultiChoiceVideoListAdapter<T>(private val displayDataList: List<DisplayData<T>>):
+class MultiChoiceVideoListAdapter<T>(private val displayDataList: List<DisplayData<T>>) :
     RecyclerView.Adapter<MultiChoiceVideoListAdapter.ViewHolder>() {
     val selectedId = hashSetOf<T>()
 
@@ -37,9 +37,9 @@ class MultiChoiceVideoListAdapter<T>(private val displayDataList: List<DisplayDa
         }
     }
 
-    override fun getItemCount(): Int  = displayDataList.size
+    override fun getItemCount(): Int = displayDataList.size
 
-    class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.item_dialog_choice_video_title)
         val thumbnail: ImageView = view.findViewById(R.id.item_dialog_choice_video_thumbnail)
         val checkBox: CheckBox = view.findViewById(R.id.item_dialog_choice_video_checkBox)

@@ -3,7 +3,6 @@ package net.turtton.ytalarm.database.dao
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.structure.Playlist
 
 @Dao
 interface AlarmDao {

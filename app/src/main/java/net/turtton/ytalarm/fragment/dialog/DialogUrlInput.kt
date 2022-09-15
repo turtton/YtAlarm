@@ -10,7 +10,6 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.lifecycleScope
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.onFailure
@@ -34,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
 class DialogUrlInput(
     private val editText: EditText,
     val onConfirmImportDialog: (dialog: DialogUrlInput) -> Unit
-): DialogFragment() {
+) : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         editText.inputType = InputType.TYPE_TEXT_VARIATION_URI
@@ -51,7 +50,7 @@ class DialogUrlInput(
 
         private val json = Json { ignoreUnknownKeys = true }
 
-        fun <F> F.showVideoImportDialog(view: View, defaultInput: String = "", onSuccess: (Video) -> Unit = {}) where F: Fragment, F: VideoViewContainer {
+        fun <F> F.showVideoImportDialog(view: View, defaultInput: String = "", onSuccess: (Video) -> Unit = {}) where F : Fragment, F : VideoViewContainer {
             val editText = EditText(context)
             editText.setText(defaultInput, TextView.BufferType.EDITABLE)
             DialogUrlInput(editText) {
@@ -75,7 +74,9 @@ class DialogUrlInput(
                                 val duration = etaInSeconds.seconds
                                 val etaText = if (duration.inWholeHours > 0) {
                                     getString(R.string.dialog_execute_progress_eta_minutes, duration.inWholeMinutes)
-                                } else getString(R.string.dialog_execute_progress_eta, duration.inWholeMinutes, duration.inWholeSeconds)
+                                } else {
+                                    getString(R.string.dialog_execute_progress_eta, duration.inWholeMinutes, duration.inWholeSeconds)
+                                }
                                 val progressEta = binding.dialogExecuteProgressEta
                                 progressEta.visibility = View.VISIBLE
                                 progressEta.text = etaText
@@ -117,9 +118,7 @@ class DialogUrlInput(
                         }
                     }
                 }
-
             }.show(childFragmentManager, "UrlInput")
         }
     }
-
 }
