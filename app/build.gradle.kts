@@ -63,6 +63,7 @@ dependencies {
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.1")
     implementation("androidx.navigation:navigation-ui-ktx:2.5.1")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
+    implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
     implementation("com.android.support:support-annotations:28.0.0")
     val room = implementation("androidx.room:room-ktx:2.4.3")
     ksp("androidx.room:room-compiler:${room?.version}")
