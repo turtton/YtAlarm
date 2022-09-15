@@ -61,7 +61,7 @@ dependencies {
     implementation("com.google.android.material:material:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.1")
-    implementation("androidx.navigation:navigation-ui-ktx:2.5.1")
+    implementation("androidx.navigation:navigation-ui-ktx:2.5.2")
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("com.android.support:support-annotations:28.0.0")
     val room = implementation("androidx.room:room-ktx:2.4.3")
