@@ -7,6 +7,19 @@ on:
     branches: [ "main" ]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    if: ${{ github.repository_owner == 'turtton' && !contains(github.event.head_commit.message, '[CI-SKIP]') }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Lint check
+        uses: musichin/ktlint-check@v2
+        with:
+          annotate: true
+          experimental: true
+
   build:
 
     runs-on: ubuntu-latest
