@@ -70,7 +70,7 @@ dependencies {
         implementation("androidx.lifecycle:lifecycle-livedata-ktx:${it.version}")
     }
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
 
     implementation("com.github.yausername.youtubedl-android:library:a8a636e6b3")?.also {
