@@ -4,6 +4,7 @@ plugins {
     id("com.google.devtools.ksp") version "1.7.10-1.0.6"
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.10"
+    id("org.jmailen.kotlinter")
 }
 
 
