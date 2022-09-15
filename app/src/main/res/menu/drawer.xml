@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_graph_aram_list"
+            android:title="@string/menu_item_aram_list"/>
+    </group>
+
+    <item android:title="@string/menu_drawer_title_video">
+        <menu>
+            <item
+                android:id="@+id/nav_graph_playlist"
+                android:title="@string/menu_title_playlist"/>
+            <item
+                android:id="@+id/nav_graph_video_list"
+                android:title="@string/menu_title_video_list"/>
+        </menu>
+    </item>
+</menu>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="50dp"
+    android:background="@color/design_default_color_primary"
+    android:theme="@style/ThemeOverlay.AppCompat">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        android:id="@+id/drawer_header_app_name"
+        android:padding="16dp"
+        android:layout_alignParentBottom="true"/>
+
+</RelativeLayout>

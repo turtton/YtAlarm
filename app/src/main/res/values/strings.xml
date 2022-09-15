@@ -1,0 +1,54 @@
+<resources>
+    <string name="app_name">YtAlarm</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="url_input">Url</string>
+    <string name="alarm_time">00:00</string>
+    <string name="alarm_type">aram_type</string>
+    <string name="playlist_name">PlaylistName</string>
+    <string name="thumbnail_description">PlaylistThumbnail</string>
+    <string name="setting_name">SettingName</string>
+    <string name="setting_value">SettingValue</string>
+    <string name="setting_description">SettingDescription</string>
+    <string name="fab_save">Save</string>
+    <plurals name="playlist_item_video_count">
+        <item quantity="one">%d video</item>
+        <item quantity="other">%d videos</item>
+    </plurals>
+    <string name="playlist_item_video_count_none">no video</string>
+    <string name="playlist_item_title">PlaylistTitle</string>
+
+    <string name="setting_time">Time</string>
+    <string name="setting_loop">Loop</string>
+    <string name="setting_volume">Volume</string>
+    <string name="menu_item_aram_list">AramList</string>
+    <string name="menu_title_playlist">PlayList</string>
+    <string name="item_video_list_data_size">%02.1fMB</string>
+    <string name="fragment_video_player_button_dismiss">Dismiss</string>
+    <string name="fragment_video_player_button_snooze">Snooze</string>
+    <string name="fragment_video_player_button_stop">Stop</string>
+
+    <string name="menu_drawer_title_video">Video</string>
+    <string name="menu_title_video_list">VideoList</string>
+
+    <string name="dialog_video_input_url_hint">https://…</string>
+    <string name="dialog_video_input_ok">Import</string>
+    <string name="dialog_video_input_cancel">Cancel</string>
+
+    <string name="dialog_execute_progress_title">Importing…</string>
+    <string name="dialog_execute_progress_title_loading">Loading…</string>
+    <string name="dialog_execute_progress_eta">%02d:%02d</string>
+    <string name="dialog_execute_progress_eta_init">calculating…</string>
+    <string name="dialog_execute_progress_eta_minutes">%d minutes</string>
+    <string name="fab_add_video_description">Add video Button</string>
+
+    <string name="dialog_multichoice_ok">Confirm</string>
+    <string name="dialog_multichoice_cancel">Cancel</string>
+</resources>
