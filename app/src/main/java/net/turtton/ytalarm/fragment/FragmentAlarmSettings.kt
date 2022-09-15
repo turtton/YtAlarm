@@ -6,7 +6,6 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.snackbar.Snackbar
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
@@ -38,7 +37,9 @@ class FragmentAlarmSettings : FragmentAbstractList() {
                     binding.recyclerList.adapter = AlarmSettingsAdapter(alarm, this)
                     fab.setOnClickListener {
                         alarmViewModel.update(alarm)
-                        findNavController().navigate(R.id.action_AlarmSettingFragment_to_AlarmListFragment)
+                        findNavController().navigate(
+                            R.id.action_AlarmSettingFragment_to_AlarmListFragment
+                        )
                     }
                     fab.visibility = View.VISIBLE
                 }
@@ -53,5 +54,4 @@ class FragmentAlarmSettings : FragmentAbstractList() {
             fab.visibility = View.VISIBLE
         }
     }
-
 }

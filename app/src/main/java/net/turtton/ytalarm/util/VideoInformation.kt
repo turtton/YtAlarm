@@ -15,5 +15,5 @@ data class VideoInformation(
     @SerialName("url")
     val videoUrl: String,
     @SerialName("webpage_url_domain")
-    val domain: String,
+    val domain: String
 )

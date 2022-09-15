@@ -18,7 +18,11 @@ import net.turtton.ytalarm.adapter.VideoListAdapter
 import net.turtton.ytalarm.fragment.dialog.DialogExecuteProgress
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImportDialog
-import net.turtton.ytalarm.viewmodel.*
+import net.turtton.ytalarm.viewmodel.PlaylistViewModel
+import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.VideoViewContainer
+import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
     lateinit var animFabAppear: Animation
@@ -113,7 +117,6 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
         }
     }
 
-
     override fun onDestroyView() {
         super.onDestroyView()
         val binding = (requireActivity() as MainActivity).binding
@@ -165,5 +168,4 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
             isAddVideoFabRotated = true
         }
     }
-
 }

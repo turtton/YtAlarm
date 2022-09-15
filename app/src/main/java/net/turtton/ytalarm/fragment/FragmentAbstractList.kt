@@ -6,9 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.CallSuper
 import androidx.fragment.app.Fragment
-import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.databinding.FragmentListBinding
-
 
 abstract class FragmentAbstractList : Fragment() {
     private var _binding: FragmentListBinding? = null

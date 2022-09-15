@@ -7,7 +7,11 @@ import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -57,7 +61,7 @@ class FragmentVideoPlayer : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        //FullScreen
+        // FullScreen
         if (Build.VERSION.SDK_INT >= 30) {
             val windowInsetsController = view.windowInsetsController!!
             windowInsetsController.systemBarsBehavior =
@@ -184,5 +188,4 @@ class FragmentVideoPlayer : Fragment() {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         insetsController.show(WindowInsetsCompat.Type.systemBars())
     }
-
 }

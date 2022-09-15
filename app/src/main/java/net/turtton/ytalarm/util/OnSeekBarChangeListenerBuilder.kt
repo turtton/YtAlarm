@@ -13,7 +13,9 @@ class OnSeekBarChangeListenerBuilder {
 
     var onStopTrackingTouch: NullableSeekBarFunction? = null
 
-    fun build(): SeekBar.OnSeekBarChangeListener = Impl(onProgressChanged, onStartTrackingTouch, onStopTrackingTouch)
+    @Suppress("ktlint:argument-list-wrapping")
+    fun build(): SeekBar.OnSeekBarChangeListener =
+        Impl(onProgressChanged, onStartTrackingTouch, onStopTrackingTouch)
 
     class Impl(
         private val onProgressChanged: OnProgressChangedFunction?,
