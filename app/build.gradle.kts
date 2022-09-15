@@ -73,7 +73,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
 
-    implementation("com.github.yausername.youtubedl-android:library:a8a636e6b3")?.also {
+    implementation("com.github.yausername.youtubedl-android:library:0.13.3")?.also {
         implementation("com.github.yausername.youtubedl-android:common:${it.version}")
     }
     implementation("com.github.bumptech.glide:glide:4.13.2")?.also {
