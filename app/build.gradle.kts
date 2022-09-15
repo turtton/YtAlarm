@@ -84,3 +84,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     androidTestImplementation("androidx.room:room-testing:$${room?.version}")
 }
+
+kotlinter {
+    experimentalRules = true
+}
