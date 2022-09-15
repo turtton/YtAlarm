@@ -37,7 +37,9 @@ class FragmentAlarmSettings : FragmentAbstractList() {
                     binding.recyclerList.adapter = AlarmSettingsAdapter(alarm, this)
                     fab.setOnClickListener {
                         alarmViewModel.update(alarm)
-                        findNavController().navigate(R.id.action_AlarmSettingFragment_to_AlarmListFragment)
+                        findNavController().navigate(
+                            R.id.action_AlarmSettingFragment_to_AlarmListFragment
+                        )
                     }
                     fab.visibility = View.VISIBLE
                 }

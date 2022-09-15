@@ -37,8 +37,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }.onFailure {
                 launch(Dispatchers.Main) {
-                    Snackbar.make(binding.root.rootView, "Internal error occurred.", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show()
+                    Snackbar.make(
+                        binding.root.rootView,
+                        "Internal error occurred.",
+                        Snackbar.LENGTH_LONG
+                    ).setAction("Action", null)
+                        .show()
                     Log.e(APP_TAG, "YtDL initialization failed", it)
                 }
             }
@@ -48,10 +52,14 @@ class MainActivity : AppCompatActivity() {
 
         setSupportActionBar(binding.toolbar)
 
-        navController = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)!!.findNavController()
+        val mainNav = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
+        navController = mainNav!!.findNavController()
         findViewById<NavigationView>(R.id.nav_view).setupWithNavController(navController)
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
-        appBarConfiguration = AppBarConfiguration(setOf(R.id.aram_list_fragment, R.id.playlist_fragment, R.id.all_video_list_fragment), drawerLayout)
+        appBarConfiguration = AppBarConfiguration(
+            setOf(R.id.aram_list_fragment, R.id.playlist_fragment, R.id.all_video_list_fragment),
+            drawerLayout
+        )
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         binding.fab.shrink()

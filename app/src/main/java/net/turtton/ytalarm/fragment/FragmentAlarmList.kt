@@ -42,7 +42,9 @@ class FragmentAlarmList : FragmentAbstractList() {
             Snackbar.make(view, "Create!!", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
 
-            val action = FragmentAlarmListDirections.actionAlarmListFragmentToAlarmSettingsFragment(-1)
+            @Suppress("ktlint:argument-list-wrapping")
+            val action = FragmentAlarmListDirections
+                .actionAlarmListFragmentToAlarmSettingsFragment(-1)
             findNavController().navigate(action)
         }
     }

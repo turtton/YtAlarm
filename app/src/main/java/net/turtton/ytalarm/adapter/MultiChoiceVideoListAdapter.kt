@@ -17,7 +17,9 @@ class MultiChoiceVideoListAdapter<T>(private val displayDataList: List<DisplayDa
     val selectedId = hashSetOf<T>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_dialog_choice_video, parent, false)
+        @Suppress("ktlint:argument-list-wrapping")
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_dialog_choice_video, parent, false)
         return ViewHolder(view)
     }
 

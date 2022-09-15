@@ -16,7 +16,9 @@ import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.util.BasicComparator
 
-class AlarmListAdapter(private val parentFragment: FragmentAlarmList) : ListAdapter<Alarm, AlarmListAdapter.ViewHolder>(BasicComparator<Alarm>()) {
+class AlarmListAdapter(
+    private val parentFragment: FragmentAlarmList
+) : ListAdapter<Alarm, AlarmListAdapter.ViewHolder>(BasicComparator<Alarm>()) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_aram, parent, false)
         return ViewHolder(view)
@@ -28,15 +30,19 @@ class AlarmListAdapter(private val parentFragment: FragmentAlarmList) : ListAdap
             aramTime.text = data.time
             aramType.text = data.repeatType.name
             aramSwitch.isChecked = data.enable
-            parentFragment.playlistViewModel.getFromId(data.playListId).observe(parentFragment.requireActivity()) { playlist ->
-                playlist?.also {
-                    playlistName.text = it.title
-                    Glide.with(itemView).load(it.thumbnailUrl).into(aramThumbnail)
+            parentFragment.playlistViewModel
+                .getFromId(data.playListId)
+                .observe(parentFragment.requireActivity()) { playlist ->
+                    playlist?.also {
+                        playlistName.text = it.title
+                        Glide.with(itemView).load(it.thumbnailUrl).into(aramThumbnail)
+                    }
                 }
-            }
 
             itemView.setOnClickListener {
-                val action = FragmentAlarmListDirections.actionAlarmListFragmentToAlarmSettingsFragment(data.id!!)
+                @Suppress("ktlint:argument-list-wrapping")
+                val action = FragmentAlarmListDirections
+                    .actionAlarmListFragmentToAlarmSettingsFragment(data.id!!)
                 parentFragment.findNavController().navigate(action)
             }
         }

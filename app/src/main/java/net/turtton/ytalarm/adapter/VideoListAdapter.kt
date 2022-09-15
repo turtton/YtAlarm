@@ -31,7 +31,10 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
             domainOrSize.text = if (isLocal) {
                 data.domain
             } else {
-                itemView.context.getString(R.string.item_video_list_data_size, data.fileSize / 1024f / 1024f)
+                itemView.context.getString(
+                    R.string.item_video_list_data_size,
+                    data.fileSize / 1024f / 1024f
+                )
             }
             Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
 
