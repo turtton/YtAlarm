@@ -24,7 +24,7 @@ jobs:
 
     runs-on: ubuntu-latest
     
-    if: ${{ github.repository_owner == 'turtton' && !contains(fromJson('["[CI-SKIP]", "chore"]'), github.event.head_commit.message) }}
+    if: jobs.lint.result == 'success'
 
     steps:
     - uses: actions/checkout@v3
