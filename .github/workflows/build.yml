@@ -24,7 +24,7 @@ jobs:
 
     runs-on: ubuntu-latest
     
-    if: jobs.lint.result == 'success'
+    if: ${{ jobs.lint.result == 'success' }}
 
     steps:
     - uses: actions/checkout@v3
