@@ -4,8 +4,8 @@ plugins {
     id("com.google.devtools.ksp") version "1.7.10-1.0.6"
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.10"
+    id("org.jmailen.kotlinter")
 }
-
 
 android {
     compileSdk = 32
@@ -66,21 +66,29 @@ dependencies {
     implementation("com.android.support:support-annotations:28.0.0")
     val room = implementation("androidx.room:room-ktx:2.4.3")
     ksp("androidx.room:room-compiler:${room?.version}")
-    val lifecycle = implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:${lifecycle?.version}")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0")?.also {
+        implementation("androidx.lifecycle:lifecycle-livedata-ktx:${it.version}")
+    }
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
 
-    val ytdl = implementation("com.github.yausername.youtubedl-android:library:a8a636e6b3")
-    implementation("com.github.yausername.youtubedl-android:common:${ytdl?.version}")
-    val glide = implementation("com.github.bumptech.glide:glide:4.13.2")
-    annotationProcessor("com.github.bumptech.glide:compiler:${glide?.version}")
-    val kotlinResult = implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.16")
-    implementation("com.michael-bull.kotlin-result:kotlin-result-coroutines:${kotlinResult?.version}")
+    implementation("com.github.yausername.youtubedl-android:library:a8a636e6b3")?.also {
+        implementation("com.github.yausername.youtubedl-android:common:${it.version}")
+    }
+    implementation("com.github.bumptech.glide:glide:4.13.2")?.also {
+        annotationProcessor("com.github.bumptech.glide:compiler:${it.version}")
+    }
+    implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.16")?.also {
+        implementation("com.michael-bull.kotlin-result:kotlin-result-coroutines:${it.version}")
+    }
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
-    androidTestImplementation("androidx.room:room-testing:$${room?.version}")
+    androidTestImplementation("androidx.room:room-testing:${room?.version}")
+}
+
+kotlinter {
+    experimentalRules = true
 }

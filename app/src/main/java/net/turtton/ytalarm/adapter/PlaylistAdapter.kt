@@ -9,16 +9,19 @@ import androidx.navigation.findNavController
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.material.snackbar.Snackbar
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentPlaylistDirections
 import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.BasicComparator
 
-class PlaylistAdapter: ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(BasicComparator<Playlist>()) {
+class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
+    BasicComparator<Playlist>()
+) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_playlist, parent, false)
+        @Suppress("ktlint:argument-list-wrapping")
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_playlist, parent, false)
         return ViewHolder(view)
     }
 
@@ -26,8 +29,7 @@ class PlaylistAdapter: ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(BasicCo
         holder.bindData(getItem(position))
     }
 
-
-    class ViewHolder(view: View): RecyclerView.ViewHolder(view) {
+    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         lateinit var playlist: Playlist
 
         private val title: TextView = view.findViewById(R.id.item_playlist_title)
@@ -39,14 +41,22 @@ class PlaylistAdapter: ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(BasicCo
             title.text = data.title
             val size = data.videos.size
             if (data.videos.isNotEmpty()) {
-                videoCount.text = itemView.context.resources.getQuantityString(R.plurals.playlist_item_video_count, size, size)
+                videoCount.text = itemView.context.resources.getQuantityString(
+                    R.plurals.playlist_item_video_count,
+                    size,
+                    size
+                )
             } else {
-                videoCount.text = itemView.context.getString(R.string.playlist_item_video_count_none)
+                videoCount.text = itemView.context.getString(
+                    R.string.playlist_item_video_count_none
+                )
             }
             Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
 
             itemView.setOnClickListener {
-                val action = FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment(data.id)
+                val action = FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment(
+                    data.id
+                )
                 itemView.findNavController().navigate(action)
             }
         }

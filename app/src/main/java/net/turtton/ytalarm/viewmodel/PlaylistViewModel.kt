@@ -1,6 +1,10 @@
 package net.turtton.ytalarm.viewmodel
 
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -14,7 +18,7 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         return repository.getPlaylistFromId(id).asLiveData()
     }
 
-    fun getFromIdAsync(id: Int): Deferred<Playlist>  = viewModelScope.async {
+    fun getFromIdAsync(id: Int): Deferred<Playlist> = viewModelScope.async {
         repository.getPlaylistFromIdSync(id)
     }
 
@@ -36,6 +40,8 @@ class PlaylistViewModelFactory(private val repository: DataRepository) : ViewMod
         if (modelClass.isAssignableFrom(PlaylistViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return PlaylistViewModel(repository) as T
-        } else throw IllegalStateException("Unknown ViewModel class")
+        } else {
+            throw IllegalStateException("Unknown ViewModel class")
+        }
     }
 }

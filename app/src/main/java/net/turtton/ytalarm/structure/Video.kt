@@ -18,5 +18,5 @@ data class Video(
     val domain: String = "",
     // byte size
     @ColumnInfo(name = "file_size")
-    val fileSize: Int = -1,
+    val fileSize: Int = -1
 )

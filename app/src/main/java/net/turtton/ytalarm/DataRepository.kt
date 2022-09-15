@@ -30,10 +30,10 @@ class DataRepository(private val database: AppDatabase) {
     suspend fun delete(alarm: Alarm) {
         database.alarmDao().delete(alarm)
     }
-    
+
     // Playlist
     val allPlaylists: Flow<List<Playlist>> = database.playlistDao().getAll()
-    
+
     fun getPlaylistFromId(id: Int): Flow<Playlist> {
         return database.playlistDao().getFromId(id)
     }
@@ -60,7 +60,7 @@ class DataRepository(private val database: AppDatabase) {
 
     // Video
     val allVideos: Flow<List<Video>> = database.videoDao().getAll()
-    
+
     fun getVideoFromIds(ids: List<String>): Flow<List<Video>> {
         return database.videoDao().getFromIds(ids)
     }
