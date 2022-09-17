@@ -45,7 +45,7 @@ class FragmentAllVideoList : FragmentAbstractList(), VideoViewContainer {
         recyclerView.adapter = adapter
 
         selectionTracker = SelectionTracker.Builder(
-            VIDEO_SELECT_TRACKER,
+            "AllVideoListTracker",
             recyclerView,
             StringKeyProvider(recyclerView),
             VideoListAdapter.VideoListDetailsLookup(recyclerView),
@@ -145,9 +145,5 @@ class FragmentAllVideoList : FragmentAbstractList(), VideoViewContainer {
 
     override fun onSaveInstanceState(outState: Bundle) {
         selectionTracker.onSaveInstanceState(outState)
-    }
-
-    companion object {
-        const val VIDEO_SELECT_TRACKER = "AllVideoListTracker"
     }
 }
