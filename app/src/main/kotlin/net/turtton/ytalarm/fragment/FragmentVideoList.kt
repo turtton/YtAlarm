@@ -205,7 +205,7 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
             fragment,
             R.menu.menu_video_list_in_playlist,
             R.id.menu_video_list_in_pl_action_remove to {
-                val selection = fragment.selectionTracker.selection
+                val selection = fragment.selectionTracker.selection.toSet()
                 DialogRemoveVideo { _, _ ->
                     val async = fragment.playlistViewModel.getFromIdAsync(playlistId)
                     fragment.lifecycleScope.launch {
@@ -215,6 +215,7 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
                         val newList = playlist.copy(videos = videoList.toList())
                         fragment.playlistViewModel.update(newList)
                     }
+                    fragment.selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "VideoRemoveDialog")
                 true
             }
