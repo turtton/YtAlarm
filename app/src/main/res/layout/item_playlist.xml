@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="item_playlist_thumbnail,text_detail"
+        app:constraint_referenced_ids="item_playlist_thumbnail,text_detail,item_playlist_checkbox"
         tools:layout_editor_absoluteY="43dp" />
 
     <ImageView
@@ -25,6 +25,15 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_launcher_background"
         tools:ignore="ImageContrastCheck" />
+
+    <CheckBox
+        android:id="@+id/item_playlist_checkbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@id/bottom_barrier"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/text_detail"
