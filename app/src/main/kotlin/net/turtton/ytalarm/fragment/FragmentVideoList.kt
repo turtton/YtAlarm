@@ -48,10 +48,10 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
         binding.recyclerList.adapter = adapter
 
         val id = args.playlistId
-        playlistViewModel.getFromId(id).observe(requireActivity()) { playlist ->
+        playlistViewModel.getFromId(id).observe(viewLifecycleOwner) { playlist ->
             playlist?.videos?.also { videos ->
                 videoViewModel.getFromIds(videos)
-                    .observe(requireActivity()) { list ->
+                    .observe(viewLifecycleOwner) { list ->
                         list?.also {
                             adapter.submitList(it)
                         }
