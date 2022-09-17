@@ -16,7 +16,6 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.adapter.VideoListAdapter
-import net.turtton.ytalarm.fragment.dialog.DialogExecuteProgress
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImportDialog
@@ -61,15 +60,11 @@ class FragmentAllVideoList : FragmentAbstractList(), VideoViewContainer {
                 R.menu.menu_video_list_action,
                 R.id.menu_video_list_action_add_to to { _ ->
                     val selection = selectionTracker.selection
-                    val loadingTitle = R.string.dialog_execute_progress_title_loading
-                    val progressDialog = DialogExecuteProgress(loadingTitle)
-                    progressDialog.show(childFragmentManager, "LoadPlaylistDialog")
                     lifecycleScope.launch {
                         val playlists = playlistViewModel.allPlaylistsAsync
                             .await()
                             .map { it.toDisplayData() }
                         launch(Dispatchers.Main) {
-                            progressDialog.dismissNow()
                             DialogMultiChoiceVideo(playlists) { _, selectedId ->
                                 val targetIdList = selectedId.toList()
                                 val targetList = playlistViewModel.getFromIdsAsync(targetIdList)
