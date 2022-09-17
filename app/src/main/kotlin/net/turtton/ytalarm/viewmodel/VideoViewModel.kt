@@ -22,6 +22,10 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getVideoFromIdSync(id)
     }
 
+    fun getFromIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
+        repository.getVideoFromIdsSync(ids)
+    }
+
     fun getExceptIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
         repository.getVideoExceptIdsSync(ids)
     }
@@ -30,8 +34,8 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         repository.insert(video)
     }
 
-    fun delete(video: Video) = viewModelScope.launch {
-        repository.delete(video)
+    fun delete(videos: List<Video>) = viewModelScope.launch {
+        repository.delete(videos)
     }
 }
 
