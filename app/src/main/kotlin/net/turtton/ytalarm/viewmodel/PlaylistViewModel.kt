@@ -49,6 +49,10 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
     fun delete(playlist: Playlist) = viewModelScope.launch {
         repository.delete(playlist)
     }
+
+    fun delete(playlists: List<Playlist>) = viewModelScope.launch {
+        repository.deletePlaylists(playlists)
+    }
 }
 
 class PlaylistViewModelFactory(private val repository: DataRepository) : ViewModelProvider.Factory {

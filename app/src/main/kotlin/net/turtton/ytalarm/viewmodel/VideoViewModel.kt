@@ -35,7 +35,7 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
     }
 
     fun delete(videos: List<Video>) = viewModelScope.launch {
-        repository.delete(videos)
+        repository.deleteVideoLists(videos)
     }
 }
 

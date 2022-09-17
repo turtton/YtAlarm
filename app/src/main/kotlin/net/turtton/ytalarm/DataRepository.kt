@@ -82,6 +82,11 @@ class DataRepository(private val database: AppDatabase) {
         database.playlistDao().delete(playlist)
     }
 
+    @WorkerThread
+    suspend fun deletePlaylists(playlists: List<Playlist>) {
+        database.playlistDao().delete(playlists)
+    }
+
     // Video
     val allVideos: Flow<List<Video>> = database.videoDao().getAll()
 
@@ -110,7 +115,7 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun delete(videos: List<Video>) {
+    suspend fun deleteVideoLists(videos: List<Video>) {
         database.videoDao().delete(videos)
     }
 }
