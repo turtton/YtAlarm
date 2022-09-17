@@ -5,7 +5,6 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.selection.SelectionTracker
-import androidx.recyclerview.selection.SelectionTracker.SelectionObserver
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.Dispatchers
@@ -19,6 +18,8 @@ import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImportDialog
 import net.turtton.ytalarm.util.AttachableMenuProvider
+import net.turtton.ytalarm.util.SelectionMenuObserver
+import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.StringKeyProvider
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
@@ -26,8 +27,9 @@ import net.turtton.ytalarm.viewmodel.VideoViewContainer
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
-class FragmentAllVideoList : FragmentAbstractList(), VideoViewContainer {
-    lateinit var selectionTracker: SelectionTracker<String>
+class FragmentAllVideoList :
+    FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<String> {
+    override lateinit var selectionTracker: SelectionTracker<String>
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
@@ -74,9 +76,10 @@ class FragmentAllVideoList : FragmentAbstractList(), VideoViewContainer {
     }
 
     class VideoSelectionObserver(
-        private val fragment: FragmentAllVideoList
-    ) : SelectionObserver<String>() {
-        private val provider = AttachableMenuProvider(
+        fragment: FragmentAllVideoList
+    ) : SelectionMenuObserver<String, FragmentAllVideoList>(
+        fragment,
+        AttachableMenuProvider(
             fragment,
             R.menu.menu_video_list_action,
             R.id.menu_video_list_action_add_to to { _ ->
@@ -130,24 +133,5 @@ class FragmentAllVideoList : FragmentAbstractList(), VideoViewContainer {
                 true
             }
         )
-
-        var isAdded = false
-
-        override fun onSelectionChanged() {
-            if (fragment.selectionTracker.hasSelection()) {
-                if (!isAdded) {
-                    fragment.requireActivity()
-                        .addMenuProvider(provider, fragment.viewLifecycleOwner)
-                    isAdded = true
-                }
-            } else {
-                fragment.requireActivity().removeMenuProvider(provider)
-                isAdded = false
-            }
-        }
-
-        override fun onSelectionRestored() {
-            onSelectionChanged()
-        }
-    }
+    )
 }
