@@ -7,6 +7,9 @@ import android.view.animation.AnimationUtils
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
+import androidx.recyclerview.selection.SelectionTracker
+import androidx.recyclerview.selection.SelectionTracker.SelectionObserver
+import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,7 +20,10 @@ import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Compa
 import net.turtton.ytalarm.adapter.VideoListAdapter
 import net.turtton.ytalarm.fragment.dialog.DialogExecuteProgress
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
+import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImportDialog
+import net.turtton.ytalarm.util.AttachableMenuProvider
+import net.turtton.ytalarm.util.StringKeyProvider
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
@@ -32,22 +38,40 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
 
     var isAddVideoFabRotated = false
 
+    lateinit var selectionTracker: SelectionTracker<String>
+
     private val args by navArgs<FragmentVideoListArgs>()
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
     }
 
-    private val playlistViewModel: PlaylistViewModel by viewModels {
+    val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(requireActivity().application.repository)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.recyclerList.layoutManager = LinearLayoutManager(view.context)
-        val adapter = VideoListAdapter()
-        binding.recyclerList.adapter = adapter
-
         val id = args.playlistId
+        val recyclerView = binding.recyclerList
+        recyclerView.layoutManager = LinearLayoutManager(view.context)
+        val adapter = VideoListAdapter()
+        recyclerView.adapter = adapter
+
+        selectionTracker = SelectionTracker.Builder(
+            "VideoListTracker",
+            recyclerView,
+            StringKeyProvider(recyclerView),
+            VideoListAdapter.VideoListDetailsLookup(recyclerView),
+            StorageStrategy.createStringStorage()
+        ).build()
+        adapter.tracker = selectionTracker
+
+        selectionTracker.addObserver(VideoSelectionObserver(this, id))
+
+        savedInstanceState?.let {
+            selectionTracker.onRestoreInstanceState(it)
+        }
+
         playlistViewModel.getFromId(id).observe(viewLifecycleOwner) { playlist ->
             playlist?.videos?.also { videos ->
                 videoViewModel.getFromIds(videos)
@@ -117,6 +141,10 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        selectionTracker.onSaveInstanceState(outState)
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         val binding = (requireActivity() as MainActivity).binding
@@ -166,6 +194,49 @@ class FragmentVideoList : FragmentAbstractList(), VideoViewContainer {
             fabAddVideoFromLink.isClickable = true
 
             isAddVideoFabRotated = true
+        }
+    }
+
+    class VideoSelectionObserver(
+        private val fragment: FragmentVideoList,
+        private val playlistId: Int
+    ) : SelectionObserver<String>() {
+        private val provider = AttachableMenuProvider(
+            fragment,
+            R.menu.menu_video_list_in_playlist,
+            R.id.menu_video_list_in_pl_action_remove to {
+                val selection = fragment.selectionTracker.selection
+                DialogRemoveVideo { _, _ ->
+                    val async = fragment.playlistViewModel.getFromIdAsync(playlistId)
+                    fragment.lifecycleScope.launch {
+                        val playlist = async.await()
+                        val videoList = playlist.videos.toMutableSet()
+                        videoList.removeAll(selection)
+                        val newList = playlist.copy(videos = videoList.toList())
+                        fragment.playlistViewModel.update(newList)
+                    }
+                }.show(fragment.childFragmentManager, "VideoRemoveDialog")
+                true
+            }
+        )
+
+        var isAdded = false
+
+        override fun onSelectionChanged() {
+            if (fragment.selectionTracker.hasSelection()) {
+                if (!isAdded) {
+                    fragment.requireActivity()
+                        .addMenuProvider(provider, fragment.viewLifecycleOwner)
+                    isAdded = true
+                }
+            } else {
+                fragment.requireActivity().removeMenuProvider(provider)
+                isAdded = false
+            }
+        }
+
+        override fun onSelectionRestored() {
+            onSelectionChanged()
         }
     }
 }
