@@ -20,7 +20,7 @@ import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImp
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
-import net.turtton.ytalarm.util.StringKeyProvider
+import net.turtton.ytalarm.util.TagKeyProvider
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
@@ -48,7 +48,7 @@ class FragmentAllVideoList :
         selectionTracker = SelectionTracker.Builder(
             "AllVideoListTracker",
             recyclerView,
-            StringKeyProvider(recyclerView),
+            TagKeyProvider(recyclerView),
             VideoListAdapter.VideoListDetailsLookup(recyclerView),
             StorageStrategy.createStringStorage()
         ).build()
