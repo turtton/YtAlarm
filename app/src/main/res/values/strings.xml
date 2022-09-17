@@ -53,4 +53,8 @@
     <string name="dialog_multichoice_cancel">Cancel</string>
     <string name="menu_video_list_add_to">AddTo</string>
     <string name="menu_video_list_remove">Remove</string>
+
+    <string name="dialog_remove_title">Delete</string>
+    <string name="dialog_remove_ok">Confirm</string>
+    <string name="dialog_remove_cancel">Cancel</string>
 </resources>
