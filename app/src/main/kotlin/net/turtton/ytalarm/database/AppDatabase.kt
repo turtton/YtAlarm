@@ -49,7 +49,7 @@ abstract class AppDatabase : RoomDatabase() {
         }
     }
 
-    private class AppDatabaseCallback(private val scope: CoroutineScope) : RoomDatabase.Callback() {
+    private class AppDatabaseCallback(private val scope: CoroutineScope) : Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             INSTANCE?.let {
                 scope.launch {
@@ -62,15 +62,16 @@ abstract class AppDatabase : RoomDatabase() {
 
         suspend fun populateAlarmDatabase(dao: AlarmDao) {
             dao.deleteAll()
-            dao.insert(Alarm())
+            dao.insert(Alarm(playListId = 0))
         }
 
         suspend fun populatePlaylistDatabase(dao: PlaylistDao) {
             dao.insert(
                 Playlist(
+                    id = 0,
                     title = "ExamplePlaylist",
-                    thumbnailUrl = "https://i.ytimg.com/vi/xn4qndSd3vs/maxresdefault.jpg",
-                    videos = listOf("xn4qndSd3vs")
+                    thumbnailUrl = "https://i.ytimg.com/vi_webp/aLexJOGZ_gw/maxresdefault.webp",
+                    videos = listOf("aLexJOGZ_gw")
                 )
             )
         }
