@@ -26,7 +26,7 @@ class AttachableMenuProvider(
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         menuInflater.inflate(menuId, menu)
         menu.forEach {
-            val icon = it.icon
+            val icon = it.icon ?: return@forEach
             icon.mutate()
             val colorRes = parent.resources.getColor(iconColors, null)
             if (Build.VERSION.SDK_INT > 29) {
