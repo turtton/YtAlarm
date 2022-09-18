@@ -31,7 +31,7 @@ class AlarmListAdapter(
             aramType.text = data.repeatType.name
             aramSwitch.isChecked = data.enable
             parentFragment.playlistViewModel
-                .getFromId(data.playListId)
+                .getFromId(data.playListId!!)
                 .observe(parentFragment.requireActivity()) { playlist ->
                     playlist?.also {
                         playlistName.text = it.title
