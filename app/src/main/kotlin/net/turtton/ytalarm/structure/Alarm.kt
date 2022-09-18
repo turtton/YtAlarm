@@ -9,7 +9,7 @@ data class Alarm(
     @PrimaryKey(autoGenerate = true)
     val id: Long? = null,
     val time: String = "00:00",
-    val repeatType: RepeatType = RepeatType.ONCE,
+    val repeatType: RepeatType = RepeatType.Once,
     val playListId: Long? = null,
     val loop: Boolean = false,
     // max 100(%)
