@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
 import net.turtton.ytalarm.structure.Alarm
@@ -12,8 +14,8 @@ import net.turtton.ytalarm.structure.Alarm
 class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
     val allAlarms: LiveData<List<Alarm>> by lazy { repository.allAlarms.asLiveData() }
 
-    fun getFromId(id: Long): LiveData<Alarm> {
-        return repository.getAlarmFromId(id).asLiveData()
+    fun getFromIdAsync(id: Long): Deferred<Alarm> = viewModelScope.async {
+        repository.getAlarmFromIdSync(id)
     }
 
     fun insert(alarm: Alarm) = viewModelScope.launch {

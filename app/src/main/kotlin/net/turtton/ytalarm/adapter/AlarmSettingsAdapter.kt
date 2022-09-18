@@ -11,20 +11,22 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.TimePicker
 import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.switchmaterial.SwitchMaterial
+import kotlinx.coroutines.flow.update
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.fragment.FragmentAlarmSettings
 import net.turtton.ytalarm.structure.AramSettingData
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
 
-class AlarmSettingsAdapter(private val alarm: Alarm, private val parentFragment: Fragment) :
+class AlarmSettingsAdapter(private val fragment: FragmentAlarmSettings) :
     RecyclerView.Adapter<AlarmSettingsAdapter.ViewHolder>() {
 
     private val dataSet: Array<AramSettingData>
 
     init {
+        val alarmState = fragment.alarmData
+        val alarm = alarmState.value
         val timeSettingData = AramSettingData.NormalData(R.string.setting_time, alarm.time) {
             SettingTimePickerFragment(alarm.time) { _, hourOfDay, minute ->
                 val newTime = String.format("%02d:%02d", hourOfDay, minute)
