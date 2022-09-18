@@ -57,11 +57,11 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.8.0")
-    implementation("androidx.appcompat:appcompat:1.5.0")
+    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.appcompat:appcompat:1.5.1")
     implementation("com.google.android.material:material:1.6.1")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.5.1")?.version?.also {
+    implementation("androidx.navigation:navigation-fragment-ktx:2.5.2")?.version?.also {
         implementation("androidx.navigation:navigation-ui-ktx:$it")
     }
     implementation("androidx.recyclerview:recyclerview:1.2.1")
@@ -69,14 +69,14 @@ dependencies {
     implementation("com.android.support:support-annotations:28.0.0")
     val room = implementation("androidx.room:room-ktx:2.4.3")
     ksp("androidx.room:room-compiler:${room?.version}")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.2.0")?.also {
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")?.also {
         implementation("androidx.lifecycle:lifecycle-livedata-ktx:${it.version}")
     }
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
 
-    implementation("com.github.yausername.youtubedl-android:library:a8a636e6b3")?.also {
+    implementation("com.github.yausername.youtubedl-android:library:0.14.0")?.also {
         implementation("com.github.yausername.youtubedl-android:common:${it.version}")
     }
     implementation("com.github.bumptech.glide:glide:4.13.2")?.also {
