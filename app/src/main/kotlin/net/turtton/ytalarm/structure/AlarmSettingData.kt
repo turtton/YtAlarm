@@ -2,6 +2,7 @@ package net.turtton.ytalarm.structure
 
 import android.view.View
 import android.widget.CompoundButton
+import android.widget.TextView
 import androidx.annotation.StringRes
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
 
@@ -11,7 +12,7 @@ sealed interface AlarmSettingData {
     data class NormalData(
         @StringRes override val nameResourceId: Int,
         var value: String,
-        var onClick: ((View) -> Unit)? = null
+        var onClick: ((View, description: TextView) -> Unit)? = null
     ) : AlarmSettingData
     data class ToggleData(
         @StringRes override val nameResourceId: Int,
