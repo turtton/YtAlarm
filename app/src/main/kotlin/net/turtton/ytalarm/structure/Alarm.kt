@@ -7,12 +7,12 @@ import net.turtton.ytalarm.util.RepeatType
 @Entity(tableName = "alarms")
 data class Alarm(
     @PrimaryKey(autoGenerate = true)
-    val id: Int? = null,
-    var time: String = "00:00",
-    var repeatType: RepeatType = RepeatType.ONCE,
-    var playListId: Long = 0,
-    var loop: Boolean = false,
+    val id: Long? = null,
+    val time: String = "00:00",
+    val repeatType: RepeatType = RepeatType.Once,
+    val playListId: Long? = null,
+    val loop: Boolean = false,
     // max 100(%)
-    var volume: Int = 50,
-    var enable: Boolean = true
+    val volume: Int = 50,
+    val enable: Boolean = true
 )

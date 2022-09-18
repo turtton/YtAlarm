@@ -26,6 +26,8 @@
     <string name="playlist_item_title">PlaylistTitle</string>
 
     <string name="setting_time">Time</string>
+    <string name="setting_repeat">Repeat</string>
+    <string name="setting_playlist">Playlist</string>
     <string name="setting_loop">Loop</string>
     <string name="setting_volume">Volume</string>
     <string name="menu_item_aram_list">AramList</string>
@@ -34,6 +36,9 @@
     <string name="fragment_video_player_button_dismiss">Dismiss</string>
     <string name="fragment_video_player_button_snooze">Snooze</string>
     <string name="fragment_video_player_button_stop">Stop</string>
+
+    <string name="repeat_type_once">Once</string>
+    <string name="repeat_type_everyday">Everyday</string>
 
     <string name="menu_drawer_title_video">Video</string>
     <string name="menu_title_video_list">VideoList</string>
@@ -58,4 +63,27 @@
     <string name="dialog_remove_title">Delete</string>
     <string name="dialog_remove_ok">Confirm</string>
     <string name="dialog_remove_cancel">Cancel</string>
+
+    <string name="dialog_playlist_choice_title">Playlists</string>
+    <string name="dialog_repeat_choice_title">Repeat</string>
+    <string-array name="dialog_repeat_type_choice">
+        <item name="dialog_repeat_type_choice_once">Once</item>
+        <item name="dialog_repeat_type_choice_everyday">EveryDay</item>
+        <item name="dialog_repeat_type_choice_days">Days</item>
+        <item name="dialog_repeat_type_choice_date">Date</item>
+    </string-array>
+    <string name="dialog_repeat_days_title">Days</string>
+    <string name="dialog_repeat_days_ok">Confirm</string>
+    <string name="dialog_repeat_days_cancel">Cancel</string>
+    <string-array name="dialog_repeat_days_choice">
+        <item name="dialog_repeat_days_choice_mon">Mon</item>
+        <item name="dialog_repeat_days_choice_tue">Tue</item>
+        <item name="dialog_repeat_days_choice_wed">Wed</item>
+        <item name="dialog_repeat_days_choice_thu">Thu</item>
+        <item name="dialog_repeat_days_choice_fri">Fri</item>
+        <item name="dialog_repeat_days_choice_sat">Sat</item>
+        <item name="dialog_repeat_days_choice_sun">Sun</item>
+    </string-array>
+
+    <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
 </resources>

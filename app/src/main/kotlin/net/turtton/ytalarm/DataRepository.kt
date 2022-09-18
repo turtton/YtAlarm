@@ -13,8 +13,9 @@ class DataRepository(private val database: AppDatabase) {
     // Alarm
     val allAlarms: Flow<List<Alarm>> = database.alarmDao().getAll()
 
-    fun getAlarmFromId(id: Int): Flow<Alarm> {
-        return database.alarmDao().getFromId(id)
+    @WorkerThread
+    suspend fun getAlarmFromIdSync(id: Long): Alarm {
+        return database.alarmDao().getFromIdSync(id)
     }
 
     @WorkerThread
