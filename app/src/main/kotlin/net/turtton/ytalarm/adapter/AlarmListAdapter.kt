@@ -28,7 +28,7 @@ class AlarmListAdapter(
         val data = getItem(position)
         holder.apply {
             aramTime.text = data.time
-            aramType.text = data.repeatType.name
+            aramType.text = data.repeatType.getDisplay(itemView.context)
             aramSwitch.isChecked = data.enable
             parentFragment.playlistViewModel
                 .getFromId(data.playListId!!)
