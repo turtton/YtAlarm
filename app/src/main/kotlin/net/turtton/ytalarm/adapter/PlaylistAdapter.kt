@@ -54,6 +54,7 @@ class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
         val data = getItem(position)
         holder.itemView.tag = data.id!!.toLong()
         holder.apply {
+            currentCheckBox += data.id to checkBox
             title.text = data.title
             val size = data.videos.size
             if (data.videos.isNotEmpty()) {
