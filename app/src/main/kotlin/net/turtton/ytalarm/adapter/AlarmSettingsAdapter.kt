@@ -16,18 +16,18 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.flow.update
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentAlarmSettings
-import net.turtton.ytalarm.structure.AramSettingData
+import net.turtton.ytalarm.structure.AlarmSettingData
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
 
 class AlarmSettingsAdapter(private val fragment: FragmentAlarmSettings) :
     RecyclerView.Adapter<AlarmSettingsAdapter.ViewHolder>() {
 
-    private val dataSet: Array<AramSettingData>
+    private val dataSet: Array<AlarmSettingData>
 
     init {
         val alarmState = fragment.alarmData
         val alarm = alarmState.value
-        val timeSelector = AramSettingData.NormalData(R.string.setting_time, alarm.time) {
+        val timeSelector = AlarmSettingData.NormalData(R.string.setting_time, alarm.time) {
             SettingTimePickerFragment(alarm.time) { _, hourOfDay, minute ->
                 val newTime = String.format("%02d:%02d", hourOfDay, minute)
                 alarmState.update {
@@ -37,13 +37,13 @@ class AlarmSettingsAdapter(private val fragment: FragmentAlarmSettings) :
             }.show(fragment.parentFragmentManager, "settingTimePicker")
         }
         val loopToggle =
-            AramSettingData.ToggleData(R.string.setting_loop, alarm.loop) { _, value ->
+            AlarmSettingData.ToggleData(R.string.setting_loop, alarm.loop) { _, value ->
                 alarmState.update {
                     it.copy(loop = value)
                 }
             }
         val volumeProgress =
-            AramSettingData.PercentData(R.string.setting_volume, alarm.volume, 100) {
+            AlarmSettingData.PercentData(R.string.setting_volume, alarm.volume, 100) {
                 onProgressChanged = { _, progress, isUser ->
                     if (isUser) {
                         alarmState.update {
@@ -68,7 +68,7 @@ class AlarmSettingsAdapter(private val fragment: FragmentAlarmSettings) :
             itemView.isClickable = false
             title.text = itemView.context.getText(data.nameResourceId)
             when (data) {
-                is AramSettingData.NormalData -> {
+                is AlarmSettingData.NormalData -> {
                     description.text = data.value
                     switch.visibility = View.GONE
                     seekBar.visibility = View.GONE
@@ -76,7 +76,7 @@ class AlarmSettingsAdapter(private val fragment: FragmentAlarmSettings) :
                         itemView.setOnClickListener(data.onClick)
                     }
                 }
-                is AramSettingData.ToggleData -> {
+                is AlarmSettingData.ToggleData -> {
                     if (data.descriptionKeyId != null) {
                         description.text = itemView.context.getText(data.descriptionKeyId)
                     } else {
@@ -87,7 +87,7 @@ class AlarmSettingsAdapter(private val fragment: FragmentAlarmSettings) :
 
                     switch.setOnCheckedChangeListener(data.onCheckedChanged)
                 }
-                is AramSettingData.PercentData -> {
+                is AlarmSettingData.PercentData -> {
                     description.visibility = View.GONE
                     switch.visibility = View.GONE
                     seekBar.progress = data.value
