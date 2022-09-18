@@ -102,11 +102,10 @@ class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
             checkBox.visibility = View.GONE
         }
 
-        fun toItemDetail(): ItemDetails<Long> =
-            object : ItemDetails<Long>() {
-                override fun getPosition(): Int = absoluteAdapterPosition
-                override fun getSelectionKey(): Long? = itemView.tag as Long?
-            }
+        fun toItemDetail(): ItemDetails<Long> = object : ItemDetails<Long>() {
+            override fun getPosition(): Int = absoluteAdapterPosition
+            override fun getSelectionKey(): Long? = itemView.tag as Long?
+        }
     }
 
     class PlaylistDetailsLookup(val recyclerView: RecyclerView) : ItemDetailsLookup<Long>() {
