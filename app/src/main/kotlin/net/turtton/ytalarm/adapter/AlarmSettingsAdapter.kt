@@ -15,14 +15,17 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.TimePicker
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentAlarmSettings
+import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.structure.AlarmSettingData
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
@@ -55,64 +58,8 @@ class AlarmSettingsAdapter(
         val repeatDisplay = alarm.repeatType.getDisplay(context)
         val repeatTypeSelector =
             AlarmSettingData.NormalData(R.string.setting_repeat, repeatDisplay) { _, description ->
-                AlertDialog.Builder(fragment.activity)
-                    .setTitle(R.string.dialog_repeat_choice_title)
-                    .setItems(R.array.dialog_repeat_type_choice) { _, index ->
-                        when (index) {
-                            // ONCE
-                            0 -> {
-                                alarmState.update {
-                                    it.copy(repeatType = RepeatType.Once)
-                                }
-                                description.text = alarmState.value.repeatType.getDisplay(context)
-                            }
-                            // EVERYDAY
-                            1 -> {
-                                alarmState.update {
-                                    it.copy(repeatType = RepeatType.Everyday)
-                                }
-                                description.text = alarmState.value.repeatType.getDisplay(context)
-                            }
-                            // DAYS
-                            2 -> {
-                                val current = alarmState.value.repeatType as? RepeatType.Days
-                                DayChoiceFragment(current?.days) { dayOfWeekCompats ->
-                                    if (dayOfWeekCompats.size == 7) {
-                                        alarmState.update {
-                                            it.copy(repeatType = RepeatType.Everyday)
-                                        }
-                                    } else {
-                                        alarmState.update {
-                                            it.copy(repeatType = RepeatType.Days(dayOfWeekCompats))
-                                        }
-                                    }
-                                    description.text = alarmState.value.repeatType.getDisplay(
-                                        context
-                                    )
-                                }.show(fragment.childFragmentManager, "DayChoice")
-                            }
-                            // DATE
-                            3 -> {
-                                val current = alarmState.value.repeatType as? RepeatType.Date
-                                SettingDatePickerFragment(current?.targetDate) { _, year, month, day ->
-                                    val calendar = GregorianCalendar(year, month, day)
-                                    val newDate = Date(calendar.timeInMillis)
-                                    alarmState.update {
-                                        it.copy(repeatType = RepeatType.Date(newDate))
-                                    }
-                                    description.text = alarmState.value.repeatType.getDisplay(
-                                        context
-                                    )
-                                }.show(fragment.childFragmentManager, "DatePicker")
-                            }
-                            else -> {
-                                Log.e(
-                                    "AlarmSettingAdapter",
-                                    "RepeatTypeSelector OutOfBoundsException index:$index"
-                                )
-                            }
-                        }
-                    }.show()
+                RepeatTypePickFragment(fragment, alarmState, description)
+                    .show(fragment.childFragmentManager, "RepeatTypePicker")
             }
         val plName = playlistName ?: "Nothing"
         val playlistSelector =
@@ -228,6 +175,74 @@ class AlarmSettingsAdapter(
 
         override fun onTimeSet(view: TimePicker?, hourOfDay: Int, minute: Int) {
             onTimeSetListener(view, hourOfDay, minute)
+        }
+    }
+
+    class RepeatTypePickFragment(
+        private val fragment: Fragment,
+        private val alarmState: MutableStateFlow<Alarm>,
+        private val description: TextView
+    ) : DialogFragment() {
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            val context = requireContext()
+            return AlertDialog.Builder(fragment.activity)
+                .setTitle(R.string.dialog_repeat_choice_title)
+                .setItems(R.array.dialog_repeat_type_choice) { _, index ->
+                    when (index) {
+                        // ONCE
+                        0 -> {
+                            alarmState.update {
+                                it.copy(repeatType = RepeatType.Once)
+                            }
+                            description.text = alarmState.value.repeatType.getDisplay(context)
+                        }
+                        // EVERYDAY
+                        1 -> {
+                            alarmState.update {
+                                it.copy(repeatType = RepeatType.Everyday)
+                            }
+                            description.text = alarmState.value.repeatType.getDisplay(context)
+                        }
+                        // DAYS
+                        2 -> {
+                            val current = alarmState.value.repeatType as? RepeatType.Days
+                            DayChoiceFragment(current?.days) { dayOfWeekCompats ->
+                                if (dayOfWeekCompats.size == 7) {
+                                    alarmState.update {
+                                        it.copy(repeatType = RepeatType.Everyday)
+                                    }
+                                } else {
+                                    alarmState.update {
+                                        it.copy(repeatType = RepeatType.Days(dayOfWeekCompats))
+                                    }
+                                }
+                                description.text = alarmState.value.repeatType.getDisplay(
+                                    context
+                                )
+                            }.show(fragment.childFragmentManager, "DayChoice")
+                        }
+                        // DATE
+                        3 -> {
+                            val current = alarmState.value.repeatType as? RepeatType.Date
+                            SettingDatePickerFragment(current?.targetDate) { _, year, month, day ->
+                                val calendar = GregorianCalendar(year, month, day)
+                                val newDate = Date(calendar.timeInMillis)
+                                alarmState.update {
+                                    it.copy(repeatType = RepeatType.Date(newDate))
+                                }
+                                description.text = alarmState.value.repeatType.getDisplay(
+                                    context
+                                )
+                            }.show(fragment.childFragmentManager, "DatePicker")
+                        }
+                        else -> {
+                            Log.e(
+                                "AlarmSettingAdapter",
+                                "RepeatTypeSelector OutOfBoundsException index:$index"
+                            )
+                        }
+                    }
+                }.create()
         }
     }
 
