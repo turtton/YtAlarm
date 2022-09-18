@@ -185,6 +185,7 @@ class FragmentVideoList :
         fabAddVideoFromLink.clearAnimation()
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun animateFab(ignore: View) {
         val binding = (requireActivity() as MainActivity).binding
         if (isAddVideoFabRotated) {
