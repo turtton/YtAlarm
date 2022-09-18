@@ -30,15 +30,16 @@ class AlarmListAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
         holder.apply {
-            aramTime.text = data.time
-            aramType.text = data.repeatType.getDisplay(itemView.context)
-            aramSwitch.isChecked = data.enable
+            alarmTime.text = data.time
+            alarmType.text = data.repeatType.getDisplay(itemView.context)
+            alarmSwitch.isChecked = data.enable
+
             val async = parentFragment.playlistViewModel.getFromIdAsync(data.playListId!!)
             parentFragment.lifecycleScope.launch {
                 async.await()?.let {
                     launch(Dispatchers.Main) {
                         playlistName.text = it.title
-                        Glide.with(itemView).load(it.thumbnailUrl).into(aramThumbnail)
+                        Glide.with(itemView).load(it.thumbnailUrl).into(alarmThumbnail)
                     }
                 }
             }
@@ -52,10 +53,10 @@ class AlarmListAdapter(
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val aramTime: TextView = view.findViewById(R.id.item_playlist_title)
-        val aramType: TextView = view.findViewById(R.id.item_aram_type)
+        val alarmTime: TextView = view.findViewById(R.id.item_playlist_title)
+        val alarmType: TextView = view.findViewById(R.id.item_aram_type)
         val playlistName: TextView = view.findViewById(R.id.item_aram_playlist_name)
-        val aramThumbnail: ImageView = view.findViewById(R.id.item_playlist_thumbnail)
-        val aramSwitch: SwitchCompat = view.findViewById(R.id.item_aram_switch)
+        val alarmThumbnail: ImageView = view.findViewById(R.id.item_playlist_thumbnail)
+        val alarmSwitch: SwitchCompat = view.findViewById(R.id.item_aram_switch)
     }
 }
