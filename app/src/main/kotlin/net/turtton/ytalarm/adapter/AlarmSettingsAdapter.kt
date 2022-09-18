@@ -54,6 +54,7 @@ class AlarmSettingsAdapter(
                     description.text = newTime
                 }.show(fragment.parentFragmentManager, "settingTimePicker")
             }
+
         val context = fragment.requireContext()
         val repeatDisplay = alarm.repeatType.getDisplay(context)
         val repeatTypeSelector =
@@ -61,6 +62,7 @@ class AlarmSettingsAdapter(
                 RepeatTypePickFragment(fragment, alarmState, description)
                     .show(fragment.childFragmentManager, "RepeatTypePicker")
             }
+
         val plName = playlistName ?: "Nothing"
         val playlistSelector =
             AlarmSettingData.NormalData(R.string.setting_playlist, plName) { _, description ->
@@ -81,12 +83,14 @@ class AlarmSettingsAdapter(
                     }
                 }
             }
+
         val loopToggle =
             AlarmSettingData.ToggleData(R.string.setting_loop, alarm.loop) { _, value ->
                 alarmState.update {
                     it.copy(loop = value)
                 }
             }
+
         val volumeProgress =
             AlarmSettingData.PercentData(R.string.setting_volume, alarm.volume, 100) {
                 onProgressChanged = { _, progress, isUser ->
@@ -98,8 +102,13 @@ class AlarmSettingsAdapter(
                 }
             }
 
-        dataSet =
-            arrayOf(timeSelector, repeatTypeSelector, playlistSelector, loopToggle, volumeProgress)
+        dataSet = arrayOf(
+            timeSelector,
+            repeatTypeSelector,
+            playlistSelector,
+            loopToggle,
+            volumeProgress
+        )
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
