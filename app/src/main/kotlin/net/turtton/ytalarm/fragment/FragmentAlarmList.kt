@@ -5,7 +5,6 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.snackbar.Snackbar
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.AlarmListAdapter
@@ -38,11 +37,6 @@ class FragmentAlarmList : FragmentAbstractList() {
         val fab = (requireActivity() as MainActivity).binding.fab
         fab.shrink()
         fab.setOnClickListener {
-            // TODO: Create new Aram
-            Snackbar.make(view, "Create!!", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-
-            @Suppress("ktlint:argument-list-wrapping")
             val action = FragmentAlarmListDirections
                 .actionAlarmListFragmentToAlarmSettingsFragment(-1)
             findNavController().navigate(action)
