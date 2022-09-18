@@ -14,5 +14,5 @@ data class Alarm(
     val loop: Boolean = false,
     // max 100(%)
     val volume: Int = 50,
-    val enable: Boolean = true
+    val enable: Boolean = false
 )
