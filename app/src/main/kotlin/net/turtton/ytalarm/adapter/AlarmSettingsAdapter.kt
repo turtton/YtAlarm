@@ -30,19 +30,25 @@ class AlarmSettingsAdapter(private val fragment: FragmentAlarmSettings) :
         val timeSettingData = AramSettingData.NormalData(R.string.setting_time, alarm.time) {
             SettingTimePickerFragment(alarm.time) { _, hourOfDay, minute ->
                 val newTime = String.format("%02d:%02d", hourOfDay, minute)
-                alarm.time = newTime
+                alarmState.update {
+                    it.copy(time = newTime)
+                }
                 it.findViewById<TextView>(R.id.item_aram_setiing_description).text = newTime
-            }.show(parentFragment.parentFragmentManager, "settingTimePicker")
+            }.show(fragment.parentFragmentManager, "settingTimePicker")
         }
         val loopSettingData =
             AramSettingData.ToggleData(R.string.setting_loop, alarm.loop) { _, value ->
-                alarm.loop = value
+                alarmState.update {
+                    it.copy(loop = value)
+                }
             }
         val volumeSettingData =
             AramSettingData.PercentData(R.string.setting_volume, alarm.volume, 100) {
                 onProgressChanged = { _, progress, isUser ->
                     if (isUser) {
-                        alarm.volume = progress
+                        alarmState.update {
+                            it.copy(volume = progress)
+                        }
                     }
                 }
             }
