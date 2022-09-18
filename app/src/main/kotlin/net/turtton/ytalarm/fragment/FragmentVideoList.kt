@@ -11,6 +11,8 @@ import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
@@ -21,6 +23,7 @@ import net.turtton.ytalarm.fragment.dialog.DialogExecuteProgress
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImportDialog
+import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
@@ -41,8 +44,10 @@ class FragmentVideoList :
     var isAddVideoFabRotated = false
 
     override lateinit var selectionTracker: SelectionTracker<String>
+    lateinit var adapter: VideoListAdapter
 
     private val args by navArgs<FragmentVideoListArgs>()
+    val currentId = MutableStateFlow(-1L)
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
@@ -53,10 +58,10 @@ class FragmentVideoList :
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val id = args.playlistId
+        currentId.update { args.playlistId }
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
-        val adapter = VideoListAdapter()
+        adapter = VideoListAdapter()
         recyclerView.adapter = adapter
 
         selectionTracker = SelectionTracker.Builder(
@@ -68,22 +73,13 @@ class FragmentVideoList :
         ).build()
         adapter.tracker = selectionTracker
 
-        selectionTracker.addObserver(VideoSelectionObserver(this, id))
+        selectionTracker.addObserver(VideoSelectionObserver(this))
 
         savedInstanceState?.let {
             selectionTracker.onRestoreInstanceState(it)
         }
 
-        playlistViewModel.getFromId(id).observe(viewLifecycleOwner) { playlist ->
-            playlist?.videos?.also { videos ->
-                videoViewModel.getFromIds(videos)
-                    .observe(viewLifecycleOwner) { list ->
-                        list?.also {
-                            adapter.submitList(it)
-                        }
-                    }
-            }
-        }
+        updateListObserver()
 
         val activity = requireActivity() as MainActivity
 
@@ -111,9 +107,18 @@ class FragmentVideoList :
             animateFab(it)
             showVideoImportDialog(it) {
                 lifecycleScope.launch {
-                    val playlist = playlistViewModel.getFromIdAsync(id).await()
-                    val newList = playlist.videos + it.id
-                    playlistViewModel.update(playlist.copy(videos = newList))
+                    val playlist = playlistViewModel.getFromIdAsync(currentId.value).await() ?: Playlist()
+                    val newList = (playlist.videos + it.id).distinct()
+                    val newPlaylist = playlist.copy(videos = newList)
+                    if (playlist.id == null) {
+                        val newId = playlistViewModel.insertAsync(newPlaylist).await()
+                        currentId.update {
+                            newId
+                        }
+                        updateListObserver()
+                    } else {
+                        playlistViewModel.update(newPlaylist)
+                    }
                 }
             }
         }
@@ -123,7 +128,7 @@ class FragmentVideoList :
                 DialogExecuteProgress(R.string.dialog_execute_progress_title_loading)
             progressDialog.show(childFragmentManager, "LoadPlaylist")
             lifecycleScope.launch {
-                val currentVideo = playlistViewModel.getFromIdAsync(id).await().videos
+                val currentVideo = playlistViewModel.getFromIdAsync(currentId.value).await()?.videos ?: emptyList()
                 val targetVideos = videoViewModel.getExceptIdsAsync(currentVideo)
                     .await()
                     .map { video -> video.toDisplayData() }
@@ -132,10 +137,17 @@ class FragmentVideoList :
                     DialogMultiChoiceVideo(targetVideos) { _, selectedId ->
                         // I don't know why but without lifecycleScope, it do not work
                         lifecycleScope.launch(Dispatchers.IO) {
-                            val playlist = playlistViewModel.getFromIdAsync(id).await()
+                            val playlist = playlistViewModel.getFromIdAsync(currentId.value).await() ?: Playlist()
                             // Converts set to avoid duplicating ids
-                            val newVideoTargets = (playlist.videos + selectedId).toSet().toList()
-                            playlistViewModel.update(playlist.copy(videos = newVideoTargets))
+                            val newVideoTargets = (playlist.videos + selectedId).distinct()
+                            val newPlaylist = playlist.copy(videos = newVideoTargets)
+                            if (playlist.id == null) {
+                                val newId = playlistViewModel.insertAsync(newPlaylist).await()
+                                currentId.update { newId }
+                                updateListObserver()
+                            } else {
+                                playlistViewModel.update(newPlaylist)
+                            }
                         }
                     }.show(childFragmentManager, "SelectVideos")
                 }
@@ -199,9 +211,23 @@ class FragmentVideoList :
         }
     }
 
+    private fun updateListObserver() {
+        lifecycleScope.launch(Dispatchers.Main) {
+            playlistViewModel.getFromId(currentId.value).observe(viewLifecycleOwner) { playlist ->
+                playlist?.videos?.also { videos ->
+                    videoViewModel.getFromIds(videos)
+                        .observe(viewLifecycleOwner) { list ->
+                            list?.also {
+                                adapter.submitList(it)
+                            }
+                        }
+                }
+            }
+        }
+    }
+
     class VideoSelectionObserver(
-        fragment: FragmentVideoList,
-        private val playlistId: Int
+        fragment: FragmentVideoList
     ) : SelectionMenuObserver<String, FragmentVideoList>(
         fragment,
         AttachableMenuProvider(
@@ -210,13 +236,18 @@ class FragmentVideoList :
             R.id.menu_video_list_in_pl_action_remove to {
                 val selection = fragment.selectionTracker.selection.toSet()
                 DialogRemoveVideo { _, _ ->
-                    val async = fragment.playlistViewModel.getFromIdAsync(playlistId)
+                    val async = fragment.playlistViewModel.getFromIdAsync(fragment.currentId.value)
                     fragment.lifecycleScope.launch {
-                        val playlist = async.await()
+                        val playlist = async.await() ?: return@launch
                         val videoList = playlist.videos.toMutableSet()
                         videoList.removeAll(selection)
                         val newList = playlist.copy(videos = videoList.toList())
-                        fragment.playlistViewModel.update(newList)
+                        if (playlist.id == null) {
+                            @Suppress("DeferredResultUnused")
+                            fragment.playlistViewModel.insertAsync(newList)
+                        } else {
+                            fragment.playlistViewModel.update(newList)
+                        }
                     }
                     fragment.selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "VideoRemoveDialog")

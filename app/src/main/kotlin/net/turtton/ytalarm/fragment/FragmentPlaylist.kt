@@ -4,10 +4,10 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
@@ -56,10 +56,8 @@ class FragmentPlaylist : FragmentAbstractList(), SelectionTrackerContainer<Long>
         val fab = (requireActivity() as MainActivity).binding.fab
         fab.shrink()
         fab.setOnClickListener {
-            Snackbar.make(view, "CreatePlaylist!!", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-
-            // TODO("open playlist name input dialog and create new Playlist in this fragment")
+            val action = FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment()
+            findNavController().navigate(action)
         }
     }
 
