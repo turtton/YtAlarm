@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "playlists")
 data class Playlist(
     @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    val id: Int? = null,
     var title: String = "Playlist",
-    val thumbnailUrl: String,
+    val thumbnailUrl: String? = null,
     var videos: List<String> = emptyList()
 )

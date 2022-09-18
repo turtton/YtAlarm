@@ -52,7 +52,7 @@ class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
-        holder.itemView.tag = data.id.toLong()
+        holder.itemView.tag = data.id!!.toLong()
         holder.apply {
             title.text = data.title
             val size = data.videos.size
@@ -67,7 +67,9 @@ class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
                     R.string.playlist_item_video_count_none
                 )
             }
-            Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
+            data.thumbnailUrl.also {
+                Glide.with(itemView).load(it).into(thumbnail)
+            }
             tracker?.let {
                 val isSelected = it.isSelected(data.id.toLong())
                 itemView.isActivated = isSelected

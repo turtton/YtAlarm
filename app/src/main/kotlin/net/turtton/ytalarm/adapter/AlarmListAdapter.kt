@@ -35,7 +35,9 @@ class AlarmListAdapter(
                 .observe(parentFragment.requireActivity()) { playlist ->
                     playlist?.also {
                         playlistName.text = it.title
-                        Glide.with(itemView).load(it.thumbnailUrl).into(aramThumbnail)
+                        it.thumbnailUrl?.also { thumbnail ->
+                            Glide.with(itemView).load(thumbnail).into(aramThumbnail)
+                        }
                     }
                 }
 
