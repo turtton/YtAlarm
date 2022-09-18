@@ -107,7 +107,9 @@ class FragmentVideoList :
             animateFab(it)
             showVideoImportDialog(it) {
                 lifecycleScope.launch {
-                    val playlist = playlistViewModel.getFromIdAsync(currentId.value).await() ?: Playlist()
+                    val playlist = playlistViewModel.getFromIdAsync(currentId.value)
+                        .await()
+                        ?: Playlist()
                     val newList = (playlist.videos + it.id).distinct()
                     val newPlaylist = playlist.copy(videos = newList)
                     if (playlist.id == null) {
@@ -128,7 +130,10 @@ class FragmentVideoList :
                 DialogExecuteProgress(R.string.dialog_execute_progress_title_loading)
             progressDialog.show(childFragmentManager, "LoadPlaylist")
             lifecycleScope.launch {
-                val currentVideo = playlistViewModel.getFromIdAsync(currentId.value).await()?.videos ?: emptyList()
+                val currentVideo = playlistViewModel.getFromIdAsync(currentId.value)
+                    .await()
+                    ?.videos
+                    ?: emptyList()
                 val targetVideos = videoViewModel.getExceptIdsAsync(currentVideo)
                     .await()
                     .map { video -> video.toDisplayData() }
@@ -137,7 +142,9 @@ class FragmentVideoList :
                     DialogMultiChoiceVideo(targetVideos) { _, selectedId ->
                         // I don't know why but without lifecycleScope, it do not work
                         lifecycleScope.launch(Dispatchers.IO) {
-                            val playlist = playlistViewModel.getFromIdAsync(currentId.value).await() ?: Playlist()
+                            val playlist = playlistViewModel.getFromIdAsync(currentId.value)
+                                .await()
+                                ?: Playlist()
                             // Converts set to avoid duplicating ids
                             val newVideoTargets = (playlist.videos + selectedId).distinct()
                             val newPlaylist = playlist.copy(videos = newVideoTargets)
