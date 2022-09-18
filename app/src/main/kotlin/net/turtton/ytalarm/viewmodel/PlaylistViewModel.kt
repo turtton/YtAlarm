@@ -22,7 +22,7 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         return repository.getPlaylistFromId(id).asLiveData()
     }
 
-    fun getFromIdAsync(id: Int): Deferred<Playlist> = viewModelScope.async {
+    fun getFromIdAsync(id: Int): Deferred<Playlist?> = viewModelScope.async {
         repository.getPlaylistFromIdSync(id)
     }
 
@@ -43,7 +43,7 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         repository.update(playlists)
     }
 
-    fun insert(playlist: Playlist) = viewModelScope.launch {
+    fun insertAsync(playlist: Playlist): Deferred<Long> = viewModelScope.async {
         repository.insert(playlist)
     }
 

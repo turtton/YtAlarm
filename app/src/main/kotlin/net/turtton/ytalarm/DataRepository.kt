@@ -73,8 +73,8 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun insert(playlist: Playlist) {
-        database.playlistDao().insert(playlist)
+    suspend fun insert(playlist: Playlist): Long {
+        return database.playlistDao().insert(playlist)
     }
 
     @WorkerThread
