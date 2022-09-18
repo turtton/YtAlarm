@@ -13,7 +13,7 @@ class DataRepository(private val database: AppDatabase) {
     // Alarm
     val allAlarms: Flow<List<Alarm>> = database.alarmDao().getAll()
 
-    fun getAlarmFromId(id: Int): Flow<Alarm> {
+    fun getAlarmFromId(id: Long): Flow<Alarm> {
         return database.alarmDao().getFromId(id)
     }
 

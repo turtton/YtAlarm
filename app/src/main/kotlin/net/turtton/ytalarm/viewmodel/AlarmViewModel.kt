@@ -12,7 +12,7 @@ import net.turtton.ytalarm.structure.Alarm
 class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
     val allAlarms: LiveData<List<Alarm>> by lazy { repository.allAlarms.asLiveData() }
 
-    fun getFromId(id: Int): LiveData<Alarm> {
+    fun getFromId(id: Long): LiveData<Alarm> {
         return repository.getAlarmFromId(id).asLiveData()
     }
 

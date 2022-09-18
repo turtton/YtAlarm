@@ -24,7 +24,8 @@
 
         <argument
             android:name="alarmId"
-            app:argType="integer" />
+            app:argType="long"
+            android:defaultValue="-1L"/>
 
         <action
             android:id="@+id/action_AlarmSettingFragment_to_AlarmListFragment"

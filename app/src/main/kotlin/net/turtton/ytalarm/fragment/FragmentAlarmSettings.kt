@@ -31,7 +31,7 @@ class FragmentAlarmSettings : FragmentAbstractList() {
         fab.visibility = View.GONE
 
         val alarmId = args.alarmId
-        if (alarmId != -1) {
+        if (alarmId != -1L) {
             alarmViewModel.getFromId(alarmId).observe(viewLifecycleOwner) { uncheckedAlarm ->
                 uncheckedAlarm?.let { alarm ->
                     binding.recyclerList.adapter = AlarmSettingsAdapter(alarm, this)
