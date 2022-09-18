@@ -1,6 +1,3 @@
 {
-  "extends": ["github>turtton/renovate"],
-  "ignoreDeps": [
-    "com.github.yausername.youtubedl-android:library"
-  ]
+  "extends": ["github>turtton/renovate"]
 }
