@@ -18,15 +18,15 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getAllPlaylistsSync()
     }
 
-    fun getFromId(id: Int): LiveData<Playlist> {
+    fun getFromId(id: Long): LiveData<Playlist> {
         return repository.getPlaylistFromId(id).asLiveData()
     }
 
-    fun getFromIdAsync(id: Int): Deferred<Playlist> = viewModelScope.async {
+    fun getFromIdAsync(id: Long): Deferred<Playlist?> = viewModelScope.async {
         repository.getPlaylistFromIdSync(id)
     }
 
-    fun getFromIdsAsync(ids: List<Int>): Deferred<List<Playlist>> = viewModelScope.async {
+    fun getFromIdsAsync(ids: List<Long>): Deferred<List<Playlist>> = viewModelScope.async {
         repository.getPlaylistFromIdsSync(ids)
     }
 
@@ -43,7 +43,7 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         repository.update(playlists)
     }
 
-    fun insert(playlist: Playlist) = viewModelScope.launch {
+    fun insertAsync(playlist: Playlist): Deferred<Long> = viewModelScope.async {
         repository.insert(playlist)
     }
 
@@ -65,4 +65,8 @@ class PlaylistViewModelFactory(private val repository: DataRepository) : ViewMod
             throw IllegalStateException("Unknown ViewModel class")
         }
     }
+}
+
+interface PlaylistViewContainer {
+    val playlistViewModel: PlaylistViewModel
 }

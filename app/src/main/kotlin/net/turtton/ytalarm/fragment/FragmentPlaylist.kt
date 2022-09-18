@@ -4,10 +4,10 @@ import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
@@ -18,12 +18,23 @@ import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.TagKeyProvider
+import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.VideoViewContainer
+import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
-class FragmentPlaylist : FragmentAbstractList(), SelectionTrackerContainer<Long> {
-    private val playlistViewModel: PlaylistViewModel by viewModels {
+class FragmentPlaylist :
+    FragmentAbstractList(),
+    VideoViewContainer,
+    PlaylistViewContainer,
+    SelectionTrackerContainer<Long> {
+    override val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(requireActivity().application.repository)
+    }
+    override val videoViewModel: VideoViewModel by viewModels {
+        VideoViewModelFactory(requireActivity().application.repository)
     }
 
     override lateinit var selectionTracker: SelectionTracker<Long>
@@ -31,7 +42,7 @@ class FragmentPlaylist : FragmentAbstractList(), SelectionTrackerContainer<Long>
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
-        val adapter = PlaylistAdapter()
+        val adapter = PlaylistAdapter(this)
         recyclerView.adapter = adapter
 
         selectionTracker = SelectionTracker.Builder(
@@ -56,10 +67,8 @@ class FragmentPlaylist : FragmentAbstractList(), SelectionTrackerContainer<Long>
         val fab = (requireActivity() as MainActivity).binding.fab
         fab.shrink()
         fab.setOnClickListener {
-            Snackbar.make(view, "CreatePlaylist!!", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
-
-            // TODO("open playlist name input dialog and create new Playlist in this fragment")
+            val action = FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment()
+            findNavController().navigate(action)
         }
     }
 
@@ -75,7 +84,7 @@ class FragmentPlaylist : FragmentAbstractList(), SelectionTrackerContainer<Long>
             fragment,
             R.menu.menu_playlist_action,
             R.id.menu_playlist_action_remove to {
-                val selection = fragment.selectionTracker.selection.map { it.toInt() }
+                val selection = fragment.selectionTracker.selection.toList()
                 DialogRemoveVideo { _, _ ->
                     val async = fragment.playlistViewModel.getFromIdsAsync(selection)
                     fragment.lifecycleScope.launch {

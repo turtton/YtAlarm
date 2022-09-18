@@ -20,13 +20,13 @@ interface PlaylistDao {
     suspend fun getAllSync(): List<Playlist>
 
     @Query("SELECT * FROM playlists WHERE id = :id")
-    fun getFromId(id: Int): Flow<Playlist>
+    fun getFromId(id: Long): Flow<Playlist>
 
     @Query("SELECT * FROM playlists WHERE id = :id")
-    suspend fun getFromIdSync(id: Int): Playlist
+    suspend fun getFromIdSync(id: Long): Playlist
 
     @Query("SELECT * FROM playlists WHERE id IN (:ids)")
-    suspend fun getFromIdsSync(ids: List<Int>): List<Playlist>
+    suspend fun getFromIdsSync(ids: List<Long>): List<Playlist>
 
     @RawQuery(observedEntities = [Playlist::class])
     suspend fun getFromVideoIdsSync(query: SupportSQLiteQuery): List<Playlist>
@@ -38,7 +38,7 @@ interface PlaylistDao {
     suspend fun update(playlists: List<Playlist>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(playlist: Playlist)
+    suspend fun insert(playlist: Playlist): Long
 
     @Delete
     suspend fun delete(playlist: Playlist)

@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.recyclerview.selection.ItemDetailsLookup
 import androidx.recyclerview.selection.ItemDetailsLookup.ItemDetails
@@ -15,14 +17,19 @@ import androidx.recyclerview.selection.SelectionTracker.SelectionObserver
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentPlaylistDirections
 import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.BasicComparator
+import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
+import net.turtton.ytalarm.viewmodel.VideoViewContainer
 
-class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
+class PlaylistAdapter<T>(
+    private val fragment: T
+) : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
     BasicComparator<Playlist>()
-) {
+) where T : VideoViewContainer, T : PlaylistViewContainer, T : LifecycleOwner {
     private val currentCheckBox = hashSetOf<Pair<Long, CheckBox>>()
 
     var tracker: SelectionTracker<Long>? = null
@@ -52,8 +59,9 @@ class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
-        holder.itemView.tag = data.id.toLong()
+        holder.itemView.tag = data.id!!.toLong()
         holder.apply {
+            currentCheckBox += data.id to checkBox
             title.text = data.title
             val size = data.videos.size
             if (data.videos.isNotEmpty()) {
@@ -67,7 +75,18 @@ class PlaylistAdapter : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
                     R.string.playlist_item_video_count_none
                 )
             }
-            Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
+
+            fragment.lifecycleScope.launch {
+                val thumbnailUrl = data.thumbnailUrl ?: kotlin.run {
+                    data.videos.randomOrNull()?.let {
+                        fragment.videoViewModel.getFromIdAsync(it).await()?.thumbnailUrl
+                    }?.also {
+                        fragment.playlistViewModel.update(data.copy(thumbnailUrl = it))
+                    }
+                }
+                Glide.with(itemView).load(thumbnailUrl).into(thumbnail)
+            }
+
             tracker?.let {
                 val isSelected = it.isSelected(data.id.toLong())
                 itemView.isActivated = isSelected

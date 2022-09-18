@@ -26,7 +26,9 @@ class MultiChoiceVideoListAdapter<T>(private val displayDataList: List<DisplayDa
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = displayDataList[position]
         holder.title.text = data.title
-        Glide.with(holder.itemView).load(data.thumbnailUrl).into(holder.thumbnail)
+        data.thumbnailUrl?.also {
+            Glide.with(holder.itemView).load(it).into(holder.thumbnail)
+        }
         holder.itemView.setOnClickListener {
             val checkBox = holder.checkBox
             if (checkBox.isChecked) {
@@ -47,10 +49,10 @@ class MultiChoiceVideoListAdapter<T>(private val displayDataList: List<DisplayDa
         val checkBox: CheckBox = view.findViewById(R.id.item_dialog_choice_video_checkBox)
     }
 
-    data class DisplayData<T>(val id: T, val title: String, val thumbnailUrl: String) {
+    data class DisplayData<T>(val id: T, val title: String, val thumbnailUrl: String?) {
         companion object {
             fun Video.toDisplayData() = DisplayData(id, title, thumbnailUrl)
-            fun Playlist.toDisplayData() = DisplayData(id, title, thumbnailUrl)
+            fun Playlist.toDisplayData() = DisplayData(id!!, title, thumbnailUrl)
         }
     }
 }

@@ -10,7 +10,7 @@ data class Alarm(
     val id: Int? = null,
     var time: String = "00:00",
     var repeatType: RepeatType = RepeatType.ONCE,
-    var playListId: Int = 0,
+    var playListId: Long = 0,
     var loop: Boolean = false,
     // max 100(%)
     var volume: Int = 50,
