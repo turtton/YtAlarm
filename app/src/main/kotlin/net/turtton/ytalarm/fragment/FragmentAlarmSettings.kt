@@ -54,6 +54,10 @@ class FragmentAlarmSettings : FragmentAbstractList() {
         }
         fab.setOnClickListener {
             val currentData = alarmData.value
+            if (currentData.playListId == null) {
+                Snackbar.make(view, R.string.snackbar_error_playlistid_is_null, 300).show()
+                return@setOnClickListener
+            }
             if (currentData.id == null) {
                 alarmViewModel.insert(currentData)
             } else {

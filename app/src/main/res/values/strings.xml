@@ -58,4 +58,6 @@
     <string name="dialog_remove_title">Delete</string>
     <string name="dialog_remove_ok">Confirm</string>
     <string name="dialog_remove_cancel">Cancel</string>
+
+    <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
 </resources>
