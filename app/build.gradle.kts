@@ -31,7 +31,8 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            val proguardFile = getDefaultProguardFile("proguard-android-optimize.txt")
+            proguardFiles(proguardFile, "proguard-rules.pro")
         }
     }
     compileOptions {
