@@ -7,6 +7,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -18,14 +19,21 @@ import net.turtton.ytalarm.adapter.AlarmSettingsAdapter
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
+import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
+import net.turtton.ytalarm.viewmodel.PlaylistViewModel
+import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 
-class FragmentAlarmSettings : FragmentAbstractList() {
+class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
     val alarmData = MutableStateFlow(Alarm())
 
     private val args by navArgs<FragmentAlarmSettingsArgs>()
 
     private val alarmViewModel: AlarmViewModel by viewModels {
         AlarmViewModelFactory(requireActivity().application.repository)
+    }
+
+    override val playlistViewModel: PlaylistViewModel by viewModels {
+        PlaylistViewModelFactory(requireActivity().application.repository)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -43,8 +51,10 @@ class FragmentAlarmSettings : FragmentAbstractList() {
             lifecycleScope.launch {
                 val alarm = async.await()
                 alarmData.update { alarm }
+                val plTitle = playlistViewModel.getFromIdAsync(alarm.playListId!!).await()?.title
                 launch(Dispatchers.Main) {
-                    binding.recyclerList.adapter = AlarmSettingsAdapter(this@FragmentAlarmSettings)
+                    val adapter = AlarmSettingsAdapter(this@FragmentAlarmSettings, plTitle)
+                    binding.recyclerList.adapter = adapter
                     fab.visibility = View.VISIBLE
                 }
             }

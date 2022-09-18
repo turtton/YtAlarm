@@ -26,6 +26,7 @@
     <string name="playlist_item_title">PlaylistTitle</string>
 
     <string name="setting_time">Time</string>
+    <string name="setting_playlist">Playlist</string>
     <string name="setting_loop">Loop</string>
     <string name="setting_volume">Volume</string>
     <string name="menu_item_aram_list">AramList</string>
@@ -58,6 +59,8 @@
     <string name="dialog_remove_title">Delete</string>
     <string name="dialog_remove_ok">Confirm</string>
     <string name="dialog_remove_cancel">Cancel</string>
+
+    <string name="dialog_playlist_choice_title">Playlists</string>
 
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
 </resources>
