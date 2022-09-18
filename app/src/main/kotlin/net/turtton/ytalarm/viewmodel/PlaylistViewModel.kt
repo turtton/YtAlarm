@@ -66,3 +66,7 @@ class PlaylistViewModelFactory(private val repository: DataRepository) : ViewMod
         }
     }
 }
+
+interface PlaylistViewContainer {
+    val playlistViewModel: PlaylistViewModel
+}
