@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_video_list_action_add_to"
+        android:icon="@drawable/ic_add_playlist"
+        android:title="@string/menu_video_list_add_to"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/menu_video_list_action_remove"
+        android:icon="@drawable/ic_trash"
+        android:title="@string/menu_video_list_remove"
+        app:showAsAction="ifRoom" />
+</menu>

@@ -14,6 +14,10 @@ import net.turtton.ytalarm.structure.Playlist
 class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
     val allPlaylists: LiveData<List<Playlist>> by lazy { repository.allPlaylists.asLiveData() }
 
+    val allPlaylistsAsync: Deferred<List<Playlist>> get() = viewModelScope.async {
+        repository.getAllPlaylistsSync()
+    }
+
     fun getFromId(id: Int): LiveData<Playlist> {
         return repository.getPlaylistFromId(id).asLiveData()
     }
@@ -22,8 +26,20 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getPlaylistFromIdSync(id)
     }
 
+    fun getFromIdsAsync(ids: List<Int>): Deferred<List<Playlist>> = viewModelScope.async {
+        repository.getPlaylistFromIdsSync(ids)
+    }
+
+    fun getFromContainsVideoIdsAsync(ids: List<String>): Deferred<List<Playlist>> = viewModelScope.async {
+        repository.getPlaylistContainsVideoIds(ids)
+    }
+
     fun update(playlist: Playlist) = viewModelScope.launch {
         repository.update(playlist)
+    }
+
+    fun update(playlists: List<Playlist>) = viewModelScope.launch {
+        repository.update(playlists)
     }
 
     fun insert(playlist: Playlist) = viewModelScope.launch {
@@ -32,6 +48,10 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
 
     fun delete(playlist: Playlist) = viewModelScope.launch {
         repository.delete(playlist)
+    }
+
+    fun delete(playlists: List<Playlist>) = viewModelScope.launch {
+        repository.deletePlaylists(playlists)
     }
 }
 

@@ -24,7 +24,7 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
         repository.update(alarm)
     }
 
-    fun delte(alarm: Alarm) = viewModelScope.launch {
+    fun delete(alarm: Alarm) = viewModelScope.launch {
         repository.delete(alarm)
     }
 }

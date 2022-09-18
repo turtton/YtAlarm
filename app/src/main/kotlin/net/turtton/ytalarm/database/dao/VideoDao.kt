@@ -19,12 +19,15 @@ interface VideoDao {
     @Query("SELECT * FROM videos WHERE id = :id")
     suspend fun getFromIdSync(id: String): Video?
 
+    @Query("SELECT * FROM videos WHERE id IN (:ids)")
+    suspend fun getFromIdsSync(ids: List<String>): List<Video>
+
     @Query("SELECT * FROM videos WHERE id NOT IN (:ids)")
-    suspend fun getExceptIds(ids: List<String>): List<Video>
+    suspend fun getExceptIdsSync(ids: List<String>): List<Video>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(video: Video)
 
     @Delete
-    suspend fun delete(video: Video)
+    suspend fun delete(videos: List<Video>)
 }

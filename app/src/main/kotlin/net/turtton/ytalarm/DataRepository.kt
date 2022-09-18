@@ -1,6 +1,7 @@
 package net.turtton.ytalarm
 
 import androidx.annotation.WorkerThread
+import androidx.sqlite.db.SimpleSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.database.AppDatabase
 import net.turtton.ytalarm.structure.Alarm
@@ -34,6 +35,9 @@ class DataRepository(private val database: AppDatabase) {
     // Playlist
     val allPlaylists: Flow<List<Playlist>> = database.playlistDao().getAll()
 
+    @WorkerThread
+    suspend fun getAllPlaylistsSync(): List<Playlist> = database.playlistDao().getAllSync()
+
     fun getPlaylistFromId(id: Int): Flow<Playlist> {
         return database.playlistDao().getFromId(id)
     }
@@ -44,8 +48,28 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
+    suspend fun getPlaylistFromIdsSync(ids: List<Int>): List<Playlist> {
+        return database.playlistDao().getFromIdsSync(ids)
+    }
+
+    @WorkerThread
+    suspend fun getPlaylistContainsVideoIds(ids: List<String>): List<Playlist> {
+        val selectQuery = "SELECT * FROM playlists"
+        val searchQuery = ids.joinToString(prefix = " WHERE ", separator = " OR ") {
+            "videos LIKE '%$it%'"
+        }
+        val query = SimpleSQLiteQuery("$selectQuery$searchQuery")
+        return database.playlistDao().getFromVideoIdsSync(query)
+    }
+
+    @WorkerThread
     suspend fun update(playlist: Playlist) {
         database.playlistDao().update(playlist)
+    }
+
+    @WorkerThread
+    suspend fun update(playlists: List<Playlist>) {
+        database.playlistDao().update(playlists)
     }
 
     @WorkerThread
@@ -56,6 +80,11 @@ class DataRepository(private val database: AppDatabase) {
     @WorkerThread
     suspend fun delete(playlist: Playlist) {
         database.playlistDao().delete(playlist)
+    }
+
+    @WorkerThread
+    suspend fun deletePlaylists(playlists: List<Playlist>) {
+        database.playlistDao().delete(playlists)
     }
 
     // Video
@@ -71,8 +100,13 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
+    suspend fun getVideoFromIdsSync(ids: List<String>): List<Video> {
+        return database.videoDao().getFromIdsSync(ids)
+    }
+
+    @WorkerThread
     suspend fun getVideoExceptIdsSync(ids: List<String>): List<Video> {
-        return database.videoDao().getExceptIds(ids)
+        return database.videoDao().getExceptIdsSync(ids)
     }
 
     @WorkerThread
@@ -81,7 +115,7 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun delete(video: Video) {
-        database.videoDao().delete(video)
+    suspend fun deleteVideoLists(videos: List<Video>) {
+        database.videoDao().delete(videos)
     }
 }
