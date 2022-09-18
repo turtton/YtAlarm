@@ -75,7 +75,7 @@ class FragmentPlaylist : FragmentAbstractList(), SelectionTrackerContainer<Long>
             fragment,
             R.menu.menu_playlist_action,
             R.id.menu_playlist_action_remove to {
-                val selection = fragment.selectionTracker.selection.map { it.toInt() }
+                val selection = fragment.selectionTracker.selection.toList()
                 DialogRemoveVideo { _, _ ->
                     val async = fragment.playlistViewModel.getFromIdsAsync(selection)
                     fragment.lifecycleScope.launch {

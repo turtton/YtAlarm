@@ -38,17 +38,17 @@ class DataRepository(private val database: AppDatabase) {
     @WorkerThread
     suspend fun getAllPlaylistsSync(): List<Playlist> = database.playlistDao().getAllSync()
 
-    fun getPlaylistFromId(id: Int): Flow<Playlist> {
+    fun getPlaylistFromId(id: Long): Flow<Playlist> {
         return database.playlistDao().getFromId(id)
     }
 
     @WorkerThread
-    suspend fun getPlaylistFromIdSync(id: Int): Playlist {
+    suspend fun getPlaylistFromIdSync(id: Long): Playlist {
         return database.playlistDao().getFromIdSync(id)
     }
 
     @WorkerThread
-    suspend fun getPlaylistFromIdsSync(ids: List<Int>): List<Playlist> {
+    suspend fun getPlaylistFromIdsSync(ids: List<Long>): List<Playlist> {
         return database.playlistDao().getFromIdsSync(ids)
     }
 
