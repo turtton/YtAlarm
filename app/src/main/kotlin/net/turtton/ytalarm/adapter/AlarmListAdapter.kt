@@ -41,7 +41,7 @@ class AlarmListAdapter(
                 button.isClickable = false
                 parentFragment.lifecycleScope.launch {
                     val alarm = async.await()
-                   parentFragment.alarmViewModel.update(alarm.copy(enable = isChecked)).join()
+                    parentFragment.alarmViewModel.update(alarm.copy(enable = isChecked)).join()
                     launch(Dispatchers.Main) {
                         button.isClickable = true
                     }
