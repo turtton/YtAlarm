@@ -86,4 +86,5 @@
     </string-array>
 
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
+    <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
 </resources>

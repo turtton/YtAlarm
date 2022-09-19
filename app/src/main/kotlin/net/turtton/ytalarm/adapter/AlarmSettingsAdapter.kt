@@ -18,6 +18,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -234,8 +235,15 @@ class AlarmSettingsAdapter(
                         3 -> {
                             val current = alarmState.value.repeatType as? RepeatType.Date
                             SettingDatePickerFragment(current?.targetDate) { _, year, month, day ->
+                                val nowCalendar = Calendar.getInstance()
                                 val calendar = GregorianCalendar(year, month, day)
-                                val newDate = Date(calendar.timeInMillis)
+                                val newDate = if (nowCalendar.time > calendar.time) {
+                                    val pastError = R.string.snackbar_error_target_is_the_past_date
+                                    Snackbar.make(requireView(), pastError, 600).show()
+                                    Date(nowCalendar.timeInMillis)
+                                } else {
+                                    Date(calendar.timeInMillis)
+                                }
                                 alarmState.update {
                                     it.copy(repeatType = RepeatType.Date(newDate))
                                 }
