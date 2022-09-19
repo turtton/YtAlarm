@@ -1,9 +1,5 @@
 package net.turtton.ytalarm.adapter
 
-import android.app.AlarmManager
-import android.app.PendingIntent
-import android.content.Context
-import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,13 +13,12 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.AlarmActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentAlarmList
 import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.util.BasicComparator
-import java.util.Calendar
+import net.turtton.ytalarm.util.updateAlarm
 
 class AlarmListAdapter(
     private val parentFragment: FragmentAlarmList
@@ -40,26 +35,15 @@ class AlarmListAdapter(
             val context = itemView.context
             alarmType.text = data.repeatType.getDisplay(context)
             alarmSwitch.isChecked = data.enable
-            alarmSwitch.setOnCheckedChangeListener { _, isChecked ->
-                val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-                if (alarmManager != null) {
-                    val intent = Intent(context, AlarmActivity::class.java)
-                    intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, data.id!!)
-                    val pendingIntent = PendingIntent.getActivity(
-                        context,
-                        0,
-                        intent,
-                        PendingIntent.FLAG_IMMUTABLE
-                    )
-                    val calendar = Calendar.getInstance()
-                    val (hour, minute) = data.time.split(':').map { it.toInt() }
-                    calendar.set(Calendar.HOUR_OF_DAY, hour)
-                    calendar.set(Calendar.MINUTE, minute)
-                    val clockInfo = AlarmManager.AlarmClockInfo(calendar.timeInMillis, null)
-                    if (isChecked) {
-                        alarmManager.setAlarmClock(clockInfo, pendingIntent)
-                    } else {
-                        alarmManager.cancel(pendingIntent)
+            alarmSwitch.setOnCheckedChangeListener { button, isChecked ->
+                updateAlarm(parentFragment.requireActivity(), data, isChecked)
+                val async = parentFragment.alarmViewModel.getFromIdAsync(data.id!!)
+                button.isClickable = false
+                parentFragment.lifecycleScope.launch {
+                    val alarm = async.await()
+                   parentFragment.alarmViewModel.update(alarm.copy(enable = isChecked)).join()
+                    launch(Dispatchers.Main) {
+                        button.isClickable = true
                     }
                 }
             }
@@ -75,6 +59,7 @@ class AlarmListAdapter(
             }
 
             itemView.setOnClickListener {
+                updateAlarm(parentFragment.requireActivity(), data, false)
                 val action = FragmentAlarmListDirections
                     .actionAlarmListFragmentToAlarmSettingsFragment(data.id!!)
                 parentFragment.findNavController().navigate(action)
