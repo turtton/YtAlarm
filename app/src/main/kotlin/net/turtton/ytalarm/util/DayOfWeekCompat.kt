@@ -27,7 +27,7 @@ enum class DayOfWeekCompat {
         return calendar.getDisplayName(Calendar.DAY_OF_WEEK, format, primaryLocale)
     }
 
-    private fun convertCalenderCode(): Int = when (this) {
+    fun convertCalenderCode(): Int = when (this) {
         MONDAY -> Calendar.MONDAY
         TUESDAY -> Calendar.TUESDAY
         WEDNESDAY -> Calendar.WEDNESDAY
