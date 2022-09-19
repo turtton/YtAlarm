@@ -1,8 +1,11 @@
 package net.turtton.ytalarm
 
+import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
@@ -41,6 +44,21 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         binding.fab.shrink()
+
+        // TODO add description dialog
+        requestPermission()
+    }
+
+    private fun requestPermission() {
+        val hasPerm = { Settings.canDrawOverlays(this) }
+        if (!hasPerm()) {
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                if (!hasPerm()) {
+                    requestPermission()
+                }
+            }.launch(intent)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
