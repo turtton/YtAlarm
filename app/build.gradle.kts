@@ -100,6 +100,7 @@ dependencies {
         testImplementation("io.kotest:kotest-assertions-core:$it")
         testImplementation("io.kotest:kotest-property:$it")
     }
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation("org.robolectric:robolectric:4.8")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
