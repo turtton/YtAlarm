@@ -134,6 +134,41 @@ class FragmentVideoPlayer : Fragment() {
             val asyncAlarm = alarmViewModel.getFromIdAsync(alarmId)
             lifecycleScope.launch {
                 val alarm = asyncAlarm.await()
+                // set snooze button
+                launch(Dispatchers.Main) {
+                    snoozeButton.setOnClickListener {
+                        var (hour, minute) = alarm.time.split(':').map { it.toInt() }
+                        // TODO edit snooze time(add calc test)
+                        minute += 10
+                        if (minute > 59) {
+                            minute %= 60
+                            hour += 1
+                        }
+                        if (hour > 23) {
+                            hour %= 24
+                        }
+                        val snoozeAlarm = alarm.copy(
+                            time = "$hour:$minute",
+                            repeatType = RepeatType.Once
+                        ).apply { snooze = true }
+                        updateAlarm(requireActivity(), snoozeAlarm, true)
+                        if (!findNavController().navigateUp()) {
+                            activity.finish()
+                        }
+                    }
+                }
+                // update alarm
+                var repeatType = alarm.repeatType
+                if (repeatType is RepeatType.Date) {
+                    repeatType = RepeatType.Once
+                }
+                if (repeatType is RepeatType.Once && !alarm.snooze) {
+                    alarmViewModel.update(alarm.copy(repeatType = repeatType, enable = false))
+                }
+                if (repeatType is RepeatType.Everyday || repeatType is RepeatType.Days) {
+                    updateAlarm(requireActivity(), alarm, true)
+                }
+
                 val playlist = playlistViewModel.getFromIdAsync(alarm.playListId!!).await()
                 val videos = playlist?.let { videoViewModel.getFromIdsAsync(it.videos).await() }
                 if (videos.isNullOrEmpty()) {
@@ -162,17 +197,6 @@ class FragmentVideoPlayer : Fragment() {
                         }
                     }
                     playVideo(view, videos[queue])
-                }
-                // update alarm
-                var repeatType = alarm.repeatType
-                if (repeatType is RepeatType.Date) {
-                    repeatType = RepeatType.Once
-                }
-                if (repeatType is RepeatType.Once) {
-                    alarmViewModel.update(alarm.copy(repeatType = repeatType, enable = false))
-                }
-                if (repeatType is RepeatType.Everyday || repeatType is RepeatType.Days) {
-                    updateAlarm(requireActivity(), alarm, true)
                 }
             }
         } else {
