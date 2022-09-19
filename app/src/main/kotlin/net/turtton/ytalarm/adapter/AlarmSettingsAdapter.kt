@@ -236,10 +236,15 @@ class AlarmSettingsAdapter(
                             val current = alarmState.value.repeatType as? RepeatType.Date
                             SettingDatePickerFragment(current?.targetDate) { _, year, month, day ->
                                 val nowCalendar = Calendar.getInstance()
+                                val nowYear = nowCalendar[Calendar.YEAR]
+                                val nowDay = nowCalendar[Calendar.DAY_OF_YEAR]
                                 val calendar = GregorianCalendar(year, month, day)
-                                val newDate = if (nowCalendar.time > calendar.time) {
+                                val dayOfYear = calendar[Calendar.DAY_OF_YEAR]
+                                val isPastDate = nowYear == year && nowDay > dayOfYear
+                                val newDate = if (nowYear > year || isPastDate) {
                                     val pastError = R.string.snackbar_error_target_is_the_past_date
-                                    Snackbar.make(requireView(), pastError, 600).show()
+                                    Snackbar.make(fragment.requireView(), pastError, 600)
+                                        .show()
                                     Date(nowCalendar.timeInMillis)
                                 } else {
                                     Date(calendar.timeInMillis)

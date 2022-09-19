@@ -23,28 +23,28 @@ fun updateAlarm(context: Activity, data: Alarm, isAdder: Boolean) {
             PendingIntent.FLAG_IMMUTABLE
         )
         val calendar = Calendar.getInstance()
-        val nowDay = calendar[Calendar.DAY_OF_WEEK]
 
         val (hour, minute) = data.time.split(':').map { it.toInt() }
 
+        val nowDay = calendar[Calendar.DAY_OF_WEEK]
         val nowHour = calendar[Calendar.HOUR_OF_DAY]
         val nowMinute = calendar[Calendar.MINUTE]
 
-        val isPrevious = nowHour > hour || (nowHour == hour && nowMinute > minute)
+        val isPastTime = nowHour > hour || (nowHour == hour && nowMinute >= minute)
 
         when (val repeatType = data.repeatType) {
             is RepeatType.Once, is RepeatType.Everyday -> {
-                if (isPrevious) {
+                if (isPastTime) {
                     calendar.add(Calendar.DATE, 1)
                 }
             }
             is RepeatType.Days -> {
                 val days = repeatType.days.map { it.convertCalenderCode() }.toMutableList()
-                days.filter { if (isPrevious) nowDay < it else nowDay <= it }
+                days.filter { if (isPastTime) nowDay < it else nowDay <= it }
                     .minByOrNull { it - nowDay }
                     ?.also {
                         calendar.set(Calendar.DAY_OF_WEEK, it)
-                    } ?: run { days.filter { if (isPrevious) it <= nowDay else it < nowDay } }
+                    } ?: run { days.filter { if (isPastTime) it <= nowDay else it < nowDay } }
                     .minByOrNull { it - nowDay }
                     ?.also {
                         calendar.set(Calendar.DAY_OF_WEEK, it)
