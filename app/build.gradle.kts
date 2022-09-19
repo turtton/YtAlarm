@@ -5,6 +5,7 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.10"
     id("org.jmailen.kotlinter")
+    jacoco
 }
 
 android {
@@ -29,6 +30,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             val proguardFile = getDefaultProguardFile("proguard-android-optimize.txt")
@@ -58,9 +62,72 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
+            isReturnDefaultValues = true
             all {
                 it.useJUnitPlatform()
             }
+        }
+    }
+
+
+    applicationVariants.all {
+        val variantName = name.capitalize()
+        val realVariantName = name
+
+        if (buildType.name != "debug") {
+            return@all
+        }
+
+        val testTaskName = "test${variantName}UnitTest"
+        task<JacocoReport>("jacoco${variantName}TestReport") {
+            dependsOn(
+                "create${variantName}CoverageReport",
+                "test${variantName}UnitTest"
+            )
+
+            group = "testing"
+            description = "Generate Jacoco coverage reports for $realVariantName"
+
+            reports {
+                xml.required.set(false)
+                html.required.set(true)
+            }
+
+            val fileFilter = listOf(
+                "**/R.class",
+                "**/R$*.class",
+                "**/BuildConfig.*",
+                "**/Manifest*.*",
+                "android/**/*.*",
+                "androidx/**/*.*",
+                "**/Lambda$*.class",
+                "**/Lambda.class",
+                "**/*Lambda.class",
+                "**/*Lambda*.class",
+                "**/*Lambda*.*",
+                "**/*Builder.*"
+            )
+
+//            val javaDebugTree = fileTree(
+//                "dir" to "$buildDir/intermediates/javac/$realVariantName/compile${variantName}JavaWithJavac/classes",
+//                "excludes" to fileFilter
+//            )
+            val kotlinDebugTree = fileTree(
+                "dir" to "$buildDir/tmp/kotlin-classes/$realVariantName",
+                "excludes" to fileFilter
+            )
+            val mainSrc = "${project.projectDir}/src/main/kotlin"
+
+            sourceDirectories.setFrom(files(mainSrc))
+            classDirectories.setFrom(files(kotlinDebugTree))
+            executionData.setFrom(
+                fileTree(
+                    "dir" to project.projectDir,
+                    "includes" to listOf("**/*.exec", "**/*.ec")
+                )
+            )
+        }.also {
+            tasks[testTaskName].finalizedBy(it)
         }
     }
 }
