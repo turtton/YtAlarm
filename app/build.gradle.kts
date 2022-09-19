@@ -54,6 +54,14 @@ android {
             isUniversalApk = true
         }
     }
+
+    testOptions {
+        unitTests {
+            all {
+                it.useJUnitPlatform()
+            }
+        }
+    }
 }
 
 dependencies {
@@ -87,6 +95,10 @@ dependencies {
     }
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.4.2")?.version?.also {
+        testImplementation("io.kotest:kotest-assertions-core:$it")
+        testImplementation("io.kotest:kotest-property:$it")
+    }
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     androidTestImplementation("androidx.room:room-testing:${room?.version}")
