@@ -15,7 +15,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 
 class FragmentAlarmList : FragmentAbstractList() {
 
-    private val alarmViewModel: AlarmViewModel by viewModels {
+    val alarmViewModel: AlarmViewModel by viewModels {
         AlarmViewModelFactory(requireActivity().application.repository)
     }
 
