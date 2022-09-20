@@ -44,6 +44,7 @@ fun Alarm.toCalendar(now: Calendar): Calendar {
 
     calendar.set(flagHour, hour)
     calendar.set(flagMinute, minute)
+    calendar.set(Calendar.SECOND, 0)
 
     return calendar
 }
