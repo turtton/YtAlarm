@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.util
 
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -20,27 +21,22 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
         val alarmList = list.filter { it.enable }.toMutableList()
 
         val intent = Intent(context, AlarmActivity::class.java)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
         val nowTime = Calendar.getInstance()
         val (alarm, calendar) = alarmList.pickNearestTime(nowTime) ?: kotlin.run {
-            val pendingIntent = PendingIntent.getActivity(
-                context,
-                0,
-                intent,
-                PendingIntent.FLAG_IMMUTABLE
-            )
+            Alarm(id = -1, enable = false) to nowTime
+        }
+
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
+
+        @SuppressLint("UnspecifiedImmutableFlag")
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, 0)
+
+        if (!alarm.enable) {
             alarmManager.cancel(pendingIntent)
             return@observe
         }
-
-        intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
-        val pendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
 
         val targetTime = calendar.timeInMillis
         val clockInfo = AlarmManager.AlarmClockInfo(targetTime, null)
