@@ -10,7 +10,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
 
-    if: ${{ github.repository_owner == 'turtton' && !contains(github.event.head_commit.message, "chore") }}
+    if: ${{ github.repository_owner == 'turtton' && !contains(github.event.head_commit.message, 'chore') }}
 
     steps:
       - uses: actions/checkout@v3
