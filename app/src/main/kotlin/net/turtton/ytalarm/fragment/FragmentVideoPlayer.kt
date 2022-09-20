@@ -37,7 +37,6 @@ import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
 import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.RepeatType
-import net.turtton.ytalarm.util.updateAlarm
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -149,9 +148,9 @@ class FragmentVideoPlayer : Fragment() {
                         }
                         val snoozeAlarm = alarm.copy(
                             time = "$hour:$minute",
-                            repeatType = RepeatType.Once
-                        ).apply { snooze = true }
-                        updateAlarm(requireActivity(), snoozeAlarm, true)
+                            repeatType = RepeatType.Snooze
+                        )
+                        alarmViewModel.insert(snoozeAlarm)
                         if (!findNavController().navigateUp()) {
                             activity.finish()
                         }
@@ -162,11 +161,17 @@ class FragmentVideoPlayer : Fragment() {
                 if (repeatType is RepeatType.Date) {
                     repeatType = RepeatType.Once
                 }
-                if (repeatType is RepeatType.Once && !alarm.snooze) {
-                    alarmViewModel.update(alarm.copy(repeatType = repeatType, enable = false))
-                }
-                if (repeatType is RepeatType.Everyday || repeatType is RepeatType.Days) {
-                    updateAlarm(requireActivity(), alarm, true)
+                when(repeatType) {
+                    is RepeatType.Once -> {
+                        alarmViewModel.update(alarm.copy(repeatType = repeatType, enable = false))
+                    }
+                    is RepeatType.Everyday, is RepeatType.Days -> {
+                        alarmViewModel.update(alarm)
+                    }
+                    is RepeatType.Snooze -> {
+                        alarmViewModel.delete(alarm)
+                    }
+                    else -> {}
                 }
 
                 val playlist = playlistViewModel.getFromIdAsync(alarm.playListId!!).await()

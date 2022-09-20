@@ -1,7 +1,6 @@
 package net.turtton.ytalarm.structure
 
 import androidx.room.Entity
-import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import net.turtton.ytalarm.util.RepeatType
 
@@ -16,7 +15,4 @@ data class Alarm(
     // max 100(%)
     val volume: Int = 50,
     val enable: Boolean = false
-) {
-    @Ignore
-    var snooze: Boolean = false
-}
+)
