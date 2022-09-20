@@ -40,7 +40,7 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
         val clockInfo = AlarmManager.AlarmClockInfo(targetTime, null)
 
         alarmManager.setAlarmClock(clockInfo, pendingIntent)
-        @Suppress("kitlint:max_line_length")
+        @Suppress("ktlint:max-line-length")
         Log.d(
             "RegisterAlarm",
             "Year: ${calendar[Calendar.YEAR]},Month:${calendar[Calendar.MONTH]},Day:${calendar[Calendar.DAY_OF_MONTH]},Hour:${calendar[Calendar.HOUR_OF_DAY]},Minute:${calendar[Calendar.MINUTE]}"
