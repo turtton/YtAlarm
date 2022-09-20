@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import java.util.Calendar
 
 @Suppress("UNUSED")
-class TestCalendar: FunSpec({
+class TestCalendar : FunSpec({
     val calendar = Calendar.getInstance()
 
     // 2022/6/1 12:00

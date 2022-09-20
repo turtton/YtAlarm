@@ -161,7 +161,7 @@ class FragmentVideoPlayer : Fragment() {
                 if (repeatType is RepeatType.Date) {
                     repeatType = RepeatType.Once
                 }
-                when(repeatType) {
+                when (repeatType) {
                     is RepeatType.Once -> {
                         alarmViewModel.update(alarm.copy(repeatType = repeatType, enable = false))
                     }

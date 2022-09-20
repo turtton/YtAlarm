@@ -26,7 +26,7 @@ sealed interface RepeatType {
     }
 
     @Serializable
-    object Snooze: RepeatType {
+    object Snooze : RepeatType {
         override fun getDisplay(context: Context): String = ""
     }
 
