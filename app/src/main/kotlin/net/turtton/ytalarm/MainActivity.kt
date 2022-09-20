@@ -6,6 +6,7 @@ import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
@@ -45,19 +46,24 @@ class MainActivity : AppCompatActivity() {
 
         binding.fab.shrink()
 
-        // TODO add description dialog
         requestPermission()
     }
 
     private fun requestPermission() {
-        val hasPerm = { Settings.canDrawOverlays(this) }
+        val hasPerm = { Settings.canDrawOverlays(applicationContext) }
         if (!hasPerm()) {
             val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            val activity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 if (!hasPerm()) {
                     requestPermission()
                 }
-            }.launch(intent)
+            }
+            AlertDialog.Builder(this)
+                .setTitle(R.string.dialog_require_overlay_perm)
+                .setPositiveButton(R.string.dialog_require_overlay_perm_ok) { _,_ ->
+                    activity.launch(intent)
+                    finish()
+                }.show()
         }
     }
 

@@ -84,6 +84,8 @@
         <item name="dialog_repeat_days_choice_sat">Sat</item>
         <item name="dialog_repeat_days_choice_sun">Sun</item>
     </string-array>
+    <string name="dialog_require_overlay_perm">This application requires overlay permission to display alarm.</string>
+    <string name="dialog_require_overlay_perm_ok">OK</string>
 
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
