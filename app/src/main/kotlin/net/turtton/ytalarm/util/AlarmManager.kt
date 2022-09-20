@@ -1,75 +1,56 @@
 package net.turtton.ytalarm.util
 
-import android.app.Activity
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.annotation.VisibleForTesting
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LiveData
 import net.turtton.ytalarm.AlarmActivity
 import net.turtton.ytalarm.structure.Alarm
-import java.util.Calendar
+import net.turtton.ytalarm.util.extensions.toCalendar
+import java.util.*
 
-fun updateAlarm(context: Activity, data: Alarm, isAdder: Boolean) {
+fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: Context) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-    if (alarmManager != null) {
+    observe(lifecycleOwner) { list ->
+        if (alarmManager == null) return@observe
+        val alarmList = list.filter { it.enable }.toMutableList()
+
         val intent = Intent(context, AlarmActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, data.id!!)
         val pendingIntent = PendingIntent.getActivity(
             context,
             0,
             intent,
             PendingIntent.FLAG_IMMUTABLE
         )
+
         val calendar = Calendar.getInstance()
-
-        val (hour, minute) = data.time.split(':').map { it.toInt() }
-
-        val nowDay = calendar[Calendar.DAY_OF_WEEK]
-        val nowHour = calendar[Calendar.HOUR_OF_DAY]
-        val nowMinute = calendar[Calendar.MINUTE]
-
-        val isPastTime = nowHour > hour || (nowHour == hour && nowMinute >= minute)
-
-        when (val repeatType = data.repeatType) {
-            is RepeatType.Once, is RepeatType.Everyday -> {
-                if (isPastTime) {
-                    calendar.add(Calendar.DATE, 1)
-                }
-            }
-            is RepeatType.Days -> {
-                val days = repeatType.days.map { it.convertCalenderCode() }.toMutableList()
-                days.filter { if (isPastTime) nowDay < it else nowDay <= it }
-                    .minByOrNull { it - nowDay }
-                    ?.also {
-                        calendar.set(Calendar.DAY_OF_WEEK, it)
-                    } ?: run { days.filter { if (isPastTime) it <= nowDay else it < nowDay } }
-                    .minByOrNull { it - nowDay }
-                    ?.also {
-                        calendar.set(Calendar.DAY_OF_WEEK, it)
-                        calendar.add(Calendar.DATE, 7)
-                    }
-            }
-            is RepeatType.Date -> {
-                calendar.time = repeatType.targetDate
-            }
-        }
-
-        calendar.set(Calendar.MINUTE, minute)
-        calendar.set(Calendar.HOUR_OF_DAY, hour)
-        calendar.set(Calendar.SECOND, 0)
-
-        val clockInfo = AlarmManager.AlarmClockInfo(calendar.timeInMillis, null)
-        if (isAdder) {
-            @Suppress("kitlint:max_line_length")
-            Log.d(
-                "RegisterAlarm",
-                "Year: ${calendar[Calendar.YEAR]},Month:${calendar[Calendar.MONTH]},Day:${calendar[Calendar.DAY_OF_MONTH]},Hour:${calendar[Calendar.HOUR_OF_DAY]},Minute:${calendar[Calendar.MINUTE]}"
-            )
-            alarmManager.setAlarmClock(clockInfo, pendingIntent)
-        } else {
+        val alarm = alarmList.pickNearestTime(calendar) ?: kotlin.run {
             alarmManager.cancel(pendingIntent)
+            return@observe
         }
+
+        intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
+
+        val targetTime = alarm.toCalendar(calendar).timeInMillis
+        val clockInfo = AlarmManager.AlarmClockInfo(targetTime, null)
+
+        alarmManager.setAlarmClock(clockInfo, pendingIntent)
+        @Suppress("kitlint:max_line_length")
+        Log.d(
+            "RegisterAlarm",
+            "Year: ${calendar[Calendar.YEAR]},Month:${calendar[Calendar.MONTH]},Day:${calendar[Calendar.DAY_OF_MONTH]},Hour:${calendar[Calendar.HOUR_OF_DAY]},Minute:${calendar[Calendar.MINUTE]}"
+        )
     }
+}
+
+@VisibleForTesting
+fun List<Alarm>.pickNearestTime(nowTime: Calendar): Alarm? {
+    return associateWith { it.toCalendar(nowTime) }
+        .minByOrNull { (_, calendar) -> calendar.timeInMillis }
+        ?.key
 }

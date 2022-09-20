@@ -17,7 +17,6 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.AlarmSettingsAdapter
 import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.util.updateAlarm
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
@@ -73,7 +72,6 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
                 alarmViewModel.insert(currentData)
             } else {
                 alarmViewModel.update(currentData)
-                updateAlarm(requireActivity(), currentData, currentData.enable)
             }
             findNavController().navigate(R.id.action_AlarmSettingFragment_to_AlarmListFragment)
         }

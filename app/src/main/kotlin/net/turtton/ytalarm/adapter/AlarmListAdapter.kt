@@ -18,7 +18,6 @@ import net.turtton.ytalarm.fragment.FragmentAlarmList
 import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.util.BasicComparator
-import net.turtton.ytalarm.util.updateAlarm
 
 class AlarmListAdapter(
     private val parentFragment: FragmentAlarmList
@@ -36,12 +35,11 @@ class AlarmListAdapter(
             alarmType.text = data.repeatType.getDisplay(context)
             alarmSwitch.isChecked = data.enable
             alarmSwitch.setOnCheckedChangeListener { button, isChecked ->
-                updateAlarm(parentFragment.requireActivity(), data, isChecked)
                 val async = parentFragment.alarmViewModel.getFromIdAsync(data.id!!)
                 button.isClickable = false
                 parentFragment.lifecycleScope.launch {
-                    val alarm = async.await()
-                    parentFragment.alarmViewModel.update(alarm.copy(enable = isChecked)).join()
+                    val alarm = async.await().copy(enable = isChecked)
+                    parentFragment.alarmViewModel.update(alarm).join()
                     launch(Dispatchers.Main) {
                         button.isClickable = true
                     }
@@ -59,7 +57,6 @@ class AlarmListAdapter(
             }
 
             itemView.setOnClickListener {
-                updateAlarm(parentFragment.requireActivity(), data, false)
                 val action = FragmentAlarmListDirections
                     .actionAlarmListFragmentToAlarmSettingsFragment(data.id!!)
                 parentFragment.findNavController().navigate(action)
