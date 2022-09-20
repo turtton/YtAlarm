@@ -21,6 +21,20 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
 
         val intent = Intent(context, AlarmActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+
+        val nowTime = Calendar.getInstance()
+        val (alarm, calendar) = alarmList.pickNearestTime(nowTime) ?: kotlin.run {
+            val pendingIntent = PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.cancel(pendingIntent)
+            return@observe
+        }
+
+        intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
         val pendingIntent = PendingIntent.getActivity(
             context,
             0,
@@ -28,15 +42,7 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        val calendar = Calendar.getInstance()
-        val alarm = alarmList.pickNearestTime(calendar) ?: kotlin.run {
-            alarmManager.cancel(pendingIntent)
-            return@observe
-        }
-
-        intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
-
-        val targetTime = alarm.toCalendar(calendar).timeInMillis
+        val targetTime = calendar.timeInMillis
         val clockInfo = AlarmManager.AlarmClockInfo(targetTime, null)
 
         alarmManager.setAlarmClock(clockInfo, pendingIntent)
@@ -49,8 +55,8 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
 }
 
 @VisibleForTesting
-fun List<Alarm>.pickNearestTime(nowTime: Calendar): Alarm? {
+fun List<Alarm>.pickNearestTime(nowTime: Calendar): Pair<Alarm, Calendar>? {
     return associateWith { it.toCalendar(nowTime) }
         .minByOrNull { (_, calendar) -> calendar.timeInMillis }
-        ?.key
+        ?.toPair()
 }

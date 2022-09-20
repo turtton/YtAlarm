@@ -25,12 +25,12 @@ class TestAlarmManager : FunSpec({
 
         test("Exclude same time") {
             val target = listOf(twelve, fifteen, nineteen)
-            target.pickNearestTime(calendar) shouldBe fifteen
+            target.pickNearestTime(calendar)?.first shouldBe fifteen
         }
 
         test("next day") {
             val target = listOf(seven, sevenHalf, eleven)
-            target.pickNearestTime(calendar) shouldBe seven
+            target.pickNearestTime(calendar)?.first shouldBe seven
         }
     }
 })
