@@ -10,12 +10,17 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
 import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.util.RepeatType
 
 class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
     val allAlarms: LiveData<List<Alarm>> by lazy { repository.allAlarms.asLiveData() }
 
     fun getFromIdAsync(id: Long): Deferred<Alarm> = viewModelScope.async {
         repository.getAlarmFromIdSync(id)
+    }
+
+    fun getMatchedAsync(repeatType: RepeatType) = viewModelScope.async {
+        repository.getMatchedAlarmSync(repeatType)
     }
 
     fun insert(alarm: Alarm) = viewModelScope.launch {
