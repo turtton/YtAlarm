@@ -26,6 +26,11 @@ sealed interface RepeatType {
     }
 
     @Serializable
+    object Snooze: RepeatType {
+        override fun getDisplay(context: Context): String = ""
+    }
+
+    @Serializable
     data class Days(val days: List<DayOfWeekCompat>) : RepeatType {
         override fun getDisplay(context: Context): String {
             return days.mapNotNull {
