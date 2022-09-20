@@ -53,14 +53,16 @@ class MainActivity : AppCompatActivity() {
         val hasPerm = { Settings.canDrawOverlays(applicationContext) }
         if (!hasPerm()) {
             val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-            val activity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            val activity = registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) {
                 if (!hasPerm()) {
                     requestPermission()
                 }
             }
             AlertDialog.Builder(this)
                 .setTitle(R.string.dialog_require_overlay_perm)
-                .setPositiveButton(R.string.dialog_require_overlay_perm_ok) { _,_ ->
+                .setPositiveButton(R.string.dialog_require_overlay_perm_ok) { _, _ ->
                     activity.launch(intent)
                     finish()
                 }.show()
