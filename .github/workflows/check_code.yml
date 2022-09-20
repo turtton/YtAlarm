@@ -31,7 +31,7 @@ jobs:
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1
 
-      - name: Build with gradle
+      - name: Check and test code
         uses: gradle/gradle-build-action@v2
         with:
           arguments: check
