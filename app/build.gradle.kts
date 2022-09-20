@@ -72,34 +72,36 @@ android {
                         isDisabled.set(false)
                         reportFile.set(file("$buildDir/reports/kover/debug-report.bin"))
                         includes.set(listOf("net.turtton.*"))
-                        excludes.set(listOf(
-                            // Android
-                            "*BuildConfig*",
-                            // Dagger/Hilt
-                            "*_*Factory*",
-                            "*_ComponentTreeDeps*",
-                            "*Hilt_**",
-                            "*HiltWrapper_*",
-                            "*_Factory*",
-                            "*_GeneratedInjector*",
-                            "*_HiltComponents*",
-                            "*_HiltModules*",
-                            "*_HiltModules_BindsModule*",
-                            "*_HiltModules_KeyModule*",
-                            "*_MembersInjector*",
-                            "*_ProvideFactory*",
-                            "*_SingletonC*",
-                            "*_TestComponentDataSupplier*",
-                            // DataBinding
-                            "*BR*",
-                            "*DataBinderMapperImpl*",
-                            "*Binding*",
-                            "*BindingImpl*",
-                            "DataBindingTriggerClass*",
-                            // Navigation
-                            "*FragmentDirections*",
-                            "*FragmentArgs*",
-                        ))
+                        excludes.set(
+                            listOf(
+                                // Android
+                                "*BuildConfig*",
+                                // Dagger/Hilt
+                                "*_*Factory*",
+                                "*_ComponentTreeDeps*",
+                                "*Hilt_**",
+                                "*HiltWrapper_*",
+                                "*_Factory*",
+                                "*_GeneratedInjector*",
+                                "*_HiltComponents*",
+                                "*_HiltModules*",
+                                "*_HiltModules_BindsModule*",
+                                "*_HiltModules_KeyModule*",
+                                "*_MembersInjector*",
+                                "*_ProvideFactory*",
+                                "*_SingletonC*",
+                                "*_TestComponentDataSupplier*",
+                                // DataBinding
+                                "*BR*",
+                                "*DataBinderMapperImpl*",
+                                "*Binding*",
+                                "*BindingImpl*",
+                                "DataBindingTriggerClass*",
+                                // Navigation
+                                "*FragmentDirections*",
+                                "*FragmentArgs*",
+                            )
+                        )
                     } else {
                         isDisabled.set(true)
                     }
