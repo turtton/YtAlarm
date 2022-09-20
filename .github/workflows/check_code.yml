@@ -51,4 +51,5 @@ jobs:
       - name: Upload Report
         uses: codecov/codecov-action@v3
         with:
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: "app/build/reports/kover/report.xml"
