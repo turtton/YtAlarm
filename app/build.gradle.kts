@@ -156,3 +156,10 @@ dependencies {
 kotlinter {
     experimentalRules = true
 }
+
+kover {
+    xmlReport {
+        onCheck.set(true)
+        reportFile.set(file("$buildDir/reports/kover/report.xml"))
+    }
+}
