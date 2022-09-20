@@ -1,6 +1,10 @@
 package net.turtton.ytalarm
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.Menu
@@ -46,6 +50,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.fab.shrink()
 
+        createNotificationChannel()
         requestPermission()
     }
 
@@ -66,6 +71,19 @@ class MainActivity : AppCompatActivity() {
                     activity.launch(intent)
                     finish()
                 }.show()
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = getString(R.string.notification_snooze_channel_name)
+            val description = getString(R.string.notification_snooze_channel_description)
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(SNOOZE_NOTIFICATION, name, importance)
+            channel.description = description
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
         }
     }
 
@@ -93,5 +111,6 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val APP_TAG = "YtAram"
+        const val SNOOZE_NOTIFICATION = "SnoozeNotification"
     }
 }
