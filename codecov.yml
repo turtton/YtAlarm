@@ -1,0 +1,5 @@
+fixes:
+  - "/home/runner/work/YtAlarm/YtAlarm>/::"
+
+codecov:
+  disable_default_path_fixes: true
