@@ -1,3 +1,5 @@
+import kotlinx.kover.api.KoverTaskExtension
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,6 +7,7 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.10"
     id("org.jmailen.kotlinter")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 android {
@@ -29,6 +32,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            enableUnitTestCoverage = true
+        }
         release {
             isMinifyEnabled = false
             val proguardFile = getDefaultProguardFile("proguard-android-optimize.txt")
@@ -52,6 +58,55 @@ android {
             reset()
             include("x86", "x86_64", "armeabi-v7a", "arm64-v8a")
             isUniversalApk = true
+        }
+    }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+            all {
+                it.useJUnitPlatform()
+                it.extensions.configure<KoverTaskExtension> {
+                    if (it.name == "testDebugUnitTest") {
+                        isDisabled.set(false)
+                        reportFile.set(file("$buildDir/reports/kover/debug-report.bin"))
+                        includes.set(listOf("net.turtton.*"))
+                        excludes.set(
+                            listOf(
+                                // Android
+                                "*BuildConfig*",
+                                // Dagger/Hilt
+                                "*_*Factory*",
+                                "*_ComponentTreeDeps*",
+                                "*Hilt_**",
+                                "*HiltWrapper_*",
+                                "*_Factory*",
+                                "*_GeneratedInjector*",
+                                "*_HiltComponents*",
+                                "*_HiltModules*",
+                                "*_HiltModules_BindsModule*",
+                                "*_HiltModules_KeyModule*",
+                                "*_MembersInjector*",
+                                "*_ProvideFactory*",
+                                "*_SingletonC*",
+                                "*_TestComponentDataSupplier*",
+                                // DataBinding
+                                "*BR*",
+                                "*DataBinderMapperImpl*",
+                                "*Binding*",
+                                "*BindingImpl*",
+                                "DataBindingTriggerClass*",
+                                // Navigation
+                                "*FragmentDirections*",
+                                "*FragmentArgs*"
+                            )
+                        )
+                    } else {
+                        isDisabled.set(true)
+                    }
+                }
+            }
         }
     }
 }
@@ -87,6 +142,12 @@ dependencies {
     }
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.4.2")?.version?.also {
+        testImplementation("io.kotest:kotest-assertions-core:$it")
+        testImplementation("io.kotest:kotest-property:$it")
+    }
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+    testImplementation("org.robolectric:robolectric:4.8")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     androidTestImplementation("androidx.room:room-testing:${room?.version}")
@@ -94,4 +155,11 @@ dependencies {
 
 kotlinter {
     experimentalRules = true
+}
+
+kover {
+    xmlReport {
+        onCheck.set(true)
+        reportFile.set(file("$buildDir/reports/kover/report.xml"))
+    }
 }
