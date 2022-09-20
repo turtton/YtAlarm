@@ -10,7 +10,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
 
-    if: ${{ github.repository_owner == 'turtton' && !contains(fromJson('["[CI-SKIP]", "chore"]'), github.event.head_commit.message) }}
+    if: ${{ github.repository_owner == 'turtton' && !contains(github.event.head_commit.message, fromJson('["[CI-SKIP]", "chore"]')) }}
 
     steps:
       - uses: actions/checkout@v3
