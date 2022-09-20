@@ -99,7 +99,7 @@ android {
                                 "DataBindingTriggerClass*",
                                 // Navigation
                                 "*FragmentDirections*",
-                                "*FragmentArgs*",
+                                "*FragmentArgs*"
                             )
                         )
                     } else {
