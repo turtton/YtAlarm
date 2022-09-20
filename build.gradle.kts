@@ -5,7 +5,6 @@ buildscript {
     }
     dependencies {
         classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.5.2")
-        classpath("org.jacoco:org.jacoco.core:0.8.8")
     }
 }
 plugins {
@@ -13,6 +12,7 @@ plugins {
     id("com.android.library") version "7.3.0" apply false
     id("org.jetbrains.kotlin.android") version "1.7.10" apply false
     id("org.jmailen.kotlinter") version "3.12.0" apply false
+    id("org.jetbrains.kotlinx.kover") version "0.6.0" apply false
 }
 
 tasks.create("clean") {

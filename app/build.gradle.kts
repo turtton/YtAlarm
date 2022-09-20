@@ -1,3 +1,5 @@
+import kotlinx.kover.api.KoverTaskExtension
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,7 +7,7 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.10"
     id("org.jmailen.kotlinter")
-    jacoco
+    id("org.jetbrains.kotlinx.kover")
 }
 
 android {
@@ -65,69 +67,44 @@ android {
             isReturnDefaultValues = true
             all {
                 it.useJUnitPlatform()
+                it.extensions.configure<KoverTaskExtension> {
+                    if (it.name == "testDebugUnitTest") {
+                        isDisabled.set(false)
+                        reportFile.set(file("$buildDir/reports/kover/debug-report.bin"))
+                        includes.set(listOf("net.turtton.*"))
+                        excludes.set(listOf(
+                            // Android
+                            "*BuildConfig*",
+                            // Dagger/Hilt
+                            "*_*Factory*",
+                            "*_ComponentTreeDeps*",
+                            "*Hilt_**",
+                            "*HiltWrapper_*",
+                            "*_Factory*",
+                            "*_GeneratedInjector*",
+                            "*_HiltComponents*",
+                            "*_HiltModules*",
+                            "*_HiltModules_BindsModule*",
+                            "*_HiltModules_KeyModule*",
+                            "*_MembersInjector*",
+                            "*_ProvideFactory*",
+                            "*_SingletonC*",
+                            "*_TestComponentDataSupplier*",
+                            // DataBinding
+                            "*BR*",
+                            "*DataBinderMapperImpl*",
+                            "*Binding*",
+                            "*BindingImpl*",
+                            "DataBindingTriggerClass*",
+                            // Navigation
+                            "*FragmentDirections*",
+                            "*FragmentArgs*",
+                        ))
+                    } else {
+                        isDisabled.set(true)
+                    }
+                }
             }
-        }
-    }
-
-
-    applicationVariants.all {
-        val variantName = name.capitalize()
-        val realVariantName = name
-
-        if (buildType.name != "debug") {
-            return@all
-        }
-
-        val testTaskName = "test${variantName}UnitTest"
-        task<JacocoReport>("jacoco${variantName}TestReport") {
-            dependsOn(
-                "create${variantName}CoverageReport",
-                "test${variantName}UnitTest"
-            )
-
-            group = "testing"
-            description = "Generate Jacoco coverage reports for $realVariantName"
-
-            reports {
-                xml.required.set(false)
-                html.required.set(true)
-            }
-
-            val fileFilter = listOf(
-                "**/R.class",
-                "**/R$*.class",
-                "**/BuildConfig.*",
-                "**/Manifest*.*",
-                "android/**/*.*",
-                "androidx/**/*.*",
-                "**/Lambda$*.class",
-                "**/Lambda.class",
-                "**/*Lambda.class",
-                "**/*Lambda*.class",
-                "**/*Lambda*.*",
-                "**/*Builder.*"
-            )
-
-//            val javaDebugTree = fileTree(
-//                "dir" to "$buildDir/intermediates/javac/$realVariantName/compile${variantName}JavaWithJavac/classes",
-//                "excludes" to fileFilter
-//            )
-            val kotlinDebugTree = fileTree(
-                "dir" to "$buildDir/tmp/kotlin-classes/$realVariantName",
-                "excludes" to fileFilter
-            )
-            val mainSrc = "${project.projectDir}/src/main/kotlin"
-
-            sourceDirectories.setFrom(files(mainSrc))
-            classDirectories.setFrom(files(kotlinDebugTree))
-            executionData.setFrom(
-                fileTree(
-                    "dir" to project.projectDir,
-                    "includes" to listOf("**/*.exec", "**/*.ec")
-                )
-            )
-        }.also {
-            tasks[testTaskName].finalizedBy(it)
         }
     }
 }
