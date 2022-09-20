@@ -29,6 +29,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.MainActivity
@@ -37,6 +38,7 @@ import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
 import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.RepeatType
+import net.turtton.ytalarm.util.observeAlarm
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -78,6 +80,8 @@ class FragmentVideoPlayer : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        alarmViewModel.allAlarms.observeAlarm(this, view.context)
+
         // FullScreen
         val activity = requireActivity()
         if (Build.VERSION.SDK_INT >= 30) {
@@ -147,12 +151,19 @@ class FragmentVideoPlayer : Fragment() {
                             hour %= 24
                         }
                         val snoozeAlarm = alarm.copy(
+                            id = null,
                             time = "$hour:$minute",
                             repeatType = RepeatType.Snooze
                         )
                         alarmViewModel.insert(snoozeAlarm)
-                        if (!findNavController().navigateUp()) {
-                            activity.finish()
+                        lifecycleScope.launch {
+                            // Wait snooze data insertion
+                            delay(100)
+                            lifecycleScope.launch(Dispatchers.Main) {
+                                if (!findNavController().navigateUp()) {
+                                    activity.finish()
+                                }
+                            }
                         }
                     }
                 }
