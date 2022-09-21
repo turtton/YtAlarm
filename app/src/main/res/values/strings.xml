@@ -30,6 +30,11 @@
     <string name="setting_playlist">Playlist</string>
     <string name="setting_loop">Loop</string>
     <string name="setting_volume">Volume</string>
+    <string name="setting_snooze">Snooze</string>
+    <plurals name="setting_snooze_time">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
     <string name="menu_item_aram_list">AramList</string>
     <string name="menu_title_playlist">PlayList</string>
     <string name="item_video_list_data_size">%02.1fMB</string>
@@ -42,6 +47,9 @@
 
     <string name="menu_drawer_title_video">Video</string>
     <string name="menu_title_video_list">VideoList</string>
+
+    <string name="dialog_snooze_time_input_ok">OK</string>
+    <string name="dialog_snooze_time_input_cancel">Cancel</string>
 
     <string name="dialog_video_input_url_hint">https://…</string>
     <string name="dialog_video_input_ok">Import</string>

@@ -149,8 +149,7 @@ class FragmentVideoPlayer : Fragment() {
                         val now = Calendar.getInstance()
                         var hour = now[Calendar.HOUR_OF_DAY]
                         var minute = now[Calendar.MINUTE]
-                        // TODO edit snooze time(add calc test)
-                        minute += 1
+                        minute += alarm.snoozeMinute
                         if (minute > 59) {
                             minute %= 60
                             hour += 1

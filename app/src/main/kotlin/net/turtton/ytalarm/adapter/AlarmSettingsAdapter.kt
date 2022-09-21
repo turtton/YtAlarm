@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.DatePicker
+import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.TimePicker
@@ -102,13 +103,40 @@ class AlarmSettingsAdapter(
                     }
                 }
             }
+        val getSnoozeMinute = { minute: Int ->
+            context.resources.getQuantityString(R.plurals.setting_snooze_time, minute, minute)
+        }
+        val snoozeTitle = R.string.setting_snooze
+        val snoozeTime =
+            AlarmSettingData.NormalData(
+                snoozeTitle,
+                getSnoozeMinute(alarm.snoozeMinute)
+            ) { _, description ->
+                val numberPicker = NumberPicker(context)
+                numberPicker.value = alarmState.value.snoozeMinute
+                numberPicker.maxValue = 60
+                numberPicker.minValue = 1
+
+                AlertDialog.Builder(context)
+                    .setTitle(snoozeTitle)
+                    .setView(numberPicker)
+                    .setPositiveButton(R.string.dialog_snooze_time_input_ok) { _, _ ->
+                        val minute = numberPicker.value
+                        alarmState.update {
+                            it.copy(snoozeMinute = minute)
+                        }
+                        description.text = getSnoozeMinute(minute)
+                    }.setNegativeButton(R.string.dialog_snooze_time_input_cancel) { _, _ -> }
+                    .show()
+            }
 
         dataSet = arrayOf(
             timeSelector,
             repeatTypeSelector,
             playlistSelector,
             loopToggle,
-            volumeProgress
+            volumeProgress,
+            snoozeTime
         )
     }
 
