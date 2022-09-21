@@ -30,7 +30,12 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
         intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
 
         @SuppressLint("UnspecifiedImmutableFlag")
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
         if (!alarm.enable) {
             alarmManager.cancel(pendingIntent)

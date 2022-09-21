@@ -19,7 +19,6 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.worker.CoroutineIOWorker
 import java.util.*
 
-
 const val SNOOZE_NOTIFICATION = "net.turtton.ytalarm.SnoozeNotification"
 
 class SnoozeRemoveWorker(
@@ -114,7 +113,7 @@ class UpdateSnoozeNotifyWorker(
     }
 }
 
-class SnoozeRemoveReceiver: BroadcastReceiver() {
+class SnoozeRemoveReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (context != null && intent != null) {
             val id = intent.getLongExtra(FLAG_SNOOZE_ID, -1)
@@ -127,7 +126,7 @@ class SnoozeRemoveReceiver: BroadcastReceiver() {
 
         @SuppressLint("UnspecifiedImmutableFlag")
         fun getIntent(context: Context, alarmId: Long): PendingIntent {
-            val intent =  Intent(context, SnoozeRemoveReceiver::class.java)
+            val intent = Intent(context, SnoozeRemoveReceiver::class.java)
                 .putExtra(FLAG_SNOOZE_ID, alarmId)
             return PendingIntent
                 .getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
