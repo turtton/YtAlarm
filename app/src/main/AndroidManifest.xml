@@ -29,7 +29,6 @@
         <activity
             android:name="net.turtton.ytalarm.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.YtArarm.NoActionBar">
             <nav-graph android:value="@navigation/video_player"/>
             <intent-filter>
