@@ -1,6 +1,7 @@
 package net.turtton.ytalarm
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -20,6 +21,9 @@ class AlarmActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1)
+        if (alarmId == -1L) {
+            Log.e("AlarmActivity", "Failed to get alarm id")
+        }
         val args = FragmentVideoPlayerArgs(alarmId.toString(), true)
 
         val alarmNav = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_alarm)
