@@ -122,6 +122,7 @@ class AlarmSettingsAdapter(
                     .setTitle(snoozeTitle)
                     .setView(numberPicker)
                     .setPositiveButton(R.string.dialog_snooze_time_input_ok) { _, _ ->
+                        numberPicker.clearFocus()
                         val minute = numberPicker.value
                         alarmState.update {
                             it.copy(snoozeMinute = minute)
