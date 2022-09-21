@@ -93,4 +93,6 @@
     <string name="notification_snooze_channel_name">YtAlarm</string>
     <string name="notification_snooze_channel_description">Snooze notification channel</string>
     <string name="notification_snooze_title">Snooze Enabled</string>
+    <string name="notification_snooze_remain">Alarm will start after %d minutes</string>
+    <string name="notification_snooze_remove">Remove</string>
 </resources>

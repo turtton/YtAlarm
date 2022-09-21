@@ -48,5 +48,6 @@
             android:turnScreenOn="true"
             android:launchMode="singleInstance">
         </activity>
+        <receiver android:name=".util.SnoozeRemoveReceiver"/>
     </application>
 </manifest>
