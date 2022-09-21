@@ -21,6 +21,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
 import net.turtton.ytalarm.databinding.ActivityMainBinding
+import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.util.initYtDL
 
 class MainActivity : AppCompatActivity() {
@@ -111,6 +112,5 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val APP_TAG = "YtAram"
-        const val SNOOZE_NOTIFICATION = "SnoozeNotification"
     }
 }
