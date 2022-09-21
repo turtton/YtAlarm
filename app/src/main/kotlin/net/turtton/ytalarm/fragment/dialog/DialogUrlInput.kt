@@ -77,9 +77,11 @@ class DialogUrlInput(
                                 progressBar.progress = (progress * 100).roundToInt()
                                 val duration = etaInSeconds.seconds
                                 val etaText = if (duration.inWholeHours > 0) {
-                                    getString(
-                                        R.string.dialog_execute_progress_eta_minutes,
-                                        duration.inWholeMinutes
+                                    val minutes = duration.inWholeMinutes
+                                    resources.getQuantityString(
+                                        R.plurals.dialog_execute_progress_eta_minutes,
+                                        minutes.toInt(),
+                                        minutes
                                     )
                                 } else {
                                     getString(

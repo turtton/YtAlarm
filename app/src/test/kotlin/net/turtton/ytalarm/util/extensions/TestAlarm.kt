@@ -37,7 +37,7 @@ class TestAlarm : FunSpec({
             test("near future") {
                 val hour = 12
                 val minute = 30
-                val target = alarm.copy(time = "$hour:$minute").toCalendar(calendar)
+                val target = alarm.copy(hour = hour, minute = minute).toCalendar(calendar)
 
                 target[Calendar.DATE] shouldBeExactly calendar[Calendar.DATE]
                 target.checkTimeSame(hour, minute)
@@ -45,7 +45,7 @@ class TestAlarm : FunSpec({
             test("previous") {
                 val hour = 11
                 val minute = 30
-                val target = alarm.copy(time = "$hour:$minute").toCalendar(calendar)
+                val target = alarm.copy(hour = hour, minute = minute).toCalendar(calendar)
 
                 target[Calendar.DATE] shouldBeExactly calendar[Calendar.DATE] + 1
                 target.checkTimeSame(hour, minute)
@@ -55,11 +55,11 @@ class TestAlarm : FunSpec({
             test("near future in same day of week") {
                 val hour = 12
                 val minute = 30
-                val time = "$hour:$minute"
 
                 val repeatType =
                     RepeatType.Days(listOf(DayOfWeekCompat.FRIDAY, DayOfWeekCompat.SATURDAY))
-                val target = Alarm(time = time, repeatType = repeatType).toCalendar(calendar)
+                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
+                    .toCalendar(calendar)
 
                 // Means Calendar.FRIDAY
                 target[Calendar.DAY_OF_WEEK] shouldBeExactly calendar[Calendar.DAY_OF_WEEK]
@@ -70,11 +70,11 @@ class TestAlarm : FunSpec({
             test("previous time in same day of week") {
                 val hour = 11
                 val minute = 30
-                val time = "$hour:$minute"
 
                 val repeatType =
                     RepeatType.Days(listOf(DayOfWeekCompat.FRIDAY))
-                val target = Alarm(time = time, repeatType = repeatType).toCalendar(calendar)
+                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
+                    .toCalendar(calendar)
 
                 target[Calendar.DAY_OF_WEEK] shouldBeExactly calendar[Calendar.DAY_OF_WEEK]
                 target[Calendar.DATE] shouldBeExactly calendar[Calendar.DATE] + 7
@@ -84,11 +84,11 @@ class TestAlarm : FunSpec({
             test("next day of week") {
                 val hour = 11
                 val minute = 30
-                val time = "$hour:$minute"
 
                 val repeatType =
                     RepeatType.Days(listOf(DayOfWeekCompat.SATURDAY, DayOfWeekCompat.MONDAY))
-                val target = Alarm(time = time, repeatType = repeatType).toCalendar(calendar)
+                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
+                    .toCalendar(calendar)
 
                 target[Calendar.DAY_OF_WEEK] shouldBeExactly Calendar.SATURDAY
                 target[Calendar.DATE] shouldBeExactly calendar[Calendar.DATE] + 1
@@ -98,11 +98,11 @@ class TestAlarm : FunSpec({
             test("next week") {
                 val hour = 11
                 val minute = 30
-                val time = "$hour:$minute"
 
                 val repeatType =
                     RepeatType.Days(listOf(DayOfWeekCompat.MONDAY, DayOfWeekCompat.WEDNESDAY))
-                val target = Alarm(time = time, repeatType = repeatType).toCalendar(calendar)
+                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
+                    .toCalendar(calendar)
 
                 target[Calendar.DAY_OF_WEEK] shouldBeExactly Calendar.MONDAY
                 target[Calendar.DATE] shouldBeExactly calendar[Calendar.DATE] + 3
@@ -123,7 +123,11 @@ class TestAlarm : FunSpec({
             targetCalendar.set(Calendar.DAY_OF_MONTH, targetDayOfMonth)
             val targetDate = Date(targetCalendar.timeInMillis)
 
-            val alarm = Alarm(time = "$hour:$minute", repeatType = RepeatType.Date(targetDate))
+            val alarm = Alarm(
+                hour = hour,
+                minute = minute,
+                repeatType = RepeatType.Date(targetDate)
+            )
             val target = alarm.toCalendar(calendar)
 
             target[Calendar.MONTH] shouldBeExactly targetMonth
@@ -133,12 +137,12 @@ class TestAlarm : FunSpec({
     }
 
     context("pickNearestTime") {
-        val seven = Alarm(time = "07:00")
-        val sevenHalf = Alarm(time = "07:30")
-        val eleven = Alarm(time = "11:00")
-        val twelve = Alarm(time = "12:00")
-        val fifteen = Alarm(time = "15:00")
-        val nineteen = Alarm(time = "19:00")
+        val seven = Alarm(hour = 7)
+        val sevenHalf = Alarm(hour = 7, minute = 30)
+        val eleven = Alarm(hour = 11)
+        val twelve = Alarm(hour = 12)
+        val fifteen = Alarm(hour = 15)
+        val nineteen = Alarm(hour = 19)
 
         test("Exclude same time") {
             val target = listOf(twelve, fifteen, nineteen)

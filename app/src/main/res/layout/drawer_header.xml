@@ -2,15 +2,16 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="50dp"
-    android:background="@color/design_default_color_primary"
-    android:theme="@style/ThemeOverlay.AppCompat">
+    android:background="@color/drawer_header">
 
     <TextView
+        android:id="@+id/drawer_header_app_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:id="@+id/drawer_header_app_name"
+        android:layout_alignParentBottom="true"
+        android:fontFamily="sans-serif-medium"
         android:padding="16dp"
-        android:layout_alignParentBottom="true"/>
+        android:text="@string/app_name"
+        android:textColor="#E1BEE7" />
 
 </RelativeLayout>

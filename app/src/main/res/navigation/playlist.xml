@@ -9,7 +9,7 @@
     <fragment
         android:id="@+id/playlist_fragment"
         android:name="net.turtton.ytalarm.fragment.FragmentPlaylist"
-        android:label="PlaylistFragment"
+        android:label="@string/playlist_fragment_label"
         tools:layout="@layout/fragment_list">
 
         <action
@@ -20,7 +20,7 @@
     <fragment
         android:id="@+id/videolist_fragment"
         android:name="net.turtton.ytalarm.fragment.FragmentVideoList"
-        android:label="VideoList"
+        android:label="@string/videolist_fragment_label"
         tools:layout="@layout/fragment_list">
 
         <argument

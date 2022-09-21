@@ -18,6 +18,7 @@ import net.turtton.ytalarm.fragment.FragmentAlarmList
 import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.util.BasicComparator
+import net.turtton.ytalarm.util.extensions.getDisplayTime
 
 class AlarmListAdapter(
     private val parentFragment: FragmentAlarmList
@@ -30,7 +31,7 @@ class AlarmListAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
         holder.apply {
-            alarmTime.text = data.time
+            alarmTime.text = data.getDisplayTime()
             val context = itemView.context
             alarmType.text = data.repeatType.getDisplay(context)
             alarmSwitch.isChecked = data.enable
