@@ -2,6 +2,7 @@ package net.turtton.ytalarm.util.extensions
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.ints.shouldBeExactly
+import io.kotest.matchers.shouldBe
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.RepeatType
@@ -128,6 +129,25 @@ class TestAlarm : FunSpec({
             target[Calendar.MONTH] shouldBeExactly targetMonth
             target[Calendar.DAY_OF_MONTH] shouldBeExactly targetDayOfMonth
             target.checkTimeSame(hour, minute)
+        }
+    }
+
+    context("pickNearestTime") {
+        val seven = Alarm(time = "07:00")
+        val sevenHalf = Alarm(time = "07:30")
+        val eleven = Alarm(time = "11:00")
+        val twelve = Alarm(time = "12:00")
+        val fifteen = Alarm(time = "15:00")
+        val nineteen = Alarm(time = "19:00")
+
+        test("Exclude same time") {
+            val target = listOf(twelve, fifteen, nineteen)
+            target.pickNearestTime(calendar)?.first shouldBe fifteen
+        }
+
+        test("next day") {
+            val target = listOf(seven, sevenHalf, eleven)
+            target.pickNearestTime(calendar)?.first shouldBe seven
         }
     }
 })
