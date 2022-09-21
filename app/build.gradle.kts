@@ -127,6 +127,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")?.also {
         implementation("androidx.lifecycle:lifecycle-livedata-ktx:${it.version}")
     }
+    implementation("androidx.activity:activity-ktx:1.5.1")
+    implementation("androidx.fragment:fragment-ktx:1.5.2")
+    implementation("androidx.work:work-runtime-ktx:2.7.1")?.version?.also {
+        androidTestImplementation("androidx.work:work-testing:$it")
+    }
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
@@ -143,7 +148,9 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.kotest:kotest-runner-junit5:5.4.2")?.version?.also {
-        testImplementation("io.kotest:kotest-assertions-core:$it")
+        testImplementation("io.kotest:kotest-assertions-core:$it")?.also { dep ->
+            androidTestImplementation(dep)
+        }
         testImplementation("io.kotest:kotest-property:$it")
     }
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
@@ -161,5 +168,9 @@ kover {
     xmlReport {
         onCheck.set(true)
         reportFile.set(file("$buildDir/reports/kover/report.xml"))
+    }
+    htmlReport {
+        onCheck.set(true)
+        reportDir.set(file("$buildDir/reports/kover/html-report"))
     }
 }

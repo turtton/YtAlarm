@@ -6,10 +6,13 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.widget.SwitchCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentAlarmList
 import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
@@ -27,22 +30,33 @@ class AlarmListAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
         holder.apply {
-            aramTime.text = data.time
-            aramType.text = data.repeatType.getDisplay(itemView.context)
-            aramSwitch.isChecked = data.enable
-            parentFragment.playlistViewModel
-                .getFromId(data.playListId!!)
-                .observe(parentFragment.requireActivity()) { playlist ->
-                    playlist?.also {
-                        playlistName.text = it.title
-                        it.thumbnailUrl?.also { thumbnail ->
-                            Glide.with(itemView).load(thumbnail).into(aramThumbnail)
-                        }
+            alarmTime.text = data.time
+            val context = itemView.context
+            alarmType.text = data.repeatType.getDisplay(context)
+            alarmSwitch.isChecked = data.enable
+            alarmSwitch.setOnCheckedChangeListener { button, isChecked ->
+                val async = parentFragment.alarmViewModel.getFromIdAsync(data.id!!)
+                button.isClickable = false
+                parentFragment.lifecycleScope.launch {
+                    val alarm = async.await().copy(enable = isChecked)
+                    parentFragment.alarmViewModel.update(alarm).join()
+                    launch(Dispatchers.Main) {
+                        button.isClickable = true
                     }
                 }
+            }
+
+            val async = parentFragment.playlistViewModel.getFromIdAsync(data.playListId!!)
+            parentFragment.lifecycleScope.launch {
+                async.await()?.let {
+                    launch(Dispatchers.Main) {
+                        playlistName.text = it.title
+                        Glide.with(itemView).load(it.thumbnailUrl).into(alarmThumbnail)
+                    }
+                }
+            }
 
             itemView.setOnClickListener {
-                @Suppress("ktlint:argument-list-wrapping")
                 val action = FragmentAlarmListDirections
                     .actionAlarmListFragmentToAlarmSettingsFragment(data.id!!)
                 parentFragment.findNavController().navigate(action)
@@ -51,10 +65,10 @@ class AlarmListAdapter(
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val aramTime: TextView = view.findViewById(R.id.item_playlist_title)
-        val aramType: TextView = view.findViewById(R.id.item_aram_type)
+        val alarmTime: TextView = view.findViewById(R.id.item_playlist_title)
+        val alarmType: TextView = view.findViewById(R.id.item_aram_type)
         val playlistName: TextView = view.findViewById(R.id.item_aram_playlist_name)
-        val aramThumbnail: ImageView = view.findViewById(R.id.item_playlist_thumbnail)
-        val aramSwitch: SwitchCompat = view.findViewById(R.id.item_aram_switch)
+        val alarmThumbnail: ImageView = view.findViewById(R.id.item_playlist_thumbnail)
+        val alarmSwitch: SwitchCompat = view.findViewById(R.id.item_aram_switch)
     }
 }

@@ -18,14 +18,14 @@
             android:name="id"
             app:argType="string" />
         <argument
-            android:name="isList"
+            android:name="isAlarm"
             android:defaultValue="false"
             app:argType="boolean" />
         <deepLink
             android:id="@+id/deepLink"
             app:action="ACTION_OPEN_VIDEO"
             app:mimeType="type/subtype"
-            app:uri="ytaram.turtton.net/video/{id}?isList={isList}" />
+            app:uri="ytaram.turtton.net/video/{id}?isAlarm={isAlarm}" />
     </fragment>
 
 </navigation>

@@ -17,6 +17,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("net.turtton.ytararm", appContext.packageName)
+        assertEquals("net.turtton.ytalarm", appContext.packageName)
     }
 }

@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.DatePicker
+import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.TimePicker
@@ -18,6 +19,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -101,13 +103,40 @@ class AlarmSettingsAdapter(
                     }
                 }
             }
+        val getSnoozeMinute = { minute: Int ->
+            context.resources.getQuantityString(R.plurals.setting_snooze_time, minute, minute)
+        }
+        val snoozeTitle = R.string.setting_snooze
+        val snoozeTime =
+            AlarmSettingData.NormalData(
+                snoozeTitle,
+                getSnoozeMinute(alarm.snoozeMinute)
+            ) { _, description ->
+                val numberPicker = NumberPicker(context)
+                numberPicker.value = alarmState.value.snoozeMinute
+                numberPicker.maxValue = 60
+                numberPicker.minValue = 1
+
+                AlertDialog.Builder(context)
+                    .setTitle(snoozeTitle)
+                    .setView(numberPicker)
+                    .setPositiveButton(R.string.dialog_snooze_time_input_ok) { _, _ ->
+                        val minute = numberPicker.value
+                        alarmState.update {
+                            it.copy(snoozeMinute = minute)
+                        }
+                        description.text = getSnoozeMinute(minute)
+                    }.setNegativeButton(R.string.dialog_snooze_time_input_cancel) { _, _ -> }
+                    .show()
+            }
 
         dataSet = arrayOf(
             timeSelector,
             repeatTypeSelector,
             playlistSelector,
             loopToggle,
-            volumeProgress
+            volumeProgress,
+            snoozeTime
         )
     }
 
@@ -234,8 +263,20 @@ class AlarmSettingsAdapter(
                         3 -> {
                             val current = alarmState.value.repeatType as? RepeatType.Date
                             SettingDatePickerFragment(current?.targetDate) { _, year, month, day ->
+                                val nowCalendar = Calendar.getInstance()
+                                val nowYear = nowCalendar[Calendar.YEAR]
+                                val nowDay = nowCalendar[Calendar.DAY_OF_YEAR]
                                 val calendar = GregorianCalendar(year, month, day)
-                                val newDate = Date(calendar.timeInMillis)
+                                val dayOfYear = calendar[Calendar.DAY_OF_YEAR]
+                                val isPastDate = nowYear == year && nowDay > dayOfYear
+                                val newDate = if (nowYear > year || isPastDate) {
+                                    val pastError = R.string.snackbar_error_target_is_the_past_date
+                                    Snackbar.make(fragment.requireView(), pastError, 600)
+                                        .show()
+                                    Date(nowCalendar.timeInMillis)
+                                } else {
+                                    Date(calendar.timeInMillis)
+                                }
                                 alarmState.update {
                                     it.copy(repeatType = RepeatType.Date(newDate))
                                 }

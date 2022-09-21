@@ -30,6 +30,11 @@
     <string name="setting_playlist">Playlist</string>
     <string name="setting_loop">Loop</string>
     <string name="setting_volume">Volume</string>
+    <string name="setting_snooze">Snooze</string>
+    <plurals name="setting_snooze_time">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
     <string name="menu_item_aram_list">AramList</string>
     <string name="menu_title_playlist">PlayList</string>
     <string name="item_video_list_data_size">%02.1fMB</string>
@@ -42,6 +47,9 @@
 
     <string name="menu_drawer_title_video">Video</string>
     <string name="menu_title_video_list">VideoList</string>
+
+    <string name="dialog_snooze_time_input_ok">OK</string>
+    <string name="dialog_snooze_time_input_cancel">Cancel</string>
 
     <string name="dialog_video_input_url_hint">https://…</string>
     <string name="dialog_video_input_ok">Import</string>
@@ -84,6 +92,15 @@
         <item name="dialog_repeat_days_choice_sat">Sat</item>
         <item name="dialog_repeat_days_choice_sun">Sun</item>
     </string-array>
+    <string name="dialog_require_overlay_perm">This application requires overlay permission to display alarm.</string>
+    <string name="dialog_require_overlay_perm_ok">OK</string>
 
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
+    <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
+
+    <string name="notification_snooze_channel_name">YtAlarm</string>
+    <string name="notification_snooze_channel_description">Snooze notification channel</string>
+    <string name="notification_snooze_title">Snooze Enabled</string>
+    <string name="notification_snooze_remain">Alarm will start after %d minutes</string>
+    <string name="notification_snooze_remove">Remove</string>
 </resources>

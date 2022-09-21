@@ -1,12 +1,18 @@
 package net.turtton.ytalarm
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -14,12 +20,9 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
-import com.google.android.material.snackbar.Snackbar
-import com.yausername.youtubedl_android.YoutubeDL
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.databinding.ActivityMainBinding
+import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
+import net.turtton.ytalarm.util.initYtDL
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,23 +33,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
-        lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                runCatching {
-                    YoutubeDL.getInstance().init(applicationContext)
-                }
-            }.onFailure {
-                launch(Dispatchers.Main) {
-                    Snackbar.make(
-                        binding.root.rootView,
-                        "Internal error occurred.",
-                        Snackbar.LENGTH_LONG
-                    ).setAction("Action", null)
-                        .show()
-                    Log.e(APP_TAG, "YtDL initialization failed", it)
-                }
-            }
-        }
+        initYtDL(binding.root.rootView)
 
         setContentView(binding.root)
 
@@ -63,6 +50,42 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         binding.fab.shrink()
+
+        createNotificationChannel()
+        requestPermission()
+    }
+
+    private fun requestPermission() {
+        val hasPerm = { Settings.canDrawOverlays(applicationContext) }
+        if (!hasPerm()) {
+            val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+            val activity = registerForActivityResult(
+                ActivityResultContracts.StartActivityForResult()
+            ) {
+                if (!hasPerm()) {
+                    requestPermission()
+                }
+            }
+            AlertDialog.Builder(this)
+                .setTitle(R.string.dialog_require_overlay_perm)
+                .setPositiveButton(R.string.dialog_require_overlay_perm_ok) { _, _ ->
+                    activity.launch(intent)
+                    finish()
+                }.show()
+        }
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = getString(R.string.notification_snooze_channel_name)
+            val description = getString(R.string.notification_snooze_channel_description)
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(SNOOZE_NOTIFICATION, name, importance)
+            channel.description = description
+            val notificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
