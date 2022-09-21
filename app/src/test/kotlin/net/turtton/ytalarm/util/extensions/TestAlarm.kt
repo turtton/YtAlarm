@@ -73,9 +73,8 @@ class TestAlarm : FunSpec({
 
                 val repeatType =
                     RepeatType.Days(listOf(DayOfWeekCompat.FRIDAY))
-                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType).toCalendar(
-                    calendar
-                )
+                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
+                    .toCalendar(calendar)
 
                 target[Calendar.DAY_OF_WEEK] shouldBeExactly calendar[Calendar.DAY_OF_WEEK]
                 target[Calendar.DATE] shouldBeExactly calendar[Calendar.DATE] + 7
@@ -88,9 +87,8 @@ class TestAlarm : FunSpec({
 
                 val repeatType =
                     RepeatType.Days(listOf(DayOfWeekCompat.SATURDAY, DayOfWeekCompat.MONDAY))
-                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType).toCalendar(
-                    calendar
-                )
+                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
+                    .toCalendar(calendar)
 
                 target[Calendar.DAY_OF_WEEK] shouldBeExactly Calendar.SATURDAY
                 target[Calendar.DATE] shouldBeExactly calendar[Calendar.DATE] + 1
@@ -103,9 +101,8 @@ class TestAlarm : FunSpec({
 
                 val repeatType =
                     RepeatType.Days(listOf(DayOfWeekCompat.MONDAY, DayOfWeekCompat.WEDNESDAY))
-                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType).toCalendar(
-                    calendar
-                )
+                val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
+                    .toCalendar(calendar)
 
                 target[Calendar.DAY_OF_WEEK] shouldBeExactly Calendar.MONDAY
                 target[Calendar.DATE] shouldBeExactly calendar[Calendar.DATE] + 3
