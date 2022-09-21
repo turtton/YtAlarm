@@ -6,7 +6,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import net.turtton.ytalarm.AlarmActivity
@@ -31,7 +30,7 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
         intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
 
         @SuppressLint("UnspecifiedImmutableFlag")
-        val pendingIntent = PendingIntent.getActivity(context, 0, intent, 0)
+        val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
 
         if (!alarm.enable) {
             alarmManager.cancel(pendingIntent)
@@ -45,12 +44,11 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
         @Suppress("ktlint:max-line-length")
         Log.d(
             "RegisterAlarm",
-            "Year: ${calendar[Calendar.YEAR]},Month:${calendar[Calendar.MONTH]},Day:${calendar[Calendar.DAY_OF_MONTH]},Hour:${calendar[Calendar.HOUR_OF_DAY]},Minute:${calendar[Calendar.MINUTE]}"
+            "Id:${alarm.id},Year:${calendar[Calendar.YEAR]},Month:${calendar[Calendar.MONTH]},Day:${calendar[Calendar.DAY_OF_MONTH]},Hour:${calendar[Calendar.HOUR_OF_DAY]},Minute:${calendar[Calendar.MINUTE]}"
         )
     }
 }
 
-@VisibleForTesting
 fun List<Alarm>.pickNearestTime(nowTime: Calendar): Pair<Alarm, Calendar>? {
     return associateWith { it.toCalendar(nowTime) }
         .minByOrNull { (_, calendar) -> calendar.timeInMillis }
