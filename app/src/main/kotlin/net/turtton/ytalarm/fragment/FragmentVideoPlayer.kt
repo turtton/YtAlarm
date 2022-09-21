@@ -29,7 +29,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.MainActivity
@@ -38,6 +37,7 @@ import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
 import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.RepeatType
+import net.turtton.ytalarm.util.UpdateSnoozeNotifyWorker
 import net.turtton.ytalarm.util.observeAlarm
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
@@ -45,6 +45,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
+import java.util.Calendar
 import kotlin.math.roundToInt
 
 class FragmentVideoPlayer : Fragment() {
@@ -134,15 +135,22 @@ class FragmentVideoPlayer : Fragment() {
         val id = args.id
         if (isAlarm) {
             val alarmId = id.toLong()
+            if (alarmId == -1L) {
+                Snackbar.make(view, "Failed to get target alarm data", 900).show()
+                Log.e("VideoPlayerFragment", "Alarm id is -1")
+                activity.finish()
+            }
             val asyncAlarm = alarmViewModel.getFromIdAsync(alarmId)
             lifecycleScope.launch {
                 val alarm = asyncAlarm.await()
                 // set snooze button
                 launch(Dispatchers.Main) {
                     snoozeButton.setOnClickListener {
-                        var (hour, minute) = alarm.time.split(':').map { it.toInt() }
+                        val now = Calendar.getInstance()
+                        var hour = now[Calendar.HOUR_OF_DAY]
+                        var minute = now[Calendar.MINUTE]
                         // TODO edit snooze time(add calc test)
-                        minute += 10
+                        minute += 1
                         if (minute > 59) {
                             minute %= 60
                             hour += 1
@@ -155,10 +163,10 @@ class FragmentVideoPlayer : Fragment() {
                             time = "$hour:$minute",
                             repeatType = RepeatType.Snooze
                         )
-                        alarmViewModel.insert(snoozeAlarm)
+                        val job = alarmViewModel.insert(snoozeAlarm)
                         lifecycleScope.launch {
-                            // Wait snooze data insertion
-                            delay(100)
+                            UpdateSnoozeNotifyWorker.registerWorker(view.context)
+                            job.join()
                             lifecycleScope.launch(Dispatchers.Main) {
                                 if (!findNavController().navigateUp()) {
                                     activity.finish()
