@@ -76,7 +76,7 @@ class UpdateSnoozeNotifyWorker(
         val nextSnooze = snoozeAlarms.pickNearestTime(Calendar.getInstance())!!.first
 
         val now = Calendar.getInstance()
-        val minute = nextSnooze.time.split(':')[1].toInt() - now[Calendar.MINUTE]
+        val minute = nextSnooze.minute - now[Calendar.MINUTE]
 
         val title = applicationContext.getString(R.string.notification_snooze_title)
         val description = applicationContext.getString(R.string.notification_snooze_remain, minute)

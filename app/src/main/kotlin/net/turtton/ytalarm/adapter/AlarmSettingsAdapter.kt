@@ -24,6 +24,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentAlarmSettings
@@ -32,6 +33,7 @@ import net.turtton.ytalarm.structure.AlarmSettingData
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
 import net.turtton.ytalarm.util.RepeatType
+import net.turtton.ytalarm.util.extensions.getDisplayTime
 import java.util.Calendar
 import java.util.Date
 import java.util.GregorianCalendar
@@ -46,14 +48,13 @@ class AlarmSettingsAdapter(
     init {
         val alarmState = fragment.alarmData
         val alarm = alarmState.value
+        val displayTime = alarm.getDisplayTime()
         val timeSelector =
-            AlarmSettingData.NormalData(R.string.setting_time, alarm.time) { _, description ->
-                SettingTimePickerFragment(alarm.time) { _, hourOfDay, minute ->
-                    val newTime = String.format("%02d:%02d", hourOfDay, minute)
-                    alarmState.update {
-                        it.copy(time = newTime)
-                    }
-                    description.text = newTime
+            AlarmSettingData.NormalData(R.string.setting_time, displayTime) { _, description ->
+                SettingTimePickerFragment(displayTime) { _, hourOfDay, minute ->
+                    description.text = alarmState.updateAndGet {
+                        it.copy(hour = hourOfDay, minute = minute)
+                    }.getDisplayTime()
                 }.show(fragment.parentFragmentManager, "settingTimePicker")
             }
 

@@ -8,7 +8,8 @@ import net.turtton.ytalarm.util.RepeatType
 data class Alarm(
     @PrimaryKey(autoGenerate = true)
     val id: Long? = null,
-    val time: String = "00:00",
+    val hour: Int = 0,
+    val minute: Int = 0,
     val repeatType: RepeatType = RepeatType.Once,
     val playListId: Long? = null,
     val loop: Boolean = false,

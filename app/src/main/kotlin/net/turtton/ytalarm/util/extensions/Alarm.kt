@@ -5,8 +5,6 @@ import net.turtton.ytalarm.util.RepeatType
 import java.util.Calendar
 
 fun Alarm.toCalendar(now: Calendar): Calendar {
-    val (hour, minute) = time.split(':').map { s -> s.toInt() }
-
     val flagHour = Calendar.HOUR_OF_DAY
     val flagMinute = Calendar.MINUTE
     val flagDayOfWeek = Calendar.DAY_OF_WEEK
@@ -48,6 +46,8 @@ fun Alarm.toCalendar(now: Calendar): Calendar {
 
     return calendar
 }
+
+fun Alarm.getDisplayTime(): String = "%02d:%02d".format(hour, minute)
 
 fun List<Alarm>.pickNearestTime(nowTime: Calendar): Pair<Alarm, Calendar>? {
     return associateWith { it.toCalendar(nowTime) }

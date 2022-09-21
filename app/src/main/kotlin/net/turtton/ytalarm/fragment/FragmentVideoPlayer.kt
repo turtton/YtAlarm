@@ -159,7 +159,8 @@ class FragmentVideoPlayer : Fragment() {
                         }
                         val snoozeAlarm = alarm.copy(
                             id = null,
-                            time = "$hour:$minute",
+                            hour = hour,
+                            minute = minute,
                             repeatType = RepeatType.Snooze
                         )
                         val job = alarmViewModel.insert(snoozeAlarm)
