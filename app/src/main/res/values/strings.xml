@@ -59,7 +59,10 @@
     <string name="dialog_execute_progress_title_loading">Loading…</string>
     <string name="dialog_execute_progress_eta">%02d:%02d</string>
     <string name="dialog_execute_progress_eta_init">calculating…</string>
-    <string name="dialog_execute_progress_eta_minutes">%d minutes</string>
+    <plurals name="dialog_execute_progress_eta_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
     <string name="fab_add_video_description">Add video Button</string>
 
     <string name="dialog_multichoice_ok">Confirm</string>
@@ -101,6 +104,9 @@
     <string name="notification_snooze_channel_name">YtAlarm</string>
     <string name="notification_snooze_channel_description">Snooze notification channel</string>
     <string name="notification_snooze_title">Snooze Enabled</string>
-    <string name="notification_snooze_remain">Alarm will start after %d minutes</string>
+    <plurals name="notification_snooze_remain">
+        <item quantity="one">Alarm will start after %d minute</item>
+        <item quantity="other">Alarm will start after %d minutes</item>
+        </plurals>
     <string name="notification_snooze_remove">Remove</string>
 </resources>
