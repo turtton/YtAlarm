@@ -10,7 +10,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import net.turtton.ytalarm.AlarmActivity
 import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.util.extensions.toCalendar
+import net.turtton.ytalarm.util.extensions.pickNearestTime
 import java.util.*
 
 fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: Context) {
@@ -52,10 +52,4 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
             "Id:${alarm.id},Year:${calendar[Calendar.YEAR]},Month:${calendar[Calendar.MONTH]},Day:${calendar[Calendar.DAY_OF_MONTH]},Hour:${calendar[Calendar.HOUR_OF_DAY]},Minute:${calendar[Calendar.MINUTE]}"
         )
     }
-}
-
-fun List<Alarm>.pickNearestTime(nowTime: Calendar): Pair<Alarm, Calendar>? {
-    return associateWith { it.toCalendar(nowTime) }
-        .minByOrNull { (_, calendar) -> calendar.timeInMillis }
-        ?.toPair()
 }

@@ -48,3 +48,9 @@ fun Alarm.toCalendar(now: Calendar): Calendar {
 
     return calendar
 }
+
+fun List<Alarm>.pickNearestTime(nowTime: Calendar): Pair<Alarm, Calendar>? {
+    return associateWith { it.toCalendar(nowTime) }
+        .minByOrNull { (_, calendar) -> calendar.timeInMillis }
+        ?.toPair()
+}
