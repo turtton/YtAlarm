@@ -102,4 +102,8 @@
         <item quantity="other">Alarm will start after %d minutes</item>
         </plurals>
     <string name="notification_snooze_remove">Remove</string>
+    <string name="playlist_fragment_label">Playlists</string>
+    <string name="videolist_fragment_label">Videos</string>
+    <string name="videoplayer_fragment_label">Playing</string>
+    <string name="allvideolist_fragment_label">All Videos</string>
 </resources>
