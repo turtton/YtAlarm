@@ -22,7 +22,7 @@ jobs:
     needs: react
     strategy:
       matrix:
-        sdk-version: [24, 33]
+        sdk-version: [ 24, 33 ]
     runs-on: macos-10.15
     steps:
       - name: Get upstream branch
@@ -68,7 +68,7 @@ jobs:
       - name: Send result message
         uses: actions/github-script@v6
         env:
-          MESSAGE: AndroidTest was ${{ jobs.check.result }}. See [log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          MESSAGE: AndroidTest was ${{ jobs.android_test.result }}. See [log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
