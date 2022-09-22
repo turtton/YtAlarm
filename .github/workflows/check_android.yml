@@ -6,12 +6,9 @@ on:
       - created
 
 jobs:
-  check:
+  react:
     if: (github.event.issue.pull_request) && startsWith(github.event.comment.body, '/androidTest') && (github.repository_owner == 'turtton')
-    strategy:
-      matrix:
-        sdk-version: [24, 33]
-    runs-on: macos-10.15
+    runs-on: ubuntu-latest
     steps:
       - name: React comment
         uses: actions/github-script@v6
@@ -24,6 +21,14 @@ jobs:
               comment_id: context.comment.id,
               content: rocket
             })
+
+  check:
+    needs: react
+    strategy:
+      matrix:
+        sdk-version: [24, 33]
+    runs-on: macos-10.15
+    steps:
       - name: Get upstream branch
         uses: actions/github-script@v6
         id: upstreambranch
@@ -39,7 +44,7 @@ jobs:
             return pull_request.data.head.ref
 
       - name: Checkout repo
-        uses: actions/checkout@2
+        uses: actions/checkout@v3
         with:
           ref: ${{ steps.upstreambranch.outputs.result }}
 
