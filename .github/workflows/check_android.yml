@@ -68,7 +68,7 @@ jobs:
       - name: Send result message
         uses: actions/github-script@v6
         env:
-          MESSAGE: AndroidTest was ${{ jobs.android_test.result }}. See [log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          MESSAGE: Finish AndroidTest Action. See [log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -78,5 +78,3 @@ jobs:
               repo: context.repo.repo,
               body: process.env.MESSAGE
             })
-
-
