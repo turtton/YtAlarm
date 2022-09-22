@@ -29,6 +29,12 @@ jobs:
         uses: xt0rted/pull-request-comment-branch@v1
         id: upstreambranch
 
+      - name: Notify pending status
+        uses: hkusu/status-create-action@v1
+        with:
+          sha: ${{ steps.upstreambranch.outputs.sha }}
+          state: pending
+
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
@@ -46,6 +52,19 @@ jobs:
         with:
           api-level: ${{ matrix.sdk-version }}
           script: ./gradlew connectedCheck --stacktrace
+
+      - name: Notify pending status
+        uses: hkusu/status-create-action@v1
+        with:
+          sha: ${{ steps.upstreambranch.outputs.sha }}
+          state: success
+
+      - name: Notify pending status
+        uses: hkusu/status-create-action@v1
+        if: failure()
+        with:
+          sha: ${{ steps.upstreambranch.outputs.sha }}
+          state: failure
 
       - name: Save logcat output
         uses: actions/upload-artifact@master
