@@ -7,24 +7,16 @@ on:
 
 jobs:
   react:
-    if: (github.event.issue.pull_request) && startsWith(github.event.comment.body, '/androidTest') && (github.repository_owner == 'turtton')
+    if: ${{ github.repository_owner == 'turtton' }}
     runs-on: ubuntu-latest
     steps:
       - name: React comment
-        uses: actions/github-script@v6
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: xt0rted/slash-command-action@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { TOKEN } = process.env
-            const client = new GitHub(TOKEN)
-            client.reactions.createForIssueComment({
-              context.repo.owner,
-              context.repo.repo,
-              comment_id: context.payload.comment.id,
-              content: rocket
-            })
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          command: androidTest
+          reaction: "true"
+          reaction-type: "rocket"
 
   android_test:
     needs: react
@@ -34,23 +26,13 @@ jobs:
     runs-on: macos-10.15
     steps:
       - name: Get upstream branch
-        uses: actions/github-script@v6
+        uses: xt0rted/pull-request-comment-branch@v1
         id: upstreambranch
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          result-encoding: string
-          script: |
-            const pull_request = await github.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number
-            })
-            return pull_request.data.head.ref
 
       - name: Checkout repo
         uses: actions/checkout@v3
         with:
-          ref: ${{ steps.upstreambranch.outputs.result }}
+          ref: ${{ steps.upstreambranch.outputs.head_ref }}
 
       - name: Set up JDK 11
         uses: actions/setup-java@v3
@@ -85,15 +67,16 @@ jobs:
     steps:
       - name: Send result message
         uses: actions/github-script@v6
+        env:
+          MESSAGE: AndroidTest was ${{ jobs.check.result }}. See [log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const result = context.jobs.check.result
             github.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "AndroidTest was ${result}. See [log](https://github.com/${context.github.repository}/actions/runs/${context.github.run_id})"
+              body: process.env.MESSAGE
             })
 
 
