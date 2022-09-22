@@ -22,7 +22,7 @@ jobs:
     needs: react
     strategy:
       matrix:
-        sdk-version: [24, 33]
+        sdk-version: [ 24, 33 ]
     runs-on: macos-10.15
     steps:
       - name: Get upstream branch
