@@ -21,6 +21,7 @@ import com.google.android.material.navigation.NavigationView
 import net.turtton.ytalarm.databinding.ActivityMainBinding
 import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.util.initYtDL
+import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
 
 class MainActivity : AppCompatActivity() {
 
@@ -75,14 +76,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = getString(R.string.notification_snooze_channel_name)
-            val description = getString(R.string.notification_snooze_channel_description)
-            val importance = NotificationManager.IMPORTANCE_HIGH
-            val channel = NotificationChannel(SNOOZE_NOTIFICATION, name, importance)
-            channel.description = description
             val notificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            val name = getString(R.string.notification_channel_name)
+            val importance = NotificationManager.IMPORTANCE_HIGH
+
+            val snoozeDescription = getString(R.string.notification_snooze_channel_description)
+            val snoozeChannel = NotificationChannel(SNOOZE_NOTIFICATION, name, importance)
+            snoozeChannel.description = snoozeDescription
+            notificationManager.createNotificationChannel(snoozeChannel)
+
+            val videoInfoDescription =
+                getString(R.string.notification_download_video_info_channel_description)
+            val videoInfoChannel =
+                NotificationChannel(VIDEO_DOWNLOAD_NOTIFICATION, name, importance)
+            videoInfoChannel.description = videoInfoDescription
+            notificationManager.createNotificationChannel(videoInfoChannel)
         }
     }
 

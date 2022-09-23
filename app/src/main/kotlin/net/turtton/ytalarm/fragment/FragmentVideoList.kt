@@ -105,22 +105,17 @@ class FragmentVideoList :
         addVideoFab.setOnClickListener(::animateFab)
         addFromLinkFab.setOnClickListener {
             animateFab(it)
-            showVideoImportDialog(it) {
-                lifecycleScope.launch {
-                    val playlist = playlistViewModel.getFromIdAsync(currentId.value)
-                        .await()
-                        ?: Playlist()
-                    val newList = (playlist.videos + it.id).distinct()
-                    val newPlaylist = playlist.copy(videos = newList)
-                    if (playlist.id == null) {
-                        val newId = playlistViewModel.insertAsync(newPlaylist).await()
-                        currentId.update {
-                            newId
-                        }
-                        updateListObserver()
-                    } else {
-                        playlistViewModel.update(newPlaylist)
-                    }
+            lifecycleScope.launch {
+                val playlist = playlistViewModel.getFromIdAsync(currentId.value)
+                    .await()
+                    ?: Playlist()
+                if (playlist.id == null) {
+                    val newId = playlistViewModel.insertAsync(playlist).await()
+                    currentId.update { newId }
+                    updateListObserver()
+                }
+                launch(Dispatchers.Main) {
+                    showVideoImportDialog(it, currentId.value)
                 }
             }
         }
