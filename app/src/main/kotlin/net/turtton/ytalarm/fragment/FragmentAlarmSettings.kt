@@ -17,6 +17,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.AlarmSettingsAdapter
 import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.util.extensions.joinStringWithSlash
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
@@ -51,7 +52,10 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
             lifecycleScope.launch {
                 val alarm = async.await()
                 alarmData.update { alarm }
-                val plTitle = playlistViewModel.getFromIdAsync(alarm.playListId!!).await()?.title
+                val plTitle = playlistViewModel.getFromIdsAsync(alarm.playListId)
+                    .await()
+                    .map { it.title }
+                    .joinStringWithSlash()
                 launch(Dispatchers.Main) {
                     val adapter = AlarmSettingsAdapter(this@FragmentAlarmSettings, plTitle)
                     binding.recyclerList.adapter = adapter
@@ -64,7 +68,7 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
         }
         fab.setOnClickListener {
             val currentData = alarmData.value
-            if (currentData.playListId == null) {
+            if (currentData.playListId.isEmpty()) {
                 Snackbar.make(view, R.string.snackbar_error_playlistid_is_null, 300).show()
                 return@setOnClickListener
             }

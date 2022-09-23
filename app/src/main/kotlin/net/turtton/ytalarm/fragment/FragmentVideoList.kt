@@ -1,6 +1,8 @@
 package net.turtton.ytalarm.fragment
 
+import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
@@ -10,6 +12,9 @@ import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.WorkManager
+import androidx.work.await
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -33,6 +38,8 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
+import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
+import java.util.*
 
 class FragmentVideoList :
     FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<String> {
@@ -40,6 +47,7 @@ class FragmentVideoList :
     lateinit var animFabDisappear: Animation
     lateinit var animFabRotateForward: Animation
     lateinit var animFabRotateBackward: Animation
+    lateinit var animFabRotateInfinity: Animation
 
     var isAddVideoFabRotated = false
 
@@ -48,6 +56,8 @@ class FragmentVideoList :
 
     private val args by navArgs<FragmentVideoListArgs>()
     val currentId = MutableStateFlow(-1L)
+
+    private var currentSyncWorker = MutableStateFlow<UUID?>(null)
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
@@ -87,6 +97,7 @@ class FragmentVideoList :
         animFabDisappear = AnimationUtils.loadAnimation(activity, R.anim.fab_disappear)
         animFabRotateForward = AnimationUtils.loadAnimation(activity, R.anim.rotate_forward)
         animFabRotateBackward = AnimationUtils.loadAnimation(activity, R.anim.rotate_backward)
+        animFabRotateInfinity = AnimationUtils.loadAnimation(activity, R.anim.rotate_infinity)
 
         val binding = activity.binding
         binding.fab.visibility = View.GONE
@@ -95,32 +106,66 @@ class FragmentVideoList :
         val addVideoFab = binding.fabAddVideo
         val addFromLinkFab = binding.fabAddVideoFromLink
         val addFromVideoFab = binding.fabAddVideoFromVideo
-        addVideoFab.visibility = View.VISIBLE
 
         addFromLinkFab.visibility = View.INVISIBLE
         addFromLinkFab.isClickable = false
         addFromVideoFab.visibility = View.INVISIBLE
         addFromVideoFab.isClickable = false
 
+        lifecycleScope.launch {
+            val playlist = playlistViewModel.getFromIdAsync(currentId.value).await()
+            launch(Dispatchers.Main) {
+                if (playlist?.originUrl == null) {
+                    listenFabWithOriginalMode()
+                } else {
+                    listenFabWithSyncMode(playlist.id!!, playlist.originUrl)
+                }
+                addVideoFab.show()
+            }
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        selectionTracker.onSaveInstanceState(outState)
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        val binding = (requireActivity() as MainActivity).binding
+
+        val fabAddVideo = binding.fabAddVideo
+        fabAddVideo.setImageResource(R.drawable.ic_add_video)
+        fabAddVideo.clearAnimation()
+        fabAddVideo.visibility = View.GONE
+
+        val fabAddVideoFromVideo = binding.fabAddVideoFromVideo
+        fabAddVideoFromVideo.visibility = View.GONE
+        fabAddVideoFromVideo.clearAnimation()
+        val fabAddVideoFromLink = binding.fabAddVideoFromLink
+        fabAddVideoFromLink.visibility = View.GONE
+        fabAddVideoFromLink.clearAnimation()
+    }
+
+    private fun listenFabWithOriginalMode() {
+        val binding = (activity as MainActivity).binding
+        val addVideoFab = binding.fabAddVideo
+        val addFromLinkFab = binding.fabAddVideoFromLink
+        val addFromVideoFab = binding.fabAddVideoFromVideo
+
         addVideoFab.setOnClickListener(::animateFab)
         addFromLinkFab.setOnClickListener {
             animateFab(it)
-            showVideoImportDialog(it) {
-                lifecycleScope.launch {
-                    val playlist = playlistViewModel.getFromIdAsync(currentId.value)
-                        .await()
-                        ?: Playlist()
-                    val newList = (playlist.videos + it.id).distinct()
-                    val newPlaylist = playlist.copy(videos = newList)
-                    if (playlist.id == null) {
-                        val newId = playlistViewModel.insertAsync(newPlaylist).await()
-                        currentId.update {
-                            newId
-                        }
-                        updateListObserver()
-                    } else {
-                        playlistViewModel.update(newPlaylist)
-                    }
+            lifecycleScope.launch {
+                val playlist = playlistViewModel.getFromIdAsync(currentId.value)
+                    .await()
+                    ?: Playlist()
+                if (playlist.id == null) {
+                    val newId = playlistViewModel.insertAsync(playlist).await()
+                    currentId.update { newId }
+                    updateListObserver()
+                }
+                launch(Dispatchers.Main) {
+                    showVideoImportDialog(it, currentId.value)
                 }
             }
         }
@@ -162,56 +207,81 @@ class FragmentVideoList :
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        selectionTracker.onSaveInstanceState(outState)
-    }
+    @SuppressLint("RestrictedApi")
+    private fun listenFabWithSyncMode(playlistId: Long, originalUrl: String) {
+        val binding = (activity as MainActivity).binding
+        val addVideoFab = binding.fabAddVideo
+        addVideoFab.setImageResource(R.drawable.ic_sync)
+        addVideoFab.isClickable = true
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        val binding = (requireActivity() as MainActivity).binding
-        binding.fab.visibility = View.VISIBLE
-        binding.fab.shrink()
+        addVideoFab.setOnClickListener {
+            val animation = addVideoFab.animation
+            if (animation == null || animation.hasEnded()) {
+                addVideoFab.startAnimation(animFabRotateInfinity)
+            }
+            lifecycleScope.launch {
+                val syncWorkerId = currentSyncWorker.value
+                if (syncWorkerId != null) {
+                    val worker = WorkManager.getInstance(it.context)
+                        .getWorkInfoById(syncWorkerId)
+                        .await()
+                    if (worker.state.isFinished.not()) {
+                        return@launch
+                    }
+                }
 
-        val fabAddVideo = binding.fabAddVideo
-        fabAddVideo.setImageResource(R.drawable.ic_add_video)
-        fabAddVideo.clearAnimation()
-        fabAddVideo.visibility = View.GONE
+                val currentWork = WorkManager.getInstance(it.context)
+                    .getWorkInfosForUniqueWork(VideoInfoDownloadWorker.WORKER_ID)
+                    .await()
+                if (currentWork.any { !it.state.isFinished }) {
+                    Log.i("current", currentWork.toString())
+                    launch(Dispatchers.Main) {
+                        addVideoFab.clearAnimation()
+                        Snackbar.make(it, R.string.snackbar_sync_is_running, 900).show()
+                    }.join()
+                    return@launch
+                }
 
-        val fabAddVideoFromVideo = binding.fabAddVideoFromVideo
-        fabAddVideoFromVideo.visibility = View.GONE
-        fabAddVideoFromVideo.clearAnimation()
-        val fabAddVideoFromLink = binding.fabAddVideoFromLink
-        fabAddVideoFromLink.visibility = View.GONE
-        fabAddVideoFromLink.clearAnimation()
+                val worker =
+                    VideoInfoDownloadWorker.registerWorker(it.context, originalUrl, playlistId)
+                currentSyncWorker.update { worker.id }
+                WorkManager.getInstance(it.context)
+                    .getWorkInfoByIdLiveData(worker.id)
+                    .observe(viewLifecycleOwner) {
+                        if (it.state.isFinished) {
+                            lifecycleScope.launch(Dispatchers.Main) {
+                                addVideoFab.clearAnimation()
+                            }
+                        }
+                    }
+            }
+        }
     }
 
     @Suppress("UNUSED_PARAMETER")
     private fun animateFab(ignore: View) {
         val binding = (requireActivity() as MainActivity).binding
+        val fabAddVideoFromVideo = binding.fabAddVideoFromVideo
+        val fabAddVideo = binding.fabAddVideo
+        val fabAddVideoFromLink = binding.fabAddVideoFromLink
         if (isAddVideoFabRotated) {
-            val fabAddVideo = binding.fabAddVideo
             fabAddVideo.startAnimation(animFabRotateBackward)
             fabAddVideo.setImageResource(R.drawable.ic_add_video)
 
-            val fabAddVideoFromVideo = binding.fabAddVideoFromVideo
             fabAddVideoFromVideo.startAnimation(animFabDisappear)
             fabAddVideoFromVideo.isClickable = false
 
-            val fabAddVideoFromLink = binding.fabAddVideoFromLink
             fabAddVideoFromLink.startAnimation(animFabDisappear)
             fabAddVideoFromLink.isClickable = false
 
             isAddVideoFabRotated = false
         } else {
-            val fabAddVideo = binding.fabAddVideo
             fabAddVideo.startAnimation(animFabRotateForward)
             fabAddVideo.setImageResource(R.drawable.ic_add)
 
-            val fabAddVideoFromVideo = binding.fabAddVideoFromVideo
             fabAddVideoFromVideo.startAnimation(animFabAppear)
             fabAddVideoFromVideo.isClickable = true
 
-            val fabAddVideoFromLink = binding.fabAddVideoFromLink
             fabAddVideoFromLink.startAnimation(animFabAppear)
             fabAddVideoFromLink.isClickable = true
 

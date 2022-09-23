@@ -40,6 +40,9 @@ class FragmentPlaylist :
     override lateinit var selectionTracker: SelectionTracker<Long>
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val activity = requireActivity() as MainActivity
+        activity.binding.fab.show()
+
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
         val adapter = PlaylistAdapter(this)

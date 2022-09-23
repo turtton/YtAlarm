@@ -17,6 +17,7 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -100,7 +101,12 @@ class FragmentVideoPlayer : Fragment() {
 
         // hide fab
         if (activity is MainActivity) {
-            activity.binding.fab.visibility = View.GONE
+            val fab = activity.binding.fab
+            fab.clearAnimation()
+            fab.visibility = View.GONE
+
+            activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+            activity.binding.toolbar.visibility = View.GONE
         }
 
         val snoozeButton = binding.fragmentVideoPlayerButtonSnooze
@@ -193,9 +199,11 @@ class FragmentVideoPlayer : Fragment() {
                     else -> {}
                 }
 
-                val playlist = playlistViewModel.getFromIdAsync(alarm.playListId!!).await()
-                val videos = playlist?.let { videoViewModel.getFromIdsAsync(it.videos).await() }
-                if (videos.isNullOrEmpty()) {
+                val playlist = playlistViewModel.getFromIdsAsync(alarm.playListId).await()
+                val videos = playlist.flatMap { it.videos }
+                    .distinct()
+                    .let { videoViewModel.getFromIdsAsync(it).await() }
+                if (videos.isEmpty()) {
                     launch(Dispatchers.Main) {
                         Snackbar.make(view, "Video is Empty", 900).show()
                     }
@@ -211,7 +219,7 @@ class FragmentVideoPlayer : Fragment() {
                     )
                 }
                 var queue = 0
-                playVideo(view, videos!!.first())
+                playVideo(view, videos.first())
                 videoView.setOnCompletionListener {
                     if (++queue >= videos.size) {
                         if (alarm.loop) {
@@ -240,8 +248,10 @@ class FragmentVideoPlayer : Fragment() {
     override fun onDestroyView() {
         _binding = null
         val activity = requireActivity()
+
         if (activity is MainActivity) {
-            activity.binding.fab.visibility = View.VISIBLE
+            activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+            activity.binding.toolbar.visibility = View.VISIBLE
         }
 
         currentVolume?.let {

@@ -11,7 +11,7 @@ data class Alarm(
     val hour: Int = 0,
     val minute: Int = 0,
     val repeatType: RepeatType = RepeatType.Once,
-    val playListId: Long? = null,
+    val playListId: List<Long> = emptyList(),
     val loop: Boolean = false,
     // max 100(%)
     val volume: Int = 50,

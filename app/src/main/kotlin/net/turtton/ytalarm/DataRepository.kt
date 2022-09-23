@@ -122,6 +122,11 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
+    suspend fun insert(videos: List<Video>) {
+        database.videoDao().insert(videos)
+    }
+
+    @WorkerThread
     suspend fun deleteVideoLists(videos: List<Video>) {
         database.videoDao().delete(videos)
     }

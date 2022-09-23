@@ -19,6 +19,7 @@ import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.util.BasicComparator
 import net.turtton.ytalarm.util.extensions.getDisplayTime
+import net.turtton.ytalarm.util.extensions.joinStringWithSlash
 
 class AlarmListAdapter(
     private val parentFragment: FragmentAlarmList
@@ -47,12 +48,12 @@ class AlarmListAdapter(
                 }
             }
 
-            val async = parentFragment.playlistViewModel.getFromIdAsync(data.playListId!!)
+            val async = parentFragment.playlistViewModel.getFromIdsAsync(data.playListId)
             parentFragment.lifecycleScope.launch {
-                async.await()?.let {
+                async.await().let { list ->
                     launch(Dispatchers.Main) {
-                        playlistName.text = it.title
-                        Glide.with(itemView).load(it.thumbnailUrl).into(alarmThumbnail)
+                        playlistName.text = list.map { it.title }.joinStringWithSlash()
+                        Glide.with(itemView).load(list.first().thumbnailUrl).into(alarmThumbnail)
                     }
                 }
             }
