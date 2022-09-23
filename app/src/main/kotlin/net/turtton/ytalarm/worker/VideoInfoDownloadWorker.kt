@@ -138,7 +138,7 @@ class VideoInfoDownloadWorker(
 
     companion object {
         private const val NOTIFICATION_ID = 1
-        private const val WORKER_ID = "VideoDownloadWorker"
+        const val WORKER_ID = "VideoDownloadWorker"
         private const val KEY_URL = "DownloadUrl"
         private const val KEY_PLAYLIST = "PlaylistId"
 
