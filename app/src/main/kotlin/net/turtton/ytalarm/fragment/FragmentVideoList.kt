@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.fragment
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -206,6 +207,7 @@ class FragmentVideoList :
         }
     }
 
+    @SuppressLint("RestrictedApi")
     private fun listenFabWithSyncMode(playlistId: Long, originalUrl: String) {
         val binding = (activity as MainActivity).binding
         val addVideoFab = binding.fabAddVideo
@@ -221,14 +223,16 @@ class FragmentVideoList :
                 val syncWorkerId = currentSyncWorker.value
                 if (syncWorkerId != null) {
                     val worker = WorkManager.getInstance(it.context)
-                        .getWorkInfoById(syncWorkerId).await()
+                        .getWorkInfoById(syncWorkerId)
+                        .await()
                     if (worker.state.isFinished.not()) {
                         return@launch
                     }
                 }
 
                 val currentWork = WorkManager.getInstance(it.context)
-                    .getWorkInfosForUniqueWork(VideoInfoDownloadWorker.WORKER_ID).await()
+                    .getWorkInfosForUniqueWork(VideoInfoDownloadWorker.WORKER_ID)
+                    .await()
                 if (currentWork.any { !it.state.isFinished }) {
                     Log.i("current", currentWork.toString())
                     launch(Dispatchers.Main) {
