@@ -6,8 +6,8 @@ import androidx.core.app.NotificationCompat
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
+import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.Operation
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -146,7 +146,7 @@ class VideoInfoDownloadWorker(
             context: Context,
             targetUrl: String,
             targetPlaylist: Long? = null
-        ): Operation {
+        ): OneTimeWorkRequest {
             val data = Data.Builder().putString(KEY_URL, targetUrl)
             targetPlaylist?.also {
                 data.putLong(KEY_PLAYLIST, it)
@@ -154,12 +154,14 @@ class VideoInfoDownloadWorker(
             val request = OneTimeWorkRequestBuilder<VideoInfoDownloadWorker>()
                 .setInputData(data.build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-            return WorkManager.getInstance(context)
+                .build()
+            WorkManager.getInstance(context)
                 .enqueueUniqueWork(
                     WORKER_ID,
                     ExistingWorkPolicy.APPEND_OR_REPLACE,
-                    request.build()
+                    request
                 )
+            return request
         }
     }
 }
