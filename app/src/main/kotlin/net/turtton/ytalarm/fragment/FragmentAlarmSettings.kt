@@ -18,6 +18,7 @@ import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.AlarmSettingsAdapter
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.util.extensions.joinStringWithSlash
+import net.turtton.ytalarm.util.observeAlarm
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
@@ -40,11 +41,12 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val fab = (requireActivity() as MainActivity).binding.fab
         fab.extend()
+        fab.visibility = View.GONE
 
         val layoutManager = LinearLayoutManager(view.context)
         binding.recyclerList.layoutManager = layoutManager
 
-        fab.visibility = View.GONE
+        alarmViewModel.allAlarms.observeAlarm(viewLifecycleOwner, view.context)
 
         val alarmId = args.alarmId
         if (alarmId != -1L) {
