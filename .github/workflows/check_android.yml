@@ -74,21 +74,21 @@ jobs:
           name: logcat
           path: artifacts/logcat.log
 
-  result:
-    runs-on: ubuntu-latest
-    needs: android_test
-    if: always()
-    steps:
-      - name: Send result message
-        uses: actions/github-script@v6
-        env:
-          MESSAGE: Finish AndroidTest Action. See [log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: process.env.MESSAGE
-            })
+#  result:
+#    runs-on: ubuntu-latest
+#    needs: android_test
+#    if: always()
+#    steps:
+#      - name: Send result message
+#        uses: actions/github-script@v6
+#        env:
+#          MESSAGE: Finish AndroidTest Action. See [log](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          script: |
+#            github.rest.issues.createComment({
+#              issue_number: context.issue.number,
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              body: process.env.MESSAGE
+#            })
