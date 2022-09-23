@@ -15,6 +15,10 @@ import net.turtton.ytalarm.util.RepeatType
 class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
     val allAlarms: LiveData<List<Alarm>> by lazy { repository.allAlarms.asLiveData() }
 
+    fun getAllAlarmsAsync(): Deferred<List<Alarm>> = viewModelScope.async {
+        repository.getAllAlarmsSync()
+    }
+
     fun getFromIdAsync(id: Long): Deferred<Alarm> = viewModelScope.async {
         repository.getAlarmFromIdSync(id)
     }

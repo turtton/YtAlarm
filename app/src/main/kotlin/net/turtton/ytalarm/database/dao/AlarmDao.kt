@@ -15,6 +15,9 @@ interface AlarmDao {
     @Query("SELECT * FROM alarms")
     fun getAll(): Flow<List<Alarm>>
 
+    @Query("SELECT * FROM alarms")
+    suspend fun getAllSync(): List<Alarm>
+
     @Query("SELECT * FROM alarms WHERE id = :id")
     suspend fun getFromIdSync(id: Long): Alarm
 
