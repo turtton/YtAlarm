@@ -34,6 +34,10 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         repository.insert(video)
     }
 
+    fun insert(videos: List<Video>) = viewModelScope.launch {
+        repository.insert(videos)
+    }
+
     fun delete(videos: List<Video>) = viewModelScope.launch {
         repository.deleteVideoLists(videos)
     }
