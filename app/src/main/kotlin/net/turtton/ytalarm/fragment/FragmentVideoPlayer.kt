@@ -100,7 +100,9 @@ class FragmentVideoPlayer : Fragment() {
 
         // hide fab
         if (activity is MainActivity) {
-            activity.binding.fab.visibility = View.GONE
+            val fab = activity.binding.fab
+            fab.clearAnimation()
+            fab.hide()
         }
 
         val snoozeButton = binding.fragmentVideoPlayerButtonSnooze
@@ -240,9 +242,6 @@ class FragmentVideoPlayer : Fragment() {
     override fun onDestroyView() {
         _binding = null
         val activity = requireActivity()
-        if (activity is MainActivity) {
-            activity.binding.fab.visibility = View.VISIBLE
-        }
 
         currentVolume?.let {
             audioManager.setStreamVolume(musicStream, it, AudioManager.FLAG_PLAY_SOUND)
