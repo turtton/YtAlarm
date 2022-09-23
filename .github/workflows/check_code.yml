@@ -43,7 +43,7 @@ jobs:
           path: app/build/reports/kover
 
       - name: Download report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: report
           path: app/build/reports/kover
