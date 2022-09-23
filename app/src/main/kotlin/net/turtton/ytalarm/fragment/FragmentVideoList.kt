@@ -99,7 +99,7 @@ class FragmentVideoList :
         animFabRotateInfinity = AnimationUtils.loadAnimation(activity, R.anim.rotate_infinity)
 
         val binding = activity.binding
-        binding.fab.hide()
+        binding.fab.visibility = View.GONE
 
         isAddVideoFabRotated = false
         val addVideoFab = binding.fabAddVideo
@@ -119,7 +119,7 @@ class FragmentVideoList :
                 } else {
                     listenFabWithSyncMode(playlist.id!!, playlist.originUrl)
                 }
-                addVideoFab.visibility = View.VISIBLE
+                addVideoFab.show()
             }
         }
     }

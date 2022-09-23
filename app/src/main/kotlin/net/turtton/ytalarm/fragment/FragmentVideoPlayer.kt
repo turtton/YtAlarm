@@ -17,6 +17,7 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -102,7 +103,10 @@ class FragmentVideoPlayer : Fragment() {
         if (activity is MainActivity) {
             val fab = activity.binding.fab
             fab.clearAnimation()
-            fab.hide()
+            fab.visibility = View.GONE
+
+            activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+            activity.binding.toolbar.visibility = View.GONE
         }
 
         val snoozeButton = binding.fragmentVideoPlayerButtonSnooze
@@ -242,6 +246,11 @@ class FragmentVideoPlayer : Fragment() {
     override fun onDestroyView() {
         _binding = null
         val activity = requireActivity()
+
+        if (activity is MainActivity) {
+            activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
+            activity.binding.toolbar.visibility = View.VISIBLE
+        }
 
         currentVolume?.let {
             audioManager.setStreamVolume(musicStream, it, AudioManager.FLAG_PLAY_SOUND)

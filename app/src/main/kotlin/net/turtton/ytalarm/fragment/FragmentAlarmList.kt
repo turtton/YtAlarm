@@ -30,6 +30,9 @@ class FragmentAlarmList : FragmentAbstractList() {
     private val prevList = MutableStateFlow(mapOf<Long, Boolean>())
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        val activity = requireActivity() as MainActivity
+        activity.binding.fab.show()
+
         val layoutManager = LinearLayoutManager(view.context)
         val adapter = AlarmListAdapter(this)
         binding.recyclerList.layoutManager = layoutManager

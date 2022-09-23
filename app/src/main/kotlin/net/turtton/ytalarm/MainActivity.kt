@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
     private lateinit var appBarConfiguration: AppBarConfiguration
     lateinit var binding: ActivityMainBinding
+    lateinit var drawerLayout: DrawerLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         val mainNav = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
         navController = mainNav!!.findNavController()
         findViewById<NavigationView>(R.id.nav_view).setupWithNavController(navController)
-        val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        drawerLayout = findViewById(R.id.drawer_layout)
         appBarConfiguration = AppBarConfiguration(
             setOf(R.id.aram_list_fragment, R.id.playlist_fragment, R.id.all_video_list_fragment),
             drawerLayout
