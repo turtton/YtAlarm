@@ -9,5 +9,6 @@ data class Playlist(
     val id: Long? = null,
     var title: String = "Playlist",
     val thumbnailUrl: String? = null,
-    var videos: List<String> = emptyList()
+    var videos: List<String> = emptyList(),
+    val originUrl: String? = null
 )
