@@ -40,6 +40,13 @@ jobs:
         with:
           ref: ${{ steps.upstreambranch.outputs.head_ref }}
 
+      - name: Set up jdk
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: gradle
+
       - name: Check android test
         uses: reactivecircus/android-emulator-runner@v2
         with:
