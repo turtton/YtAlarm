@@ -27,13 +27,16 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
+import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.fragment.FragmentAlarmSettings
+import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.structure.AlarmSettingData
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
 import net.turtton.ytalarm.util.RepeatType
 import net.turtton.ytalarm.util.extensions.getDisplayTime
+import net.turtton.ytalarm.util.extensions.joinStringWithSlash
 import java.util.Calendar
 import java.util.Date
 import java.util.GregorianCalendar
@@ -73,16 +76,16 @@ class AlarmSettingsAdapter(
                 fragment.lifecycleScope.launch {
                     val playlists = async.await()
                     launch(Dispatchers.Main) {
-                        AlertDialog.Builder(fragment.activity)
-                            .setTitle(R.string.dialog_playlist_choice_title)
-                            .setItems(playlists.map { it.title }.toTypedArray()) { _, index ->
-                                val playlist = playlists[index]
-                                alarmState.update {
-                                    it.copy(playListId = playlist.id)
-                                }
-                                description.text = playlist.title
+                        DialogMultiChoiceVideo(playlists.map { it.toDisplayData() }) { _,ids ->
+                            alarmState.update {
+                                val newList = (it.playListId + ids).distinct()
+                                it.copy(playListId = newList)
                             }
-                            .show()
+                            val currentId = alarmState.value.playListId
+                            description.text = playlists.filter { currentId.contains(it.id!!) }
+                                .map { it.title }
+                                .joinStringWithSlash()
+                        }.show(fragment.childFragmentManager, "MultiChoicePlaylist")
                     }
                 }
             }

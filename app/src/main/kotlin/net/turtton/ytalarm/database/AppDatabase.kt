@@ -15,11 +15,12 @@ import net.turtton.ytalarm.database.dao.VideoDao
 import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.util.converter.LongListConverter
 import net.turtton.ytalarm.util.converter.RepeatTypeConverter
 import net.turtton.ytalarm.util.converter.StringListConverter
 
 @Database(entities = [Alarm::class, Video::class, Playlist::class], version = 1)
-@TypeConverters(StringListConverter::class, RepeatTypeConverter::class)
+@TypeConverters(StringListConverter::class, LongListConverter::class, RepeatTypeConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
 
@@ -63,7 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         suspend fun populateAlarmDatabase(dao: AlarmDao) {
             dao.deleteAll()
-            dao.insert(Alarm(playListId = 0))
+            dao.insert(Alarm(playListId = listOf(0)))
         }
 
         suspend fun populatePlaylistDatabase(dao: PlaylistDao) {

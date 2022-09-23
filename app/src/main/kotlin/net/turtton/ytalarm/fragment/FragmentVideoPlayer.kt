@@ -199,9 +199,11 @@ class FragmentVideoPlayer : Fragment() {
                     else -> {}
                 }
 
-                val playlist = playlistViewModel.getFromIdAsync(alarm.playListId!!).await()
-                val videos = playlist?.let { videoViewModel.getFromIdsAsync(it.videos).await() }
-                if (videos.isNullOrEmpty()) {
+                val playlist = playlistViewModel.getFromIdsAsync(alarm.playListId).await()
+                val videos = playlist.flatMap { it.videos }
+                    .distinct()
+                    .let { videoViewModel.getFromIdsAsync(it).await() }
+                if (videos.isEmpty()) {
                     launch(Dispatchers.Main) {
                         Snackbar.make(view, "Video is Empty", 900).show()
                     }
@@ -217,7 +219,7 @@ class FragmentVideoPlayer : Fragment() {
                     )
                 }
                 var queue = 0
-                playVideo(view, videos!!.first())
+                playVideo(view, videos.first())
                 videoView.setOnCompletionListener {
                     if (++queue >= videos.size) {
                         if (alarm.loop) {
