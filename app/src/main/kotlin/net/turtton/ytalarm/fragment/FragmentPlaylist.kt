@@ -8,16 +8,21 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.PlaylistAdapter
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
+import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.TagKeyProvider
+import net.turtton.ytalarm.viewmodel.AlarmViewModel
+import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
@@ -35,6 +40,9 @@ class FragmentPlaylist :
     }
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
+    }
+    val alarmViewModel: AlarmViewModel by viewModels {
+        AlarmViewModelFactory(requireActivity().application.repository)
     }
 
     override lateinit var selectionTracker: SelectionTracker<Long>
@@ -89,10 +97,31 @@ class FragmentPlaylist :
             R.id.menu_playlist_action_remove to {
                 val selection = fragment.selectionTracker.selection.toList()
                 DialogRemoveVideo { _, _ ->
+                    val alarmsAsync = fragment.alarmViewModel.getAllAlarmsAsync()
                     val async = fragment.playlistViewModel.getFromIdsAsync(selection)
                     fragment.lifecycleScope.launch {
-                        val playlists = async.await()
-                        fragment.playlistViewModel.delete(playlists)
+                        val usingList = alarmsAsync.await().flatMap { it.playListId }.distinct()
+                        val deletable = arrayListOf<Playlist>()
+                        var detectUsage = false
+                        async.await().forEach {
+                            if (!usingList.contains(it.id!!)) {
+                                deletable += it
+                            } else {
+                                detectUsage = true
+                            }
+                        }
+                        if (deletable.isNotEmpty()) {
+                            fragment.playlistViewModel.delete(deletable)
+                        }
+                        if (detectUsage) {
+                            launch(Dispatchers.Main) {
+                                Snackbar.make(
+                                    fragment.requireView(),
+                                    R.string.snackbar_detect_playlist_usage,
+                                    1200
+                                ).show()
+                            }
+                        }
                     }
                     fragment.selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "PlaylistRemoveDialog")

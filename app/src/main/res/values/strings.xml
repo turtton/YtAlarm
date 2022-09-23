@@ -95,6 +95,7 @@
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
     <string name="snackbar_sync_is_running">Download worker is already working. Please wait.</string>
+    <string name="snackbar_detect_playlist_usage">Err: some playlists are used by alarms.</string>
 
     <string name="notification_channel_name">YtAlarm</string>
     <string name="notification_snooze_channel_description">Snooze notification channel</string>
