@@ -21,7 +21,7 @@ data class VideoInformation(
     val domain: String,
     // video or playlist
     @SerialName("_type")
-    val type: String,
+    val type: String = "video",
     // available if type == playlist
     val entries: List<VideoInformation>? = null
 )
