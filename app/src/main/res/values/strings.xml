@@ -113,4 +113,6 @@
     <string name="videolist_fragment_label">Videos</string>
     <string name="videoplayer_fragment_label">Playing</string>
     <string name="allvideolist_fragment_label">All Videos</string>
+    <string name="menu_playlist_option_rename">Rename</string>
+    <string name="item_playlist_more_button_description">Option Button</string>
 </resources>
