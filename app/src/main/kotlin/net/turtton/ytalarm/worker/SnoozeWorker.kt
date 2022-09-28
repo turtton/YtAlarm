@@ -1,6 +1,5 @@
 package net.turtton.ytalarm.util
 
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -16,6 +15,7 @@ import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
+import net.turtton.ytalarm.util.extensions.compatPendingIntentFlag
 import net.turtton.ytalarm.util.extensions.pickNearestTime
 import net.turtton.ytalarm.worker.CoroutineIOWorker
 import java.util.*
@@ -126,12 +126,11 @@ class SnoozeRemoveReceiver : BroadcastReceiver() {
     companion object {
         private const val FLAG_SNOOZE_ID = "SnoozeId"
 
-        @SuppressLint("UnspecifiedImmutableFlag")
         fun getIntent(context: Context, alarmId: Long): PendingIntent {
             val intent = Intent(context, SnoozeRemoveReceiver::class.java)
                 .putExtra(FLAG_SNOOZE_ID, alarmId)
             return PendingIntent
-                .getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+                .getBroadcast(context, 0, intent, compatPendingIntentFlag)
         }
     }
 }
