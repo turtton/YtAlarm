@@ -1,13 +1,20 @@
 package net.turtton.ytalarm.adapter
 
+import android.app.AlertDialog
+import android.app.Dialog
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.PopupMenu
 import android.widget.TextView
-import androidx.lifecycle.LifecycleOwner
+import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.recyclerview.selection.ItemDetailsLookup
@@ -17,6 +24,7 @@ import androidx.recyclerview.selection.SelectionTracker.SelectionObserver
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentPlaylistDirections
@@ -29,7 +37,7 @@ class PlaylistAdapter<T>(
     private val fragment: T
 ) : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
     BasicComparator<Playlist>()
-) where T : VideoViewContainer, T : PlaylistViewContainer, T : LifecycleOwner {
+) where T : VideoViewContainer, T : PlaylistViewContainer, T : Fragment {
     private val currentCheckBox = hashSetOf<Pair<Long, CheckBox>>()
 
     var tracker: SelectionTracker<Long>? = null
@@ -104,6 +112,23 @@ class PlaylistAdapter<T>(
                 )
                 itemView.findNavController().navigate(action)
             }
+
+            optionButton.setOnClickListener {
+                val menu =
+                    PopupMenu(it.context, it.findViewById(R.id.item_playlist_option_button))
+                menu.inflate(R.menu.menu_playlist_option)
+                menu.setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.itemId) {
+                        R.id.menu_playlist_option_rename -> {
+                            DialogNameInput(data.id, fragment, title.text.toString())
+                                .show(fragment.childFragmentManager, "DialogNameInput")
+                            true
+                        }
+                        else -> false
+                    }
+                }
+                menu.show()
+            }
         }
     }
 
@@ -116,6 +141,7 @@ class PlaylistAdapter<T>(
         val videoCount: TextView = view.findViewById(R.id.item_playlist_video_count)
         val thumbnail: ImageView = view.findViewById(R.id.item_playlist_thumbnail)
         val checkBox: CheckBox = view.findViewById(R.id.item_playlist_checkbox)
+        val optionButton: ImageButton = view.findViewById(R.id.item_playlist_option_button)
 
         init {
             checkBox.visibility = View.GONE
@@ -137,6 +163,40 @@ class PlaylistAdapter<T>(
                     null
                 }
             }
+        }
+    }
+
+    class DialogNameInput(
+        private val targetId: Long,
+        private val playlistViewContainer: PlaylistViewContainer,
+        private val currentName: String
+    ) : DialogFragment() {
+
+        override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+            val editText = EditText(context)
+            editText.setText(currentName)
+
+            editText.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        editText.selectAll()
+                    }
+                }
+            }
+
+            return AlertDialog.Builder(context)
+                .setView(editText)
+                .setPositiveButton(R.string.dialog_playlist_name_input_ok) { _, _ ->
+                    lifecycleScope.launch {
+                        val viewModel = playlistViewContainer.playlistViewModel
+                        viewModel.getFromIdAsync(targetId)
+                            .await()
+                            ?.let {
+                                viewModel.update(it.copy(title = editText.text.toString()))
+                            }
+                    }
+                }.setNegativeButton(R.string.dialog_playlist_name_input_cancel) { _, _ -> }
+                .create()
         }
     }
 }

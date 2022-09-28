@@ -91,6 +91,9 @@
     <string name="dialog_require_overlay_perm">This application requires overlay permission to display alarm.</string>
     <string name="dialog_require_overlay_perm_ok">OK</string>
 
+    <string name="dialog_playlist_name_input_ok">Rename</string>
+    <string name="dialog_playlist_name_input_cancel">Cancel</string>
+
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
