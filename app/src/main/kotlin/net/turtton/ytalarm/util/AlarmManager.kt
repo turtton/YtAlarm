@@ -1,6 +1,5 @@
 package net.turtton.ytalarm.util
 
-import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -10,6 +9,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import net.turtton.ytalarm.AlarmActivity
 import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.util.extensions.compatPendingIntentFlag
 import net.turtton.ytalarm.util.extensions.pickNearestTime
 import java.util.*
 
@@ -29,12 +29,11 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
 
-        @SuppressLint("UnspecifiedImmutableFlag")
         val pendingIntent = PendingIntent.getActivity(
             context,
             0,
             intent,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            compatPendingIntentFlag
         )
 
         if (!alarm.enable) {
