@@ -139,7 +139,9 @@ class PlaylistAdapter<T>(
     }
 
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
-        currentCheckBox.remove(ViewContainer(holder.itemView.tag as Long, holder.checkBox, holder.optionButton))
+        currentCheckBox.remove(
+            ViewContainer(holder.itemView.tag as Long, holder.checkBox, holder.optionButton)
+        )
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -206,5 +208,9 @@ class PlaylistAdapter<T>(
         }
     }
 
-    private data class ViewContainer(val id: Long, val checkBox: CheckBox, val optionButton: ImageButton)
+    private data class ViewContainer(
+        val id: Long,
+        val checkBox: CheckBox,
+        val optionButton: ImageButton
+    )
 }
