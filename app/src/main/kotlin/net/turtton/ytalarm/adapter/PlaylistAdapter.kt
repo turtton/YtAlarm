@@ -38,20 +38,26 @@ class PlaylistAdapter<T>(
 ) : ListAdapter<Playlist, PlaylistAdapter.ViewHolder>(
     BasicComparator<Playlist>()
 ) where T : VideoViewContainer, T : PlaylistViewContainer, T : Fragment {
-    private val currentCheckBox = hashSetOf<Pair<Long, CheckBox>>()
+    private val currentCheckBox = hashSetOf<ViewContainer>()
 
     var tracker: SelectionTracker<Long>? = null
         set(value) {
             value?.let {
                 it.addObserver(object : SelectionObserver<Long>() {
                     override fun onSelectionChanged() {
-                        currentCheckBox.forEach { (id, box) ->
+                        currentCheckBox.forEach { (id, box, option) ->
                             box.visibility = if (it.hasSelection()) {
                                 View.VISIBLE
                             } else {
                                 View.GONE
                             }
                             box.isChecked = it.isSelected(id)
+
+                            option.visibility = if (it.hasSelection()) {
+                                View.GONE
+                            } else {
+                                View.VISIBLE
+                            }
                         }
                     }
                 })
@@ -69,7 +75,7 @@ class PlaylistAdapter<T>(
         val data = getItem(position)
         holder.itemView.tag = data.id!!.toLong()
         holder.apply {
-            currentCheckBox += data.id to checkBox
+            currentCheckBox += ViewContainer(data.id, checkBox, optionButton)
             title.text = data.title
             val size = data.videos.size
             if (data.videos.isNotEmpty()) {
@@ -133,7 +139,7 @@ class PlaylistAdapter<T>(
     }
 
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
-        currentCheckBox.remove(holder.itemView.tag as Long to holder.checkBox)
+        currentCheckBox.remove(ViewContainer(holder.itemView.tag as Long, holder.checkBox, holder.optionButton))
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -199,4 +205,6 @@ class PlaylistAdapter<T>(
                 .create()
         }
     }
+
+    private data class ViewContainer(val id: Long, val checkBox: CheckBox, val optionButton: ImageButton)
 }
