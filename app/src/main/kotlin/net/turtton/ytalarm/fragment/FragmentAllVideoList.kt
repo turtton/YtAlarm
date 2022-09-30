@@ -112,24 +112,31 @@ class FragmentAllVideoList :
                 true
             },
             R.id.menu_video_list_action_remove to {
-                val selection = fragment.selectionTracker.selection
+                val selection = fragment.selectionTracker.selection.toList()
                 DialogRemoveVideo { _, _ ->
-                    val async = fragment.videoViewModel.getFromIdsAsync(selection.toList())
+                    val videoViewModel = fragment.videoViewModel
+                    val async = videoViewModel.getFromIdsAsync(selection)
                     fragment.lifecycleScope.launch {
                         val videos = async.await()
-                        fragment.videoViewModel.delete(videos)
-                        val ids = videos.map { it.id }
+                        videoViewModel.delete(videos)
                         val playlists = fragment.playlistViewModel
-                            .getFromContainsVideoIdsAsync(ids)
+                            .getFromContainsVideoIdsAsync(selection)
                             .await()
-                        playlists.forEach { playlist ->
-                            playlist.videos = playlist.videos.toMutableList().apply {
-                                removeIf {
-                                    ids.contains(it)
-                                }
+                        val newList = playlists.map {
+                            it.copy(
+                                videos = it.videos.filterNot { video -> selection.contains(video) }
+                            )
+                        }.map {
+                            if (videos.any { video -> video.thumbnailUrl == it.thumbnailUrl }) {
+                                val newVideoId = it.videos.firstOrNull() ?: ""
+                                videoViewModel.getFromIdAsync(newVideoId).await()?.let { video ->
+                                    it.copy(thumbnailUrl = video.thumbnailUrl)
+                                } ?: it
+                            } else {
+                                it
                             }
                         }
-                        fragment.playlistViewModel.update(playlists)
+                        fragment.playlistViewModel.update(newList)
                     }
                     fragment.selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "VideoRemoveDialog")
