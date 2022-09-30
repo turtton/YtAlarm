@@ -31,16 +31,17 @@ jobs:
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1
 
-      - name: Pre test
-        uses: gradle/gradle-build-action@v2
-        with:
-          arguments: testDebugUnitTest
-
       - name: Check android test
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
           script: ./gradlew check --stacktrace
+
+      - name: Generate combined report
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: ./gradlew combinedTestReportDebug --stacktrace
 
       - name: Generate report
         uses: actions/upload-artifact@v3
