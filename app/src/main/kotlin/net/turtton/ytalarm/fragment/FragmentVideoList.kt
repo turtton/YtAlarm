@@ -319,7 +319,18 @@ class FragmentVideoList :
                         val playlist = async.await() ?: return@launch
                         val videoList = playlist.videos.toMutableSet()
                         videoList.removeAll(selection)
-                        val newList = playlist.copy(videos = videoList.toList())
+                        var newList = playlist.copy(videos = videoList.toList())
+
+                        val videoViewModel = fragment.videoViewModel
+                        val videos = videoViewModel
+                            .getFromIdsAsync(selection.toList())
+                            .await()
+                        if (videos.any { it.thumbnailUrl == playlist.thumbnailUrl }) {
+                            val newTarget = videoList.firstOrNull() ?: ""
+                            val targetVideo = videoViewModel.getFromIdAsync(newTarget).await()
+                            newList = newList.copy(thumbnailUrl = targetVideo?.thumbnailUrl)
+                        }
+
                         if (playlist.id == null) {
                             @Suppress("DeferredResultUnused")
                             fragment.playlistViewModel.insertAsync(newList)
