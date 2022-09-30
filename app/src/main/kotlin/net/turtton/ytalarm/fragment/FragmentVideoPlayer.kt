@@ -188,7 +188,7 @@ class FragmentVideoPlayer : Fragment() {
                 }
                 when (repeatType) {
                     is RepeatType.Once -> {
-                        alarmViewModel.update(alarm.copy(repeatType = repeatType, enable = false))
+                        alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
                     }
                     is RepeatType.Everyday, is RepeatType.Days -> {
                         alarmViewModel.update(alarm)
@@ -222,7 +222,7 @@ class FragmentVideoPlayer : Fragment() {
                 playVideo(view, videos.first())
                 videoView.setOnCompletionListener {
                     if (++queue >= videos.size) {
-                        if (alarm.loop) {
+                        if (alarm.shouldLoop) {
                             queue = 0
                         } else {
                             return@setOnCompletionListener
