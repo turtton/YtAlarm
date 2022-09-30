@@ -10,7 +10,7 @@ buildscript {
 plugins {
     id("com.android.application") version "7.3.0" apply false
     id("com.android.library") version "7.3.0" apply false
-    id("org.jetbrains.kotlin.android") version "1.7.10" apply false
+    id("org.jetbrains.kotlin.android") version "1.7.20" apply false
     id("org.jmailen.kotlinter") version "3.12.0" apply false
     id("org.jetbrains.kotlinx.kover") version "0.6.0" apply false
 }

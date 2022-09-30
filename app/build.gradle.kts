@@ -3,9 +3,9 @@ import kotlinx.kover.api.KoverTaskExtension
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.7.10-1.0.6"
+    id("com.google.devtools.ksp") version "1.7.20-1.0.6"
     id("androidx.navigation.safeargs.kotlin")
-    kotlin("plugin.serialization") version "1.7.10"
+    kotlin("plugin.serialization") version "1.7.20"
     id("org.jmailen.kotlinter")
     id("org.jetbrains.kotlinx.kover")
 }
@@ -139,7 +139,7 @@ dependencies {
     implementation("com.github.yausername.youtubedl-android:library:0.14.0")?.also {
         implementation("com.github.yausername.youtubedl-android:common:${it.version}")
     }
-    implementation("com.github.bumptech.glide:glide:4.13.2")?.also {
+    implementation("com.github.bumptech.glide:glide:4.14.1")?.also {
         annotationProcessor("com.github.bumptech.glide:compiler:${it.version}")
     }
     implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.16")?.also {
