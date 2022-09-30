@@ -40,7 +40,7 @@ class FragmentAlarmList : FragmentAbstractList() {
         val allAlarms = alarmViewModel.allAlarms
         allAlarms.observe(viewLifecycleOwner) { list ->
             list?.let { alarmList ->
-                val compList = alarmList.associate { it.id!! to it.enable }
+                val compList = alarmList.associate { it.id!! to it.isEnable }
                 val currentState = prevList.value
                 prevList.update { compList }
                 if (alarmList.size == currentState.size) {

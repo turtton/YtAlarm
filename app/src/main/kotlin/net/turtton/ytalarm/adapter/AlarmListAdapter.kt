@@ -35,12 +35,12 @@ class AlarmListAdapter(
             alarmTime.text = data.getDisplayTime()
             val context = itemView.context
             alarmType.text = data.repeatType.getDisplay(context)
-            alarmSwitch.isChecked = data.enable
+            alarmSwitch.isChecked = data.isEnable
             alarmSwitch.setOnCheckedChangeListener { button, isChecked ->
                 val async = parentFragment.alarmViewModel.getFromIdAsync(data.id!!)
                 button.isClickable = false
                 parentFragment.lifecycleScope.launch {
-                    val alarm = async.await().copy(enable = isChecked)
+                    val alarm = async.await().copy(isEnable = isChecked)
                     parentFragment.alarmViewModel.update(alarm).join()
                     launch(Dispatchers.Main) {
                         button.isClickable = true

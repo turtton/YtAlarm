@@ -12,9 +12,9 @@ data class Alarm(
     val minute: Int = 0,
     val repeatType: RepeatType = RepeatType.Once,
     val playListId: List<Long> = emptyList(),
-    val loop: Boolean = false,
+    val shouldLoop: Boolean = false,
     // max 100(%)
     val volume: Int = 50,
     val snoozeMinute: Int = 5,
-    val enable: Boolean = false
+    val isEnable: Boolean = false
 )

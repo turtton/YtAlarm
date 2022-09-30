@@ -17,13 +17,13 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
     observe(lifecycleOwner) { list ->
         if (alarmManager == null) return@observe
-        val alarmList = list.filter { it.enable }.toMutableList()
+        val alarmList = list.filter { it.isEnable }.toMutableList()
 
         val intent = Intent(context, AlarmActivity::class.java)
 
         val nowTime = Calendar.getInstance()
         val (alarm, calendar) = alarmList.pickNearestTime(nowTime) ?: kotlin.run {
-            Alarm(id = -1, enable = false) to nowTime
+            Alarm(id = -1, isEnable = false) to nowTime
         }
 
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
@@ -36,7 +36,7 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
             compatPendingIntentFlag
         )
 
-        if (!alarm.enable) {
+        if (!alarm.isEnable) {
             alarmManager.cancel(pendingIntent)
             return@observe
         }

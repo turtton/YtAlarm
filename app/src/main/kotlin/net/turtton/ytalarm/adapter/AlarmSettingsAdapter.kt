@@ -91,9 +91,9 @@ class AlarmSettingsAdapter(
             }
 
         val loopToggle =
-            AlarmSettingData.ToggleData(R.string.setting_loop, alarm.loop) { _, value ->
+            AlarmSettingData.ToggleData(R.string.setting_loop, alarm.shouldLoop) { _, value ->
                 alarmState.update {
-                    it.copy(loop = value)
+                    it.copy(shouldLoop = value)
                 }
             }
 
