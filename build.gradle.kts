@@ -12,14 +12,14 @@ plugins {
     id("com.android.library") version "7.3.0" apply false
     id("org.jetbrains.kotlin.android") version "1.7.20" apply false
     id("org.jmailen.kotlinter") version "3.12.0" apply false
-    id("com.vanniktech.android.junit.jacoco") version "0.16.0"
+    id("nl.neotech.plugin.rootcoverage") version "1.6.0"
 }
 
 tasks.create("clean") {
     delete(rootProject.buildDir)
 }
 
-junitJacoco {
+rootCoverage {
     excludes = listOf(
         // Android
         "**/R.class",
@@ -34,4 +34,6 @@ junitJacoco {
         "**/*Directions\$*.*",
         "**/databinding/**"
     )
+
+    generateXml = true
 }

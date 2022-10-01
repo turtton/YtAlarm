@@ -31,32 +31,26 @@ jobs:
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1
 
-      - name: Check android test
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          script: ./gradlew check --stacktrace
-
       - name: Generate combined report
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
-          script: ./gradlew combinedTestReportDebug --stacktrace
+          script: ./gradlew :rootCoverageReport --stacktrace
 
       - name: Generate report
         uses: actions/upload-artifact@v3
         with:
           name: report
-          path: app/build/reports/jacocoCombined/debug
+          path: build/reports
 
       - name: Download report
         uses: actions/download-artifact@v3
         with:
           name: report
-          path: app/build/reports/jacocoCombined/debug
+          path: build/reports
 
       - name: Upload Report
         uses: codecov/codecov-action@v3
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: "app/build/reports/jacocoCombined/debug/jacoco.xml"
+          files: "build/reports/jacoco.xml"
