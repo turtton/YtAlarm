@@ -5,10 +5,6 @@ import android.view.View
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
-import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.kotest.matchers.shouldBe
@@ -30,7 +26,6 @@ class TestMainActivity {
 
     @Test
     fun basicFabTest() {
-        onView(withId(R.id.fab)).check(matches(isDisplayed()))
         activityRule.scenario.onActivity {
             val navController = it.supportFragmentManager
                 .findFragmentById(R.id.nav_host_fragment_content_main)!!
