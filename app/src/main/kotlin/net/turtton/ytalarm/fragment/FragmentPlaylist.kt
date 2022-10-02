@@ -49,7 +49,7 @@ class FragmentPlaylist :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val activity = requireActivity() as MainActivity
-        activity.binding.fab.show()
+        activity.binding.fab.visibility = View.VISIBLE
 
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
