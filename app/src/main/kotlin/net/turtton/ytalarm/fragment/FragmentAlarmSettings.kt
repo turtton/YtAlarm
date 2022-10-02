@@ -2,6 +2,7 @@ package net.turtton.ytalarm.fragment
 
 import android.os.Bundle
 import android.view.View
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -39,7 +40,9 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val fab = (requireActivity() as MainActivity).binding.fab
+        val mainActivity = requireActivity() as MainActivity
+        mainActivity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+        val fab = mainActivity.binding.fab
         fab.extend()
         fab.visibility = View.GONE
 

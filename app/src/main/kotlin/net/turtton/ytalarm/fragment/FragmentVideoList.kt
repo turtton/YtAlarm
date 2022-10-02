@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
@@ -92,6 +93,7 @@ class FragmentVideoList :
         updateListObserver()
 
         val activity = requireActivity() as MainActivity
+        activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
 
         animFabAppear = AnimationUtils.loadAnimation(activity, R.anim.fab_appear)
         animFabDisappear = AnimationUtils.loadAnimation(activity, R.anim.fab_disappear)
