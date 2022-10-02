@@ -16,7 +16,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.databinding.ActivityMainBinding
 import net.turtton.ytalarm.fragment.FragmentPlaylistDirections
 import net.turtton.ytalarm.fragment.FragmentVideoPlayerArgs
 import org.junit.Rule
@@ -33,8 +32,6 @@ class TestMainActivity {
     fun basicFabTest() {
         onView(withId(R.id.fab)).check(matches(isDisplayed()))
         activityRule.scenario.onActivity {
-            val binding = it.binding
-
             val navController = it.supportFragmentManager
                 .findFragmentById(R.id.nav_host_fragment_content_main)!!
                 .findNavController()
@@ -42,33 +39,33 @@ class TestMainActivity {
             it.lifecycleScope.launch {
                 // alarmListFragment -> alarmSettingsFragment -> alarmListFragment
                 launchMain {
-                    binding.checkAlarmListFab()
+                    it.checkAlarmListFab()
                 }.join()
 
                 navController.navigate(R.id.action_AlarmListFragment_to_AlarmSettingsFragment)
                 launchMain {
-                    binding.checkAlarmSettingFab()
+                    it.checkAlarmSettingFab()
                 }.join()
 
                 navController.navigateUp()
                 launchMain {
-                    binding.checkAlarmListFab()
+                    it.checkAlarmListFab()
                 }.join()
 
                 // playlistFragment -> videoListFragment -> playlistFragment
                 navController.navigate(R.id.nav_graph_playlist)
                 launchMain {
-                    binding.checkPlaylistFab()
+                    it.checkPlaylistFab()
                 }.join()
 
                 navController.navigate(
                     FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment()
                 )
-                checkVideoListFab(this, binding)
+                it.checkVideoListFab(this)
 
                 navController.navigateUp()
                 launchMain {
-                    binding.checkPlaylistFab()
+                    it.checkPlaylistFab()
                 }.join()
 
                 // allVideoListFragment -> videoPlayerFragment -> allPlaylistFragment
@@ -96,36 +93,42 @@ class TestMainActivity {
         private const val invisible = View.INVISIBLE
         private const val gone = View.GONE
 
-        private fun ActivityMainBinding.checkAlarmListFab() {
-            fab.visibility shouldBe visible
-            fab.isExtended shouldBe false
-            fabAddVideoFromLink.visibility shouldBe gone
-            fabAddVideoFromVideo.visibility shouldBe gone
+        private fun MainActivity.checkAlarmListFab() {
+            binding.fab.visibility shouldBe visible
+            binding.fab.isExtended shouldBe false
+            binding.fabAddVideoFromLink.visibility shouldBe gone
+            binding.fabAddVideoFromVideo.visibility shouldBe gone
+            drawerLayout.getDrawerLockMode(Gravity.LEFT) shouldBe DrawerLayout.LOCK_MODE_UNLOCKED
         }
 
-        private fun ActivityMainBinding.checkAlarmSettingFab() {
-            fab.visibility shouldBe visible
-            fab.isExtended shouldBe true
-            fabAddVideoFromLink.visibility shouldBe gone
-            fabAddVideoFromVideo.visibility shouldBe gone
+        private fun MainActivity.checkAlarmSettingFab() {
+            binding.fab.visibility shouldBe visible
+            binding.fab.isExtended shouldBe true
+            binding.fabAddVideoFromLink.visibility shouldBe gone
+            binding.fabAddVideoFromVideo.visibility shouldBe gone
+            val drawerLockMode = drawerLayout.getDrawerLockMode(Gravity.LEFT)
+            drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
         }
 
-        private fun ActivityMainBinding.checkPlaylistFab() {
-            fab.visibility shouldBe visible
-            fab.isExtended shouldBe false
-            fabAddVideoFromLink.visibility shouldBe gone
-            fabAddVideoFromVideo.visibility shouldBe gone
+        private fun MainActivity.checkPlaylistFab() {
+            binding.fab.visibility shouldBe visible
+            binding.fab.isExtended shouldBe false
+            binding.fabAddVideoFromLink.visibility shouldBe gone
+            binding.fabAddVideoFromVideo.visibility shouldBe gone
+            drawerLayout.getDrawerLockMode(Gravity.LEFT) shouldBe DrawerLayout.LOCK_MODE_UNLOCKED
         }
 
         /**
          * This method is not good for testing, but I could not find good way to launching multiple coroutine.
          * Please avoid including CoroutineScope field in arguments to make stack trace information easy to read.
          */
-        private suspend fun checkVideoListFab(scope: CoroutineScope, binding: ActivityMainBinding) {
+        private suspend fun MainActivity.checkVideoListFab(scope: CoroutineScope) {
             scope.launchMain {
                 binding.fab.visibility shouldBe gone
                 binding.fabAddVideoFromLink.visibility shouldBe invisible
                 binding.fabAddVideoFromVideo.visibility shouldBe invisible
+                val drawerLockMode = drawerLayout.getDrawerLockMode(Gravity.LEFT)
+                drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
             }.join()
 
             scope.launch {
