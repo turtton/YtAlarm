@@ -30,11 +30,10 @@ class TestMainActivity {
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Test
-    fun fabViewTest() {
+    fun basicFabTest() {
         onView(withId(R.id.fab)).check(matches(isDisplayed()))
         activityRule.scenario.onActivity {
             val binding = it.binding
-
 
             val navController = it.supportFragmentManager
                 .findFragmentById(R.id.nav_host_fragment_content_main)!!
@@ -118,7 +117,6 @@ class TestMainActivity {
             fabAddVideoFromVideo.visibility shouldBe gone
         }
 
-
         /**
          * This method is not good for testing, but I could not find good way to launching multiple coroutine.
          * Please avoid including CoroutineScope field in arguments to make stack trace information easy to read.
@@ -168,7 +166,8 @@ class TestMainActivity {
             activity.binding.fabAddVideoFromLink.visibility shouldBe gone
             activity.binding.fabAddVideoFromVideo.visibility shouldBe gone
 
-            activity.drawerLayout.getDrawerLockMode(Gravity.LEFT) shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+            val drawerLockMode = activity.drawerLayout.getDrawerLockMode(Gravity.LEFT)
+            drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
         }
 
         private fun CoroutineScope.launchMain(block: suspend CoroutineScope.() -> Unit) =
