@@ -77,6 +77,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.2")?.version?.also {
         implementation("androidx.navigation:navigation-ui-ktx:$it")
+        androidTestImplementation("androidx.navigation:navigation-testing:$it")
     }
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
