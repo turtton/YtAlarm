@@ -67,6 +67,7 @@ android {
                 it.useJUnitPlatform()
             }
         }
+        animationsDisabled = true
     }
 }
 
