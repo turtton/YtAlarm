@@ -33,7 +33,6 @@ class TestCoroutineWorker {
         runBlocking {
             val result = worker.doWork()
             (result is Success) shouldBe true
-            result.outputData.getLongArray("playlist") shouldBe arrayOf(0L)
         }
     }
 }

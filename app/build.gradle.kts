@@ -1,5 +1,3 @@
-import kotlinx.kover.api.KoverTaskExtension
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,7 +5,6 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.20"
     id("org.jmailen.kotlinter")
-    id("org.jetbrains.kotlinx.kover")
 }
 
 android {
@@ -34,6 +31,7 @@ android {
     buildTypes {
         debug {
             enableUnitTestCoverage = true
+            enableAndroidTestCoverage = true
         }
         release {
             isMinifyEnabled = false
@@ -67,47 +65,9 @@ android {
             isReturnDefaultValues = true
             all {
                 it.useJUnitPlatform()
-                it.extensions.configure<KoverTaskExtension> {
-                    if (it.name == "testDebugUnitTest") {
-                        isDisabled.set(false)
-                        reportFile.set(file("$buildDir/reports/kover/debug-report.bin"))
-                        includes.set(listOf("net.turtton.*"))
-                        excludes.set(
-                            listOf(
-                                // Android
-                                "*BuildConfig*",
-                                // Dagger/Hilt
-                                "*_*Factory*",
-                                "*_ComponentTreeDeps*",
-                                "*Hilt_**",
-                                "*HiltWrapper_*",
-                                "*_Factory*",
-                                "*_GeneratedInjector*",
-                                "*_HiltComponents*",
-                                "*_HiltModules*",
-                                "*_HiltModules_BindsModule*",
-                                "*_HiltModules_KeyModule*",
-                                "*_MembersInjector*",
-                                "*_ProvideFactory*",
-                                "*_SingletonC*",
-                                "*_TestComponentDataSupplier*",
-                                // DataBinding
-                                "*BR*",
-                                "*DataBinderMapperImpl*",
-                                "*Binding*",
-                                "*BindingImpl*",
-                                "DataBindingTriggerClass*",
-                                // Navigation
-                                "*FragmentDirections*",
-                                "*FragmentArgs*"
-                            )
-                        )
-                    } else {
-                        isDisabled.set(true)
-                    }
-                }
             }
         }
+        animationsDisabled = true
     }
 }
 
@@ -118,6 +78,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.2")?.version?.also {
         implementation("androidx.navigation:navigation-ui-ktx:$it")
+        androidTestImplementation("androidx.navigation:navigation-testing:$it")
     }
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
@@ -155,22 +116,13 @@ dependencies {
     }
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation("org.robolectric:robolectric:4.8.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.3")
+    androidTestImplementation("androidx.test.ext:junit-ktx:1.1.3")
+    androidTestImplementation("androidx.test:rules:1.4.0")
+    androidTestImplementation("androidx.test:runner:1.4.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     androidTestImplementation("androidx.room:room-testing:${room?.version}")
 }
 
 kotlinter {
     experimentalRules = true
-}
-
-kover {
-    xmlReport {
-        onCheck.set(true)
-        reportFile.set(file("$buildDir/reports/kover/report.xml"))
-    }
-    htmlReport {
-        onCheck.set(true)
-        reportDir.set(file("$buildDir/reports/kover/html-report"))
-    }
 }

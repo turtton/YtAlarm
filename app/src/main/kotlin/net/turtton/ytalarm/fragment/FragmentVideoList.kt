@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
@@ -92,6 +93,7 @@ class FragmentVideoList :
         updateListObserver()
 
         val activity = requireActivity() as MainActivity
+        activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
 
         animFabAppear = AnimationUtils.loadAnimation(activity, R.anim.fab_appear)
         animFabDisappear = AnimationUtils.loadAnimation(activity, R.anim.fab_disappear)
@@ -266,7 +268,9 @@ class FragmentVideoList :
         val fabAddVideoFromLink = binding.fabAddVideoFromLink
         if (isAddVideoFabRotated) {
             fabAddVideo.startAnimation(animFabRotateBackward)
-            fabAddVideo.setImageResource(R.drawable.ic_add_video)
+            val icAddVideo = R.drawable.ic_add_video
+            fabAddVideo.setImageResource(icAddVideo)
+            fabAddVideo.tag = icAddVideo
 
             fabAddVideoFromVideo.startAnimation(animFabDisappear)
             fabAddVideoFromVideo.isClickable = false
@@ -277,7 +281,9 @@ class FragmentVideoList :
             isAddVideoFabRotated = false
         } else {
             fabAddVideo.startAnimation(animFabRotateForward)
-            fabAddVideo.setImageResource(R.drawable.ic_add)
+            val icAdd = R.drawable.ic_add
+            fabAddVideo.setImageResource(icAdd)
+            fabAddVideo.tag = icAdd
 
             fabAddVideoFromVideo.startAnimation(animFabAppear)
             fabAddVideoFromVideo.isClickable = true
