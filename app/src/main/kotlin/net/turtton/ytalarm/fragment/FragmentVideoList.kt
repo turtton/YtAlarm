@@ -266,7 +266,9 @@ class FragmentVideoList :
         val fabAddVideoFromLink = binding.fabAddVideoFromLink
         if (isAddVideoFabRotated) {
             fabAddVideo.startAnimation(animFabRotateBackward)
-            fabAddVideo.setImageResource(R.drawable.ic_add_video)
+            val icAddVideo = R.drawable.ic_add_video
+            fabAddVideo.setImageResource(icAddVideo)
+            fabAddVideo.tag = icAddVideo
 
             fabAddVideoFromVideo.startAnimation(animFabDisappear)
             fabAddVideoFromVideo.isClickable = false
@@ -277,7 +279,9 @@ class FragmentVideoList :
             isAddVideoFabRotated = false
         } else {
             fabAddVideo.startAnimation(animFabRotateForward)
-            fabAddVideo.setImageResource(R.drawable.ic_add)
+            val icAdd = R.drawable.ic_add
+            fabAddVideo.setImageResource(icAdd)
+            fabAddVideo.tag = icAdd
 
             fabAddVideoFromVideo.startAnimation(animFabAppear)
             fabAddVideoFromVideo.isClickable = true
