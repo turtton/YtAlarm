@@ -91,6 +91,9 @@
     <string name="dialog_require_permission">Permission Required</string>
     <string name="dialog_require_overlay_perm">This application requires \"Display over other apps\" permission to display alarm.</string>
     <string name="dialog_require_overlay_perm_ok">OK</string>
+    <string name="dialog_require_configuration">Configuration Required</string>
+    <string name="dialog_require_disable_restrictions">This application requires disabling the option \"Remove permissions if app is unused\"</string>
+    <string name="dialog_require_disable_restrictions_ok">OK</string>
 
     <string name="dialog_playlist_name_input_ok">Rename</string>
     <string name="dialog_playlist_name_input_cancel">Cancel</string>
@@ -100,6 +103,7 @@
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
     <string name="snackbar_sync_is_running">Download worker is already working. Please wait.</string>
     <string name="snackbar_detect_playlist_usage">Err: some playlists are used by alarms.</string>
+    <string name="snackbar_failed_to_check_restriction">Err: failed to check app restriction status.</string>
 
     <string name="notification_channel_name">YtAlarm</string>
     <string name="notification_snooze_channel_description">Snooze notification channel</string>
