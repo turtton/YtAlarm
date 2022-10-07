@@ -10,6 +10,10 @@ import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
+import androidx.core.content.IntentCompat
+import androidx.core.content.PackageManagerCompat
+import androidx.core.content.UnusedAppRestrictionsConstants
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -18,6 +22,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
 import net.turtton.ytalarm.databinding.ActivityMainBinding
 import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.util.initYtDL
@@ -55,23 +60,52 @@ class MainActivity : AppCompatActivity() {
         requestPermission()
     }
 
+    override fun onRestart() {
+        super.onRestart()
+        requestPermission()
+    }
+
     private fun requestPermission() {
-        val hasPerm = { Settings.canDrawOverlays(applicationContext) }
-        if (!hasPerm()) {
+        val hasDrawPerm = { Settings.canDrawOverlays(this) }
+        val activity = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {}
+        if (!hasDrawPerm()) {
             val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-            val activity = registerForActivityResult(
-                ActivityResultContracts.StartActivityForResult()
-            ) {
-                if (!hasPerm()) {
-                    requestPermission()
-                }
-            }
             AlertDialog.Builder(this)
-                .setTitle(R.string.dialog_require_overlay_perm)
+                .setTitle(R.string.dialog_require_permission)
+                .setMessage(R.string.dialog_require_overlay_perm)
                 .setPositiveButton(R.string.dialog_require_overlay_perm_ok) { _, _ ->
                     activity.launch(intent)
-                    finish()
                 }.show()
+        } else {
+            PackageManagerCompat.getUnusedAppRestrictionsStatus(this).let {
+                it.addListener({
+                    when (it.get()) {
+                        UnusedAppRestrictionsConstants.API_30_BACKPORT,
+                        UnusedAppRestrictionsConstants.API_30,
+                        UnusedAppRestrictionsConstants.API_31 -> {
+                            val intent = IntentCompat
+                                .createManageUnusedAppRestrictionsIntent(this, packageName)
+                            AlertDialog.Builder(this)
+                                .setTitle(R.string.dialog_require_configuration)
+                                .setMessage(R.string.dialog_require_disable_restrictions)
+                                .setPositiveButton(
+                                    R.string.dialog_require_disable_restrictions_ok
+                                ) { _, _ ->
+                                    activity.launch(intent)
+                                }.show()
+                        }
+                        UnusedAppRestrictionsConstants.ERROR -> {
+                            Snackbar.make(
+                                binding.root.rootView,
+                                R.string.snackbar_failed_to_check_restriction,
+                                900
+                            ).show()
+                        }
+                    }
+                }, ContextCompat.getMainExecutor(this))
+            }
         }
     }
 
