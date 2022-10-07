@@ -88,7 +88,8 @@
         <item name="dialog_repeat_days_choice_sat">Sat</item>
         <item name="dialog_repeat_days_choice_sun">Sun</item>
     </string-array>
-    <string name="dialog_require_overlay_perm">This application requires Display over other apps permission to display alarm.</string>
+    <string name="dialog_require_permission">Permission Required</string>
+    <string name="dialog_require_overlay_perm">This application requires \"Display over other apps\" permission to display alarm.</string>
     <string name="dialog_require_overlay_perm_ok">OK</string>
 
     <string name="dialog_playlist_name_input_ok">Rename</string>
