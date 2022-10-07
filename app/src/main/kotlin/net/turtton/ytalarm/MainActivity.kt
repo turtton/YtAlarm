@@ -101,8 +101,7 @@ class MainActivity : AppCompatActivity() {
                                 binding.root.rootView,
                                 R.string.snackbar_failed_to_check_restriction,
                                 900
-                            )
-                                .show()
+                            ).show()
                         }
                     }
                 }, ContextCompat.getMainExecutor(this))
