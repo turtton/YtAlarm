@@ -31,7 +31,12 @@ class MultiChoiceVideoListAdapter<T>(
         data.thumbnailUrl?.also {
             Glide.with(holder.itemView).load(it).into(holder.thumbnail)
         }
-        holder.checkBox.isChecked = chosenTargets[position]
+        chosenTargets[position].also {
+            holder.checkBox.isChecked = it
+            if (it) {
+                selectedId.add(data.id)
+            }
+        }
         holder.itemView.setOnClickListener {
             val checkBox = holder.checkBox
             if (checkBox.isChecked) {
