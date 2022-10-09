@@ -245,7 +245,11 @@ class FragmentVideoList :
                 }
 
                 val worker =
-                    VideoInfoDownloadWorker.registerWorker(it.context, originalUrl, playlistId)
+                    VideoInfoDownloadWorker.registerWorker(
+                        it.context,
+                        originalUrl,
+                        longArrayOf(playlistId)
+                    )
                 currentSyncWorker.update { worker.id }
                 WorkManager.getInstance(it.context)
                     .getWorkInfoByIdLiveData(worker.id)

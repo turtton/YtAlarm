@@ -15,13 +15,14 @@ class DialogMultiChoiceVideo<T>(
     val confirmImportDialog: (DialogMultiChoiceVideo<T>, selectedId: Set<T>) -> Unit = { _, _ -> }
 ) : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val recyclerView = RecyclerView(requireParentFragment().requireContext())
+        val context = requireContext()
+        val recyclerView = RecyclerView(context)
 
         val adapter = MultiChoiceVideoListAdapter(displayDataList, chosenTargets)
-        recyclerView.layoutManager = LinearLayoutManager(requireParentFragment().context)
+        recyclerView.layoutManager = LinearLayoutManager(context)
         recyclerView.adapter = adapter
 
-        return AlertDialog.Builder(requireParentFragment().context)
+        return AlertDialog.Builder(context)
             .setView(recyclerView)
             .setPositiveButton(R.string.dialog_multichoice_ok) { _, _ ->
                 confirmImportDialog(this, adapter.selectedId)

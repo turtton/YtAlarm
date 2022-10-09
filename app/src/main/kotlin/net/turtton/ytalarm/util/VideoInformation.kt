@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class VideoInformation(
     val id: String,
+    val title: String? = null,
     // available if type == video
     @SerialName("fulltitle")
     val fullTitle: String? = null,

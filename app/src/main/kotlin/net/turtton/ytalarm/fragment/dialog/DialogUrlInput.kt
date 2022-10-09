@@ -37,8 +37,9 @@ class DialogUrlInput(
             val editText = EditText(context)
             DialogUrlInput(editText) {
                 val url = editText.text.toString()
+                val targetId = playlistId?.let { longArrayOf(it) } ?: longArrayOf()
                 VideoInfoDownloadWorker
-                    .registerWorker(view.context, url, playlistId)
+                    .registerWorker(view.context, url, targetId)
                 Snackbar.make(view, R.string.snackbar_start_download, 600).show()
             }.show(childFragmentManager, "UrlInput")
         }
