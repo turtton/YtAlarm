@@ -76,10 +76,13 @@ class AlarmSettingsAdapter(
                 fragment.lifecycleScope.launch {
                     val playlists = async.await()
                     launch(Dispatchers.Main) {
-                        DialogMultiChoiceVideo(playlists.map { it.toDisplayData() }) { _, ids ->
+                        val displayData = playlists.map { it.toDisplayData() }
+                        val chosenList = playlists.map {
+                            alarmState.value.playListId.contains(it.id)
+                        }
+                        DialogMultiChoiceVideo(displayData, chosenList) { _, ids ->
                             alarmState.update {
-                                val newList = (it.playListId + ids).distinct()
-                                it.copy(playListId = newList)
+                                it.copy(playListId = ids.toList())
                             }
                             val currentId = alarmState.value.playListId
                             description.text = playlists.filter { currentId.contains(it.id!!) }
