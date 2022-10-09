@@ -6,6 +6,8 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +15,7 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -30,6 +33,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.MainActivity
@@ -68,6 +72,8 @@ class FragmentVideoPlayer : Fragment() {
     private val musicStream = AudioManager.STREAM_MUSIC
     private lateinit var audioManager: AudioManager
     private var currentVolume: Int? = null
+
+    private var vibrator: Vibrator? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -140,6 +146,7 @@ class FragmentVideoPlayer : Fragment() {
 
         val id = args.id
         if (isAlarm) {
+            startVibration()
             val alarmId = id.toLong()
             if (alarmId == -1L) {
                 Snackbar.make(view, "Failed to get target alarm data", 900).show()
@@ -264,6 +271,7 @@ class FragmentVideoPlayer : Fragment() {
             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         insetsController.show(WindowInsetsCompat.Type.systemBars())
 
+        vibrator?.cancel()
         super.onDestroyView()
     }
 
@@ -315,6 +323,21 @@ class FragmentVideoPlayer : Fragment() {
                     .setAction("Action", null)
                     .show()
                 Log.e("YtAram", "failed to get stream info", it)
+            }
+        }
+    }
+
+    private fun startVibration() {
+        vibrator = requireContext().getSystemService()
+        lifecycleScope.launch {
+            while (true) {
+                delay(3000)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vibrator?.vibrate(VibrationEffect.createOneShot(1500, 255))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vibrator?.vibrate(1500)
+                }
             }
         }
     }
