@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
+import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.VideoInformation
 
@@ -44,16 +45,28 @@ class VideoInfoDownloadWorker(
         val (videos, type) = download(request)
         repository.insert(videos)
 
-        val targetPlaylist = inputData.getLong(KEY_PLAYLIST, -1)
-        if (targetPlaylist != -1L) {
-            val playlist = repository.getPlaylistFromIdSync(targetPlaylist)
+        inputData.getLongArray(KEY_PLAYLIST)?.forEach { targetPlaylist ->
+            val playlist = repository.getPlaylistFromIdSync(targetPlaylist) ?: Playlist()
             val newList = (playlist.videos + videos.map { it.id }).distinct()
             val new = when (type) {
                 is Type.Video -> playlist.copy(videos = newList)
-                is Type.Playlist -> playlist.copy(videos = newList, originUrl = type.url)
+                is Type.Playlist -> {
+                    playlist.copy(videos = newList, originUrl = type.url).let {
+                        if (it.id == null) {
+                            it.copy(title = type.title)
+                        } else {
+                            it
+                        }
+                    }
+                }
             }
-            repository.update(new)
+            if (targetPlaylist != -1L) {
+                repository.update(new)
+            } else {
+                repository.insert(new)
+            }
         }
+
         return Result.success()
     }
 
@@ -111,7 +124,7 @@ class VideoInfoDownloadWorker(
                             entry.videoUrl!!,
                             entry.domain
                         )
-                    } to Type.Playlist(it.url)
+                    } to Type.Playlist(it.title!!, it.url)
                 }
                 else -> {
                     Log.e(WORKER_ID, "Unknown type:${it.type}, Data:$it")
@@ -132,8 +145,7 @@ class VideoInfoDownloadWorker(
     private sealed interface Type {
         object Video : Type
 
-        @JvmInline
-        value class Playlist(val url: String) : Type
+        data class Playlist(val title: String, val url: String) : Type
     }
 
     companion object {
@@ -145,11 +157,11 @@ class VideoInfoDownloadWorker(
         fun registerWorker(
             context: Context,
             targetUrl: String,
-            targetPlaylist: Long? = null
+            targetPlaylists: LongArray = longArrayOf()
         ): OneTimeWorkRequest {
             val data = Data.Builder().putString(KEY_URL, targetUrl)
-            targetPlaylist?.also {
-                data.putLong(KEY_PLAYLIST, it)
+            if (targetPlaylists.isNotEmpty()) {
+                data.putLongArray(KEY_PLAYLIST, targetPlaylists)
             }
             val request = OneTimeWorkRequestBuilder<VideoInfoDownloadWorker>()
                 .setInputData(data.build())

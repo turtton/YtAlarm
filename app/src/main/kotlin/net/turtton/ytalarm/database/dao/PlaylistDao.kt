@@ -23,7 +23,7 @@ interface PlaylistDao {
     fun getFromId(id: Long): Flow<Playlist>
 
     @Query("SELECT * FROM playlists WHERE id = :id")
-    suspend fun getFromIdSync(id: Long): Playlist
+    suspend fun getFromIdSync(id: Long): Playlist?
 
     @Query("SELECT * FROM playlists WHERE id IN (:ids)")
     suspend fun getFromIdsSync(ids: List<Long>): List<Playlist>

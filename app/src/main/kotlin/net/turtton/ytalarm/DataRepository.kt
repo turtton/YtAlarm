@@ -55,7 +55,7 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun getPlaylistFromIdSync(id: Long): Playlist {
+    suspend fun getPlaylistFromIdSync(id: Long): Playlist? {
         return database.playlistDao().getFromIdSync(id)
     }
 
