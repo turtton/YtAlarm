@@ -36,4 +36,6 @@ rootCoverage {
     )
 
     generateXml = true
+
+    executeAndroidTests = false
 }
