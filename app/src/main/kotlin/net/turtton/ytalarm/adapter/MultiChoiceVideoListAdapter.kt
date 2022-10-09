@@ -12,8 +12,10 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.structure.Video
 
-class MultiChoiceVideoListAdapter<T>(private val displayDataList: List<DisplayData<T>>) :
-    RecyclerView.Adapter<MultiChoiceVideoListAdapter.ViewHolder>() {
+class MultiChoiceVideoListAdapter<T>(
+    private val displayDataList: List<DisplayData<T>>,
+    private val chosenTargets: List<Boolean>
+) : RecyclerView.Adapter<MultiChoiceVideoListAdapter.ViewHolder>() {
     val selectedId = hashSetOf<T>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -29,6 +31,7 @@ class MultiChoiceVideoListAdapter<T>(private val displayDataList: List<DisplayDa
         data.thumbnailUrl?.also {
             Glide.with(holder.itemView).load(it).into(holder.thumbnail)
         }
+        holder.checkBox.isChecked = chosenTargets[position]
         holder.itemView.setOnClickListener {
             val checkBox = holder.checkBox
             if (checkBox.isChecked) {

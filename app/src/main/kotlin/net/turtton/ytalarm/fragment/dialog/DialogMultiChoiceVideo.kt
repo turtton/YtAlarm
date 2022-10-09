@@ -11,12 +11,13 @@ import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter
 
 class DialogMultiChoiceVideo<T>(
     private val displayDataList: List<MultiChoiceVideoListAdapter.DisplayData<T>>,
+    private val chosenTargets: List<Boolean> = displayDataList.map { false },
     val confirmImportDialog: (DialogMultiChoiceVideo<T>, selectedId: Set<T>) -> Unit = { _, _ -> }
 ) : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val recyclerView = RecyclerView(requireParentFragment().requireContext())
 
-        val adapter = MultiChoiceVideoListAdapter(displayDataList)
+        val adapter = MultiChoiceVideoListAdapter(displayDataList, chosenTargets)
         recyclerView.layoutManager = LinearLayoutManager(requireParentFragment().context)
         recyclerView.adapter = adapter
 
