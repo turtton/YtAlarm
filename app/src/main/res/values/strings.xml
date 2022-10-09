@@ -94,6 +94,9 @@
     <string name="dialog_require_configuration">Configuration Required</string>
     <string name="dialog_require_disable_restrictions">This application requires disabling the option \"Remove permissions if app is unused\"</string>
     <string name="dialog_require_disable_restrictions_ok">OK</string>
+    <string name="dialog_shared_text_should_be_url_title">Error</string>
+    <string name="dialog_shared_text_should_be_url_description">The shared text should start \"http..\"</string>
+    <string name="dialog_shared_text_should_be_url_ok">OK</string>
 
     <string name="dialog_playlist_name_input_ok">Rename</string>
     <string name="dialog_playlist_name_input_cancel">Cancel</string>

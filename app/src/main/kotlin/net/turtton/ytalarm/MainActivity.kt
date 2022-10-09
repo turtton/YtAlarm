@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -15,6 +16,7 @@ import androidx.core.content.IntentCompat
 import androidx.core.content.PackageManagerCompat
 import androidx.core.content.UnusedAppRestrictionsConstants
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -23,10 +25,18 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.launch
+import net.turtton.ytalarm.YtApplication.Companion.repository
+import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter
+import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.databinding.ActivityMainBinding
+import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.util.initYtDL
+import net.turtton.ytalarm.viewmodel.PlaylistViewModel
+import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
+import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
 class MainActivity : AppCompatActivity() {
 
@@ -34,6 +44,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     lateinit var binding: ActivityMainBinding
     lateinit var drawerLayout: DrawerLayout
+
+    val playlistViewModel: PlaylistViewModel by viewModels {
+        PlaylistViewModelFactory(application.repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +71,38 @@ class MainActivity : AppCompatActivity() {
         binding.fab.shrink()
 
         createNotificationChannel()
+
+        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+            lifecycleScope.launch {
+                intent.getStringExtra(Intent.EXTRA_TEXT)?.let { url ->
+                    if (!url.startsWith("http")) {
+                        AlertDialog.Builder(applicationContext)
+                            .setTitle(R.string.dialog_shared_text_should_be_url_title)
+                            .setMessage(R.string.dialog_shared_text_should_be_url_description)
+                            .setPositiveButton(R.string.dialog_shared_text_should_be_url_ok, null)
+                            .show()
+                    }
+
+                    val playlists = playlistViewModel.allPlaylistsAsync.await()
+                        .filter { it.originUrl == null }
+                        .map { it.toDisplayData() }
+                        .toMutableList()
+                        .apply {
+                            val title = "Create New Playlist"
+                            add(MultiChoiceVideoListAdapter.DisplayData(-1, title, null))
+                        }
+
+                    DialogMultiChoiceVideo(playlists) { _, id ->
+                        VideoInfoDownloadWorker.registerWorker(
+                            applicationContext,
+                            url,
+                            id.toLongArray()
+                        )
+                    }.show(supportFragmentManager, "SelectTargetPlaylist")
+                }
+            }
+        }
+
         requestPermission()
     }
 
