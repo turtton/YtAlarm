@@ -8,7 +8,7 @@ on:
 
 jobs:
   check:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     if: ${{ github.repository_owner == 'turtton' && !contains(github.event.head_commit.message, 'chore') }}
 
@@ -31,11 +31,10 @@ jobs:
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1
 
-      - name: Generate combined report
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 29
-          script: ./gradlew :rootCoverageReport --stacktrace
+      - name: Build with Gradle
+          uses: gradle/gradle-build-action@v2
+          with:
+            arguments: :rootCoverageReport
 
       - name: Generate report
         uses: actions/upload-artifact@v3
