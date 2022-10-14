@@ -52,7 +52,7 @@ class VideoInfoDownloadWorker(
                 is Type.Video -> playlist.copy(videos = newList)
                 is Type.Playlist -> {
                     playlist.copy(videos = newList, originUrl = type.url).let {
-                        if (it.id == null) {
+                        if (it.id == 0L) {
                             it.copy(title = type.title)
                         } else {
                             it

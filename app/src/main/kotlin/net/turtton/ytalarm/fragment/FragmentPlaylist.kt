@@ -106,7 +106,7 @@ class FragmentPlaylist :
                         val deletable = arrayListOf<Playlist>()
                         var detectUsage = false
                         async.await().forEach {
-                            if (!usingList.contains(it.id!!)) {
+                            if (!usingList.contains(it.id)) {
                                 deletable += it
                             } else {
                                 detectUsage = true
