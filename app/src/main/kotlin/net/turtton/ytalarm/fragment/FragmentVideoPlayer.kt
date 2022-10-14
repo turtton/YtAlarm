@@ -44,6 +44,7 @@ import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.RepeatType
 import net.turtton.ytalarm.util.UpdateSnoozeNotifyWorker
 import net.turtton.ytalarm.util.observeAlarm
+import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -146,6 +147,10 @@ class FragmentVideoPlayer : Fragment() {
 
         val id = args.id
         if (isAlarm) {
+            lifecycleScope.launch {
+                val alarmList = alarmViewModel.getAllAlarmsAsync().await()
+                updateAlarmSchedule(view.context, alarmList)
+            }
             startVibration()
             val alarmId = id.toLong()
             if (alarmId == -1L) {
