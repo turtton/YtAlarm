@@ -77,7 +77,7 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
                 Snackbar.make(view, R.string.snackbar_error_playlistid_is_null, 300).show()
                 return@setOnClickListener
             }
-            if (currentData.id == null) {
+            if (currentData.id == 0L) {
                 alarmViewModel.insert(currentData)
             } else {
                 alarmViewModel.update(currentData)

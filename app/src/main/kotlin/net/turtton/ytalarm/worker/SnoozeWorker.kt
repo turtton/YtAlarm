@@ -83,7 +83,7 @@ class UpdateSnoozeNotifyWorker(
             .getQuantityString(R.plurals.notification_snooze_remain, minute, minute)
         val removeText = applicationContext.getString(R.string.notification_snooze_remove)
 
-        val removeIntent = SnoozeRemoveReceiver.getIntent(applicationContext, nextSnooze.id!!)
+        val removeIntent = SnoozeRemoveReceiver.getIntent(applicationContext, nextSnooze.id)
 
         val builder =
             NotificationCompat.Builder(applicationContext, SNOOZE_NOTIFICATION)
