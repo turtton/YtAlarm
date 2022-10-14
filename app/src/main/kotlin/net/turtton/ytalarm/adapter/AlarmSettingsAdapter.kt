@@ -85,7 +85,7 @@ class AlarmSettingsAdapter(
                                 it.copy(playListId = ids.toList())
                             }
                             val currentId = alarmState.value.playListId
-                            description.text = playlists.filter { currentId.contains(it.id!!) }
+                            description.text = playlists.filter { currentId.contains(it.id) }
                                 .map { it.title }
                                 .joinStringWithSlash()
                         }.show(fragment.childFragmentManager, "MultiChoicePlaylist")

@@ -30,7 +30,7 @@ fun updateAlarmSchedule(context: Context, alarmList: List<Alarm>) {
     }
 
     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-    intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id!!)
+    intent.putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id)
 
     val pendingIntent = PendingIntent.getActivity(
         context,

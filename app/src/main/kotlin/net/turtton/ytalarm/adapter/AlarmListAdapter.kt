@@ -37,7 +37,7 @@ class AlarmListAdapter(
             alarmType.text = data.repeatType.getDisplay(context)
             alarmSwitch.isChecked = data.isEnable
             alarmSwitch.setOnCheckedChangeListener { button, isChecked ->
-                val async = parentFragment.alarmViewModel.getFromIdAsync(data.id!!)
+                val async = parentFragment.alarmViewModel.getFromIdAsync(data.id)
                 button.isClickable = false
                 parentFragment.lifecycleScope.launch {
                     val alarm = async.await().copy(isEnable = isChecked)
@@ -60,7 +60,7 @@ class AlarmListAdapter(
 
             itemView.setOnClickListener {
                 val action = FragmentAlarmListDirections
-                    .actionAlarmListFragmentToAlarmSettingsFragment(data.id!!)
+                    .actionAlarmListFragmentToAlarmSettingsFragment(data.id)
                 parentFragment.findNavController().navigate(action)
             }
         }

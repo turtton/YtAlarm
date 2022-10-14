@@ -52,7 +52,7 @@ class VideoInfoDownloadWorker(
                 is Type.Video -> playlist.copy(videos = newList)
                 is Type.Playlist -> {
                     playlist.copy(videos = newList, originUrl = type.url).let {
-                        if (it.id == null) {
+                        if (it.id == 0L) {
                             it.copy(title = type.title)
                         } else {
                             it
@@ -102,33 +102,30 @@ class VideoInfoDownloadWorker(
         }
     }.mapBoth(
         success = {
-            when (it.type) {
-                "video" -> {
+            when (it.typeData) {
+                is VideoInformation.Type.Video -> {
                     val video = Video(
                         it.id,
-                        it.fullTitle!!,
-                        it.thumbnailUrl!!,
+                        it.typeData.fullTitle,
+                        it.typeData.thumbnailUrl,
                         it.url,
-                        it.videoUrl!!,
+                        it.typeData.videoUrl,
                         it.domain
                     )
                     return@mapBoth listOf(video) to Type.Video
                 }
-                "playlist" -> {
-                    return@mapBoth it.entries!!.map { entry ->
+                is VideoInformation.Type.Playlist -> {
+                    return@mapBoth it.typeData.entries.map { entry ->
+                        entry.typeData as VideoInformation.Type.Video
                         Video(
                             entry.id,
-                            entry.fullTitle!!,
-                            entry.thumbnailUrl!!,
+                            entry.typeData.fullTitle,
+                            entry.typeData.thumbnailUrl,
                             entry.url,
-                            entry.videoUrl!!,
+                            entry.typeData.videoUrl,
                             entry.domain
                         )
                     } to Type.Playlist(it.title!!, it.url)
-                }
-                else -> {
-                    Log.e(WORKER_ID, "Unknown type:${it.type}, Data:$it")
-                    return@mapBoth emptyList<Video>() to Type.Video
                 }
             }
         },

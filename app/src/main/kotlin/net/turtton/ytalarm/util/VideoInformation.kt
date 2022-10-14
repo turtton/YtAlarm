@@ -1,28 +1,24 @@
 package net.turtton.ytalarm.util
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import net.turtton.ytalarm.util.serializer.VideoInformationSerializer
 
-@Serializable
+@Serializable(with = VideoInformationSerializer::class)
 data class VideoInformation(
     val id: String,
     val title: String? = null,
-    // available if type == video
-    @SerialName("fulltitle")
-    val fullTitle: String? = null,
-    // available if type == video
-    @SerialName("thumbnail")
-    val thumbnailUrl: String? = null,
-    @SerialName("webpage_url")
     val url: String,
-    // available if type == video
-    @SerialName("url")
-    val videoUrl: String? = null,
-    @SerialName("webpage_url_domain")
     val domain: String,
-    // video or playlist
-    @SerialName("_type")
-    val type: String = "video",
-    // available if type == playlist
-    val entries: List<VideoInformation>? = null
-)
+    val typeData: Type
+) {
+    sealed interface Type {
+        data class Video(
+            val fullTitle: String,
+            val thumbnailUrl: String,
+            val videoUrl: String
+        ) : Type
+        data class Playlist(
+            val entries: List<VideoInformation>
+        ) : Type
+    }
+}

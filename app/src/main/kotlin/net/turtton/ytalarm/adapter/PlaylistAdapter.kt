@@ -73,7 +73,7 @@ class PlaylistAdapter<T>(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
-        holder.itemView.tag = data.id!!.toLong()
+        holder.itemView.tag = data.id
         holder.apply {
             currentCheckBox += ViewContainer(data.id, checkBox, optionButton)
             title.text = data.title
@@ -102,7 +102,7 @@ class PlaylistAdapter<T>(
             }
 
             tracker?.let {
-                val isSelected = it.isSelected(data.id.toLong())
+                val isSelected = it.isSelected(data.id)
                 itemView.isActivated = isSelected
                 checkBox.isChecked = isSelected
                 checkBox.visibility = if (it.hasSelection()) {

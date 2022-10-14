@@ -120,7 +120,7 @@ class FragmentVideoList :
                 if (playlist?.originUrl == null) {
                     listenFabWithOriginalMode()
                 } else {
-                    listenFabWithSyncMode(playlist.id!!, playlist.originUrl)
+                    listenFabWithSyncMode(playlist.id, playlist.originUrl)
                 }
                 addVideoFab.show()
             }
@@ -161,7 +161,7 @@ class FragmentVideoList :
                 val playlist = playlistViewModel.getFromIdAsync(currentId.value)
                     .await()
                     ?: Playlist()
-                if (playlist.id == null) {
+                if (playlist.id == 0L) {
                     val newId = playlistViewModel.insertAsync(playlist).await()
                     currentId.update { newId }
                     updateListObserver()
@@ -195,7 +195,7 @@ class FragmentVideoList :
                             // Converts set to avoid duplicating ids
                             val newVideoTargets = (playlist.videos + selectedId).distinct()
                             val newPlaylist = playlist.copy(videos = newVideoTargets)
-                            if (playlist.id == null) {
+                            if (playlist.id == 0L) {
                                 val newId = playlistViewModel.insertAsync(newPlaylist).await()
                                 currentId.update { newId }
                                 updateListObserver()
@@ -341,7 +341,7 @@ class FragmentVideoList :
                             newList = newList.copy(thumbnailUrl = targetVideo?.thumbnailUrl)
                         }
 
-                        if (playlist.id == null) {
+                        if (playlist.id == 0L) {
                             @Suppress("DeferredResultUnused")
                             fragment.playlistViewModel.insertAsync(newList)
                         } else {

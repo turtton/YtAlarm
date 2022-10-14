@@ -176,7 +176,7 @@ class FragmentVideoPlayer : Fragment() {
                             hour %= 24
                         }
                         val snoozeAlarm = alarm.copy(
-                            id = null,
+                            id = 0,
                             hour = hour,
                             minute = minute,
                             repeatType = RepeatType.Snooze
