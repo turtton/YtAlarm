@@ -64,7 +64,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         suspend fun populateAlarmDatabase(dao: AlarmDao) {
             dao.deleteAll()
-            dao.insert(Alarm(playListId = listOf(0)))
+            dao.insert(Alarm(playListId = listOf(1)))
         }
 
         suspend fun populatePlaylistDatabase(dao: PlaylistDao) {
