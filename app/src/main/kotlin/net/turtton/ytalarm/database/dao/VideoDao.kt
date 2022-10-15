@@ -13,20 +13,23 @@ interface VideoDao {
     @Query("SELECT * FROM videos")
     fun getAll(): Flow<List<Video>>
 
-    @Query("SELECT * FROM videos WHERE id IN (:ids)")
-    fun getFromIds(ids: List<String>): Flow<List<Video>>
-
     @Query("SELECT * FROM videos WHERE id = :id")
-    suspend fun getFromIdSync(id: String): Video?
+    fun getFromIdSync(id: Long): Video?
 
-    @Query("SELECT * FROM videos WHERE id IN (:ids)")
+    @Query("SELECT * FROM videos WHERE video_id IN (:ids)")
+    fun getFromVideoIds(ids: List<String>): Flow<List<Video>>
+
+    @Query("SELECT * FROM videos WHERE video_id = :id")
+    suspend fun getFromVideoIdSync(id: String): Video?
+
+    @Query("SELECT * FROM videos WHERE video_id IN (:ids)")
     suspend fun getFromIdsSync(ids: List<String>): List<Video>
 
-    @Query("SELECT * FROM videos WHERE id NOT IN (:ids)")
+    @Query("SELECT * FROM videos WHERE video_id NOT IN (:ids)")
     suspend fun getExceptIdsSync(ids: List<String>): List<Video>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(video: Video)
+    suspend fun insert(video: Video): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(videos: List<Video>)

@@ -93,7 +93,7 @@ class PlaylistAdapter<T>(
             fragment.lifecycleScope.launch {
                 val thumbnailUrl = data.thumbnailUrl ?: kotlin.run {
                     data.videos.randomOrNull()?.let {
-                        fragment.videoViewModel.getFromIdAsync(it).await()?.thumbnailUrl
+                        fragment.videoViewModel.getFromVideoIdAsync(it).await()?.thumbnailUrl
                     }?.also {
                         fragment.playlistViewModel.update(data.copy(thumbnailUrl = it))
                     }

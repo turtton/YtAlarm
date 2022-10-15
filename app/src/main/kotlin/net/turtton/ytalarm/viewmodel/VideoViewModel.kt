@@ -14,12 +14,16 @@ import net.turtton.ytalarm.structure.Video
 class VideoViewModel(private val repository: DataRepository) : ViewModel() {
     val allVideos: LiveData<List<Video>> by lazy { repository.allVideos.asLiveData() }
 
-    fun getFromIds(ids: List<String>): LiveData<List<Video>> {
-        return repository.getVideoFromIds(ids).asLiveData()
+    fun getFromIdAsync(id: Long): Deferred<Video?> = viewModelScope.async {
+        repository.getVideoFromId(id)
     }
 
-    fun getFromIdAsync(id: String): Deferred<Video?> = viewModelScope.async {
-        repository.getVideoFromIdSync(id)
+    fun getFromVideoIds(ids: List<String>): LiveData<List<Video>> {
+        return repository.getVideoFromVideoIds(ids).asLiveData()
+    }
+
+    fun getFromVideoIdAsync(id: String): Deferred<Video?> = viewModelScope.async {
+        repository.getVideoFromVideoIdSync(id)
     }
 
     fun getFromIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
@@ -30,7 +34,7 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getVideoExceptIdsSync(ids)
     }
 
-    fun insert(video: Video) = viewModelScope.launch {
+    fun insertAsync(video: Video): Deferred<Long> = viewModelScope.async {
         repository.insert(video)
     }
 

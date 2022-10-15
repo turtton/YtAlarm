@@ -13,7 +13,9 @@ import java.util.UUID
 @Entity(tableName = "videos")
 data class Video(
     @PrimaryKey
-    val id: String,
+    val id: Long = 0,
+    @ColumnInfo(name = "video_id")
+    val videoId: String,
     val title: String = "No title",
     @ColumnInfo(name = "thumbnail_link")
     val thumbnailUrl: String = "",

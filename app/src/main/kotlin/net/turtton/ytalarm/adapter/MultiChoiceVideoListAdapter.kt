@@ -59,7 +59,7 @@ class MultiChoiceVideoListAdapter<T>(
 
     data class DisplayData<T>(val id: T, val title: String, val thumbnailUrl: String?) {
         companion object {
-            fun Video.toDisplayData() = DisplayData(id, title, thumbnailUrl)
+            fun Video.toDisplayData() = DisplayData(videoId, title, thumbnailUrl)
             fun Playlist.toDisplayData() = DisplayData(id, title, thumbnailUrl)
         }
     }

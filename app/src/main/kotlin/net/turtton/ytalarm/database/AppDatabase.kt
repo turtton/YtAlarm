@@ -87,6 +87,7 @@ abstract class AppDatabase : RoomDatabase() {
         suspend fun populateVideoDatabase(dao: VideoDao) {
             dao.insert(
                 Video(
+                    0,
                     "aLexJOGZ_gw",
                     "クッキー☆ボムラッシュ.SSBU",
                     "https://i.ytimg.com/vi_webp/aLexJOGZ_gw/maxresdefault.webp",

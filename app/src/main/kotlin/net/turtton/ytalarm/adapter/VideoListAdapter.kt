@@ -51,9 +51,9 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
-        holder.itemView.tag = data.id
+        holder.itemView.tag = data.videoId
         holder.apply {
-            currentCheckBox.add(data.id to checkBox)
+            currentCheckBox.add(data.videoId to checkBox)
             title.text = data.title
             domainOrSize.text = if (data.stateData is Video.State.Downloaded) {
                 itemView.context.getString(
@@ -65,7 +65,7 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
             }
             Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
             tracker?.let {
-                val isSelected = it.isSelected(data.id)
+                val isSelected = it.isSelected(data.videoId)
                 itemView.isActivated = isSelected
                 checkBox.isChecked = isSelected
                 checkBox.visibility = if (it.hasSelection()) {
@@ -78,7 +78,7 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
             itemView.setOnClickListener {
                 val navController = it.findFragment<Fragment>().findNavController()
 
-                val args = FragmentVideoPlayerArgs(data.id).toBundle()
+                val args = FragmentVideoPlayerArgs(data.videoId).toBundle()
                 navController.navigate(R.id.nav_graph_video_player, args)
             }
         }

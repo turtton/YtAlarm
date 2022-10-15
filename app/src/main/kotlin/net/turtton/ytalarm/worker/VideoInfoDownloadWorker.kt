@@ -47,7 +47,7 @@ class VideoInfoDownloadWorker(
 
         inputData.getLongArray(KEY_PLAYLIST)?.forEach { targetPlaylist ->
             val playlist = repository.getPlaylistFromIdSync(targetPlaylist) ?: Playlist()
-            val newList = (playlist.videos + videos.map { it.id }).distinct()
+            val newList = (playlist.videos + videos.map { it.videoId }).distinct()
             val new = when (type) {
                 is Type.Video -> playlist.copy(videos = newList)
                 is Type.Playlist -> {
@@ -105,6 +105,7 @@ class VideoInfoDownloadWorker(
             when (it.typeData) {
                 is VideoInformation.Type.Video -> {
                     val video = Video(
+                        0,
                         it.id,
                         it.typeData.fullTitle,
                         it.typeData.thumbnailUrl,
@@ -118,6 +119,7 @@ class VideoInfoDownloadWorker(
                     return@mapBoth it.typeData.entries.map { entry ->
                         entry.typeData as VideoInformation.Type.Video
                         Video(
+                            0,
                             entry.id,
                             entry.typeData.fullTitle,
                             entry.typeData.thumbnailUrl,

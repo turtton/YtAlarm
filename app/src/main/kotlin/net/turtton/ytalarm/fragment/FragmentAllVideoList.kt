@@ -129,7 +129,7 @@ class FragmentAllVideoList :
                         }.map {
                             if (videos.any { video -> video.thumbnailUrl == it.thumbnailUrl }) {
                                 val newVideoId = it.videos.firstOrNull() ?: ""
-                                videoViewModel.getFromIdAsync(newVideoId).await()?.let { video ->
+                                videoViewModel.getFromVideoIdAsync(newVideoId).await()?.let { video ->
                                     it.copy(thumbnailUrl = video.thumbnailUrl)
                                 } ?: it
                             } else {

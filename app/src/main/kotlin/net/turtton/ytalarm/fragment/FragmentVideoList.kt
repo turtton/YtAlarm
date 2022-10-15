@@ -303,7 +303,7 @@ class FragmentVideoList :
         lifecycleScope.launch(Dispatchers.Main) {
             playlistViewModel.getFromId(currentId.value).observe(viewLifecycleOwner) { playlist ->
                 playlist?.videos?.also { videos ->
-                    videoViewModel.getFromIds(videos)
+                    videoViewModel.getFromVideoIds(videos)
                         .observe(viewLifecycleOwner) { list ->
                             list?.also {
                                 adapter.submitList(it)
@@ -337,7 +337,7 @@ class FragmentVideoList :
                             .await()
                         if (videos.any { it.thumbnailUrl == playlist.thumbnailUrl }) {
                             val newTarget = videoList.firstOrNull() ?: ""
-                            val targetVideo = videoViewModel.getFromIdAsync(newTarget).await()
+                            val targetVideo = videoViewModel.getFromVideoIdAsync(newTarget).await()
                             newList = newList.copy(thumbnailUrl = targetVideo?.thumbnailUrl)
                         }
 

@@ -245,7 +245,7 @@ class FragmentVideoPlayer : Fragment() {
             }
         } else {
             lifecycleScope.launch {
-                val video = videoViewModel.getFromIdAsync(id).await()
+                val video = videoViewModel.getFromVideoIdAsync(id).await()
                 if (video == null) {
                     Snackbar.make(view, "Error! Cannot get video data.", Snackbar.LENGTH_LONG)
                         .setAction("Action", null)
