@@ -12,8 +12,8 @@ import java.util.UUID
 
 @Entity(tableName = "videos")
 data class Video(
-    @PrimaryKey
-    val id: Long = 0,
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0L,
     @ColumnInfo(name = "video_id")
     val videoId: String,
     val title: String = "No title",
@@ -28,15 +28,13 @@ data class Video(
     @Serializable
     sealed interface State {
         @Serializable
-        @JvmInline
-        value class Importing(val workerId: UUID) : State
+        data class Importing(val workerId: UUID) : State
 
         @Serializable
         object Information : State
 
         @Serializable
-        @JvmInline
-        value class Downloading(val workerId: UUID) : State
+        data class Downloading(val workerId: UUID) : State
 
         @Serializable
         data class Downloaded(
