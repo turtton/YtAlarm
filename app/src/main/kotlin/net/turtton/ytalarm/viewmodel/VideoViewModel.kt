@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
@@ -28,8 +27,8 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
     }
 
     fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
-            repository.getVideoExceptIdsSync(ids)
-        }
+        repository.getVideoExceptIdsSync(ids)
+    }
 
     fun getFromVideoIds(ids: List<String>): LiveData<List<Video>> {
         return repository.getVideoFromVideoIds(ids).asLiveData()
@@ -57,6 +56,10 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
 
     fun insert(videos: List<Video>) = viewModelScope.launch {
         repository.insert(videos)
+    }
+
+    fun delete(video: Video) = viewModelScope.launch {
+        repository.delete(video)
     }
 
     fun delete(videos: List<Video>) = viewModelScope.launch {

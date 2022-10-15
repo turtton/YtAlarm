@@ -156,6 +156,11 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
+    suspend fun delete(video: Video) {
+        database.videoDao().delete(video)
+    }
+
+    @WorkerThread
     suspend fun deleteVideoLists(videos: List<Video>) {
         database.videoDao().delete(videos)
     }

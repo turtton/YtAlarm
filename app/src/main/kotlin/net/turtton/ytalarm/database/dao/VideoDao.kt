@@ -48,5 +48,8 @@ interface VideoDao {
     suspend fun insert(videos: List<Video>)
 
     @Delete
+    suspend fun delete(video: Video)
+
+    @Delete
     suspend fun delete(videos: List<Video>)
 }
