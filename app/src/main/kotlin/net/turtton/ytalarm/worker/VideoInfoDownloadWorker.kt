@@ -160,12 +160,10 @@ class VideoInfoDownloadWorker(
         videoIds: List<Long>,
         type: Type
     ): LongArray = map { targetPlaylist ->
-        val playlist = repository.getPlaylistFromIdSync(targetPlaylist) ?: kotlin.run {
-            if (targetPlaylist == 0L) {
-                Playlist()
-            } else {
-                return@map null
-            }
+        val playlist = if (targetPlaylist == 0L) {
+            Playlist()
+        } else {
+            repository.getPlaylistFromIdSync(targetPlaylist) ?: return@map null
         }
         val newList = (playlist.videos + videoIds).distinct()
         val new = when (type) {
