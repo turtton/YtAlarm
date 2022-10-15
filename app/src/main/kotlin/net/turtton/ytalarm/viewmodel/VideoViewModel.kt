@@ -15,11 +15,11 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
     val allVideos: LiveData<List<Video>> by lazy { repository.allVideos.asLiveData() }
 
     fun getFromIdAsync(id: Long): Deferred<Video?> = viewModelScope.async {
-        repository.getVideoFromId(id)
+        repository.getVideoFromIdSync(id)
     }
 
     fun getFromIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
-        repository.getVideoFromIds(ids)
+        repository.getVideoFromIdsSync(ids)
     }
 
     fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
