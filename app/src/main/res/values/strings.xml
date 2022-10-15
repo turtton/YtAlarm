@@ -6,6 +6,7 @@
 
     <string name="alarm_time">00:00</string>
     <string name="alarm_type">aram_type</string>
+    <string name="playlist_name_downloading">Downloading</string>
     <string name="playlist_name">PlaylistName</string>
     <string name="thumbnail_description">PlaylistThumbnail</string>
     <string name="setting_name">SettingName</string>
@@ -102,6 +103,7 @@
     <string name="dialog_playlist_name_input_ok">Rename</string>
     <string name="dialog_playlist_name_input_cancel">Cancel</string>
 
+    <string name="snackbar_error_unexpected_playlist_state">Please reenter playlist.</string>
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>

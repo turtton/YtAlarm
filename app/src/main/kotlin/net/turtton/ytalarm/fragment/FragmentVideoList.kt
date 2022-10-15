@@ -2,20 +2,19 @@ package net.turtton.ytalarm.fragment
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StableIdKeyProvider
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.WorkManager
-import androidx.work.await
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,9 +55,7 @@ class FragmentVideoList :
     lateinit var adapter: VideoListAdapter
 
     private val args by navArgs<FragmentVideoListArgs>()
-    val currentId = MutableStateFlow(-1L)
-
-    private var currentSyncWorker = MutableStateFlow<UUID?>(null)
+    val currentId = MutableStateFlow(0L)
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
@@ -115,12 +112,11 @@ class FragmentVideoList :
         addFromVideoFab.isClickable = false
 
         lifecycleScope.launch {
-            val playlist = playlistViewModel.getFromIdAsync(currentId.value).await()
+            val playlistType = playlistViewModel.getFromIdAsync(currentId.value).await()?.type
             launch(Dispatchers.Main) {
-                if (playlist?.originUrl == null) {
-                    listenFabWithOriginalMode()
-                } else {
-                    listenFabWithSyncMode(playlist.id, playlist.originUrl)
+                when (playlistType) {
+                    null, is Playlist.Type.Original -> listenFabWithOriginalMode()
+                    is Playlist.Type.CloudPlaylist -> listenFabWithSyncMode(playlistType)
                 }
                 addVideoFab.show()
             }
@@ -158,11 +154,8 @@ class FragmentVideoList :
         addFromLinkFab.setOnClickListener {
             animateFab(it)
             lifecycleScope.launch {
-                val playlist = playlistViewModel.getFromIdAsync(currentId.value)
-                    .await()
-                    ?: Playlist()
-                if (playlist.id == 0L) {
-                    val newId = playlistViewModel.insertAsync(playlist).await()
+                if (currentId.value == 0L) {
+                    val newId = playlistViewModel.insertAsync(Playlist()).await()
                     currentId.update { newId }
                     updateListObserver()
                 }
@@ -210,11 +203,25 @@ class FragmentVideoList :
     }
 
     @SuppressLint("RestrictedApi")
-    private fun listenFabWithSyncMode(playlistId: Long, originalUrl: String) {
+    private fun listenFabWithSyncMode(typeState: Playlist.Type.CloudPlaylist) {
         val binding = (activity as MainActivity).binding
         val addVideoFab = binding.fabAddVideo
         addVideoFab.setImageResource(R.drawable.ic_sync)
         addVideoFab.isClickable = true
+
+        if (typeState.syncState is Playlist.SyncState.Syncing) {
+            addVideoFab.startAnimation(animFabRotateInfinity)
+            val workerId = typeState.syncState.workerId
+            WorkManager.getInstance(requireContext())
+                .getWorkInfoByIdLiveData(workerId)
+                .observe(viewLifecycleOwner) {
+                    if (it.state.isFinished) {
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            addVideoFab.clearAnimation()
+                        }
+                    }
+                }
+        }
 
         addVideoFab.setOnClickListener {
             val animation = addVideoFab.animation
@@ -222,35 +229,33 @@ class FragmentVideoList :
                 addVideoFab.startAnimation(animFabRotateInfinity)
             }
             lifecycleScope.launch {
-                val syncWorkerId = currentSyncWorker.value
-                if (syncWorkerId != null) {
-                    val worker = WorkManager.getInstance(it.context)
-                        .getWorkInfoById(syncWorkerId)
-                        .await()
-                    if (worker.state.isFinished.not()) {
-                        return@launch
-                    }
+                val currentPlaylist = playlistViewModel.getFromIdAsync(currentId.value).await()
+                val currentState = currentPlaylist?.type
+
+                if (currentPlaylist == null || currentState !is Playlist.Type.CloudPlaylist) {
+                    launch(Dispatchers.Main) {
+                        val errorId = R.string.snackbar_error_unexpected_playlist_state
+                        Snackbar.make(requireView(), errorId, 900).show()
+                        findNavController().navigateUp()
+                    }.join()
+                    return@launch
                 }
 
-                val currentWork = WorkManager.getInstance(it.context)
-                    .getWorkInfosForUniqueWork(VideoInfoDownloadWorker.WORKER_ID)
-                    .await()
-                if (currentWork.any { !it.state.isFinished }) {
-                    Log.i("current", currentWork.toString())
+                if (currentState.syncState is Playlist.SyncState.Syncing) {
                     launch(Dispatchers.Main) {
-                        addVideoFab.clearAnimation()
                         Snackbar.make(it, R.string.snackbar_sync_is_running, 900).show()
                     }.join()
                     return@launch
                 }
 
-                val worker =
-                    VideoInfoDownloadWorker.registerWorker(
-                        it.context,
-                        originalUrl,
-                        longArrayOf(playlistId)
-                    )
-                currentSyncWorker.update { worker.id }
+                val worker = VideoInfoDownloadWorker.registerWorker(
+                    it.context,
+                    currentState.url,
+                    longArrayOf(currentPlaylist.id)
+                )
+
+                val newState = currentState.copy(syncState = Playlist.SyncState.Syncing(worker.id))
+                playlistViewModel.update(currentPlaylist.copy(type = newState)).join()
                 WorkManager.getInstance(it.context)
                     .getWorkInfoByIdLiveData(worker.id)
                     .observe(viewLifecycleOwner) {

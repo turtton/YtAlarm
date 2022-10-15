@@ -151,8 +151,8 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun insert(videos: List<Video>) {
-        database.videoDao().insert(videos)
+    suspend fun insert(videos: List<Video>): List<Long> {
+        return database.videoDao().insert(videos)
     }
 
     @WorkerThread

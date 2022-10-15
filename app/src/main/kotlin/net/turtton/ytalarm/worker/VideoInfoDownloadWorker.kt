@@ -37,7 +37,7 @@ class VideoInfoDownloadWorker(
 
     override suspend fun doWork(): Result {
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
-        val playlists = inputData.getLongArray(KEY_PLAYLIST)
+        var playlists = inputData.getLongArray(KEY_PLAYLIST)
 
         val stateTitle = applicationContext.getString(R.string.item_video_list_state_downloading)
         val data = Video.State.Importing(id)
@@ -45,7 +45,7 @@ class VideoInfoDownloadWorker(
 
         val targetVideoId = repository.insert(targetVideo)
         targetVideo = targetVideo.copy(id = targetVideoId)
-        playlists?.insertVideosInPlaylists(listOf(targetVideo), Type.Video)
+        playlists = playlists?.insertVideosInPlaylists(listOf(targetVideoId), Type.Video)
 
         val request = YoutubeDLRequest(targetUrl)
             .addOption("--dump-single-json")
@@ -72,8 +72,14 @@ class VideoInfoDownloadWorker(
         } else {
             repository.delete(targetVideo)
             playlists?.deleteVideoFromPlaylists(targetVideoId)
-            repository.insert(videos)
-            playlists?.insertVideosInPlaylists(videos, type)
+            val targetIds = mutableListOf<Long>()
+            val newVideos = videos.filter {
+                checkVideoDuplication(it.videoId, it.domain)?.let { id ->
+                    targetIds += id
+                } == null
+            }
+            targetIds += repository.insert(newVideos)
+            playlists?.insertVideosInPlaylists(targetIds, type)
         }
 
         return Result.success()
@@ -150,32 +156,39 @@ class VideoInfoDownloadWorker(
         }
     )
 
-    private suspend fun LongArray.insertVideosInPlaylists(videos: List<Video>, type: Type) =
-        forEach { targetPlaylist ->
-            val playlist = repository.getPlaylistFromIdSync(targetPlaylist) ?: Playlist()
-            val newList = (playlist.videos + videos.map { it.id }).distinct()
-            val new = when (type) {
-                is Type.Video -> playlist.copy(videos = newList)
-                is Type.Playlist -> {
-                    playlist.copy(videos = newList, originUrl = type.url).let {
-                        if (it.id == 0L) {
-                            it.copy(title = type.title)
-                        } else {
-                            it
-                        }
-                    }
-                }
-            }
-            if (targetPlaylist != -1L) {
-                repository.update(new)
+    private suspend fun LongArray.insertVideosInPlaylists(
+        videoIds: List<Long>,
+        type: Type
+    ): LongArray = map { targetPlaylist ->
+        val playlist = repository.getPlaylistFromIdSync(targetPlaylist) ?: kotlin.run {
+            if (targetPlaylist == 0L) {
+                Playlist()
             } else {
-                repository.insert(new)
+                return@map null
             }
         }
+        val newList = (playlist.videos + videoIds).distinct()
+        val new = when (type) {
+            is Type.Video -> playlist.copy(videos = newList)
+            is Type.Playlist -> {
+                val playlistType = Playlist.Type.CloudPlaylist(type.url)
+                playlist.copy(title = type.title, videos = newList, type = playlistType)
+            }
+        }
+        if (targetPlaylist != 0L) {
+            repository.update(new)
+            targetPlaylist
+        } else {
+            val downloadText = applicationContext.getString(R.string.playlist_name_downloading)
+            repository.insert(new.copy(title = downloadText))
+        }
+    }.filterNotNull().toLongArray()
 
     private suspend fun LongArray.deleteVideoFromPlaylists(targetVideoId: Long) = forEach {
         val playlist = repository.getPlaylistFromIdSync(it) ?: return@forEach
-        val newVideoList = playlist.videos.toMutableList().apply { remove(targetVideoId) }
+        val newVideoList = playlist.videos
+            .toMutableList()
+            .also { videos -> videos.remove(targetVideoId) }
         repository.update(playlist.copy(videos = newVideoList))
     }
 

@@ -31,6 +31,7 @@ import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter
 import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.databinding.ActivityMainBinding
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
+import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.util.initYtDL
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -84,12 +85,12 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     val playlists = playlistViewModel.allPlaylistsAsync.await()
-                        .filter { it.originUrl == null }
+                        .filter { it.type is Playlist.Type.Original }
                         .map { it.toDisplayData() }
                         .toMutableList()
                         .apply {
                             val title = "Create New Playlist"
-                            add(MultiChoiceVideoListAdapter.DisplayData(-1, title, null))
+                            add(MultiChoiceVideoListAdapter.DisplayData(0, title, null))
                         }
 
                     DialogMultiChoiceVideo(playlists) { _, id ->
