@@ -37,34 +37,43 @@ class VideoInfoDownloadWorker(
 
     override suspend fun doWork(): Result {
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
+        val playlists = inputData.getLongArray(KEY_PLAYLIST)
+
+        val stateTitle = applicationContext.getString(R.string.item_video_list_state_downloading)
+        val data = Video.State.Importing(id)
+        var targetVideo = Video(videoId = "", title = stateTitle, stateData = data)
+
+        val targetVideoId = repository.insert(targetVideo)
+        targetVideo = targetVideo.copy(id = targetVideoId)
+        playlists?.insertVideosInPlaylists(listOf(targetVideo), Type.Video)
 
         val request = YoutubeDLRequest(targetUrl)
             .addOption("--dump-single-json")
             .addOption("-f", "b")
 
         val (videos, type) = download(request)
-        repository.insert(videos)
 
-        inputData.getLongArray(KEY_PLAYLIST)?.forEach { targetPlaylist ->
-            val playlist = repository.getPlaylistFromIdSync(targetPlaylist) ?: Playlist()
-            val newList = (playlist.videos + videos.map { it.id }).distinct()
-            val new = when (type) {
-                is Type.Video -> playlist.copy(videos = newList)
-                is Type.Playlist -> {
-                    playlist.copy(videos = newList, originUrl = type.url).let {
-                        if (it.id == 0L) {
-                            it.copy(title = type.title)
-                        } else {
-                            it
-                        }
+        if (type is Type.Video) {
+            val video = videos.first()
+            val duplication = checkVideoDuplication(video.videoId, video.domain)
+            if (duplication == null) {
+                repository.update(video.copy(id = targetVideoId))
+            } else {
+                repository.delete(targetVideo)
+                playlists?.let {
+                    it.deleteVideoFromPlaylists(targetVideoId)
+                    repository.getPlaylistFromIdsSync(it.toList()).forEach { playlist ->
+                        val videoSet = playlist.videos.toMutableSet()
+                        videoSet += duplication
+                        repository.update(playlist.copy(videos = videoSet.toList()))
                     }
                 }
             }
-            if (targetPlaylist != -1L) {
-                repository.update(new)
-            } else {
-                repository.insert(new)
-            }
+        } else {
+            repository.delete(targetVideo)
+            playlists?.deleteVideoFromPlaylists(targetVideoId)
+            repository.insert(videos)
+            playlists?.insertVideosInPlaylists(videos, type)
         }
 
         return Result.success()
@@ -140,6 +149,44 @@ class VideoInfoDownloadWorker(
             return@mapBoth download(request)
         }
     )
+
+    private suspend fun LongArray.insertVideosInPlaylists(videos: List<Video>, type: Type) =
+        forEach { targetPlaylist ->
+            val playlist = repository.getPlaylistFromIdSync(targetPlaylist) ?: Playlist()
+            val newList = (playlist.videos + videos.map { it.id }).distinct()
+            val new = when (type) {
+                is Type.Video -> playlist.copy(videos = newList)
+                is Type.Playlist -> {
+                    playlist.copy(videos = newList, originUrl = type.url).let {
+                        if (it.id == 0L) {
+                            it.copy(title = type.title)
+                        } else {
+                            it
+                        }
+                    }
+                }
+            }
+            if (targetPlaylist != -1L) {
+                repository.update(new)
+            } else {
+                repository.insert(new)
+            }
+        }
+
+    private suspend fun LongArray.deleteVideoFromPlaylists(targetVideoId: Long) = forEach {
+        val playlist = repository.getPlaylistFromIdSync(it) ?: return@forEach
+        val newVideoList = playlist.videos.toMutableList().apply { remove(targetVideoId) }
+        repository.update(playlist.copy(videos = newVideoList))
+    }
+
+    private suspend fun checkVideoDuplication(videoId: String, domain: String): Long? =
+        repository.getVideoFromVideoIdSync(videoId)?.let {
+            if (it.domain == domain) {
+                it.id
+            } else {
+                null
+            }
+        }
 
     private sealed interface Type {
         object Video : Type
