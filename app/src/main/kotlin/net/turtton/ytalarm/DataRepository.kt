@@ -112,6 +112,10 @@ class DataRepository(private val database: AppDatabase) {
         return database.videoDao().getFromIdsSync(ids)
     }
 
+    fun getVideoFromIds(ids: List<Long>): Flow<List<Video>> {
+        return database.videoDao().getFromIds(ids)
+    }
+
     @WorkerThread
     fun getVideoExceptIdsSync(ids: List<Long>): List<Video> {
         return database.videoDao().getExceptIdsSync(ids)

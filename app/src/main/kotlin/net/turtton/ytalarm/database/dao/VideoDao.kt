@@ -19,6 +19,9 @@ interface VideoDao {
     @Query("SELECT * FROM videos WHERE id IN (:ids)")
     fun getFromIdsSync(ids: List<Long>): List<Video>
 
+    @Query("SELECT * FROM videos WHERE id IN (:ids)")
+    fun getFromIds(ids: List<Long>): Flow<List<Video>>
+
     @Query("SELECT * FROM videos WHERE id NOT IN (:ids)")
     fun getExceptIdsSync(ids: List<Long>): List<Video>
 
