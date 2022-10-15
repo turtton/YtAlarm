@@ -333,7 +333,7 @@ class FragmentVideoList :
 
                         val videoViewModel = fragment.videoViewModel
                         val videos = videoViewModel
-                            .getFromIdsAsync(selection.toList())
+                            .getFromVideoIdsAsync(selection.toList())
                             .await()
                         if (videos.any { it.thumbnailUrl == playlist.thumbnailUrl }) {
                             val newTarget = videoList.firstOrNull() ?: ""

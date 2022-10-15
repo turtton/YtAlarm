@@ -107,6 +107,11 @@ class DataRepository(private val database: AppDatabase) {
         return database.videoDao().getFromIdSync(id)
     }
 
+    @WorkerThread
+    fun getVideoFromIds(ids: List<Long>): List<Video> {
+        return database.videoDao().getFromIdsSync(ids)
+    }
+
     fun getVideoFromVideoIds(ids: List<String>): Flow<List<Video>> {
         return database.videoDao().getFromVideoIds(ids)
     }
@@ -117,8 +122,8 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun getVideoFromIdsSync(ids: List<String>): List<Video> {
-        return database.videoDao().getFromIdsSync(ids)
+    suspend fun getVideoFromVideoIdsSync(ids: List<String>): List<Video> {
+        return database.videoDao().getFromVideoIdsSync(ids)
     }
 
     @WorkerThread
