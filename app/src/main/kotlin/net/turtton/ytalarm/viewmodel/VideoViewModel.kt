@@ -27,9 +27,7 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         return repository.getVideoFromIds(ids).asLiveData()
     }
 
-    fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> =
-        // I do not know why but this async needs CoroutineContext, otherwise runs in MainThread.
-        viewModelScope.async(Dispatchers.IO) {
+    fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
             repository.getVideoExceptIdsSync(ids)
         }
 
