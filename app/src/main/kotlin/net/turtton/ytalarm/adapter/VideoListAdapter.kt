@@ -55,14 +55,13 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
         holder.apply {
             currentCheckBox.add(data.id to checkBox)
             title.text = data.title
-            val isLocal = data.internalLink.startsWith("http")
-            domainOrSize.text = if (isLocal) {
-                data.domain
-            } else {
+            domainOrSize.text = if (data.stateData is Video.State.Downloaded) {
                 itemView.context.getString(
                     R.string.item_video_list_data_size,
-                    data.fileSize / 1024f / 1024f
+                    data.stateData.fileSize / 1024f / 1024f
                 )
+            } else {
+                data.domain
             }
             Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
             tracker?.let {

@@ -18,9 +18,15 @@ import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.converter.LongListConverter
 import net.turtton.ytalarm.util.converter.RepeatTypeConverter
 import net.turtton.ytalarm.util.converter.StringListConverter
+import net.turtton.ytalarm.util.converter.VideoStateConverter
 
 @Database(entities = [Alarm::class, Video::class, Playlist::class], version = 1)
-@TypeConverters(StringListConverter::class, LongListConverter::class, RepeatTypeConverter::class)
+@TypeConverters(
+    StringListConverter::class,
+    LongListConverter::class,
+    RepeatTypeConverter::class,
+    VideoStateConverter::class
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
 
@@ -85,9 +91,8 @@ abstract class AppDatabase : RoomDatabase() {
                     "クッキー☆ボムラッシュ.SSBU",
                     "https://i.ytimg.com/vi_webp/aLexJOGZ_gw/maxresdefault.webp",
                     "https://www.youtube.com/watch?v=aLexJOGZ_gw",
-                    "https://...",
                     "youtube.com",
-                    26955482
+                    Video.State.Information
                 )
             )
         }

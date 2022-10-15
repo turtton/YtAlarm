@@ -109,8 +109,8 @@ class VideoInfoDownloadWorker(
                         it.typeData.fullTitle,
                         it.typeData.thumbnailUrl,
                         it.url,
-                        it.typeData.videoUrl,
-                        it.domain
+                        it.domain,
+                        Video.State.Information
                     )
                     return@mapBoth listOf(video) to Type.Video
                 }
@@ -122,8 +122,8 @@ class VideoInfoDownloadWorker(
                             entry.typeData.fullTitle,
                             entry.typeData.thumbnailUrl,
                             entry.url,
-                            entry.typeData.videoUrl,
-                            entry.domain
+                            entry.domain,
+                            Video.State.Information
                         )
                     } to Type.Playlist(it.title!!, it.url)
                 }
