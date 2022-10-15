@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.structure.Video
 
@@ -36,6 +37,9 @@ interface VideoDao {
 
     @Query("SELECT * FROM videos WHERE video_id NOT IN (:ids)")
     suspend fun getExceptVideoIdsSync(ids: List<String>): List<Video>
+
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun update(video: Video)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(video: Video): Long

@@ -47,6 +47,10 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getVideoExceptVideoIdsSync(ids)
     }
 
+    fun update(video: Video) = viewModelScope.launch {
+        repository.update(video)
+    }
+
     fun insertAsync(video: Video): Deferred<Long> = viewModelScope.async {
         repository.insert(video)
     }

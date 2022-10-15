@@ -141,6 +141,11 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
+    suspend fun update(video: Video) {
+        return database.videoDao().update(video)
+    }
+
+    @WorkerThread
     suspend fun insert(video: Video): Long {
         return database.videoDao().insert(video)
     }
