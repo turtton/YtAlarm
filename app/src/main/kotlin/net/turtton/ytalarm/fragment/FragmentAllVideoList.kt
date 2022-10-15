@@ -115,7 +115,7 @@ class FragmentAllVideoList :
                 val selection = fragment.selectionTracker.selection.toList()
                 DialogRemoveVideo { _, _ ->
                     val videoViewModel = fragment.videoViewModel
-                    val async = videoViewModel.getFromIdsAsync(selection)
+                    val async = videoViewModel.getFromVideoIdsAsync(selection)
                     fragment.lifecycleScope.launch {
                         val videos = async.await()
                         videoViewModel.delete(videos)

@@ -19,6 +19,9 @@ interface VideoDao {
     @Query("SELECT * FROM videos WHERE id IN (:ids)")
     fun getFromIdsSync(ids: List<Long>): List<Video>
 
+    @Query("SELECT * FROM videos WHERE id NOT IN (:ids)")
+    fun getExceptIdsSync(ids: List<Long>): List<Video>
+
     @Query("SELECT * FROM videos WHERE video_id IN (:ids)")
     fun getFromVideoIds(ids: List<String>): Flow<List<Video>>
 
@@ -29,7 +32,7 @@ interface VideoDao {
     suspend fun getFromVideoIdsSync(ids: List<String>): List<Video>
 
     @Query("SELECT * FROM videos WHERE video_id NOT IN (:ids)")
-    suspend fun getExceptIdsSync(ids: List<String>): List<Video>
+    suspend fun getExceptVideoIdsSync(ids: List<String>): List<Video>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(video: Video): Long

@@ -18,6 +18,14 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getVideoFromId(id)
     }
 
+    fun getFromIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
+        repository.getVideoFromIds(ids)
+    }
+
+    fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
+        repository.getVideoExceptIdsSync(ids)
+    }
+
     fun getFromVideoIds(ids: List<String>): LiveData<List<Video>> {
         return repository.getVideoFromVideoIds(ids).asLiveData()
     }
@@ -26,12 +34,12 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getVideoFromVideoIdSync(id)
     }
 
-    fun getFromIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
-        repository.getVideoFromIdsSync(ids)
+    fun getFromVideoIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
+        repository.getVideoFromVideoIdsSync(ids)
     }
 
-    fun getExceptIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
-        repository.getVideoExceptIdsSync(ids)
+    fun getExceptVideoIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
+        repository.getVideoExceptVideoIdsSync(ids)
     }
 
     fun insertAsync(video: Video): Deferred<Long> = viewModelScope.async {

@@ -181,7 +181,7 @@ class FragmentVideoList :
                     .await()
                     ?.videos
                     ?: emptyList()
-                val targetVideos = videoViewModel.getExceptIdsAsync(currentVideo)
+                val targetVideos = videoViewModel.getExceptVideoIdsAsync(currentVideo)
                     .await()
                     .map { video -> video.toDisplayData() }
                 launch(Dispatchers.Main) {
