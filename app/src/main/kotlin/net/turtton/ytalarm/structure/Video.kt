@@ -20,6 +20,7 @@ data class Video(
     @ColumnInfo(name = "video_url")
     val videoUrl: String = "",
     val domain: String = "",
+    @ColumnInfo(name = "state_data")
     val stateData: State
 ) {
     @Serializable
