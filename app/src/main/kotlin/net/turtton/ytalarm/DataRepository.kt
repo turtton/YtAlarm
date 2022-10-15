@@ -65,7 +65,7 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun getPlaylistContainsVideoIds(ids: List<String>): List<Playlist> {
+    suspend fun getPlaylistContainsVideoIds(ids: List<Long>): List<Playlist> {
         val selectQuery = "SELECT * FROM playlists"
         val searchQuery = ids.joinToString(prefix = " WHERE ", separator = " OR ") {
             "videos LIKE '%$it%'"

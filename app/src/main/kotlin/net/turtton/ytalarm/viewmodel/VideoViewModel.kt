@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
@@ -26,9 +27,11 @@ class VideoViewModel(private val repository: DataRepository) : ViewModel() {
         return repository.getVideoFromIds(ids).asLiveData()
     }
 
-    fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
-        repository.getVideoExceptIdsSync(ids)
-    }
+    fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> =
+        // I do not know why but this async needs CoroutineContext, otherwise runs in MainThread.
+        viewModelScope.async(Dispatchers.IO) {
+            repository.getVideoExceptIdsSync(ids)
+        }
 
     fun getFromVideoIds(ids: List<String>): LiveData<List<Video>> {
         return repository.getVideoFromVideoIds(ids).asLiveData()

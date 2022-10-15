@@ -22,12 +22,12 @@ import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.BasicComparator
 
 class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicComparator<Video>()) {
-    private val currentCheckBox = hashSetOf<Pair<String, CheckBox>>()
+    private val currentCheckBox = hashSetOf<Pair<Long, CheckBox>>()
 
-    var tracker: SelectionTracker<String>? = null
+    var tracker: SelectionTracker<Long>? = null
         set(value) {
             value?.let {
-                it.addObserver(object : SelectionObserver<String>() {
+                it.addObserver(object : SelectionObserver<Long>() {
                     override fun onSelectionChanged() {
                         currentCheckBox.forEach { (id, box) ->
                             box.visibility = if (it.hasSelection()) {
@@ -51,9 +51,9 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
-        holder.itemView.tag = data.videoId
+        holder.itemView.tag = data.id
         holder.apply {
-            currentCheckBox.add(data.videoId to checkBox)
+            currentCheckBox.add(data.id to checkBox)
             title.text = data.title
             domainOrSize.text = if (data.stateData is Video.State.Downloaded) {
                 itemView.context.getString(
@@ -65,7 +65,7 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
             }
             Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
             tracker?.let {
-                val isSelected = it.isSelected(data.videoId)
+                val isSelected = it.isSelected(data.id)
                 itemView.isActivated = isSelected
                 checkBox.isChecked = isSelected
                 checkBox.visibility = if (it.hasSelection()) {
@@ -85,7 +85,7 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
     }
 
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
-        currentCheckBox.remove(holder.itemView.tag as String to holder.checkBox)
+        currentCheckBox.remove(holder.itemView.tag as Long to holder.checkBox)
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -98,15 +98,15 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
             checkBox.visibility = View.GONE
         }
 
-        fun toItemDetail(): ItemDetailsLookup.ItemDetails<String> =
-            object : ItemDetailsLookup.ItemDetails<String>() {
+        fun toItemDetail(): ItemDetailsLookup.ItemDetails<Long> =
+            object : ItemDetailsLookup.ItemDetails<Long>() {
                 override fun getPosition(): Int = absoluteAdapterPosition
-                override fun getSelectionKey(): String? = itemView.tag as String?
+                override fun getSelectionKey(): Long? = itemView.tag as? Long
             }
     }
 
-    class VideoListDetailsLookup(val recyclerView: RecyclerView) : ItemDetailsLookup<String>() {
-        override fun getItemDetails(e: MotionEvent): ItemDetails<String>? {
+    class VideoListDetailsLookup(val recyclerView: RecyclerView) : ItemDetailsLookup<Long>() {
+        override fun getItemDetails(e: MotionEvent): ItemDetails<Long>? {
             return recyclerView.findChildViewUnder(e.x, e.y)?.let { view ->
                 val viewHolder = recyclerView.getChildViewHolder(view)
                 if (viewHolder is ViewHolder) {

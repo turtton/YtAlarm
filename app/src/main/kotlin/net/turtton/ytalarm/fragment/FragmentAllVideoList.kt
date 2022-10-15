@@ -5,6 +5,7 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.selection.SelectionTracker
+import androidx.recyclerview.selection.StableIdKeyProvider
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +21,6 @@ import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImp
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
-import net.turtton.ytalarm.util.TagKeyProvider
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
@@ -28,8 +28,8 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 class FragmentAllVideoList :
-    FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<String> {
-    override lateinit var selectionTracker: SelectionTracker<String>
+    FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<Long> {
+    override lateinit var selectionTracker: SelectionTracker<Long>
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
@@ -51,9 +51,9 @@ class FragmentAllVideoList :
         selectionTracker = SelectionTracker.Builder(
             "AllVideoListTracker",
             recyclerView,
-            TagKeyProvider(recyclerView),
+            StableIdKeyProvider(recyclerView),
             VideoListAdapter.VideoListDetailsLookup(recyclerView),
-            StorageStrategy.createStringStorage()
+            StorageStrategy.createLongStorage()
         ).build()
         adapter.tracker = selectionTracker
 
@@ -80,7 +80,7 @@ class FragmentAllVideoList :
 
     class VideoSelectionObserver(
         fragment: FragmentAllVideoList
-    ) : SelectionMenuObserver<String, FragmentAllVideoList>(
+    ) : SelectionMenuObserver<Long, FragmentAllVideoList>(
         fragment,
         AttachableMenuProvider(
             fragment,
@@ -115,12 +115,12 @@ class FragmentAllVideoList :
                 val selection = fragment.selectionTracker.selection.toList()
                 DialogRemoveVideo { _, _ ->
                     val videoViewModel = fragment.videoViewModel
-                    val async = videoViewModel.getFromVideoIdsAsync(selection)
+                    val async = videoViewModel.getFromIdsAsync(selection)
                     fragment.lifecycleScope.launch {
                         val videos = async.await()
                         videoViewModel.delete(videos)
                         val playlists = fragment.playlistViewModel
-                            .getFromContainsVideoIdsAsync(selection)
+                            .getFromContainsIdsAsync(selection)
                             .await()
                         val newList = playlists.map {
                             it.copy(
@@ -128,9 +128,11 @@ class FragmentAllVideoList :
                             )
                         }.map {
                             if (videos.any { video -> video.thumbnailUrl == it.thumbnailUrl }) {
-                                val newVideoId = it.videos.firstOrNull() ?: ""
-                                videoViewModel.getFromVideoIdAsync(newVideoId).await()?.let { video ->
-                                    it.copy(thumbnailUrl = video.thumbnailUrl)
+                                it.videos.firstOrNull()?.let { newVideoId ->
+                                    videoViewModel.getFromIdAsync(newVideoId).await()
+                                        ?.let { video ->
+                                            it.copy(thumbnailUrl = video.thumbnailUrl)
+                                        }
                                 } ?: it
                             } else {
                                 it

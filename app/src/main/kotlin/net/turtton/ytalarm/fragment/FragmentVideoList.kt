@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.selection.SelectionTracker
+import androidx.recyclerview.selection.StableIdKeyProvider
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.WorkManager
@@ -33,7 +34,6 @@ import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
-import net.turtton.ytalarm.util.TagKeyProvider
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
@@ -43,7 +43,7 @@ import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 import java.util.*
 
 class FragmentVideoList :
-    FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<String> {
+    FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<Long> {
     lateinit var animFabAppear: Animation
     lateinit var animFabDisappear: Animation
     lateinit var animFabRotateForward: Animation
@@ -52,7 +52,7 @@ class FragmentVideoList :
 
     var isAddVideoFabRotated = false
 
-    override lateinit var selectionTracker: SelectionTracker<String>
+    override lateinit var selectionTracker: SelectionTracker<Long>
     lateinit var adapter: VideoListAdapter
 
     private val args by navArgs<FragmentVideoListArgs>()
@@ -78,9 +78,9 @@ class FragmentVideoList :
         selectionTracker = SelectionTracker.Builder(
             "VideoListTracker",
             recyclerView,
-            TagKeyProvider(recyclerView),
+            StableIdKeyProvider(recyclerView),
             VideoListAdapter.VideoListDetailsLookup(recyclerView),
-            StorageStrategy.createStringStorage()
+            StorageStrategy.createLongStorage()
         ).build()
         adapter.tracker = selectionTracker
 
@@ -181,7 +181,7 @@ class FragmentVideoList :
                     .await()
                     ?.videos
                     ?: emptyList()
-                val targetVideos = videoViewModel.getExceptVideoIdsAsync(currentVideo)
+                val targetVideos = videoViewModel.getExceptIdsAsync(currentVideo)
                     .await()
                     .map { video -> video.toDisplayData() }
                 launch(Dispatchers.Main) {
@@ -303,7 +303,7 @@ class FragmentVideoList :
         lifecycleScope.launch(Dispatchers.Main) {
             playlistViewModel.getFromId(currentId.value).observe(viewLifecycleOwner) { playlist ->
                 playlist?.videos?.also { videos ->
-                    videoViewModel.getFromVideoIds(videos)
+                    videoViewModel.getFromIds(videos)
                         .observe(viewLifecycleOwner) { list ->
                             list?.also {
                                 adapter.submitList(it)
@@ -316,7 +316,7 @@ class FragmentVideoList :
 
     class VideoSelectionObserver(
         fragment: FragmentVideoList
-    ) : SelectionMenuObserver<String, FragmentVideoList>(
+    ) : SelectionMenuObserver<Long, FragmentVideoList>(
         fragment,
         AttachableMenuProvider(
             fragment,
@@ -333,12 +333,13 @@ class FragmentVideoList :
 
                         val videoViewModel = fragment.videoViewModel
                         val videos = videoViewModel
-                            .getFromVideoIdsAsync(selection.toList())
+                            .getFromIdsAsync(selection.toList())
                             .await()
                         if (videos.any { it.thumbnailUrl == playlist.thumbnailUrl }) {
-                            val newTarget = videoList.firstOrNull() ?: ""
-                            val targetVideo = videoViewModel.getFromVideoIdAsync(newTarget).await()
-                            newList = newList.copy(thumbnailUrl = targetVideo?.thumbnailUrl)
+                            videoList.firstOrNull()?.let { newTarget ->
+                                val targetVideo = videoViewModel.getFromIdAsync(newTarget).await()
+                                newList = newList.copy(thumbnailUrl = targetVideo?.thumbnailUrl)
+                            }
                         }
 
                         if (playlist.id == 0L) {
