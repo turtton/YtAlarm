@@ -27,6 +27,11 @@ data class Video(
 ) {
     @Serializable
     sealed interface State {
+        fun isUpdating(): Boolean = when (this) {
+            is Importing, is Downloading -> true
+            else -> false
+        }
+
         @Serializable
         data class Importing(val workerId: UUID) : State
 

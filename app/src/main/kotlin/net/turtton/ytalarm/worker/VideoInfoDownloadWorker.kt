@@ -57,7 +57,19 @@ class VideoInfoDownloadWorker(
             val video = videos.first()
             val duplication = checkVideoDuplication(video.videoId, video.domain)
             if (duplication == null) {
-                repository.update(video.copy(id = targetVideoId))
+                val importedVideo = video.copy(id = targetVideoId)
+                repository.update(importedVideo)
+                playlists?.forEach {
+                    repository.getPlaylistFromIdSync(it)?.let { playlist ->
+                        val containsVideos = repository.getVideoFromIdsSync(playlist.videos)
+                        val hasUpdatingVideo = containsVideos.any { video ->
+                            video.stateData.isUpdating()
+                        }
+                        if (!hasUpdatingVideo) {
+                            repository.update(playlist.copy(type = Playlist.Type.Original))
+                        }
+                    }
+                }
             } else {
                 repository.delete(targetVideo)
                 playlists?.let {
@@ -168,8 +180,7 @@ class VideoInfoDownloadWorker(
             repository.update(newPlaylist)
             it
         } else {
-            val downloadText = applicationContext.getString(R.string.playlist_name_downloading)
-            newPlaylist = newPlaylist.copy(title = downloadText, type = Playlist.Type.Downloading)
+            newPlaylist = newPlaylist.copy(type = Playlist.Type.Downloading)
             repository.insert(newPlaylist)
         }
     }.filterNotNull().toLongArray()
