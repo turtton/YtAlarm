@@ -55,10 +55,11 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
         holder.apply {
             currentCheckBox.add(data.id to checkBox)
             title.text = data.title
-            domainOrSize.text = if (data.stateData is Video.State.Downloaded) {
+            val state = data.stateData
+            domainOrSize.text = if (state is Video.State.Downloaded) {
                 itemView.context.getString(
                     R.string.item_video_list_data_size,
-                    data.stateData.fileSize / 1024f / 1024f
+                    state.fileSize / 1024f / 1024f
                 )
             } else {
                 data.domain
@@ -75,11 +76,13 @@ class VideoListAdapter : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicCo
                 }
             }
 
-            itemView.setOnClickListener {
-                val navController = it.findFragment<Fragment>().findNavController()
+            if (state !is Video.State.Importing && state !is Video.State.Downloading) {
+                itemView.setOnClickListener {
+                    val navController = it.findFragment<Fragment>().findNavController()
 
-                val args = FragmentVideoPlayerArgs(data.videoId).toBundle()
-                navController.navigate(R.id.nav_graph_video_player, args)
+                    val args = FragmentVideoPlayerArgs(data.videoId).toBundle()
+                    navController.navigate(R.id.nav_graph_video_player, args)
+                }
             }
         }
     }
