@@ -1,21 +1,23 @@
 package net.turtton.ytalarm.util.converter
 
 import androidx.room.TypeConverter
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 import net.turtton.ytalarm.util.RepeatType
 
+@OptIn(ExperimentalSerializationApi::class)
 class RepeatTypeConverter {
-    private val json = Json
+    private val cbor = Cbor
 
     @TypeConverter
-    fun fromString(value: String?): RepeatType? {
-        return value?.let { json.decodeFromString(it) }
+    fun fromByteArray(value: ByteArray?): RepeatType? {
+        return value?.let { cbor.decodeFromByteArray(it) }
     }
 
     @TypeConverter
-    fun toString(repeatType: RepeatType?): String? {
-        return repeatType?.let { json.encodeToString(it) }
+    fun toByteArray(repeatType: RepeatType?): ByteArray? {
+        return repeatType?.let { cbor.encodeToByteArray(it) }
     }
 }

@@ -2,6 +2,7 @@
 
 package net.turtton.ytalarm.structure
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
@@ -15,7 +16,9 @@ data class Playlist(
     val id: Long = 0L,
     var title: String = "Playlist",
     val thumbnailUrl: String? = null,
+    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     var videos: List<Long> = emptyList(),
+    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     val type: Type = Type.Original
 ) {
     @Serializable

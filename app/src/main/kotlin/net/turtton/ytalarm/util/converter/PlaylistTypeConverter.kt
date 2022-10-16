@@ -1,21 +1,23 @@
 package net.turtton.ytalarm.util.converter
 
 import androidx.room.TypeConverter
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 import net.turtton.ytalarm.structure.Playlist
 
+@OptIn(ExperimentalSerializationApi::class)
 class PlaylistTypeConverter {
-    private val json = Json
+    private val cbor = Cbor
 
     @TypeConverter
-    fun fromString(value: String?): Playlist.Type? {
-        return value?.let { json.decodeFromString(it) }
+    fun fromByteArray(value: ByteArray?): Playlist.Type? {
+        return value?.let { cbor.decodeFromByteArray(it) }
     }
 
     @TypeConverter
-    fun toString(type: Playlist.Type?): String? {
-        return type?.let { json.encodeToString(it) }
+    fun toByteArray(type: Playlist.Type?): ByteArray? {
+        return type?.let { cbor.encodeToByteArray(it) }
     }
 }

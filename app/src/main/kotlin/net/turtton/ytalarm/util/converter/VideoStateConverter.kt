@@ -1,21 +1,23 @@
 package net.turtton.ytalarm.util.converter
 
 import androidx.room.TypeConverter
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 import net.turtton.ytalarm.structure.Video
 
+@OptIn(ExperimentalSerializationApi::class)
 class VideoStateConverter {
-    private val json = Json
+    private val cbor = Cbor
 
     @TypeConverter
-    fun fromString(value: String?): Video.State? {
-        return value?.let { json.decodeFromString(it) }
+    fun fromByteArray(value: ByteArray?): Video.State? {
+        return value?.let { cbor.decodeFromByteArray(it) }
     }
 
     @TypeConverter
-    fun fromString(state: Video.State?): String? {
-        return state?.let { json.encodeToString(it) }
+    fun fromByteArray(state: Video.State?): ByteArray? {
+        return state?.let { cbor.encodeToByteArray(it) }
     }
 }
