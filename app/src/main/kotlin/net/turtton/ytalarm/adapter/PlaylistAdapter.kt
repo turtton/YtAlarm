@@ -3,7 +3,6 @@ package net.turtton.ytalarm.adapter
 import android.app.AlertDialog
 import android.app.Dialog
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -104,7 +103,6 @@ class PlaylistAdapter<T>(
                             fragment.playlistViewModel.update(data.copy(thumbnailUrl = it))
                         }
                     }
-                Log.i("thumbnail", "/$thumbnailUrl/")
                 Glide.with(itemView).load(thumbnailUrl).into(thumbnail)
             }
 
