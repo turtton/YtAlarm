@@ -74,13 +74,8 @@ class FragmentPlaylist :
         }
 
         playlistViewModel.allPlaylists.observe(requireActivity()) { list ->
-            list?.let { playlists ->
-                playlists.filter { playlist -> playlist.videos.isEmpty() }
-                    .takeIf { it.isNotEmpty() }
-                    ?.let {
-                        playlistViewModel.delete(it)
-                    }
-                adapter.submitList(playlists)
+            list?.let {
+                adapter.submitList(it)
             }
         }
 
