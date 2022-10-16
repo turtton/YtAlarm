@@ -9,6 +9,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.WorkManager
+import androidx.work.await
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,6 +20,7 @@ import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.PlaylistAdapter
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.structure.Playlist
+import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
@@ -75,6 +78,30 @@ class FragmentPlaylist :
 
         playlistViewModel.allPlaylists.observe(requireActivity()) { list ->
             list?.let {
+                it.filter { playlist ->
+                    playlist.type is Playlist.Type.Downloading
+                }.forEach { playlist ->
+                    lifecycleScope.launch {
+                        playlist.videos.firstOrNull()?.let { videoId ->
+                            videoViewModel.getFromIdAsync(videoId).await()?.let { video ->
+                                when (val state = video.stateData) {
+                                    is Video.State.Importing -> state.workerId
+                                    is Video.State.Downloading -> state.workerId
+                                    else -> return@launch
+                                }.let { workerId ->
+                                    WorkManager.getInstance(view.context)
+                                        .getWorkInfoById(workerId)
+                                        .await()
+                                        ?.state
+                                }
+                            }.also { state ->
+                                if (state == null || state.isFinished) {
+                                    playlistViewModel.delete(playlist)
+                                }
+                            }
+                        }
+                    }
+                }
                 adapter.submitList(it)
             }
         }

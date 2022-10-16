@@ -24,6 +24,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.adapter.VideoListAdapter
+import net.turtton.ytalarm.fragment.FragmentAllVideoList.Companion.updatePlaylistThumbnails
 import net.turtton.ytalarm.fragment.dialog.DialogExecuteProgress
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
@@ -33,6 +34,7 @@ import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.TagKeyProvider
+import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
@@ -42,7 +44,10 @@ import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 import java.util.*
 
 class FragmentVideoList :
-    FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<Long> {
+    FragmentAbstractList(),
+    VideoViewContainer,
+    PlaylistViewContainer,
+    SelectionTrackerContainer<Long> {
     lateinit var animFabAppear: Animation
     lateinit var animFabDisappear: Animation
     lateinit var animFabRotateForward: Animation
@@ -55,13 +60,13 @@ class FragmentVideoList :
     lateinit var adapter: VideoListAdapter
 
     private val args by navArgs<FragmentVideoListArgs>()
-    val currentId = MutableStateFlow(0L)
+    private val currentId = MutableStateFlow(0L)
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
     }
 
-    val playlistViewModel: PlaylistViewModel by viewModels {
+    override val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(requireActivity().application.repository)
     }
 
@@ -157,9 +162,7 @@ class FragmentVideoList :
             animateFab(it)
             lifecycleScope.launch {
                 if (currentId.value == 0L) {
-                    val downloadingTitle = it.context.getString(R.string.playlist_name_downloading)
                     val newPlaylist = Playlist(
-                        title = downloadingTitle,
                         type = Playlist.Type.Downloading
                     )
                     val newId = playlistViewModel.insertAsync(newPlaylist).await()
@@ -312,7 +315,7 @@ class FragmentVideoList :
     }
 
     private fun updateListObserver() {
-        lifecycleScope.launch(Dispatchers.Main) {
+        lifecycleScope.launch(Dispatchers.Main) mainThread@{
             playlistViewModel.getFromId(currentId.value).observe(viewLifecycleOwner) { playlist ->
                 playlist?.videos?.also { videos ->
                     videoViewModel.getFromIds(videos)
@@ -334,32 +337,10 @@ class FragmentVideoList :
             fragment,
             R.menu.menu_video_list_in_playlist,
             R.id.menu_video_list_in_pl_action_remove to {
-                val selection = fragment.selectionTracker.selection.toSet()
+                val selection = fragment.selectionTracker.selection.distinct()
                 DialogRemoveVideo { _, _ ->
-                    val async = fragment.playlistViewModel.getFromIdAsync(fragment.currentId.value)
                     fragment.lifecycleScope.launch {
-                        val playlist = async.await() ?: return@launch
-                        val videoList = playlist.videos.toMutableSet()
-                        videoList.removeAll(selection)
-                        var newList = playlist.copy(videos = videoList.toList())
-
-                        val videoViewModel = fragment.videoViewModel
-                        val videos = videoViewModel
-                            .getFromIdsAsync(selection.toList())
-                            .await()
-                        if (videos.any { it.thumbnailUrl == playlist.thumbnailUrl }) {
-                            videoList.firstOrNull()?.let { newTarget ->
-                                val targetVideo = videoViewModel.getFromIdAsync(newTarget).await()
-                                newList = newList.copy(thumbnailUrl = targetVideo?.thumbnailUrl)
-                            }
-                        }
-
-                        if (playlist.id == 0L) {
-                            @Suppress("DeferredResultUnused")
-                            fragment.playlistViewModel.insertAsync(newList)
-                        } else {
-                            fragment.playlistViewModel.update(newList)
-                        }
+                        fragment.updatePlaylistThumbnails(selection, fragment.currentId.value)
                     }
                     fragment.selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "VideoRemoveDialog")
