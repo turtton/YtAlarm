@@ -1,7 +1,6 @@
 package net.turtton.ytalarm
 
 import androidx.annotation.WorkerThread
-import androidx.sqlite.db.SimpleSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.database.AppDatabase
 import net.turtton.ytalarm.structure.Alarm
@@ -62,16 +61,6 @@ class DataRepository(private val database: AppDatabase) {
     @WorkerThread
     suspend fun getPlaylistFromIdsSync(ids: List<Long>): List<Playlist> {
         return database.playlistDao().getFromIdsSync(ids)
-    }
-
-    @WorkerThread
-    suspend fun getPlaylistContainsVideoIds(ids: List<Long>): List<Playlist> {
-        val selectQuery = "SELECT * FROM playlists"
-        val searchQuery = ids.joinToString(prefix = " WHERE ", separator = " OR ") {
-            "videos LIKE '%$it%'"
-        }
-        val query = SimpleSQLiteQuery("$selectQuery$searchQuery")
-        return database.playlistDao().getFromVideoIdsSync(query)
     }
 
     @WorkerThread

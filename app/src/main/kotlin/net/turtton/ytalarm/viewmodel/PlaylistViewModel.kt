@@ -30,10 +30,6 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getPlaylistFromIdsSync(ids)
     }
 
-    fun getFromContainsIdsAsync(ids: List<Long>): Deferred<List<Playlist>> = viewModelScope.async {
-        repository.getPlaylistContainsVideoIds(ids)
-    }
-
     fun update(playlist: Playlist) = viewModelScope.launch {
         repository.update(playlist)
     }
