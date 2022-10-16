@@ -94,11 +94,12 @@ class PlaylistAdapter<T>(
                 val thumbnailUrl = data.thumbnailUrl
                     ?.takeIf { it.isNotEmpty() && it.isNotBlank() }
                     ?: kotlin.run {
-                        data.videos.firstOrNull()?.let {
+                        data.videos.firstOrNull()?.let { video ->
                             fragment.videoViewModel
-                                .getFromIdAsync(it)
+                                .getFromIdAsync(video)
                                 .await()
                                 ?.thumbnailUrl
+                                ?.takeIf { it.isNotEmpty() && it.isNotBlank() }
                         }?.also {
                             fragment.playlistViewModel.update(data.copy(thumbnailUrl = it))
                         }
