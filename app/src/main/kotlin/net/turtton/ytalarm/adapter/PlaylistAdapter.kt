@@ -45,7 +45,26 @@ class PlaylistAdapter<T>(
             value?.let {
                 it.addObserver(object : SelectionObserver<Long>() {
                     override fun onSelectionChanged() {
-                        currentCheckBox.forEach { (id, box, option) ->
+                        val selected = currentCheckBox.filter { current ->
+                            it.isSelected(current.id)
+                        }
+                        val unSelectable = selected.filter { current ->
+                            !current.selectable
+                        }
+                        if (unSelectable.isNotEmpty() && unSelectable.size == selected.size) {
+                            fragment.lifecycleScope.launch(Dispatchers.Main) {
+                                it.clearSelection()
+                            }
+                            return
+                        }
+                        currentCheckBox.forEach { (id, box, option, selectable) ->
+                            if (!selectable) {
+                                fragment.lifecycleScope.launch(Dispatchers.Main) {
+                                    it.deselect(id)
+                                }
+                                return@forEach
+                            }
+
                             box.visibility = if (it.hasSelection()) {
                                 View.VISIBLE
                             } else {
@@ -75,7 +94,6 @@ class PlaylistAdapter<T>(
         val data = getItem(position)
         holder.itemView.tag = data.id
         holder.apply {
-            currentCheckBox += ViewContainer(data.id, checkBox, optionButton)
             title.text = data.title
             val size = data.videos.size
             if (data.videos.isNotEmpty()) {
@@ -107,17 +125,6 @@ class PlaylistAdapter<T>(
                 Glide.with(itemView).load(thumbnailUrl).into(thumbnail)
             }
 
-            tracker?.let {
-                val isSelected = it.isSelected(data.id)
-                itemView.isActivated = isSelected
-                checkBox.isChecked = isSelected
-                checkBox.visibility = if (it.hasSelection()) {
-                    View.VISIBLE
-                } else {
-                    View.GONE
-                }
-            }
-
             if (data.type !is Playlist.Type.Downloading) {
                 itemView.setOnClickListener {
                     val action =
@@ -143,13 +150,46 @@ class PlaylistAdapter<T>(
                     }
                     menu.show()
                 }
+            } else {
+                videoCount.visibility = View.GONE
+                optionButton.visibility = View.GONE
+                selectable = false
             }
+
+            tracker?.let {
+                var isSelected = it.isSelected(data.id)
+                if (isSelected && !selectable) {
+                    fragment.lifecycleScope.launch(Dispatchers.Main) {
+                        it.deselect(data.id)
+                    }
+                }
+                isSelected = isSelected && selectable
+                itemView.isActivated = isSelected
+                checkBox.isChecked = isSelected
+                checkBox.visibility = if (it.hasSelection() && selectable) {
+                    View.VISIBLE
+                } else {
+                    View.GONE
+                }
+                optionButton.visibility = if (it.hasSelection() || !selectable) {
+                    View.GONE
+                } else {
+                    View.VISIBLE
+                }
+            }
+
+            currentCheckBox += ViewContainer(data.id, checkBox, optionButton, selectable)
         }
     }
 
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
         currentCheckBox.remove(
-            ViewContainer(holder.itemView.tag as Long, holder.checkBox, holder.optionButton)
+            ViewContainer(
+                holder.itemView.tag as Long,
+                holder.checkBox,
+                holder.optionButton,
+                holder.selectable
+            )
         )
     }
 
@@ -159,6 +199,8 @@ class PlaylistAdapter<T>(
         val thumbnail: ImageView = view.findViewById(R.id.item_playlist_thumbnail)
         val checkBox: CheckBox = view.findViewById(R.id.item_playlist_checkbox)
         val optionButton: ImageButton = view.findViewById(R.id.item_playlist_option_button)
+
+        var selectable: Boolean = true
 
         init {
             checkBox.visibility = View.GONE
@@ -220,6 +262,7 @@ class PlaylistAdapter<T>(
     private data class ViewContainer(
         val id: Long,
         val checkBox: CheckBox,
-        val optionButton: ImageButton
+        val optionButton: ImageButton,
+        val selectable: Boolean
     )
 }

@@ -45,7 +45,7 @@ class FragmentAllVideoList :
 
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
-        val adapter = VideoListAdapter()
+        val adapter = VideoListAdapter(this)
         recyclerView.adapter = adapter
 
         selectionTracker = SelectionTracker.Builder(

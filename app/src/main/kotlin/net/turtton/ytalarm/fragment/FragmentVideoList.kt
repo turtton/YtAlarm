@@ -69,7 +69,7 @@ class FragmentVideoList :
         currentId.update { args.playlistId }
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
-        adapter = VideoListAdapter()
+        adapter = VideoListAdapter(this)
         recyclerView.adapter = adapter
 
         selectionTracker = SelectionTracker.Builder(
