@@ -5,7 +5,6 @@ import android.view.View
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.selection.SelectionTracker
-import androidx.recyclerview.selection.StableIdKeyProvider
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +20,7 @@ import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImp
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
+import net.turtton.ytalarm.util.TagKeyProvider
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
@@ -51,7 +51,7 @@ class FragmentAllVideoList :
         selectionTracker = SelectionTracker.Builder(
             "AllVideoListTracker",
             recyclerView,
-            StableIdKeyProvider(recyclerView),
+            TagKeyProvider(recyclerView),
             VideoListAdapter.VideoListDetailsLookup(recyclerView),
             StorageStrategy.createLongStorage()
         ).build()
