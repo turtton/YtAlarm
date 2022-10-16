@@ -118,28 +118,31 @@ class PlaylistAdapter<T>(
                 }
             }
 
-            itemView.setOnClickListener {
-                val action = FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment(
-                    data.id
-                )
-                itemView.findNavController().navigate(action)
-            }
-
-            optionButton.setOnClickListener {
-                val menu =
-                    PopupMenu(it.context, it.findViewById(R.id.item_playlist_option_button))
-                menu.inflate(R.menu.menu_playlist_option)
-                menu.setOnMenuItemClickListener { menuItem ->
-                    when (menuItem.itemId) {
-                        R.id.menu_playlist_option_rename -> {
-                            DialogNameInput(data.id, fragment, title.text.toString())
-                                .show(fragment.childFragmentManager, "DialogNameInput")
-                            true
-                        }
-                        else -> false
-                    }
+            if (data.type !is Playlist.Type.Downloading) {
+                itemView.setOnClickListener {
+                    val action =
+                        FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment(
+                            data.id
+                        )
+                    itemView.findNavController().navigate(action)
                 }
-                menu.show()
+
+                optionButton.setOnClickListener {
+                    val menu =
+                        PopupMenu(it.context, it.findViewById(R.id.item_playlist_option_button))
+                    menu.inflate(R.menu.menu_playlist_option)
+                    menu.setOnMenuItemClickListener { menuItem ->
+                        when (menuItem.itemId) {
+                            R.id.menu_playlist_option_rename -> {
+                                DialogNameInput(data.id, fragment, title.text.toString())
+                                    .show(fragment.childFragmentManager, "DialogNameInput")
+                                true
+                            }
+                            else -> false
+                        }
+                    }
+                    menu.show()
+                }
             }
         }
     }

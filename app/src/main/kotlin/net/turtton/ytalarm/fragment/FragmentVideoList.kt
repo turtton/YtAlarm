@@ -115,7 +115,9 @@ class FragmentVideoList :
             val playlistType = playlistViewModel.getFromIdAsync(currentId.value).await()?.type
             launch(Dispatchers.Main) {
                 when (playlistType) {
-                    null, is Playlist.Type.Original -> listenFabWithOriginalMode()
+                    null,
+                    is Playlist.Type.Downloading,
+                    is Playlist.Type.Original -> listenFabWithOriginalMode()
                     is Playlist.Type.CloudPlaylist -> listenFabWithSyncMode(playlistType)
                 }
                 addVideoFab.show()
@@ -155,7 +157,12 @@ class FragmentVideoList :
             animateFab(it)
             lifecycleScope.launch {
                 if (currentId.value == 0L) {
-                    val newId = playlistViewModel.insertAsync(Playlist()).await()
+                    val downloadingTitle = it.context.getString(R.string.playlist_name_downloading)
+                    val newPlaylist = Playlist(
+                        title = downloadingTitle,
+                        type = Playlist.Type.Downloading
+                    )
+                    val newId = playlistViewModel.insertAsync(newPlaylist).await()
                     currentId.update { newId }
                     updateListObserver()
                 }

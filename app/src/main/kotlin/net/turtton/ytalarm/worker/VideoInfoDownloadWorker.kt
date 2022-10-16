@@ -45,7 +45,7 @@ class VideoInfoDownloadWorker(
 
         val targetVideoId = repository.insert(targetVideo)
         targetVideo = targetVideo.copy(id = targetVideoId)
-        playlists = playlists?.insertVideosInPlaylists(listOf(targetVideoId), Type.Video)
+        playlists = playlists?.insertVideoInPlaylists(targetVideo)
 
         val request = YoutubeDLRequest(targetUrl)
             .addOption("--dump-single-json")
@@ -156,15 +156,29 @@ class VideoInfoDownloadWorker(
         }
     )
 
+    private suspend fun LongArray.insertVideoInPlaylists(video: Video) = map {
+        val playlist = if (it == 0L) {
+            Playlist()
+        } else {
+            repository.getPlaylistFromIdSync(it) ?: return@map null
+        }
+        val newList = (playlist.videos + video.id).distinct()
+        var newPlaylist = playlist.copy(videos = newList)
+        if (it != 0L) {
+            repository.update(newPlaylist)
+            it
+        } else {
+            val downloadText = applicationContext.getString(R.string.playlist_name_downloading)
+            newPlaylist = newPlaylist.copy(title = downloadText, type = Playlist.Type.Downloading)
+            repository.insert(newPlaylist)
+        }
+    }.filterNotNull().toLongArray()
+
     private suspend fun LongArray.insertVideosInPlaylists(
         videoIds: List<Long>,
         type: Type
     ): LongArray = map { targetPlaylist ->
-        val playlist = if (targetPlaylist == 0L) {
-            Playlist()
-        } else {
-            repository.getPlaylistFromIdSync(targetPlaylist) ?: return@map null
-        }
+        val playlist = repository.getPlaylistFromIdSync(targetPlaylist)!!
         val newList = (playlist.videos + videoIds).distinct()
         val new = when (type) {
             is Type.Video -> playlist.copy(videos = newList)
@@ -173,14 +187,9 @@ class VideoInfoDownloadWorker(
                 playlist.copy(title = type.title, videos = newList, type = playlistType)
             }
         }
-        if (targetPlaylist != 0L) {
-            repository.update(new)
-            targetPlaylist
-        } else {
-            val downloadText = applicationContext.getString(R.string.playlist_name_downloading)
-            repository.insert(new.copy(title = downloadText))
-        }
-    }.filterNotNull().toLongArray()
+        repository.update(new)
+        targetPlaylist
+    }.toLongArray()
 
     private suspend fun LongArray.deleteVideoFromPlaylists(targetVideoId: Long) = forEach {
         val playlist = repository.getPlaylistFromIdSync(it) ?: return@forEach
