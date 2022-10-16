@@ -73,8 +73,15 @@ class FragmentPlaylist :
             selectionTracker.onRestoreInstanceState(it)
         }
 
-        playlistViewModel.allPlaylists.observe(requireActivity()) {
-            it?.let { adapter.submitList(it) }
+        playlistViewModel.allPlaylists.observe(requireActivity()) { list ->
+            list?.let { playlists ->
+                playlists.filter { playlist -> playlist.videos.isEmpty() }
+                    .takeIf { it.isNotEmpty() }
+                    ?.let {
+                        playlistViewModel.delete(it)
+                    }
+                adapter.submitList(playlists)
+            }
         }
 
         val fab = (requireActivity() as MainActivity).binding.fab
