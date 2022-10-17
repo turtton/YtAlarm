@@ -87,7 +87,7 @@ class FragmentAllVideoList :
                             is Video.State.Downloading -> status.workerId
                             else -> return@launch
                         }.let { workerId ->
-                            WorkManager.getInstance(requireContext())
+                            WorkManager.getInstance(view.context)
                                 .getWorkInfoById(workerId)
                                 .await()
                                 ?.state
