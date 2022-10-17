@@ -78,42 +78,13 @@ class MainActivity : AppCompatActivity() {
         binding.fab.shrink()
 
         createNotificationChannel()
-
-        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-            lifecycleScope.launch {
-                intent.getStringExtra(Intent.EXTRA_TEXT)?.let { url ->
-                    if (!url.startsWith("http")) {
-                        AlertDialog.Builder(applicationContext)
-                            .setTitle(R.string.dialog_shared_text_should_be_url_title)
-                            .setMessage(R.string.dialog_shared_text_should_be_url_description)
-                            .setPositiveButton(R.string.dialog_shared_text_should_be_url_ok, null)
-                            .show()
-                    }
-
-                    val playlists = playlistViewModel.allPlaylistsAsync.await()
-                        .filter { it.type is Playlist.Type.Original }
-                        .map { it.toDisplayData(videoViewModel) }
-                        .toMutableList()
-                        .apply {
-                            val title = "Create New Playlist"
-                            val drawable = MultiChoiceVideoListAdapter.DisplayData
-                                .Thumbnail
-                                .Drawable(R.drawable.ic_add_playlist)
-                            add(MultiChoiceVideoListAdapter.DisplayData(0, title, drawable))
-                        }
-
-                    DialogMultiChoiceVideo(playlists) { _, id ->
-                        VideoInfoDownloadWorker.registerWorker(
-                            applicationContext,
-                            url,
-                            id.toLongArray()
-                        )
-                    }.show(supportFragmentManager, "SelectTargetPlaylist")
-                }
-            }
-        }
-
         requestPermission()
+        checkUrlShare(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        checkUrlShare(intent)
     }
 
     override fun onRestart() {
@@ -161,6 +132,54 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }, ContextCompat.getMainExecutor(this))
+            }
+        }
+    }
+
+    private fun checkUrlShare(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+            intent.getStringExtra(Intent.EXTRA_TEXT)?.let { url ->
+                lifecycleScope.launch {
+                    if (!url.startsWith("http")) {
+                        AlertDialog.Builder(applicationContext)
+                            .setTitle(R.string.dialog_shared_text_should_be_url_title)
+                            .setMessage(R.string.dialog_shared_text_should_be_url_description)
+                            .setPositiveButton(R.string.dialog_shared_text_should_be_url_ok, null)
+                            .show()
+                    }
+
+                    val playlists = playlistViewModel.allPlaylistsAsync.await()
+                        .filter { it.type is Playlist.Type.Original }
+                        .map { it.toDisplayData(videoViewModel) }
+                        .toMutableList()
+                        .apply {
+                            val title = "Create New Playlist"
+                            val drawable = MultiChoiceVideoListAdapter.DisplayData
+                                .Thumbnail
+                                .Drawable(R.drawable.ic_add_playlist)
+                            add(MultiChoiceVideoListAdapter.DisplayData(0, title, drawable))
+                        }
+
+                    DialogMultiChoiceVideo(playlists) { _, id ->
+                        lifecycleScope.launch {
+                            val mutableId = id.toMutableSet()
+                            if (mutableId.contains(0L)) {
+                                val icon = R.drawable.ic_download
+                                val playlist = Playlist(
+                                    thumbnail = Playlist.Thumbnail.Drawable(icon),
+                                    type = Playlist.Type.Downloading
+                                )
+                                mutableId += playlistViewModel.insertAsync(playlist).await()
+                                mutableId.remove(0L)
+                            }
+                            VideoInfoDownloadWorker.registerWorker(
+                                applicationContext,
+                                url,
+                                mutableId.toLongArray()
+                            )
+                        }
+                    }.show(supportFragmentManager, "SelectTargetPlaylist")
+                }
             }
         }
     }
