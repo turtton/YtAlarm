@@ -11,6 +11,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.await
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.runCatching
@@ -45,6 +46,13 @@ class VideoInfoDownloadWorker(
 
         val targetVideoId = repository.insert(targetVideo)
         targetVideo = targetVideo.copy(id = targetVideoId)
+        @Suppress("ControlFlowWithEmptyBody")
+        while (
+            WorkManager.getInstance(applicationContext)
+                .getWorkInfoById(id)
+                .await()
+                .let { it == null || it.state.isFinished }
+        ) {}
         playlists = playlists?.insertVideoInPlaylists(targetVideo)
 
         val request = YoutubeDLRequest(targetUrl)
