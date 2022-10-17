@@ -109,20 +109,29 @@ class PlaylistAdapter<T>(
             }
 
             fragment.lifecycleScope.launch {
-                val thumbnailUrl = data.thumbnailUrl
-                    ?.takeIf { it.isNotEmpty() && it.isNotBlank() }
-                    ?: kotlin.run {
-                        data.videos.firstOrNull()?.let { video ->
-                            fragment.videoViewModel
-                                .getFromIdAsync(video)
-                                .await()
-                                ?.thumbnailUrl
-                                ?.takeIf { it.isNotEmpty() && it.isNotBlank() }
-                        }?.also {
-                            fragment.playlistViewModel.update(data.copy(thumbnailUrl = it))
-                        }
+                when (val thumbnailData = data.thumbnail) {
+                    is Playlist.Thumbnail.Video -> {
+                        val thumbnailUrl = fragment.videoViewModel
+                            .getFromIdAsync(thumbnailData.id)
+                            .await()
+                            ?.thumbnailUrl
+                            ?: data.videos.firstOrNull()?.let { video ->
+                                fragment.videoViewModel
+                                    .getFromIdAsync(video)
+                                    .await()
+                                    ?.takeIf {
+                                        val thumbnailUrl = it.thumbnailUrl
+                                        thumbnailUrl.isNotEmpty() && thumbnailUrl.isNotBlank()
+                                    }
+                            }?.also {
+                                fragment.playlistViewModel.update(
+                                    data.copy(thumbnail = Playlist.Thumbnail.Video(it.id))
+                                )
+                            }?.thumbnailUrl
+                        Glide.with(itemView).load(thumbnailUrl).into(thumbnail)
                     }
-                Glide.with(itemView).load(thumbnailUrl).into(thumbnail)
+                    is Playlist.Thumbnail.Drawable -> thumbnail.setImageResource(thumbnailData.id)
+                }
             }
 
             if (data.type !is Playlist.Type.Downloading) {

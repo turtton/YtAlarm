@@ -17,6 +17,8 @@ import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 class FragmentAlarmList : FragmentAbstractList() {
 
@@ -26,6 +28,10 @@ class FragmentAlarmList : FragmentAbstractList() {
 
     val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(requireActivity().application.repository)
+    }
+
+    val videoViewModel: VideoViewModel by viewModels {
+        VideoViewModelFactory(requireActivity().application.repository)
     }
 
     private val prevList = MutableStateFlow(mapOf<Long, Boolean>())

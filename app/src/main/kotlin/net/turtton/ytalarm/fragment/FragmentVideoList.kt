@@ -163,7 +163,8 @@ class FragmentVideoList :
             lifecycleScope.launch {
                 if (currentId.value == 0L) {
                     val newPlaylist = Playlist(
-                        type = Playlist.Type.Downloading
+                        type = Playlist.Type.Downloading,
+                        thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_download)
                     )
                     val newId = playlistViewModel.insertAsync(newPlaylist).await()
                     currentId.update { newId }
@@ -194,11 +195,18 @@ class FragmentVideoList :
                         lifecycleScope.launch(Dispatchers.IO) {
                             val playlist = playlistViewModel.getFromIdAsync(currentId.value)
                                 .await()
-                                ?: Playlist()
+                                ?: kotlin.run {
+                                    val icon = R.drawable.ic_download
+                                    Playlist(thumbnail = Playlist.Thumbnail.Drawable(icon))
+                                }
                             // Converts set to avoid duplicating ids
                             val newVideoTargets = (playlist.videos + selectedId).distinct()
-                            val newPlaylist = playlist.copy(videos = newVideoTargets)
+                            var newPlaylist = playlist.copy(videos = newVideoTargets)
                             if (playlist.id == 0L) {
+                                newVideoTargets.firstOrNull()?.let { targetId ->
+                                    val video = Playlist.Thumbnail.Video(targetId)
+                                    newPlaylist = newPlaylist.copy(thumbnail = video)
+                                }
                                 val newId = playlistViewModel.insertAsync(newPlaylist).await()
                                 currentId.update { newId }
                                 updateListObserver()

@@ -16,6 +16,7 @@ import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.converter.LongListConverter
+import net.turtton.ytalarm.util.converter.PlaylistThumbnailConverter
 import net.turtton.ytalarm.util.converter.PlaylistTypeConverter
 import net.turtton.ytalarm.util.converter.RepeatTypeConverter
 import net.turtton.ytalarm.util.converter.StringListConverter
@@ -27,7 +28,8 @@ import net.turtton.ytalarm.util.converter.VideoStateConverter
     LongListConverter::class,
     RepeatTypeConverter::class,
     VideoStateConverter::class,
-    PlaylistTypeConverter::class
+    PlaylistTypeConverter::class,
+    PlaylistThumbnailConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
@@ -79,7 +81,7 @@ abstract class AppDatabase : RoomDatabase() {
             Playlist(
                 id = 0,
                 title = "ExamplePlaylist",
-                thumbnailUrl = "https://i.ytimg.com/vi_webp/aLexJOGZ_gw/maxresdefault.webp",
+                thumbnail = Playlist.Thumbnail.Video(videoId),
                 videos = listOf(videoId)
             )
         )

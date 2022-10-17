@@ -25,6 +25,8 @@ import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
     val alarmData = MutableStateFlow(Alarm())
@@ -37,6 +39,10 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
 
     override val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(requireActivity().application.repository)
+    }
+
+    val videoViewModel: VideoViewModel by viewModels {
+        VideoViewModelFactory(requireActivity().application.repository)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

@@ -36,6 +36,8 @@ import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.util.initYtDL
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
 import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
@@ -48,6 +50,10 @@ class MainActivity : AppCompatActivity() {
 
     val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(application.repository)
+    }
+
+    val videoViewModel: VideoViewModel by viewModels {
+        VideoViewModelFactory(application.repository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,11 +92,14 @@ class MainActivity : AppCompatActivity() {
 
                     val playlists = playlistViewModel.allPlaylistsAsync.await()
                         .filter { it.type is Playlist.Type.Original }
-                        .map { it.toDisplayData() }
+                        .map { it.toDisplayData(videoViewModel) }
                         .toMutableList()
                         .apply {
                             val title = "Create New Playlist"
-                            add(MultiChoiceVideoListAdapter.DisplayData(0, title, null))
+                            val drawable = MultiChoiceVideoListAdapter.DisplayData
+                                .Thumbnail
+                                .Drawable(R.drawable.ic_add_playlist)
+                            add(MultiChoiceVideoListAdapter.DisplayData(0, title, drawable))
                         }
 
                     DialogMultiChoiceVideo(playlists) { _, id ->

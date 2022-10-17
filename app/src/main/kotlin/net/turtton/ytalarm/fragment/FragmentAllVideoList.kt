@@ -20,6 +20,7 @@ import net.turtton.ytalarm.adapter.VideoListAdapter
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImportDialog
+import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
@@ -124,7 +125,7 @@ class FragmentAllVideoList :
                 fragment.lifecycleScope.launch {
                     val playlists = fragment.playlistViewModel.allPlaylistsAsync
                         .await()
-                        .map { it.toDisplayData() }
+                        .map { it.toDisplayData(fragment.videoViewModel) }
                     launch(Dispatchers.Main) {
                         DialogMultiChoiceVideo(playlists) { _, selectedId ->
                             val targetIdList = selectedId.toList()
@@ -184,11 +185,16 @@ class FragmentAllVideoList :
                 )
             }.map {
                 val removedVideos = videoViewModel.getFromIdsAsync(removedVideoIds).await()
-                if (removedVideos.any { video -> video.thumbnailUrl == it.thumbnailUrl }) {
+                val thumbnail = it.thumbnail
+                val shouldUpdate = thumbnail is Playlist.Thumbnail.Video &&
+                    removedVideos.any { video ->
+                        video.id == thumbnail.id
+                    }
+                if (shouldUpdate) {
                     it.videos.firstOrNull()?.let { newVideoId ->
                         videoViewModel.getFromIdAsync(newVideoId).await()
                             ?.let { video ->
-                                it.copy(thumbnailUrl = video.thumbnailUrl)
+                                it.copy(thumbnail = Playlist.Thumbnail.Video(video.id))
                             }
                     } ?: it
                 } else {

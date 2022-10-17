@@ -59,28 +59,46 @@ class VideoInfoDownloadWorker(
             if (duplication == null) {
                 val importedVideo = video.copy(id = targetVideoId)
                 repository.update(importedVideo)
-                playlists?.forEach {
-                    repository.getPlaylistFromIdSync(it)?.let { playlist ->
-                        val containsVideos = repository.getVideoFromIdsSync(playlist.videos)
-                        val hasUpdatingVideo = containsVideos.any { video ->
-                            video.stateData.isUpdating()
-                        }
-                        if (!hasUpdatingVideo) {
-                            repository.update(playlist.copy(type = Playlist.Type.Original))
-                        }
+                playlists?.let {
+                    repository.getPlaylistFromIdsSync(it.toList())
+                }?.map { pl ->
+                    var playlist = pl
+                    var shouldUpdate = false
+                    val containsVideos = repository.getVideoFromIdsSync(playlist.videos)
+                    val hasUpdatingVideo = hasUpdatingVideo(containsVideos)
+                    if (!hasUpdatingVideo) {
+                        playlist = playlist.copy(type = Playlist.Type.Original)
+                        shouldUpdate = true
                     }
+                    updatePlaylistThumbnail(playlist)?.also { newPlaylist ->
+                        playlist = newPlaylist
+                        shouldUpdate = true
+                    }
+                    playlist.takeIf { shouldUpdate }
                 }
             } else {
                 repository.delete(targetVideo)
                 playlists?.let {
                     it.deleteVideoFromPlaylists(targetVideoId)
-                    repository.getPlaylistFromIdsSync(it.toList()).forEach { playlist ->
+                    repository.getPlaylistFromIdsSync(it.toList()).map { playlist ->
                         val videoSet = playlist.videos.toMutableSet()
                         videoSet += duplication
-                        repository.update(playlist.copy(videos = videoSet.toList()))
+                        var newPlaylist = playlist.copy(videos = videoSet.toList())
+                        updatePlaylistThumbnail(newPlaylist)?.let { pl ->
+                            newPlaylist = pl
+                        }
+                        val currentVideos = repository.getVideoFromIdsSync(newPlaylist.videos)
+                        if (!hasUpdatingVideo(currentVideos)) {
+                            newPlaylist = newPlaylist.copy(type = Playlist.Type.Original)
+                        }
+                        newPlaylist
                     }
                 }
-            }
+            }?.filterNotNull()
+                .takeIf { !it.isNullOrEmpty() }
+                ?.let {
+                    repository.update(it)
+                }
         } else {
             repository.delete(targetVideo)
             playlists?.deleteVideoFromPlaylists(targetVideoId)
@@ -170,7 +188,8 @@ class VideoInfoDownloadWorker(
 
     private suspend fun LongArray.insertVideoInPlaylists(video: Video) = map {
         val playlist = if (it == 0L) {
-            Playlist()
+            val icon = R.drawable.ic_download
+            Playlist(thumbnail = Playlist.Thumbnail.Drawable(icon))
         } else {
             repository.getPlaylistFromIdSync(it) ?: return@map null
         }
@@ -198,7 +217,7 @@ class VideoInfoDownloadWorker(
                 playlist.copy(title = type.title, videos = newList, type = playlistType)
             }
         }
-        repository.update(new)
+        repository.update(updatePlaylistThumbnail(new) ?: new)
         targetPlaylist
     }.toLongArray()
 
@@ -210,6 +229,14 @@ class VideoInfoDownloadWorker(
         repository.update(playlist.copy(videos = newVideoList))
     }
 
+    private fun updatePlaylistThumbnail(playlist: Playlist): Playlist? = playlist.takeIf {
+        it.thumbnail is Playlist.Thumbnail.Drawable
+    }?.let {
+        it.videos.firstOrNull()?.let { videoId ->
+            it.copy(thumbnail = Playlist.Thumbnail.Video(videoId))
+        }
+    }
+
     private suspend fun checkVideoDuplication(videoId: String, domain: String): Long? =
         repository.getVideoFromVideoIdSync(videoId)?.let {
             if (it.domain == domain) {
@@ -218,6 +245,10 @@ class VideoInfoDownloadWorker(
                 null
             }
         }
+
+    private fun hasUpdatingVideo(videos: List<Video>): Boolean = videos.any { video ->
+        video.stateData.isUpdating()
+    }
 
     private sealed interface Type {
         object Video : Type
