@@ -30,8 +30,12 @@ class MultiChoiceVideoListAdapter<T>(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = displayDataList[position]
         holder.title.text = data.title
-        data.thumbnailUrl?.also {
-            Glide.with(holder.itemView).load(it).into(holder.thumbnail)
+        when (val thumbnail = data.thumbnailUrl) {
+            is DisplayData.Thumbnail.Url -> Glide.with(holder.itemView)
+                .load(thumbnail.url)
+                .into(holder.thumbnail)
+            is DisplayData.Thumbnail.Drawable -> holder.thumbnail.setImageResource(thumbnail.id)
+            null -> holder.thumbnail.setImageResource(R.drawable.ic_no_image)
         }
         chosenTargets[position].also {
             holder.checkBox.isChecked = it
