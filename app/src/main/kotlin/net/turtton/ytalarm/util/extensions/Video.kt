@@ -12,6 +12,8 @@ suspend fun List<Video>.collectGarbage(workManager: WorkManager): List<Video> = 
     it.stateData.workerId?.let { uuid ->
         workManager.getWorkInfoById(uuid)
             .await()
-            ?.let { info -> info.state.isFinished && info.state != WorkInfo.State.FAILED }
+            .let { info ->
+                info == null || (info.state.isFinished && info.state != WorkInfo.State.FAILED)
+            }
     } ?: false
 }
