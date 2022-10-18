@@ -9,7 +9,6 @@ import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.WorkManager
-import androidx.work.await
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
@@ -21,11 +20,11 @@ import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImportDialog
 import net.turtton.ytalarm.structure.Playlist
-import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.TagKeyProvider
+import net.turtton.ytalarm.util.extensions.collectGarbage
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
@@ -74,28 +73,10 @@ class FragmentAllVideoList :
 
         videoViewModel.allVideos.observe(requireActivity()) {
             it.let {
-                it.filter { video ->
-                    when (video.stateData) {
-                        is Video.State.Importing,
-                        is Video.State.Downloading -> true
-                        else -> false
-                    }
-                }.forEach { video ->
-                    lifecycleScope.launch {
-                        when (val status = video.stateData) {
-                            is Video.State.Importing -> status.workerId
-                            is Video.State.Downloading -> status.workerId
-                            else -> return@launch
-                        }.let { workerId ->
-                            WorkManager.getInstance(view.context)
-                                .getWorkInfoById(workerId)
-                                .await()
-                                ?.state
-                        }.also { state ->
-                            if (state == null || state.isFinished) {
-                                videoViewModel.delete(video)
-                            }
-                        }
+                lifecycleScope.launch {
+                    val garbage = it.collectGarbage(WorkManager.getInstance(view.context))
+                    if (garbage.isNotEmpty()) {
+                        videoViewModel.delete(garbage)
                     }
                 }
                 adapter.submitList(it)
