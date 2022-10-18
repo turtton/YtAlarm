@@ -32,14 +32,17 @@ data class Video(
             else -> false
         }
 
+        val workerId: UUID?
+            get() = null
+
         @Serializable
-        data class Importing(val workerId: UUID) : State
+        data class Importing(override val workerId: UUID) : State
 
         @Serializable
         object Information : State
 
         @Serializable
-        data class Downloading(val workerId: UUID) : State
+        data class Downloading(override val workerId: UUID) : State
 
         @Serializable
         data class Downloaded(
