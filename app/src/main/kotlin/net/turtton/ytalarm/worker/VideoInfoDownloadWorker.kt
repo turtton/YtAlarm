@@ -37,7 +37,7 @@ class VideoInfoDownloadWorker(
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
         var playlists = inputData.getLongArray(KEY_PLAYLIST)
 
-        val stateTitle = applicationContext.getString(R.string.item_video_list_state_downloading)
+        val stateTitle = applicationContext.getString(R.string.item_video_list_state_importing)
         val data = Video.State.Importing(id)
         var targetVideo = Video(videoId = "", title = stateTitle, stateData = data)
 
