@@ -12,13 +12,12 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.await
+import androidx.work.workDataOf
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.runCatching
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
@@ -33,8 +32,6 @@ class VideoInfoDownloadWorker(
     workerParams: WorkerParameters
 ) : CoroutineIOWorker(appContext, workerParams) {
     private val json = Json { ignoreUnknownKeys = true }
-
-    private val triedCount = MutableStateFlow(0)
 
     override suspend fun doWork(): Result {
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
@@ -55,11 +52,8 @@ class VideoInfoDownloadWorker(
         ) {}
         playlists = playlists?.insertVideoInPlaylists(targetVideo)
 
-        val request = YoutubeDLRequest(targetUrl)
-            .addOption("--dump-single-json")
-            .addOption("-f", "b")
-
-        val (videos, type) = download(request)
+        val (videos, type) = download(targetUrl)
+            ?: return Result.failure(workDataOf(KEY_URL to targetUrl))
 
         if (type is Type.Video) {
             val video = videos.first()
@@ -136,17 +130,13 @@ class VideoInfoDownloadWorker(
                 .addAction(R.drawable.ic_cancel, cancel, cancelIntent)
                 .setSilent(true)
 
-        val count = triedCount.value
-        if (count > 0) {
-            val text = applicationContext
-                .getString(R.string.notification_download_video_info_retry, count)
-            notification.setContentText(text)
-        }
-
         return ForegroundInfo(NOTIFICATION_ID, notification.build())
     }
 
-    private suspend fun download(request: YoutubeDLRequest): Pair<List<Video>, Type> = runCatching {
+    private fun download(targetUrl: String): Pair<List<Video>, Type>? = runCatching {
+        val request = YoutubeDLRequest(targetUrl)
+            .addOption("--dump-single-json")
+            .addOption("-f", "b")
         YoutubeDL.getInstance().execute(request) { _, _, _ -> }
     }.andThen {
         val output = it.out
@@ -185,12 +175,8 @@ class VideoInfoDownloadWorker(
             }
         },
         failure = {
-            Log.e(WORKER_ID, "Download failed. Retrying...", it)
-            triedCount.getAndUpdate { count -> count + 1 }
-            runCatching {
-                setForeground(getForegroundInfo())
-            }
-            return@mapBoth download(request)
+            Log.e(WORKER_ID, "Download failed. Url: $targetUrl", it)
+            null
         }
     )
 
@@ -267,7 +253,7 @@ class VideoInfoDownloadWorker(
     companion object {
         private const val NOTIFICATION_ID = 1
         const val WORKER_ID = "VideoDownloadWorker"
-        private const val KEY_URL = "DownloadUrl"
+        const val KEY_URL = "DownloadUrl"
         private const val KEY_PLAYLIST = "PlaylistId"
 
         fun registerWorker(
