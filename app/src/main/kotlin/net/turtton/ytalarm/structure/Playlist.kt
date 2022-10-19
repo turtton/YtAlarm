@@ -41,15 +41,6 @@ data class Playlist(
         object Original : Type
 
         @Serializable
-        data class CloudPlaylist(val url: String, val syncState: SyncState = SyncState.Done) : Type
-    }
-
-    @Serializable
-    sealed interface SyncState {
-        @Serializable
-        object Done : SyncState
-
-        @Serializable
-        data class Syncing(val workerId: UUID) : SyncState
+        data class CloudPlaylist(val url: String, val workerId: UUID) : Type
     }
 }

@@ -1,19 +1,26 @@
 package net.turtton.ytalarm.util.extensions
 
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.await
 import net.turtton.ytalarm.structure.Video
 
 /**
- * Collects videos which finished downloading or import except Result is Failed.
+ * Collects videos which finished downloading or importing except state is [Video.WorkerState.Failed].
  */
 suspend fun List<Video>.collectGarbage(workManager: WorkManager): List<Video> = filter {
-    it.stateData.workerId?.let { uuid ->
+    it.stateData.let { state ->
+        when (state) {
+            is Video.State.Importing ->
+                state.state as? Video.WorkerState.Working
+            is Video.State.Downloading ->
+                state.state as? Video.WorkerState.Working
+            else -> null
+        }?.workerId
+    }?.let { uuid ->
         workManager.getWorkInfoById(uuid)
             .await()
             .let { info ->
-                info == null || (info.state.isFinished && info.state != WorkInfo.State.FAILED)
+                info == null || (info.state.isFinished)
             }
     } ?: false
 }

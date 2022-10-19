@@ -12,7 +12,6 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.await
-import androidx.work.workDataOf
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.runCatching
@@ -38,7 +37,7 @@ class VideoInfoDownloadWorker(
         var playlists = inputData.getLongArray(KEY_PLAYLIST)
 
         val stateTitle = applicationContext.getString(R.string.item_video_list_state_importing)
-        val data = Video.State.Importing(id)
+        val data = Video.State.Importing(Video.WorkerState.Working(id))
         var targetVideo = Video(videoId = "", title = stateTitle, stateData = data)
 
         val targetVideoId = repository.insert(targetVideo)
@@ -53,7 +52,11 @@ class VideoInfoDownloadWorker(
         playlists = playlists?.insertVideoInPlaylists(targetVideo)
 
         val (videos, type) = download(targetUrl)
-            ?: return Result.failure(workDataOf(KEY_URL to targetUrl))
+            ?: run {
+                val failed = Video.WorkerState.Failed(targetUrl)
+                repository.update(targetVideo.copy(stateData = Video.State.Importing(failed)))
+                return Result.failure()
+            }
 
         if (type is Type.Video) {
             val video = videos.first()
@@ -207,7 +210,7 @@ class VideoInfoDownloadWorker(
         val new = when (type) {
             is Type.Video -> playlist.copy(videos = newList)
             is Type.Playlist -> {
-                val playlistType = Playlist.Type.CloudPlaylist(type.url)
+                val playlistType = Playlist.Type.CloudPlaylist(type.url, id)
                 playlist.copy(title = type.title, videos = newList, type = playlistType)
             }
         }
@@ -253,7 +256,7 @@ class VideoInfoDownloadWorker(
     companion object {
         private const val NOTIFICATION_ID = 1
         const val WORKER_ID = "VideoDownloadWorker"
-        const val KEY_URL = "DownloadUrl"
+        private const val KEY_URL = "DownloadUrl"
         private const val KEY_PLAYLIST = "PlaylistId"
 
         fun registerWorker(

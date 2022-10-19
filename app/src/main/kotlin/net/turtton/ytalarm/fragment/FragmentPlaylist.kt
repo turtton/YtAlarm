@@ -85,19 +85,23 @@ class FragmentPlaylist :
                         playlist.videos.firstOrNull()?.let { videoId ->
                             videoViewModel.getFromIdAsync(videoId).await()?.let { video ->
                                 when (val state = video.stateData) {
-                                    is Video.State.Importing -> state.workerId
-                                    is Video.State.Downloading -> state.workerId
+                                    is Video.State.Importing ->
+                                        state.state as? Video.WorkerState.Working
+                                    is Video.State.Downloading ->
+                                        state.state as? Video.WorkerState.Working
                                     else -> return@launch
-                                }.let { workerId ->
-                                    WorkManager.getInstance(view.context)
-                                        .getWorkInfoById(workerId)
-                                        .await()
-                                        ?.state
                                 }
-                            }.also { state ->
-                                if (state == null || state.isFinished) {
-                                    playlistViewModel.delete(playlist)
-                                }
+                                    ?.workerId
+                                    ?.let { workerId ->
+                                        WorkManager.getInstance(view.context)
+                                            .getWorkInfoById(workerId)
+                                            .await()
+                                            ?.state
+                                    }.also { state ->
+                                        if (state == null || state.isFinished) {
+                                            playlistViewModel.delete(playlist)
+                                        }
+                                    }
                             }
                         }
                     }

@@ -32,17 +32,14 @@ data class Video(
             else -> false
         }
 
-        val workerId: UUID?
-            get() = null
-
         @Serializable
-        data class Importing(override val workerId: UUID) : State
+        data class Importing(val state: WorkerState) : State
 
         @Serializable
         object Information : State
 
         @Serializable
-        data class Downloading(override val workerId: UUID) : State
+        data class Downloading(val state: WorkerState) : State
 
         @Serializable
         data class Downloaded(
@@ -51,5 +48,14 @@ data class Video(
             // byte size
             val fileSize: Int
         ) : State
+    }
+
+    @Serializable
+    sealed interface WorkerState {
+        @Serializable
+        data class Failed(val url: String) : WorkerState
+
+        @Serializable
+        data class Working(val workerId: UUID) : WorkerState
     }
 }

@@ -1,6 +1,7 @@
 package net.turtton.ytalarm.fragment
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.view.animation.Animation
@@ -14,6 +15,7 @@ import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.WorkManager
+import androidx.work.await
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +59,7 @@ class FragmentVideoList :
     var isAddVideoFabRotated = false
 
     override lateinit var selectionTracker: SelectionTracker<Long>
-    lateinit var adapter: VideoListAdapter
+    lateinit var adapter: VideoListAdapter<FragmentVideoList>
 
     private val args by navArgs<FragmentVideoListArgs>()
     private val currentId = MutableStateFlow(0L)
@@ -123,7 +125,10 @@ class FragmentVideoList :
                     null,
                     is Playlist.Type.Downloading,
                     is Playlist.Type.Original -> listenFabWithOriginalMode()
-                    is Playlist.Type.CloudPlaylist -> listenFabWithSyncMode(playlistType)
+                    is Playlist.Type.CloudPlaylist -> listenFabWithSyncMode(
+                        view.context,
+                        playlistType
+                    )
                 }
                 addVideoFab.show()
             }
@@ -221,23 +226,28 @@ class FragmentVideoList :
     }
 
     @SuppressLint("RestrictedApi")
-    private fun listenFabWithSyncMode(typeState: Playlist.Type.CloudPlaylist) {
+    private fun listenFabWithSyncMode(context: Context, typeState: Playlist.Type.CloudPlaylist) {
         val binding = (activity as MainActivity).binding
         val addVideoFab = binding.fabAddVideo
         addVideoFab.setImageResource(R.drawable.ic_sync)
         addVideoFab.isClickable = true
 
-        if (typeState.syncState is Playlist.SyncState.Syncing) {
-            addVideoFab.startAnimation(animFabRotateInfinity)
-            val workerId = typeState.syncState.workerId
-            WorkManager.getInstance(requireContext())
-                .getWorkInfoByIdLiveData(workerId)
-                .observe(viewLifecycleOwner) {
-                    if (it.state.isFinished) {
-                        lifecycleScope.launch(Dispatchers.Main) {
-                            addVideoFab.clearAnimation()
+        val workManager = WorkManager.getInstance(context)
+        lifecycleScope.launch {
+            val workerId = typeState.workerId
+            workManager.getWorkInfoById(workerId)
+                .await()
+                ?.state
+                ?.takeUnless { it.isFinished }
+                ?.let {
+                    workManager.getWorkInfoByIdLiveData(workerId)
+                        .observe(viewLifecycleOwner) {
+                            if (it.state.isFinished) {
+                                lifecycleScope.launch(Dispatchers.Main) {
+                                    addVideoFab.clearAnimation()
+                                }
+                            }
                         }
-                    }
                 }
         }
 
@@ -259,12 +269,16 @@ class FragmentVideoList :
                     return@launch
                 }
 
-                if (currentState.syncState is Playlist.SyncState.Syncing) {
-                    launch(Dispatchers.Main) {
-                        Snackbar.make(it, R.string.snackbar_sync_is_running, 900).show()
-                    }.join()
-                    return@launch
-                }
+                workManager.getWorkInfoById(currentState.workerId)
+                    .await()
+                    ?.state
+                    ?.takeUnless { it.isFinished }
+                    ?.let { _ ->
+                        launch(Dispatchers.Main) {
+                            Snackbar.make(it, R.string.snackbar_sync_is_running, 900).show()
+                        }.join()
+                        return@launch
+                    }
 
                 val worker = VideoInfoDownloadWorker.registerWorker(
                     it.context,
@@ -272,11 +286,12 @@ class FragmentVideoList :
                     longArrayOf(currentPlaylist.id)
                 )
 
-                val newState = currentState.copy(syncState = Playlist.SyncState.Syncing(worker.id))
+                val newState = currentState.copy(workerId = worker.id)
                 playlistViewModel.update(currentPlaylist.copy(type = newState)).join()
                 WorkManager.getInstance(it.context)
                     .getWorkInfoByIdLiveData(worker.id)
                     .observe(viewLifecycleOwner) {
+                        if (it == null) return@observe
                         if (it.state.isFinished) {
                             lifecycleScope.launch(Dispatchers.Main) {
                                 addVideoFab.clearAnimation()

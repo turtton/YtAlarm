@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.adapter
 
+import android.app.AlertDialog
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -24,10 +25,16 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentVideoPlayerArgs
 import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.BasicComparator
+import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
+import net.turtton.ytalarm.viewmodel.VideoViewContainer
+import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
-class VideoListAdapter(
-    private val fragment: LifecycleOwner
-) : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicComparator<Video>()) {
+class VideoListAdapter<T>(
+    private val fragment: T
+) : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicComparator<Video>())
+        where T : LifecycleOwner,
+              T : PlaylistViewContainer,
+              T : VideoViewContainer {
     private val currentCheckBox = hashSetOf<ViewContainer>()
 
     var tracker: SelectionTracker<Long>? = null
@@ -80,8 +87,9 @@ class VideoListAdapter(
         holder.apply {
             title.text = data.title
             val state = data.stateData
+            val context = itemView.context
             domainOrSize.text = if (state is Video.State.Downloaded) {
-                itemView.context.getString(
+                context.getString(
                     R.string.item_video_list_data_size,
                     state.fileSize / 1024f / 1024f
                 )
@@ -98,6 +106,62 @@ class VideoListAdapter(
                     navController.navigate(R.id.nav_graph_video_player, args)
                 }
             } else {
+                if (state is Video.State.Importing && state.state is Video.WorkerState.Failed) {
+                    domainOrSize.text = context.getString(R.string.item_video_list_click_to_retry)
+                    title.text = context.getString(R.string.item_video_list_import_failed)
+                    val url = state.state.url
+                    itemView.setOnClickListener { view ->
+                        val retryButtonMessage = R.string.dialog_video_import_failed_retry
+                        val clearButtonMessage = R.string.dialog_video_import_failed_clear
+                        AlertDialog.Builder(view.context)
+                            .setTitle(R.string.dialog_video_import_failed_title)
+                            .setMessage(url)
+                            .setPositiveButton(retryButtonMessage) { _, _ ->
+                                fragment.lifecycleScope.launch {
+                                    val targetPlaylists = fragment.playlistViewModel
+                                        .allPlaylistsAsync
+                                        .await()
+                                        .filter { it.videos.contains(data.id) }
+                                        .apply {
+                                            val edited = map { playlist ->
+                                                playlist.copy(
+                                                    videos = playlist.videos.filterNot {
+                                                        it == data.id
+                                                    }
+                                                )
+                                            }
+                                            fragment.playlistViewModel.update(edited).join()
+                                        }
+                                        .map { it.id }
+                                        .toLongArray()
+                                    VideoInfoDownloadWorker.registerWorker(
+                                        view.context,
+                                        url,
+                                        targetPlaylists
+                                    )
+                                    fragment.videoViewModel.delete(data)
+                                }
+                            }.setNegativeButton(clearButtonMessage) { _, _ ->
+                                fragment.lifecycleScope.launch {
+                                    val targetPlaylists = fragment.playlistViewModel
+                                        .allPlaylistsAsync
+                                        .await()
+                                        .filter { it.videos.contains(data.id) }
+                                    val edited = targetPlaylists.map { playlist ->
+                                        playlist.copy(
+                                            videos = playlist.videos.filterNot { it == data.id }
+                                        )
+                                    }
+                                    fragment.playlistViewModel.update(edited)
+                                    fragment.videoViewModel.delete(data)
+                                }
+                            }.show()
+                    }
+                } else if (
+                    state is Video.State.Downloading && state.state is Video.WorkerState.Failed
+                ) {
+                    TODO("implement in #65")
+                }
                 selectable = false
             }
             tracker?.let {
