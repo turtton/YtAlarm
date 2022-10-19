@@ -85,30 +85,13 @@ class VideoListAdapter<T>(
         val data = getItem(position)
         holder.itemView.tag = data.id
         holder.apply {
-            title.text = data.title
             val state = data.stateData
             val context = itemView.context
-            domainOrSize.text = if (state is Video.State.Downloaded) {
-                context.getString(
-                    R.string.item_video_list_data_size,
-                    state.fileSize / 1024f / 1024f
-                )
-            } else {
-                data.domain
-            }
-            Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
-
-            if (state !is Video.State.Importing && state !is Video.State.Downloading) {
-                itemView.setOnClickListener {
-                    val navController = it.findFragment<Fragment>().findNavController()
-
-                    val args = FragmentVideoPlayerArgs(data.videoId).toBundle()
-                    navController.navigate(R.id.nav_graph_video_player, args)
-                }
-            } else {
-                if (state is Video.State.Importing && state.state is Video.WorkerState.Failed) {
-                    domainOrSize.text = context.getString(R.string.item_video_list_click_to_retry)
+            when (state) {
+                is Video.State.Importing -> if (state.state is Video.WorkerState.Failed) {
                     title.text = context.getString(R.string.item_video_list_import_failed)
+                    domainOrSize.text = context.getString(R.string.item_video_list_click_to_retry)
+                    thumbnail.setImageResource(R.drawable.ic_error)
                     val url = state.state.url
                     itemView.setOnClickListener { view ->
                         val retryButtonMessage = R.string.dialog_video_import_failed_retry
@@ -156,13 +139,31 @@ class VideoListAdapter<T>(
                                     fragment.videoViewModel.delete(data)
                                 }
                             }.show()
+                        selectable = false
                     }
-                } else if (
-                    state is Video.State.Downloading && state.state is Video.WorkerState.Failed
-                ) {
+                }
+                is Video.State.Downloading -> if (state.state is Video.WorkerState.Failed) {
+                    selectable = false
                     TODO("implement in #65")
                 }
-                selectable = false
+                else -> {
+                    title.text = data.title
+                    domainOrSize.text = if (state is Video.State.Downloaded) {
+                        context.getString(
+                            R.string.item_video_list_data_size,
+                            state.fileSize / 1024f / 1024f
+                        )
+                    } else {
+                        data.domain
+                    }
+                    Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
+                    itemView.setOnClickListener {
+                        val navController = it.findFragment<Fragment>().findNavController()
+
+                        val args = FragmentVideoPlayerArgs(data.videoId).toBundle()
+                        navController.navigate(R.id.nav_graph_video_player, args)
+                    }
+                }
             }
             tracker?.let {
                 var isSelected = it.isSelected(data.id)
