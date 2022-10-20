@@ -54,12 +54,7 @@
 
     <string name="dialog_execute_progress_title">Importing…</string>
     <string name="dialog_execute_progress_title_loading">Loading…</string>
-    <string name="dialog_execute_progress_eta">%02d:%02d</string>
     <string name="dialog_execute_progress_eta_init">calculating…</string>
-    <plurals name="dialog_execute_progress_eta_minutes">
-        <item quantity="one">%d minute</item>
-        <item quantity="other">%d minutes</item>
-    </plurals>
     <string name="fab_add_video_description">Add video Button</string>
 
     <string name="dialog_multichoice_ok">Confirm</string>
@@ -72,7 +67,6 @@
     <string name="dialog_remove_ok">Confirm</string>
     <string name="dialog_remove_cancel">Cancel</string>
 
-    <string name="dialog_playlist_choice_title">Playlists</string>
     <string name="dialog_repeat_choice_title">Repeat</string>
     <string-array name="dialog_repeat_type_choice">
         <item name="dialog_repeat_type_choice_once">Once</item>
@@ -127,7 +121,6 @@
     <string name="notification_snooze_remove">Remove</string>
     <string name="notification_download_video_info_channel_description">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
-    <string name="notification_download_video_info_retry">Download failed. Retrying(%d)</string>
     <string name="notification_download_video_info_cancel">Cancel</string>
     <string name="playlist_fragment_label">Playlists</string>
     <string name="videolist_fragment_label">Videos</string>
