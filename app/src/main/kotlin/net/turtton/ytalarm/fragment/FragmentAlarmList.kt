@@ -46,23 +46,22 @@ class FragmentAlarmList : FragmentAbstractList() {
         binding.recyclerList.layoutManager = layoutManager
         binding.recyclerList.adapter = adapter
         val allAlarms = alarmViewModel.allAlarms
-        allAlarms.observe(viewLifecycleOwner) { list ->
-            list?.let { alarmList ->
-                val compList = alarmList.associate { it.id to it.isEnable }
-                val currentState = prevList.value
-                prevList.update { compList }
-                if (alarmList.size == currentState.size) {
-                    val isEnableChanged = compList.any { (key, isEnable) ->
-                        currentState.contains(key) && currentState[key] != isEnable
-                    }
-                    if (isEnableChanged) {
-                        return@observe
-                    }
+        allAlarms.observe(viewLifecycleOwner) { alarmList ->
+            if (alarmList == null) return@observe
+            val compList = alarmList.associate { it.id to it.isEnable }
+            val currentState = prevList.value
+            prevList.update { compList }
+            if (alarmList.size == currentState.size) {
+                val isEnableChanged = compList.any { (key, isEnable) ->
+                    currentState.contains(key) && currentState[key] != isEnable
                 }
-                prevList.update { compList }
-                alarmList.filter { it.repeatType !is RepeatType.Snooze }
-                    .let { adapter.submitList(it) }
+                if (isEnableChanged) {
+                    return@observe
+                }
             }
+            prevList.update { compList }
+            alarmList.filter { it.repeatType !is RepeatType.Snooze }
+                .let { adapter.submitList(it) }
         }
         allAlarms.observeAlarm(viewLifecycleOwner, requireContext())
 

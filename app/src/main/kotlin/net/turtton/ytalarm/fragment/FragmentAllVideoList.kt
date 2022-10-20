@@ -72,15 +72,14 @@ class FragmentAllVideoList :
         }
 
         videoViewModel.allVideos.observe(requireActivity()) {
-            it.let {
-                lifecycleScope.launch {
-                    val garbage = it.collectGarbage(WorkManager.getInstance(view.context))
-                    if (garbage.isNotEmpty()) {
-                        videoViewModel.delete(garbage)
-                    }
+            if (it == null) return@observe
+            lifecycleScope.launch {
+                val garbage = it.collectGarbage(WorkManager.getInstance(view.context))
+                if (garbage.isNotEmpty()) {
+                    videoViewModel.delete(garbage)
                 }
-                adapter.submitList(it)
             }
+            adapter.submitList(it)
         }
 
         val fab = (requireActivity() as MainActivity).binding.fab

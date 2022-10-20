@@ -242,7 +242,7 @@ class FragmentVideoList :
                 ?.let {
                     workManager.getWorkInfoByIdLiveData(workerId)
                         .observe(viewLifecycleOwner) {
-                            if (it.state.isFinished) {
+                            if (it == null || it.state.isFinished) {
                                 lifecycleScope.launch(Dispatchers.Main) {
                                     addVideoFab.clearAnimation()
                                 }

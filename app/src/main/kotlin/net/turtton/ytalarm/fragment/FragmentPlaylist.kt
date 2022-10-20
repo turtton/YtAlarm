@@ -76,33 +76,32 @@ class FragmentPlaylist :
             selectionTracker.onRestoreInstanceState(it)
         }
 
-        playlistViewModel.allPlaylists.observe(requireActivity()) { list ->
-            list?.let {
-                it.filter { playlist ->
-                    playlist.type is Playlist.Type.Downloading
-                }.forEach { playlist ->
-                    lifecycleScope.launch {
-                        playlist.videos.firstOrNull()?.let { videoId ->
-                            videoViewModel.getFromIdAsync(videoId).await()?.let { video ->
-                                when (val state = video.stateData) {
-                                    is Video.State.Importing ->
-                                        state.state as? Video.WorkerState.Working
-                                    is Video.State.Downloading ->
-                                        state.state as? Video.WorkerState.Working
-                                    else -> return@launch
-                                }
-                                    ?.workerId
-                                    ?.let { workerId ->
-                                        WorkManager.getInstance(view.context)
-                                            .getWorkInfoById(workerId)
-                                            .await()
-                                            ?.state
-                                    }.also { state ->
-                                        if (state == null || state.isFinished) {
-                                            playlistViewModel.delete(playlist)
-                                        }
-                                    }
+        playlistViewModel.allPlaylists.observe(requireActivity()) {
+            if (it == null) return@observe
+            it.filter { playlist ->
+                playlist.type is Playlist.Type.Downloading
+            }.forEach { playlist ->
+                lifecycleScope.launch {
+                    playlist.videos.firstOrNull()?.let { videoId ->
+                        videoViewModel.getFromIdAsync(videoId).await()?.let { video ->
+                            when (val state = video.stateData) {
+                                is Video.State.Importing ->
+                                    state.state as? Video.WorkerState.Working
+                                is Video.State.Downloading ->
+                                    state.state as? Video.WorkerState.Working
+                                else -> return@launch
                             }
+                                ?.workerId
+                                ?.let { workerId ->
+                                    WorkManager.getInstance(view.context)
+                                        .getWorkInfoById(workerId)
+                                        .await()
+                                        ?.state
+                                }.also { state ->
+                                    if (state == null || state.isFinished) {
+                                        playlistViewModel.delete(playlist)
+                                    }
+                                }
                         }
                     }
                 }
