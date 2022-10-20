@@ -1,7 +1,6 @@
 package net.turtton.ytalarm
 
 import androidx.annotation.WorkerThread
-import androidx.sqlite.db.SimpleSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.database.AppDatabase
 import net.turtton.ytalarm.structure.Alarm
@@ -65,16 +64,6 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun getPlaylistContainsVideoIds(ids: List<String>): List<Playlist> {
-        val selectQuery = "SELECT * FROM playlists"
-        val searchQuery = ids.joinToString(prefix = " WHERE ", separator = " OR ") {
-            "videos LIKE '%$it%'"
-        }
-        val query = SimpleSQLiteQuery("$selectQuery$searchQuery")
-        return database.playlistDao().getFromVideoIdsSync(query)
-    }
-
-    @WorkerThread
     suspend fun update(playlist: Playlist) {
         database.playlistDao().update(playlist)
     }
@@ -102,33 +91,62 @@ class DataRepository(private val database: AppDatabase) {
     // Video
     val allVideos: Flow<List<Video>> = database.videoDao().getAll()
 
-    fun getVideoFromIds(ids: List<String>): Flow<List<Video>> {
-        return database.videoDao().getFromIds(ids)
-    }
-
     @WorkerThread
-    suspend fun getVideoFromIdSync(id: String): Video? {
+    suspend fun getVideoFromIdSync(id: Long): Video? {
         return database.videoDao().getFromIdSync(id)
     }
 
     @WorkerThread
-    suspend fun getVideoFromIdsSync(ids: List<String>): List<Video> {
+    suspend fun getVideoFromIdsSync(ids: List<Long>): List<Video> {
         return database.videoDao().getFromIdsSync(ids)
     }
 
+    fun getVideoFromIds(ids: List<Long>): Flow<List<Video>> {
+        return database.videoDao().getFromIds(ids)
+    }
+
     @WorkerThread
-    suspend fun getVideoExceptIdsSync(ids: List<String>): List<Video> {
+    suspend fun getVideoExceptIdsSync(ids: List<Long>): List<Video> {
         return database.videoDao().getExceptIdsSync(ids)
     }
 
-    @WorkerThread
-    suspend fun insert(video: Video) {
-        database.videoDao().insert(video)
+    fun getVideoFromVideoIds(ids: List<String>): Flow<List<Video>> {
+        return database.videoDao().getFromVideoIds(ids)
     }
 
     @WorkerThread
-    suspend fun insert(videos: List<Video>) {
-        database.videoDao().insert(videos)
+    suspend fun getVideoFromVideoIdSync(id: String): Video? {
+        return database.videoDao().getFromVideoIdSync(id)
+    }
+
+    @WorkerThread
+    suspend fun getVideoFromVideoIdsSync(ids: List<String>): List<Video> {
+        return database.videoDao().getFromVideoIdsSync(ids)
+    }
+
+    @WorkerThread
+    suspend fun getVideoExceptVideoIdsSync(ids: List<String>): List<Video> {
+        return database.videoDao().getExceptVideoIdsSync(ids)
+    }
+
+    @WorkerThread
+    suspend fun update(video: Video) {
+        return database.videoDao().update(video)
+    }
+
+    @WorkerThread
+    suspend fun insert(video: Video): Long {
+        return database.videoDao().insert(video)
+    }
+
+    @WorkerThread
+    suspend fun insert(videos: List<Video>): List<Long> {
+        return database.videoDao().insert(videos)
+    }
+
+    @WorkerThread
+    suspend fun delete(video: Video) {
+        database.videoDao().delete(video)
     }
 
     @WorkerThread

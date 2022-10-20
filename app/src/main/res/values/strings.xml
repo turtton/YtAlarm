@@ -6,6 +6,7 @@
 
     <string name="alarm_time">00:00</string>
     <string name="alarm_type">aram_type</string>
+    <string name="playlist_name_importing">Importing</string>
     <string name="playlist_name">PlaylistName</string>
     <string name="thumbnail_description">PlaylistThumbnail</string>
     <string name="setting_name">SettingName</string>
@@ -31,6 +32,9 @@
     <string name="menu_item_aram_list">AramList</string>
     <string name="menu_title_playlist">PlayList</string>
     <string name="item_video_list_data_size">%02.1fMB</string>
+    <string name="item_video_list_click_to_retry">Click to retry</string>
+    <string name="item_video_list_import_failed">Import failed</string>
+    <string name="item_video_list_state_importing">Importing</string>
     <string name="fragment_video_player_button_dismiss">Dismiss</string>
     <string name="fragment_video_player_button_snooze">Snooze</string>
     <string name="fragment_video_player_button_stop">Stop</string>
@@ -50,12 +54,7 @@
 
     <string name="dialog_execute_progress_title">Importing…</string>
     <string name="dialog_execute_progress_title_loading">Loading…</string>
-    <string name="dialog_execute_progress_eta">%02d:%02d</string>
     <string name="dialog_execute_progress_eta_init">calculating…</string>
-    <plurals name="dialog_execute_progress_eta_minutes">
-        <item quantity="one">%d minute</item>
-        <item quantity="other">%d minutes</item>
-    </plurals>
     <string name="fab_add_video_description">Add video Button</string>
 
     <string name="dialog_multichoice_ok">Confirm</string>
@@ -68,7 +67,6 @@
     <string name="dialog_remove_ok">Confirm</string>
     <string name="dialog_remove_cancel">Cancel</string>
 
-    <string name="dialog_playlist_choice_title">Playlists</string>
     <string name="dialog_repeat_choice_title">Repeat</string>
     <string-array name="dialog_repeat_type_choice">
         <item name="dialog_repeat_type_choice_once">Once</item>
@@ -101,6 +99,11 @@
     <string name="dialog_playlist_name_input_ok">Rename</string>
     <string name="dialog_playlist_name_input_cancel">Cancel</string>
 
+    <string name="dialog_video_import_failed_title">Failed Url</string>
+    <string name="dialog_video_import_failed_retry">Retry</string>
+    <string name="dialog_video_import_failed_clear">Clear</string>
+
+    <string name="snackbar_error_unexpected_playlist_state">Please reenter playlist.</string>
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
@@ -118,7 +121,6 @@
     <string name="notification_snooze_remove">Remove</string>
     <string name="notification_download_video_info_channel_description">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
-    <string name="notification_download_video_info_retry">Download failed. Retrying(%d)</string>
     <string name="notification_download_video_info_cancel">Cancel</string>
     <string name="playlist_fragment_label">Playlists</string>
     <string name="videolist_fragment_label">Videos</string>

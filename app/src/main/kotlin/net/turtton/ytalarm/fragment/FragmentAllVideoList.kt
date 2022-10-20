@@ -3,10 +3,12 @@ package net.turtton.ytalarm.fragment
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
@@ -17,10 +19,13 @@ import net.turtton.ytalarm.adapter.VideoListAdapter
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.fragment.dialog.DialogUrlInput.Companion.showVideoImportDialog
+import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.TagKeyProvider
+import net.turtton.ytalarm.util.extensions.collectGarbage
+import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
@@ -28,14 +33,17 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 class FragmentAllVideoList :
-    FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<String> {
-    override lateinit var selectionTracker: SelectionTracker<String>
+    FragmentAbstractList(),
+    VideoViewContainer,
+    PlaylistViewContainer,
+    SelectionTrackerContainer<Long> {
+    override lateinit var selectionTracker: SelectionTracker<Long>
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
     }
 
-    val playlistViewModel: PlaylistViewModel by viewModels {
+    override val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(requireActivity().application.repository)
     }
 
@@ -45,7 +53,7 @@ class FragmentAllVideoList :
 
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
-        val adapter = VideoListAdapter()
+        val adapter = VideoListAdapter(this)
         recyclerView.adapter = adapter
 
         selectionTracker = SelectionTracker.Builder(
@@ -53,7 +61,7 @@ class FragmentAllVideoList :
             recyclerView,
             TagKeyProvider(recyclerView),
             VideoListAdapter.VideoListDetailsLookup(recyclerView),
-            StorageStrategy.createStringStorage()
+            StorageStrategy.createLongStorage()
         ).build()
         adapter.tracker = selectionTracker
 
@@ -64,7 +72,14 @@ class FragmentAllVideoList :
         }
 
         videoViewModel.allVideos.observe(requireActivity()) {
-            it.let { adapter.submitList(it) }
+            if (it == null) return@observe
+            lifecycleScope.launch {
+                val garbage = it.collectGarbage(WorkManager.getInstance(view.context))
+                if (garbage.isNotEmpty()) {
+                    videoViewModel.delete(garbage)
+                }
+            }
+            adapter.submitList(it)
         }
 
         val fab = (requireActivity() as MainActivity).binding.fab
@@ -80,7 +95,7 @@ class FragmentAllVideoList :
 
     class VideoSelectionObserver(
         fragment: FragmentAllVideoList
-    ) : SelectionMenuObserver<String, FragmentAllVideoList>(
+    ) : SelectionMenuObserver<Long, FragmentAllVideoList>(
         fragment,
         AttachableMenuProvider(
             fragment,
@@ -90,7 +105,7 @@ class FragmentAllVideoList :
                 fragment.lifecycleScope.launch {
                     val playlists = fragment.playlistViewModel.allPlaylistsAsync
                         .await()
-                        .map { it.toDisplayData() }
+                        .map { it.toDisplayData(fragment.videoViewModel) }
                     launch(Dispatchers.Main) {
                         DialogMultiChoiceVideo(playlists) { _, selectedId ->
                             val targetIdList = selectedId.toList()
@@ -119,24 +134,7 @@ class FragmentAllVideoList :
                     fragment.lifecycleScope.launch {
                         val videos = async.await()
                         videoViewModel.delete(videos)
-                        val playlists = fragment.playlistViewModel
-                            .getFromContainsVideoIdsAsync(selection)
-                            .await()
-                        val newList = playlists.map {
-                            it.copy(
-                                videos = it.videos.filterNot { video -> selection.contains(video) }
-                            )
-                        }.map {
-                            if (videos.any { video -> video.thumbnailUrl == it.thumbnailUrl }) {
-                                val newVideoId = it.videos.firstOrNull() ?: ""
-                                videoViewModel.getFromIdAsync(newVideoId).await()?.let { video ->
-                                    it.copy(thumbnailUrl = video.thumbnailUrl)
-                                } ?: it
-                            } else {
-                                it
-                            }
-                        }
-                        fragment.playlistViewModel.update(newList)
+                        fragment.updatePlaylistThumbnails(selection)
                     }
                     fragment.selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "VideoRemoveDialog")
@@ -144,4 +142,46 @@ class FragmentAllVideoList :
             }
         )
     )
+
+    companion object {
+        suspend fun <T> T.updatePlaylistThumbnails(
+            removedVideoIds: List<Long>,
+            targetPlaylistId: Long? = null
+        ) where T : LifecycleOwner, T : PlaylistViewContainer, T : VideoViewContainer {
+            val playlists = targetPlaylistId?.let {
+                playlistViewModel
+                    .getFromIdAsync(it)
+                    .await()
+                    ?.let { playlist -> listOf(playlist) }
+                    ?: emptyList()
+            } ?: playlistViewModel.allPlaylistsAsync
+                .await()
+                .filter {
+                    it.videos.any { videoId -> removedVideoIds.contains(videoId) }
+                }
+            val newList = playlists.map {
+                it.copy(
+                    videos = it.videos.filterNot { video -> removedVideoIds.contains(video) }
+                )
+            }.map {
+                val removedVideos = videoViewModel.getFromIdsAsync(removedVideoIds).await()
+                val thumbnail = it.thumbnail
+                val shouldUpdate = thumbnail is Playlist.Thumbnail.Video &&
+                    removedVideos.any { video ->
+                        video.id == thumbnail.id
+                    }
+                if (shouldUpdate) {
+                    it.videos.firstOrNull()?.let { newVideoId ->
+                        videoViewModel.getFromIdAsync(newVideoId).await()
+                            ?.let { video ->
+                                it.copy(thumbnail = Playlist.Thumbnail.Video(video.id))
+                            }
+                    } ?: it
+                } else {
+                    it
+                }
+            }
+            playlistViewModel.update(newList)
+        }
+    }
 }

@@ -1,20 +1,22 @@
 package net.turtton.ytalarm.util.converter
 
 import androidx.room.TypeConverter
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
 
+@OptIn(ExperimentalSerializationApi::class)
 class StringListConverter {
-    private val json = Json
+    private val cbor = Cbor
 
     @TypeConverter
-    fun fromString(value: String?): List<String> {
-        return value?.let { json.decodeFromString(it) } ?: emptyList()
+    fun fromByteArray(value: ByteArray?): List<String> {
+        return value?.let { cbor.decodeFromByteArray(it) } ?: emptyList()
     }
 
     @TypeConverter
-    fun toString(list: List<String>?): String? {
-        return list?.let { json.encodeToString(it) }
+    fun toByteArray(list: List<String>?): ByteArray? {
+        return list?.let { cbor.encodeToByteArray(it) }
     }
 }

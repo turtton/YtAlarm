@@ -14,28 +14,52 @@ import net.turtton.ytalarm.structure.Video
 class VideoViewModel(private val repository: DataRepository) : ViewModel() {
     val allVideos: LiveData<List<Video>> by lazy { repository.allVideos.asLiveData() }
 
-    fun getFromIds(ids: List<String>): LiveData<List<Video>> {
-        return repository.getVideoFromIds(ids).asLiveData()
-    }
-
-    fun getFromIdAsync(id: String): Deferred<Video?> = viewModelScope.async {
+    fun getFromIdAsync(id: Long): Deferred<Video?> = viewModelScope.async {
         repository.getVideoFromIdSync(id)
     }
 
-    fun getFromIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
+    fun getFromIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
         repository.getVideoFromIdsSync(ids)
     }
 
-    fun getExceptIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
+    fun getFromIds(ids: List<Long>): LiveData<List<Video>> {
+        return repository.getVideoFromIds(ids).asLiveData()
+    }
+
+    fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
         repository.getVideoExceptIdsSync(ids)
     }
 
-    fun insert(video: Video) = viewModelScope.launch {
+    fun getFromVideoIds(ids: List<String>): LiveData<List<Video>> {
+        return repository.getVideoFromVideoIds(ids).asLiveData()
+    }
+
+    fun getFromVideoIdAsync(id: String): Deferred<Video?> = viewModelScope.async {
+        repository.getVideoFromVideoIdSync(id)
+    }
+
+    fun getFromVideoIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
+        repository.getVideoFromVideoIdsSync(ids)
+    }
+
+    fun getExceptVideoIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
+        repository.getVideoExceptVideoIdsSync(ids)
+    }
+
+    fun update(video: Video) = viewModelScope.launch {
+        repository.update(video)
+    }
+
+    fun insertAsync(video: Video): Deferred<Long> = viewModelScope.async {
         repository.insert(video)
     }
 
     fun insert(videos: List<Video>) = viewModelScope.launch {
         repository.insert(videos)
+    }
+
+    fun delete(video: Video) = viewModelScope.launch {
+        repository.delete(video)
     }
 
     fun delete(videos: List<Video>) = viewModelScope.launch {

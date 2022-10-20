@@ -17,6 +17,8 @@ import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 class FragmentAlarmList : FragmentAbstractList() {
 
@@ -26,6 +28,10 @@ class FragmentAlarmList : FragmentAbstractList() {
 
     val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(requireActivity().application.repository)
+    }
+
+    val videoViewModel: VideoViewModel by viewModels {
+        VideoViewModelFactory(requireActivity().application.repository)
     }
 
     private val prevList = MutableStateFlow(mapOf<Long, Boolean>())
@@ -40,23 +46,22 @@ class FragmentAlarmList : FragmentAbstractList() {
         binding.recyclerList.layoutManager = layoutManager
         binding.recyclerList.adapter = adapter
         val allAlarms = alarmViewModel.allAlarms
-        allAlarms.observe(viewLifecycleOwner) { list ->
-            list?.let { alarmList ->
-                val compList = alarmList.associate { it.id to it.isEnable }
-                val currentState = prevList.value
-                prevList.update { compList }
-                if (alarmList.size == currentState.size) {
-                    val isEnableChanged = compList.any { (key, isEnable) ->
-                        currentState.contains(key) && currentState[key] != isEnable
-                    }
-                    if (isEnableChanged) {
-                        return@observe
-                    }
+        allAlarms.observe(viewLifecycleOwner) { alarmList ->
+            if (alarmList == null) return@observe
+            val compList = alarmList.associate { it.id to it.isEnable }
+            val currentState = prevList.value
+            prevList.update { compList }
+            if (alarmList.size == currentState.size) {
+                val isEnableChanged = compList.any { (key, isEnable) ->
+                    currentState.contains(key) && currentState[key] != isEnable
                 }
-                prevList.update { compList }
-                alarmList.filter { it.repeatType !is RepeatType.Snooze }
-                    .let { adapter.submitList(it) }
+                if (isEnableChanged) {
+                    return@observe
+                }
             }
+            prevList.update { compList }
+            alarmList.filter { it.repeatType !is RepeatType.Snooze }
+                .let { adapter.submitList(it) }
         }
         allAlarms.observeAlarm(viewLifecycleOwner, requireContext())
 

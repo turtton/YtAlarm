@@ -5,9 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.RawQuery
 import androidx.room.Update
-import androidx.sqlite.db.SupportSQLiteQuery
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.structure.Playlist
 
@@ -27,9 +25,6 @@ interface PlaylistDao {
 
     @Query("SELECT * FROM playlists WHERE id IN (:ids)")
     suspend fun getFromIdsSync(ids: List<Long>): List<Playlist>
-
-    @RawQuery(observedEntities = [Playlist::class])
-    suspend fun getFromVideoIdsSync(query: SupportSQLiteQuery): List<Playlist>
 
     @Update
     suspend fun update(playlist: Playlist)
