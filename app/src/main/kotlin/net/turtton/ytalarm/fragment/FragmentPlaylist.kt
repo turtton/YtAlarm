@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.fragment
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import androidx.drawerlayout.widget.DrawerLayout
@@ -51,6 +52,7 @@ class FragmentPlaylist :
 
     override lateinit var selectionTracker: SelectionTracker<Long>
 
+    @SuppressLint("RestrictedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val activity = requireActivity() as MainActivity
         activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)

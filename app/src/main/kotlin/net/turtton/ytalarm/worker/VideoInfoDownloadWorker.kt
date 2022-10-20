@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.worker
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -33,6 +34,7 @@ class VideoInfoDownloadWorker(
 ) : CoroutineIOWorker(appContext, workerParams) {
     private val json = Json { ignoreUnknownKeys = true }
 
+    @SuppressLint("RestrictedApi")
     override suspend fun doWork(): Result {
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
         var playlists = inputData.getLongArray(KEY_PLAYLIST)
