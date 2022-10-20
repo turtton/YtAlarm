@@ -8,6 +8,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Operation
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -48,7 +49,8 @@ class VideoInfoDownloadWorker(
                 .getWorkInfoById(id)
                 .await()
                 .let { it == null || it.state.isFinished }
-        ) {}
+        ) {
+        }
         playlists = playlists?.insertVideoInPlaylists(targetVideo)
 
         val (videos, type) = download(targetUrl)
@@ -264,6 +266,15 @@ class VideoInfoDownloadWorker(
             targetUrl: String,
             targetPlaylists: LongArray = longArrayOf()
         ): OneTimeWorkRequest {
+            val (request, task) = prepareWorker(targetUrl, targetPlaylists)
+            WorkManager.getInstance(context).task()
+            return request
+        }
+
+        fun prepareWorker(
+            targetUrl: String,
+            targetPlaylists: LongArray = longArrayOf()
+        ): Pair<OneTimeWorkRequest, EnqueueTask> {
             val data = Data.Builder().putString(KEY_URL, targetUrl)
             if (targetPlaylists.isNotEmpty()) {
                 data.putLongArray(KEY_PLAYLIST, targetPlaylists)
@@ -272,13 +283,16 @@ class VideoInfoDownloadWorker(
                 .setInputData(data.build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
-            WorkManager.getInstance(context)
-                .enqueueUniqueWork(
+            val enqueueTask: EnqueueTask = {
+                enqueueUniqueWork(
                     WORKER_ID,
                     ExistingWorkPolicy.APPEND_OR_REPLACE,
                     request
                 )
-            return request
+            }
+            return request to enqueueTask
         }
     }
 }
+
+typealias EnqueueTask = WorkManager.() -> Operation
