@@ -16,7 +16,7 @@ Describe only one bug or feature per issue.
 
 ### Documents
 
-Both new creations and suggestions for modification of existing files are welcome.
+Both new creations and suggestions for modification of existing files are welcome.  
 Below is a guide for creating a new one.
 
 - Create specify files in [docs/readme](../docs/readme) or [docs/contributing](../docs/contributing)
