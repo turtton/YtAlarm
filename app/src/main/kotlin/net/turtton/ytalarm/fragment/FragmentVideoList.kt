@@ -246,6 +246,10 @@ class FragmentVideoList :
                                 lifecycleScope.launch(Dispatchers.Main) {
                                     addVideoFab.clearAnimation()
                                 }
+                            } else {
+                                lifecycleScope.launch(Dispatchers.Main) {
+                                    addVideoFab.startAnimation(animFabRotateInfinity)
+                                }
                             }
                         }
                 }
