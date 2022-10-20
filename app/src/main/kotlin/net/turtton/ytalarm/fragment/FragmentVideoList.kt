@@ -284,16 +284,17 @@ class FragmentVideoList :
                         return@launch
                     }
 
-                val worker = VideoInfoDownloadWorker.registerWorker(
-                    it.context,
-                    currentState.url,
-                    longArrayOf(currentPlaylist.id)
-                )
+                val (request, enqueueTask) = VideoInfoDownloadWorker
+                    .prepareWorker(
+                        currentState.url,
+                        longArrayOf(currentPlaylist.id)
+                    )
 
-                val newState = currentState.copy(workerId = worker.id)
+                val newState = currentState.copy(workerId = request.id)
                 playlistViewModel.update(currentPlaylist.copy(type = newState)).join()
-                WorkManager.getInstance(it.context)
-                    .getWorkInfoByIdLiveData(worker.id)
+
+                workManager.enqueueTask()
+                workManager.getWorkInfoByIdLiveData(request.id)
                     .observe(viewLifecycleOwner) {
                         if (it == null) return@observe
                         if (it.state.isFinished) {
