@@ -76,7 +76,7 @@ class FragmentPlaylist :
             selectionTracker.onRestoreInstanceState(it)
         }
 
-        playlistViewModel.allPlaylists.observe(requireActivity()) {
+        playlistViewModel.allPlaylists.observe(viewLifecycleOwner) {
             if (it == null) return@observe
             it.filter { playlist ->
                 playlist.type is Playlist.Type.Downloading
@@ -105,8 +105,8 @@ class FragmentPlaylist :
                         }
                     }
                 }
-                adapter.submitList(it)
             }
+            adapter.submitList(it)
         }
 
         val fab = (requireActivity() as MainActivity).binding.fab
