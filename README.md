@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/logo-no-background.png"></p>
+<p align="center"><img src="docs/logo/logo-no-background.png"></p>
 <h4 align="center"><b>A simple alarm app using youtubedl-android</b></h4>
 
 ------
