@@ -160,7 +160,7 @@ class PlaylistAdapter<T>(
                     menu.show()
                 }
             } else {
-                title.text = itemView.context.getString(R.string.playlist_name_downloading)
+                title.text = itemView.context.getString(R.string.playlist_name_importing)
                 videoCount.visibility = View.GONE
                 optionButton.visibility = View.GONE
                 selectable = false
