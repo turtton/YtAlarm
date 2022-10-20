@@ -87,6 +87,7 @@ class VideoListAdapter<T>(
         holder.apply {
             val state = data.stateData
             val context = itemView.context
+
             when (state) {
                 is Video.State.Importing -> if (state.state is Video.WorkerState.Failed) {
                     title.text = context.getString(R.string.item_video_list_import_failed)
@@ -141,6 +142,10 @@ class VideoListAdapter<T>(
                             }.show()
                         selectable = false
                     }
+                } else {
+                    title.text = data.title
+                    domainOrSize.visibility = View.GONE
+                    thumbnail.setImageResource(R.drawable.ic_download)
                 }
                 is Video.State.Downloading -> if (state.state is Video.WorkerState.Failed) {
                     selectable = false
