@@ -12,6 +12,6 @@
         android:fontFamily="sans-serif-medium"
         android:padding="16dp"
         android:text="@string/app_name"
-        android:textColor="#E1BEE7" />
+        android:textColor="@color/white" />
 
 </RelativeLayout>
