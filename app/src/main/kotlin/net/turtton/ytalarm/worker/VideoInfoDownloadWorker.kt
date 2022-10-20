@@ -42,7 +42,8 @@ class VideoInfoDownloadWorker(
         var targetVideo = Video(videoId = "", title = stateTitle, stateData = data)
 
         val targetVideoId = repository.insert(targetVideo)
-        targetVideo = targetVideo.copy(id = targetVideoId)
+        targetVideo = repository.getVideoFromIdSync(targetVideoId)!!
+
         @Suppress("ControlFlowWithEmptyBody")
         while (
             WorkManager.getInstance(applicationContext)
@@ -186,20 +187,23 @@ class VideoInfoDownloadWorker(
     )
 
     private suspend fun LongArray.insertVideoInPlaylists(video: Video) = map {
-        val playlist = if (it == 0L) {
-            val icon = R.drawable.ic_download
-            Playlist(thumbnail = Playlist.Thumbnail.Drawable(icon))
+        val playlist =
+            if (it == 0L) {
+                val icon = R.drawable.ic_download
+                Playlist(
+                    thumbnail = Playlist.Thumbnail.Drawable(icon),
+                    type = Playlist.Type.Downloading
+                )
+            } else {
+                repository.getPlaylistFromIdSync(it) ?: return@map null
+            }
+        val newList = playlist.videos.toMutableSet().apply { add(video.id) }.toList()
+        val newPlaylist = playlist.copy(videos = newList)
+        if (it == 0L) {
+            repository.insert(newPlaylist)
         } else {
-            repository.getPlaylistFromIdSync(it) ?: return@map null
-        }
-        val newList = (playlist.videos + video.id).distinct()
-        var newPlaylist = playlist.copy(videos = newList)
-        if (it != 0L) {
             repository.update(newPlaylist)
             it
-        } else {
-            newPlaylist = newPlaylist.copy(type = Playlist.Type.Downloading)
-            repository.insert(newPlaylist)
         }
     }.filterNotNull().toLongArray()
 
