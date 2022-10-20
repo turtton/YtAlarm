@@ -162,20 +162,10 @@ class MainActivity : AppCompatActivity() {
 
                     DialogMultiChoiceVideo(playlists) { _, id ->
                         lifecycleScope.launch {
-                            val mutableId = id.toMutableSet()
-                            if (mutableId.contains(0L)) {
-                                val icon = R.drawable.ic_download
-                                val playlist = Playlist(
-                                    thumbnail = Playlist.Thumbnail.Drawable(icon),
-                                    type = Playlist.Type.Downloading
-                                )
-                                mutableId += playlistViewModel.insertAsync(playlist).await()
-                                mutableId.remove(0L)
-                            }
                             VideoInfoDownloadWorker.registerWorker(
                                 applicationContext,
                                 url,
-                                mutableId.toLongArray()
+                                id.toLongArray()
                             )
                         }
                     }.show(supportFragmentManager, "SelectTargetPlaylist")
