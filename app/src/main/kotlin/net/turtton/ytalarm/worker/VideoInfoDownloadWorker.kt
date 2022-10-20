@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.worker
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -8,16 +9,16 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.OneTimeWorkRequest
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Operation
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import androidx.work.await
 import com.github.michaelbull.result.andThen
 import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.runCatching
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
@@ -33,38 +34,92 @@ class VideoInfoDownloadWorker(
 ) : CoroutineIOWorker(appContext, workerParams) {
     private val json = Json { ignoreUnknownKeys = true }
 
-    private val triedCount = MutableStateFlow(0)
-
+    @SuppressLint("RestrictedApi")
     override suspend fun doWork(): Result {
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
+        var playlists = inputData.getLongArray(KEY_PLAYLIST)
 
-        val request = YoutubeDLRequest(targetUrl)
-            .addOption("--dump-single-json")
-            .addOption("-f", "b")
+        val stateTitle = applicationContext.getString(R.string.item_video_list_state_importing)
+        val data = Video.State.Importing(Video.WorkerState.Working(id))
+        var targetVideo = Video(videoId = "", title = stateTitle, stateData = data)
 
-        val (videos, type) = download(request)
-        repository.insert(videos)
+        val targetVideoId = repository.insert(targetVideo)
+        targetVideo = repository.getVideoFromIdSync(targetVideoId)!!
 
-        inputData.getLongArray(KEY_PLAYLIST)?.forEach { targetPlaylist ->
-            val playlist = repository.getPlaylistFromIdSync(targetPlaylist) ?: Playlist()
-            val newList = (playlist.videos + videos.map { it.id }).distinct()
-            val new = when (type) {
-                is Type.Video -> playlist.copy(videos = newList)
-                is Type.Playlist -> {
-                    playlist.copy(videos = newList, originUrl = type.url).let {
-                        if (it.id == 0L) {
-                            it.copy(title = type.title)
-                        } else {
-                            it
+        @Suppress("ControlFlowWithEmptyBody")
+        while (
+            WorkManager.getInstance(applicationContext)
+                .getWorkInfoById(id)
+                .await()
+                .let { it == null || it.state.isFinished }
+        ) {
+        }
+        playlists = playlists?.insertVideoInPlaylists(targetVideo)
+
+        val (videos, type) = download(targetUrl)
+            ?: run {
+                val failed = Video.WorkerState.Failed(targetUrl)
+                repository.update(targetVideo.copy(stateData = Video.State.Importing(failed)))
+                return Result.failure()
+            }
+
+        if (type is Type.Video) {
+            val video = videos.first()
+            val duplication = checkVideoDuplication(video.videoId, video.domain)
+            if (duplication == null) {
+                val importedVideo = video.copy(id = targetVideoId)
+                repository.update(importedVideo)
+                playlists?.let {
+                    repository.getPlaylistFromIdsSync(it.toList())
+                }?.map { pl ->
+                    var playlist = pl
+                    var shouldUpdate = false
+                    val containsVideos = repository.getVideoFromIdsSync(playlist.videos)
+                    val hasUpdatingVideo = hasUpdatingVideo(containsVideos)
+                    if (!hasUpdatingVideo) {
+                        playlist = playlist.copy(type = Playlist.Type.Original)
+                        shouldUpdate = true
+                    }
+                    updatePlaylistThumbnail(playlist)?.also { newPlaylist ->
+                        playlist = newPlaylist
+                        shouldUpdate = true
+                    }
+                    playlist.takeIf { shouldUpdate }
+                }
+            } else {
+                repository.delete(targetVideo)
+                playlists?.let {
+                    it.deleteVideoFromPlaylists(targetVideoId)
+                    repository.getPlaylistFromIdsSync(it.toList()).map { playlist ->
+                        val videoSet = playlist.videos.toMutableSet()
+                        videoSet += duplication
+                        var newPlaylist = playlist.copy(videos = videoSet.toList())
+                        updatePlaylistThumbnail(newPlaylist)?.let { pl ->
+                            newPlaylist = pl
                         }
+                        val currentVideos = repository.getVideoFromIdsSync(newPlaylist.videos)
+                        if (!hasUpdatingVideo(currentVideos)) {
+                            newPlaylist = newPlaylist.copy(type = Playlist.Type.Original)
+                        }
+                        newPlaylist
                     }
                 }
+            }?.filterNotNull()
+                .takeIf { !it.isNullOrEmpty() }
+                ?.let {
+                    repository.update(it)
+                }
+        } else {
+            repository.delete(targetVideo)
+            playlists?.deleteVideoFromPlaylists(targetVideoId)
+            val targetIds = mutableListOf<Long>()
+            val newVideos = videos.filter {
+                checkVideoDuplication(it.videoId, it.domain)?.let { id ->
+                    targetIds += id
+                } == null
             }
-            if (targetPlaylist != -1L) {
-                repository.update(new)
-            } else {
-                repository.insert(new)
-            }
+            targetIds += repository.insert(newVideos)
+            playlists?.insertVideosInPlaylists(targetIds, type)
         }
 
         return Result.success()
@@ -83,17 +138,13 @@ class VideoInfoDownloadWorker(
                 .addAction(R.drawable.ic_cancel, cancel, cancelIntent)
                 .setSilent(true)
 
-        val count = triedCount.value
-        if (count > 0) {
-            val text = applicationContext
-                .getString(R.string.notification_download_video_info_retry, count)
-            notification.setContentText(text)
-        }
-
         return ForegroundInfo(NOTIFICATION_ID, notification.build())
     }
 
-    private suspend fun download(request: YoutubeDLRequest): Pair<List<Video>, Type> = runCatching {
+    private fun download(targetUrl: String): Pair<List<Video>, Type>? = runCatching {
+        val request = YoutubeDLRequest(targetUrl)
+            .addOption("--dump-single-json")
+            .addOption("-f", "b")
         YoutubeDL.getInstance().execute(request) { _, _, _ -> }
     }.andThen {
         val output = it.out
@@ -105,12 +156,13 @@ class VideoInfoDownloadWorker(
             when (it.typeData) {
                 is VideoInformation.Type.Video -> {
                     val video = Video(
+                        0,
                         it.id,
                         it.typeData.fullTitle,
                         it.typeData.thumbnailUrl,
                         it.url,
-                        it.typeData.videoUrl,
-                        it.domain
+                        it.domain,
+                        Video.State.Information
                     )
                     return@mapBoth listOf(video) to Type.Video
                 }
@@ -118,26 +170,90 @@ class VideoInfoDownloadWorker(
                     return@mapBoth it.typeData.entries.map { entry ->
                         entry.typeData as VideoInformation.Type.Video
                         Video(
+                            0,
                             entry.id,
                             entry.typeData.fullTitle,
                             entry.typeData.thumbnailUrl,
                             entry.url,
-                            entry.typeData.videoUrl,
-                            entry.domain
+                            entry.domain,
+                            Video.State.Information
                         )
                     } to Type.Playlist(it.title!!, it.url)
                 }
             }
         },
         failure = {
-            Log.e(WORKER_ID, "Download failed. Retrying...", it)
-            triedCount.getAndUpdate { count -> count + 1 }
-            runCatching {
-                setForeground(getForegroundInfo())
-            }
-            return@mapBoth download(request)
+            Log.e(WORKER_ID, "Download failed. Url: $targetUrl", it)
+            null
         }
     )
+
+    private suspend fun LongArray.insertVideoInPlaylists(video: Video) = map {
+        val playlist =
+            if (it == 0L) {
+                val icon = R.drawable.ic_download
+                Playlist(
+                    thumbnail = Playlist.Thumbnail.Drawable(icon),
+                    type = Playlist.Type.Importing
+                )
+            } else {
+                repository.getPlaylistFromIdSync(it) ?: return@map null
+            }
+        val newList = playlist.videos.toMutableSet().apply { add(video.id) }.toList()
+        val newPlaylist = playlist.copy(videos = newList)
+        if (it == 0L) {
+            repository.insert(newPlaylist)
+        } else {
+            repository.update(newPlaylist)
+            it
+        }
+    }.filterNotNull().toLongArray()
+
+    private suspend fun LongArray.insertVideosInPlaylists(
+        videoIds: List<Long>,
+        type: Type
+    ): LongArray = map { targetPlaylist ->
+        val playlist = repository.getPlaylistFromIdSync(targetPlaylist)!!
+        val newList = (playlist.videos + videoIds).distinct()
+        val new = when (type) {
+            is Type.Video -> playlist.copy(videos = newList)
+            is Type.Playlist -> {
+                val playlistType = Playlist.Type.CloudPlaylist(type.url, id)
+                playlist.copy(title = type.title, videos = newList, type = playlistType)
+            }
+        }
+        repository.update(updatePlaylistThumbnail(new) ?: new)
+        targetPlaylist
+    }.toLongArray()
+
+    private suspend fun LongArray.deleteVideoFromPlaylists(targetVideoId: Long) = forEach {
+        val playlist = repository.getPlaylistFromIdSync(it) ?: return@forEach
+        val newVideoList = playlist.videos
+            .toMutableList()
+            .also { videos -> videos.remove(targetVideoId) }
+        repository.update(playlist.copy(videos = newVideoList))
+    }
+
+    private fun updatePlaylistThumbnail(playlist: Playlist): Playlist? = playlist.takeIf {
+        it.thumbnail is Playlist.Thumbnail.Drawable
+    }?.let {
+        it.videos.firstOrNull()?.let { videoId ->
+            it.copy(thumbnail = Playlist.Thumbnail.Video(videoId))
+        }
+    }
+
+    private suspend fun checkVideoDuplication(videoId: String, domain: String): Long? =
+        repository.getVideoFromVideoIdSync(videoId)?.let {
+            if (it.domain == domain) {
+                it.id
+            } else {
+                null
+            }
+        }
+
+    private fun hasUpdatingVideo(videos: List<Video>): Boolean = videos.any { video ->
+        video.stateData.isUpdating()
+    }
 
     private sealed interface Type {
         object Video : Type
@@ -156,6 +272,15 @@ class VideoInfoDownloadWorker(
             targetUrl: String,
             targetPlaylists: LongArray = longArrayOf()
         ): OneTimeWorkRequest {
+            val (request, task) = prepareWorker(targetUrl, targetPlaylists)
+            WorkManager.getInstance(context).task()
+            return request
+        }
+
+        fun prepareWorker(
+            targetUrl: String,
+            targetPlaylists: LongArray = longArrayOf()
+        ): Pair<OneTimeWorkRequest, EnqueueTask> {
             val data = Data.Builder().putString(KEY_URL, targetUrl)
             if (targetPlaylists.isNotEmpty()) {
                 data.putLongArray(KEY_PLAYLIST, targetPlaylists)
@@ -164,13 +289,16 @@ class VideoInfoDownloadWorker(
                 .setInputData(data.build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
-            WorkManager.getInstance(context)
-                .enqueueUniqueWork(
+            val enqueueTask: EnqueueTask = {
+                enqueueUniqueWork(
                     WORKER_ID,
                     ExistingWorkPolicy.APPEND_OR_REPLACE,
                     request
                 )
-            return request
+            }
+            return request to enqueueTask
         }
     }
 }
+
+typealias EnqueueTask = WorkManager.() -> Operation

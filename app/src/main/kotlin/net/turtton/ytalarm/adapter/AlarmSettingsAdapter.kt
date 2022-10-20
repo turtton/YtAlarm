@@ -76,7 +76,9 @@ class AlarmSettingsAdapter(
                 fragment.lifecycleScope.launch {
                     val playlists = async.await()
                     launch(Dispatchers.Main) {
-                        val displayData = playlists.map { it.toDisplayData() }
+                        val displayData = playlists.map {
+                            it.toDisplayData(fragment.videoViewModel)
+                        }
                         val chosenList = playlists.map {
                             alarmState.value.playListId.contains(it.id)
                         }

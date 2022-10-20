@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.structure
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import net.turtton.ytalarm.util.RepeatType
@@ -10,7 +11,9 @@ data class Alarm(
     val id: Long = 0L,
     val hour: Int = 0,
     val minute: Int = 0,
+    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     val repeatType: RepeatType = RepeatType.Once,
+    @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     val playListId: List<Long> = emptyList(),
     val shouldLoop: Boolean = false,
     // max 100(%)

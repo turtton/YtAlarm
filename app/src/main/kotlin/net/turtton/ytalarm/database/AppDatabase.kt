@@ -16,11 +16,21 @@ import net.turtton.ytalarm.structure.Alarm
 import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.converter.LongListConverter
+import net.turtton.ytalarm.util.converter.PlaylistThumbnailConverter
+import net.turtton.ytalarm.util.converter.PlaylistTypeConverter
 import net.turtton.ytalarm.util.converter.RepeatTypeConverter
 import net.turtton.ytalarm.util.converter.StringListConverter
+import net.turtton.ytalarm.util.converter.VideoStateConverter
 
 @Database(entities = [Alarm::class, Video::class, Playlist::class], version = 1)
-@TypeConverters(StringListConverter::class, LongListConverter::class, RepeatTypeConverter::class)
+@TypeConverters(
+    StringListConverter::class,
+    LongListConverter::class,
+    RepeatTypeConverter::class,
+    VideoStateConverter::class,
+    PlaylistTypeConverter::class,
+    PlaylistThumbnailConverter::class
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao
 
@@ -55,41 +65,37 @@ abstract class AppDatabase : RoomDatabase() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             INSTANCE?.let {
                 scope.launch {
-                    populateAlarmDatabase(it.alarmDao())
-                    populatePlaylistDatabase(it.playlistDao())
-                    populateVideoDatabase(it.videoDao())
+                    val videoId = populateVideoDatabase(it.videoDao())
+                    val playlistId = populatePlaylistDatabase(it.playlistDao(), videoId)
+                    populateAlarmDatabase(it.alarmDao(), playlistId)
                 }
             }
         }
 
-        suspend fun populateAlarmDatabase(dao: AlarmDao) {
+        suspend fun populateAlarmDatabase(dao: AlarmDao, playlistId: Long) {
             dao.deleteAll()
-            dao.insert(Alarm(playListId = listOf(0)))
+            dao.insert(Alarm(playListId = listOf(playlistId)))
         }
 
-        suspend fun populatePlaylistDatabase(dao: PlaylistDao) {
-            dao.insert(
-                Playlist(
-                    id = 0,
-                    title = "ExamplePlaylist",
-                    thumbnailUrl = "https://i.ytimg.com/vi_webp/aLexJOGZ_gw/maxresdefault.webp",
-                    videos = listOf("aLexJOGZ_gw")
-                )
+        suspend fun populatePlaylistDatabase(dao: PlaylistDao, videoId: Long): Long = dao.insert(
+            Playlist(
+                id = 0,
+                title = "ExamplePlaylist",
+                thumbnail = Playlist.Thumbnail.Video(videoId),
+                videos = listOf(videoId)
             )
-        }
+        )
 
-        suspend fun populateVideoDatabase(dao: VideoDao) {
-            dao.insert(
-                Video(
-                    "aLexJOGZ_gw",
-                    "クッキー☆ボムラッシュ.SSBU",
-                    "https://i.ytimg.com/vi_webp/aLexJOGZ_gw/maxresdefault.webp",
-                    "https://www.youtube.com/watch?v=aLexJOGZ_gw",
-                    "https://...",
-                    "youtube.com",
-                    26955482
-                )
+        suspend fun populateVideoDatabase(dao: VideoDao): Long = dao.insert(
+            Video(
+                0,
+                "aLexJOGZ_gw",
+                "クッキー☆ボムラッシュ.SSBU",
+                "https://i.ytimg.com/vi_webp/aLexJOGZ_gw/maxresdefault.webp",
+                "https://www.youtube.com/watch?v=aLexJOGZ_gw",
+                "youtube.com",
+                Video.State.Information
             )
-        }
+        )
     }
 }

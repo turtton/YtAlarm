@@ -17,6 +17,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentAlarmList
 import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
 import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.BasicComparator
 import net.turtton.ytalarm.util.extensions.getDisplayTime
 import net.turtton.ytalarm.util.extensions.joinStringWithSlash
@@ -53,7 +54,18 @@ class AlarmListAdapter(
                 async.await().let { list ->
                     launch(Dispatchers.Main) {
                         playlistName.text = list.map { it.title }.joinStringWithSlash()
-                        Glide.with(itemView).load(list.first().thumbnailUrl).into(alarmThumbnail)
+                        when (val thumbnail = list.first().thumbnail) {
+                            is Playlist.Thumbnail.Video -> {
+                                val url = parentFragment.videoViewModel
+                                    .getFromIdAsync(thumbnail.id)
+                                    .await()
+                                    ?.thumbnailUrl
+                                Glide.with(itemView).load(url).into(alarmThumbnail)
+                            }
+                            is Playlist.Thumbnail.Drawable -> {
+                                alarmThumbnail.setImageResource(thumbnail.id)
+                            }
+                        }
                     }
                 }
             }

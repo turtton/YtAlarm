@@ -5,19 +5,19 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
-import net.turtton.ytalarm.util.RepeatType
+import net.turtton.ytalarm.structure.Playlist
 
 @OptIn(ExperimentalSerializationApi::class)
-class RepeatTypeConverter {
+class PlaylistThumbnailConverter {
     private val cbor = Cbor
 
     @TypeConverter
-    fun fromByteArray(value: ByteArray?): RepeatType? {
+    fun fromByteArray(value: ByteArray?): Playlist.Thumbnail? {
         return value?.let { cbor.decodeFromByteArray(it) }
     }
 
     @TypeConverter
-    fun toByteArray(repeatType: RepeatType?): ByteArray? {
-        return repeatType?.let { cbor.encodeToByteArray(it) }
+    fun toByteArray(type: Playlist.Thumbnail?): ByteArray? {
+        return type?.let { cbor.encodeToByteArray(it) }
     }
 }

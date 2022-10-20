@@ -15,6 +15,7 @@ import java.util.*
 
 fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: Context) {
     observe(lifecycleOwner) { list ->
+        if (list == null) return@observe
         val alarmList = list.filter { it.isEnable }.toMutableList()
         updateAlarmSchedule(context, alarmList)
     }

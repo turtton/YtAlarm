@@ -31,10 +31,13 @@ import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter
 import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.databinding.ActivityMainBinding
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
+import net.turtton.ytalarm.structure.Playlist
 import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.util.initYtDL
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
 import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
@@ -47,6 +50,10 @@ class MainActivity : AppCompatActivity() {
 
     val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(application.repository)
+    }
+
+    val videoViewModel: VideoViewModel by viewModels {
+        VideoViewModelFactory(application.repository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,39 +78,13 @@ class MainActivity : AppCompatActivity() {
         binding.fab.shrink()
 
         createNotificationChannel()
-
-        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-            lifecycleScope.launch {
-                intent.getStringExtra(Intent.EXTRA_TEXT)?.let { url ->
-                    if (!url.startsWith("http")) {
-                        AlertDialog.Builder(applicationContext)
-                            .setTitle(R.string.dialog_shared_text_should_be_url_title)
-                            .setMessage(R.string.dialog_shared_text_should_be_url_description)
-                            .setPositiveButton(R.string.dialog_shared_text_should_be_url_ok, null)
-                            .show()
-                    }
-
-                    val playlists = playlistViewModel.allPlaylistsAsync.await()
-                        .filter { it.originUrl == null }
-                        .map { it.toDisplayData() }
-                        .toMutableList()
-                        .apply {
-                            val title = "Create New Playlist"
-                            add(MultiChoiceVideoListAdapter.DisplayData(-1, title, null))
-                        }
-
-                    DialogMultiChoiceVideo(playlists) { _, id ->
-                        VideoInfoDownloadWorker.registerWorker(
-                            applicationContext,
-                            url,
-                            id.toLongArray()
-                        )
-                    }.show(supportFragmentManager, "SelectTargetPlaylist")
-                }
-            }
-        }
-
         requestPermission()
+        checkUrlShare(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        checkUrlShare(intent)
     }
 
     override fun onRestart() {
@@ -151,6 +132,44 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 }, ContextCompat.getMainExecutor(this))
+            }
+        }
+    }
+
+    private fun checkUrlShare(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+            intent.getStringExtra(Intent.EXTRA_TEXT)?.let { url ->
+                lifecycleScope.launch {
+                    if (!url.startsWith("http")) {
+                        AlertDialog.Builder(applicationContext)
+                            .setTitle(R.string.dialog_shared_text_should_be_url_title)
+                            .setMessage(R.string.dialog_shared_text_should_be_url_description)
+                            .setPositiveButton(R.string.dialog_shared_text_should_be_url_ok, null)
+                            .show()
+                    }
+
+                    val playlists = playlistViewModel.allPlaylistsAsync.await()
+                        .filter { it.type is Playlist.Type.Original }
+                        .map { it.toDisplayData(videoViewModel) }
+                        .toMutableList()
+                        .apply {
+                            val title = "Create New Playlist"
+                            val drawable = MultiChoiceVideoListAdapter.DisplayData
+                                .Thumbnail
+                                .Drawable(R.drawable.ic_add_playlist)
+                            add(MultiChoiceVideoListAdapter.DisplayData(0, title, drawable))
+                        }
+
+                    DialogMultiChoiceVideo(playlists) { _, id ->
+                        lifecycleScope.launch {
+                            VideoInfoDownloadWorker.registerWorker(
+                                applicationContext,
+                                url,
+                                id.toLongArray()
+                            )
+                        }
+                    }.show(supportFragmentManager, "SelectTargetPlaylist")
+                }
             }
         }
     }

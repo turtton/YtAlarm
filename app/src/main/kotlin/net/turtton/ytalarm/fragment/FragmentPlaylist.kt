@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.fragment
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import androidx.drawerlayout.widget.DrawerLayout
@@ -9,6 +10,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.WorkManager
+import androidx.work.await
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,6 +21,7 @@ import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.PlaylistAdapter
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.structure.Playlist
+import net.turtton.ytalarm.structure.Video
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
@@ -48,6 +52,7 @@ class FragmentPlaylist :
 
     override lateinit var selectionTracker: SelectionTracker<Long>
 
+    @SuppressLint("RestrictedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val activity = requireActivity() as MainActivity
         activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
@@ -73,8 +78,37 @@ class FragmentPlaylist :
             selectionTracker.onRestoreInstanceState(it)
         }
 
-        playlistViewModel.allPlaylists.observe(requireActivity()) {
-            it?.let { adapter.submitList(it) }
+        playlistViewModel.allPlaylists.observe(viewLifecycleOwner) {
+            if (it == null) return@observe
+            it.filter { playlist ->
+                playlist.type is Playlist.Type.Importing
+            }.forEach { playlist ->
+                lifecycleScope.launch {
+                    playlist.videos.firstOrNull()?.let { videoId ->
+                        videoViewModel.getFromIdAsync(videoId).await()?.let { video ->
+                            when (val state = video.stateData) {
+                                is Video.State.Importing ->
+                                    state.state as? Video.WorkerState.Working
+                                is Video.State.Downloading ->
+                                    state.state as? Video.WorkerState.Working
+                                else -> return@launch
+                            }
+                                ?.workerId
+                                ?.let { workerId ->
+                                    WorkManager.getInstance(view.context)
+                                        .getWorkInfoById(workerId)
+                                        .await()
+                                        ?.state
+                                }.also { state ->
+                                    if (state == null || state.isFinished) {
+                                        playlistViewModel.delete(playlist)
+                                    }
+                                }
+                        }
+                    }
+                }
+            }
+            adapter.submitList(it)
         }
 
         val fab = (requireActivity() as MainActivity).binding.fab

@@ -1,14 +1,15 @@
 package net.turtton.ytalarm.fragment
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
@@ -25,6 +26,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.adapter.VideoListAdapter
+import net.turtton.ytalarm.fragment.FragmentAllVideoList.Companion.updatePlaylistThumbnails
 import net.turtton.ytalarm.fragment.dialog.DialogExecuteProgress
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
@@ -34,6 +36,7 @@ import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.TagKeyProvider
+import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
@@ -43,7 +46,10 @@ import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 import java.util.*
 
 class FragmentVideoList :
-    FragmentAbstractList(), VideoViewContainer, SelectionTrackerContainer<String> {
+    FragmentAbstractList(),
+    VideoViewContainer,
+    PlaylistViewContainer,
+    SelectionTrackerContainer<Long> {
     lateinit var animFabAppear: Animation
     lateinit var animFabDisappear: Animation
     lateinit var animFabRotateForward: Animation
@@ -52,19 +58,17 @@ class FragmentVideoList :
 
     var isAddVideoFabRotated = false
 
-    override lateinit var selectionTracker: SelectionTracker<String>
-    lateinit var adapter: VideoListAdapter
+    override lateinit var selectionTracker: SelectionTracker<Long>
+    lateinit var adapter: VideoListAdapter<FragmentVideoList>
 
     private val args by navArgs<FragmentVideoListArgs>()
-    val currentId = MutableStateFlow(-1L)
-
-    private var currentSyncWorker = MutableStateFlow<UUID?>(null)
+    private val currentId = MutableStateFlow(0L)
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
     }
 
-    val playlistViewModel: PlaylistViewModel by viewModels {
+    override val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(requireActivity().application.repository)
     }
 
@@ -72,7 +76,7 @@ class FragmentVideoList :
         currentId.update { args.playlistId }
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
-        adapter = VideoListAdapter()
+        adapter = VideoListAdapter(this)
         recyclerView.adapter = adapter
 
         selectionTracker = SelectionTracker.Builder(
@@ -80,7 +84,7 @@ class FragmentVideoList :
             recyclerView,
             TagKeyProvider(recyclerView),
             VideoListAdapter.VideoListDetailsLookup(recyclerView),
-            StorageStrategy.createStringStorage()
+            StorageStrategy.createLongStorage()
         ).build()
         adapter.tracker = selectionTracker
 
@@ -115,12 +119,16 @@ class FragmentVideoList :
         addFromVideoFab.isClickable = false
 
         lifecycleScope.launch {
-            val playlist = playlistViewModel.getFromIdAsync(currentId.value).await()
+            val playlistType = playlistViewModel.getFromIdAsync(currentId.value).await()?.type
             launch(Dispatchers.Main) {
-                if (playlist?.originUrl == null) {
-                    listenFabWithOriginalMode()
-                } else {
-                    listenFabWithSyncMode(playlist.id, playlist.originUrl)
+                when (playlistType) {
+                    null,
+                    is Playlist.Type.Importing,
+                    is Playlist.Type.Original -> listenFabWithOriginalMode()
+                    is Playlist.Type.CloudPlaylist -> listenFabWithSyncMode(
+                        view.context,
+                        playlistType
+                    )
                 }
                 addVideoFab.show()
             }
@@ -158,11 +166,12 @@ class FragmentVideoList :
         addFromLinkFab.setOnClickListener {
             animateFab(it)
             lifecycleScope.launch {
-                val playlist = playlistViewModel.getFromIdAsync(currentId.value)
-                    .await()
-                    ?: Playlist()
-                if (playlist.id == 0L) {
-                    val newId = playlistViewModel.insertAsync(playlist).await()
+                if (currentId.value == 0L) {
+                    val newPlaylist = Playlist(
+                        type = Playlist.Type.Importing,
+                        thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_download)
+                    )
+                    val newId = playlistViewModel.insertAsync(newPlaylist).await()
                     currentId.update { newId }
                     updateListObserver()
                 }
@@ -191,11 +200,18 @@ class FragmentVideoList :
                         lifecycleScope.launch(Dispatchers.IO) {
                             val playlist = playlistViewModel.getFromIdAsync(currentId.value)
                                 .await()
-                                ?: Playlist()
+                                ?: kotlin.run {
+                                    val icon = R.drawable.ic_download
+                                    Playlist(thumbnail = Playlist.Thumbnail.Drawable(icon))
+                                }
                             // Converts set to avoid duplicating ids
                             val newVideoTargets = (playlist.videos + selectedId).distinct()
-                            val newPlaylist = playlist.copy(videos = newVideoTargets)
+                            var newPlaylist = playlist.copy(videos = newVideoTargets)
                             if (playlist.id == 0L) {
+                                newVideoTargets.firstOrNull()?.let { targetId ->
+                                    val video = Playlist.Thumbnail.Video(targetId)
+                                    newPlaylist = newPlaylist.copy(thumbnail = video)
+                                }
                                 val newId = playlistViewModel.insertAsync(newPlaylist).await()
                                 currentId.update { newId }
                                 updateListObserver()
@@ -210,11 +226,34 @@ class FragmentVideoList :
     }
 
     @SuppressLint("RestrictedApi")
-    private fun listenFabWithSyncMode(playlistId: Long, originalUrl: String) {
+    private fun listenFabWithSyncMode(context: Context, typeState: Playlist.Type.CloudPlaylist) {
         val binding = (activity as MainActivity).binding
         val addVideoFab = binding.fabAddVideo
         addVideoFab.setImageResource(R.drawable.ic_sync)
         addVideoFab.isClickable = true
+
+        val workManager = WorkManager.getInstance(context)
+        lifecycleScope.launch {
+            val workerId = typeState.workerId
+            workManager.getWorkInfoById(workerId)
+                .await()
+                ?.state
+                ?.takeUnless { it.isFinished }
+                ?.let {
+                    workManager.getWorkInfoByIdLiveData(workerId)
+                        .observe(viewLifecycleOwner) {
+                            if (it == null || it.state.isFinished) {
+                                lifecycleScope.launch(Dispatchers.Main) {
+                                    addVideoFab.clearAnimation()
+                                }
+                            } else {
+                                lifecycleScope.launch(Dispatchers.Main) {
+                                    addVideoFab.startAnimation(animFabRotateInfinity)
+                                }
+                            }
+                        }
+                }
+        }
 
         addVideoFab.setOnClickListener {
             val animation = addVideoFab.animation
@@ -222,38 +261,42 @@ class FragmentVideoList :
                 addVideoFab.startAnimation(animFabRotateInfinity)
             }
             lifecycleScope.launch {
-                val syncWorkerId = currentSyncWorker.value
-                if (syncWorkerId != null) {
-                    val worker = WorkManager.getInstance(it.context)
-                        .getWorkInfoById(syncWorkerId)
-                        .await()
-                    if (worker.state.isFinished.not()) {
-                        return@launch
-                    }
-                }
+                val currentPlaylist = playlistViewModel.getFromIdAsync(currentId.value).await()
+                val currentState = currentPlaylist?.type
 
-                val currentWork = WorkManager.getInstance(it.context)
-                    .getWorkInfosForUniqueWork(VideoInfoDownloadWorker.WORKER_ID)
-                    .await()
-                if (currentWork.any { !it.state.isFinished }) {
-                    Log.i("current", currentWork.toString())
+                if (currentPlaylist == null || currentState !is Playlist.Type.CloudPlaylist) {
                     launch(Dispatchers.Main) {
-                        addVideoFab.clearAnimation()
-                        Snackbar.make(it, R.string.snackbar_sync_is_running, 900).show()
+                        val errorId = R.string.snackbar_error_unexpected_playlist_state
+                        Snackbar.make(requireView(), errorId, 900).show()
+                        findNavController().navigateUp()
                     }.join()
                     return@launch
                 }
 
-                val worker =
-                    VideoInfoDownloadWorker.registerWorker(
-                        it.context,
-                        originalUrl,
-                        longArrayOf(playlistId)
+                workManager.getWorkInfoById(currentState.workerId)
+                    .await()
+                    ?.state
+                    ?.takeUnless { it.isFinished }
+                    ?.let { _ ->
+                        launch(Dispatchers.Main) {
+                            Snackbar.make(it, R.string.snackbar_sync_is_running, 900).show()
+                        }.join()
+                        return@launch
+                    }
+
+                val (request, enqueueTask) = VideoInfoDownloadWorker
+                    .prepareWorker(
+                        currentState.url,
+                        longArrayOf(currentPlaylist.id)
                     )
-                currentSyncWorker.update { worker.id }
-                WorkManager.getInstance(it.context)
-                    .getWorkInfoByIdLiveData(worker.id)
+
+                val newState = currentState.copy(workerId = request.id)
+                playlistViewModel.update(currentPlaylist.copy(type = newState)).join()
+
+                workManager.enqueueTask()
+                workManager.getWorkInfoByIdLiveData(request.id)
                     .observe(viewLifecycleOwner) {
+                        if (it == null) return@observe
                         if (it.state.isFinished) {
                             lifecycleScope.launch(Dispatchers.Main) {
                                 addVideoFab.clearAnimation()
@@ -300,7 +343,7 @@ class FragmentVideoList :
     }
 
     private fun updateListObserver() {
-        lifecycleScope.launch(Dispatchers.Main) {
+        lifecycleScope.launch(Dispatchers.Main) mainThread@{
             playlistViewModel.getFromId(currentId.value).observe(viewLifecycleOwner) { playlist ->
                 playlist?.videos?.also { videos ->
                     videoViewModel.getFromIds(videos)
@@ -316,37 +359,16 @@ class FragmentVideoList :
 
     class VideoSelectionObserver(
         fragment: FragmentVideoList
-    ) : SelectionMenuObserver<String, FragmentVideoList>(
+    ) : SelectionMenuObserver<Long, FragmentVideoList>(
         fragment,
         AttachableMenuProvider(
             fragment,
             R.menu.menu_video_list_in_playlist,
             R.id.menu_video_list_in_pl_action_remove to {
-                val selection = fragment.selectionTracker.selection.toSet()
+                val selection = fragment.selectionTracker.selection.distinct()
                 DialogRemoveVideo { _, _ ->
-                    val async = fragment.playlistViewModel.getFromIdAsync(fragment.currentId.value)
                     fragment.lifecycleScope.launch {
-                        val playlist = async.await() ?: return@launch
-                        val videoList = playlist.videos.toMutableSet()
-                        videoList.removeAll(selection)
-                        var newList = playlist.copy(videos = videoList.toList())
-
-                        val videoViewModel = fragment.videoViewModel
-                        val videos = videoViewModel
-                            .getFromIdsAsync(selection.toList())
-                            .await()
-                        if (videos.any { it.thumbnailUrl == playlist.thumbnailUrl }) {
-                            val newTarget = videoList.firstOrNull() ?: ""
-                            val targetVideo = videoViewModel.getFromIdAsync(newTarget).await()
-                            newList = newList.copy(thumbnailUrl = targetVideo?.thumbnailUrl)
-                        }
-
-                        if (playlist.id == 0L) {
-                            @Suppress("DeferredResultUnused")
-                            fragment.playlistViewModel.insertAsync(newList)
-                        } else {
-                            fragment.playlistViewModel.update(newList)
-                        }
+                        fragment.updatePlaylistThumbnails(selection, fragment.currentId.value)
                     }
                     fragment.selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "VideoRemoveDialog")
