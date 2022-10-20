@@ -21,7 +21,6 @@ class MultiChoiceVideoListAdapter<T>(
     val selectedId = hashSetOf<T>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        @Suppress("ktlint:argument-list-wrapping")
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_dialog_choice_video, parent, false)
         return ViewHolder(view)
@@ -43,14 +42,16 @@ class MultiChoiceVideoListAdapter<T>(
                 selectedId.add(data.id)
             }
         }
+
         holder.itemView.setOnClickListener {
-            val checkBox = holder.checkBox
-            if (checkBox.isChecked) {
-                selectedId.remove(data.id)
-                checkBox.isChecked = false
-            } else {
+            val current = holder.checkBox.isChecked
+            holder.checkBox.isChecked = !current
+        }
+        holder.checkBox.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
                 selectedId.add(data.id)
-                checkBox.isChecked = true
+            } else {
+                selectedId.remove(data.id)
             }
         }
     }
