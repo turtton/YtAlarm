@@ -23,7 +23,7 @@
         app:layout_constraintBottom_toBottomOf="@id/bottom_barrier"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_launcher_background"
+        app:srcCompat="@drawable/ic_error"
         tools:ignore="ImageContrastCheck" />
 
     <CheckBox
