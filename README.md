@@ -23,7 +23,7 @@ Also, you do not need an account for each service to use this app.
 ### Media player
 
 - streaming
-- ~~download~~(In progress #65)
+- ~~download~~(In progress [#65](https://github.com/turtton/YtAlarm/issues/65))
 
 ### Media Management
 

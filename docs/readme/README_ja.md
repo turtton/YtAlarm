@@ -20,7 +20,7 @@ YtAlarmはyoutubedl-androidを使用したシンプルな目覚ましアプリ�
 ### プレイヤー
 
 - ストリーミング
-- ~~ダウンロード~~(準備中 #65)
+- ~~ダウンロード~~(準備中 [#65](https://github.com/turtton/YtAlarm/issues/65))
 
 ### メディア管理
 
