@@ -35,7 +35,7 @@ data class Playlist(
     @Serializable
     sealed interface Type {
         @Serializable
-        object Downloading : Type
+        object Importing : Type
 
         @Serializable
         object Original : Type

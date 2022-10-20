@@ -123,7 +123,7 @@ class FragmentVideoList :
             launch(Dispatchers.Main) {
                 when (playlistType) {
                     null,
-                    is Playlist.Type.Downloading,
+                    is Playlist.Type.Importing,
                     is Playlist.Type.Original -> listenFabWithOriginalMode()
                     is Playlist.Type.CloudPlaylist -> listenFabWithSyncMode(
                         view.context,
@@ -168,7 +168,7 @@ class FragmentVideoList :
             lifecycleScope.launch {
                 if (currentId.value == 0L) {
                     val newPlaylist = Playlist(
-                        type = Playlist.Type.Downloading,
+                        type = Playlist.Type.Importing,
                         thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_download)
                     )
                     val newId = playlistViewModel.insertAsync(newPlaylist).await()

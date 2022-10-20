@@ -192,7 +192,7 @@ class VideoInfoDownloadWorker(
                 val icon = R.drawable.ic_download
                 Playlist(
                     thumbnail = Playlist.Thumbnail.Drawable(icon),
-                    type = Playlist.Type.Downloading
+                    type = Playlist.Type.Importing
                 )
             } else {
                 repository.getPlaylistFromIdSync(it) ?: return@map null

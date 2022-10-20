@@ -79,7 +79,7 @@ class FragmentPlaylist :
         playlistViewModel.allPlaylists.observe(viewLifecycleOwner) {
             if (it == null) return@observe
             it.filter { playlist ->
-                playlist.type is Playlist.Type.Downloading
+                playlist.type is Playlist.Type.Importing
             }.forEach { playlist ->
                 lifecycleScope.launch {
                     playlist.videos.firstOrNull()?.let { videoId ->

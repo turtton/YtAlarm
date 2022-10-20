@@ -134,7 +134,7 @@ class PlaylistAdapter<T>(
                 }
             }
 
-            if (data.type !is Playlist.Type.Downloading) {
+            if (data.type !is Playlist.Type.Importing) {
                 itemView.setOnClickListener {
                     val action =
                         FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment(
