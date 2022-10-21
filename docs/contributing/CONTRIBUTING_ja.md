@@ -30,7 +30,7 @@
 ### 方針
 
 - 特別な理由が無い限りJavaのコードは受けつけません
-- コーディングに関しては[Android Kotlin Style Guide(日本語)](https://developer.android.com/kotlin/style-guide?hl=ja)に従って記述していただければ問題ないと思いますが、最終的にはktlint従ってください
+- コーディングに関しては[Android Kotlin Style Guide(日本語)](https://developer.android.com/kotlin/style-guide?hl=ja)に従って記述していただければ問題ないと思いますが、最終的には`ktlint`と`detekt`に従ってください
 - ライブラリ等を追加する際はライセンスに細心の注意を払ってください(クローズドソースなものが含まれていないことを確認してください)
 - 特別な理由なしにmainなどの主要ブランチにコードを直接Pushすることは許されていません
 
@@ -63,9 +63,9 @@
 
 ### コード精査
 
-`ktlint`および`Android Plugin for Gradle`を使用します。以下のgradleタスクより実行が可能です
+`ktlint`、`detekt`および`Android Plugin for Gradle`を使用します。以下のgradleタスクより実行が可能です
 
 - フォーマット: `formatKotlin`
-- リント: `lintKotlin lint`
+- リント: `lintKotlin detekt lint`
 - 全体のチェック: `check`
 

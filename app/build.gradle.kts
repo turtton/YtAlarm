@@ -5,6 +5,7 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.20"
     id("org.jmailen.kotlinter")
+    id("io.gitlab.arturbosch.detekt")
 }
 
 android {
@@ -133,4 +134,9 @@ dependencies {
 
 kotlinter {
     experimentalRules = true
+}
+
+detekt {
+    config = files("../detekt.yml")
+    buildUponDefaultConfig = true
 }

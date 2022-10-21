@@ -33,7 +33,7 @@ Coming soon.
 ### Guidelines
 
 - Java code is not accepted unless there is a particular reason.
-- Coding should be written following the [Android Kotlin Style Guide](https://developer.android.com/kotlin/style-guide?hl=en), but please follow Ktlint for the final version.
+- Coding should be written following the [Android Kotlin Style Guide](https://developer.android.com/kotlin/style-guide?hl=en), but please follow `ktlint` and `detekt` for the final version.
 - Pay close attention to the license when adding libraries.(make sure it does not include closed-source library)
 
 ### Starting development
@@ -66,10 +66,10 @@ Also, please do not commit any workspace configuration files such as `.fleet` .
 
 ### Code Checking
 
-Uses `ktlint` and `Android Plugin for Gradle`. It can be run from the following Gradle task.
+Uses `ktlint`, `detekt` and `Android Plugin for Gradle`. It can be run from the following Gradle task.
 
 - Format: `formatKotlin`
-- Lint: `lintKotlin lint`
+- Lint: `lintKotlin detekt lint`
 - Check all: `check`
 
 
