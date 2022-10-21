@@ -15,6 +15,7 @@ import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
+import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.extensions.compatPendingIntentFlag
 import net.turtton.ytalarm.util.extensions.pickNearestTime
 import net.turtton.ytalarm.worker.CoroutineIOWorker
@@ -64,7 +65,7 @@ class UpdateSnoozeNotifyWorker(
 ) : CoroutineIOWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
         val snoozeAlarms = withContext(Dispatchers.IO) {
-            repository.getMatchedAlarmSync(RepeatType.Snooze)
+            repository.getMatchedAlarmSync(Alarm.RepeatType.Snooze)
         }
         val notificationManager = NotificationManagerCompat.from(applicationContext)
 

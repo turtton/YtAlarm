@@ -39,9 +39,9 @@ import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
+import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
-import net.turtton.ytalarm.util.RepeatType
 import net.turtton.ytalarm.util.UpdateSnoozeNotifyWorker
 import net.turtton.ytalarm.util.observeAlarm
 import net.turtton.ytalarm.util.updateAlarmSchedule
@@ -179,7 +179,7 @@ class FragmentVideoPlayer : Fragment() {
                             id = 0,
                             hour = hour,
                             minute = minute,
-                            repeatType = RepeatType.Snooze
+                            repeatType = Alarm.RepeatType.Snooze
                         )
                         val job = alarmViewModel.insert(snoozeAlarm)
                         lifecycleScope.launch {
@@ -195,17 +195,17 @@ class FragmentVideoPlayer : Fragment() {
                 }
                 // update alarm
                 var repeatType = alarm.repeatType
-                if (repeatType is RepeatType.Date) {
-                    repeatType = RepeatType.Once
+                if (repeatType is Alarm.RepeatType.Date) {
+                    repeatType = Alarm.RepeatType.Once
                 }
                 when (repeatType) {
-                    is RepeatType.Once -> {
+                    is Alarm.RepeatType.Once -> {
                         alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
                     }
-                    is RepeatType.Everyday, is RepeatType.Days -> {
+                    is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
                         alarmViewModel.update(alarm)
                     }
-                    is RepeatType.Snooze -> {
+                    is Alarm.RepeatType.Snooze -> {
                         alarmViewModel.delete(alarm)
                     }
                     else -> {}

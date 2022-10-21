@@ -35,7 +35,6 @@ import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.ui.fragment.FragmentAlarmSettings
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
-import net.turtton.ytalarm.util.RepeatType
 import net.turtton.ytalarm.util.extensions.getDisplayTime
 import net.turtton.ytalarm.util.extensions.joinStringWithSlash
 import java.util.Calendar
@@ -263,28 +262,30 @@ class AlarmSettingsAdapter(
                         // ONCE
                         0 -> {
                             alarmState.update {
-                                it.copy(repeatType = RepeatType.Once)
+                                it.copy(repeatType = Alarm.RepeatType.Once)
                             }
                             description.text = alarmState.value.repeatType.getDisplay(context)
                         }
                         // EVERYDAY
                         1 -> {
                             alarmState.update {
-                                it.copy(repeatType = RepeatType.Everyday)
+                                it.copy(repeatType = Alarm.RepeatType.Everyday)
                             }
                             description.text = alarmState.value.repeatType.getDisplay(context)
                         }
                         // DAYS
                         2 -> {
-                            val current = alarmState.value.repeatType as? RepeatType.Days
+                            val current = alarmState.value.repeatType as? Alarm.RepeatType.Days
                             DayChoiceFragment(current?.days) { dayOfWeekCompats ->
                                 if (dayOfWeekCompats.size == 7) {
                                     alarmState.update {
-                                        it.copy(repeatType = RepeatType.Everyday)
+                                        it.copy(repeatType = Alarm.RepeatType.Everyday)
                                     }
                                 } else {
                                     alarmState.update {
-                                        it.copy(repeatType = RepeatType.Days(dayOfWeekCompats))
+                                        it.copy(
+                                            repeatType = Alarm.RepeatType.Days(dayOfWeekCompats)
+                                        )
                                     }
                                 }
                                 description.text = alarmState.value.repeatType.getDisplay(
@@ -294,7 +295,7 @@ class AlarmSettingsAdapter(
                         }
                         // DATE
                         3 -> {
-                            val current = alarmState.value.repeatType as? RepeatType.Date
+                            val current = alarmState.value.repeatType as? Alarm.RepeatType.Date
                             SettingDatePickerFragment(current?.targetDate) { _, year, month, day ->
                                 val nowCalendar = Calendar.getInstance()
                                 val nowYear = nowCalendar[Calendar.YEAR]
@@ -311,7 +312,7 @@ class AlarmSettingsAdapter(
                                     Date(calendar.timeInMillis)
                                 }
                                 alarmState.update {
-                                    it.copy(repeatType = RepeatType.Date(newDate))
+                                    it.copy(repeatType = Alarm.RepeatType.Date(newDate))
                                 }
                                 description.text = alarmState.value.repeatType.getDisplay(
                                     context

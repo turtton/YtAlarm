@@ -6,7 +6,6 @@ import net.turtton.ytalarm.database.AppDatabase
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
-import net.turtton.ytalarm.util.RepeatType
 
 class DataRepository(private val database: AppDatabase) {
 
@@ -24,7 +23,7 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun getMatchedAlarmSync(repeatType: RepeatType): List<Alarm> {
+    suspend fun getMatchedAlarmSync(repeatType: Alarm.RepeatType): List<Alarm> {
         return database.alarmDao().getMatchedSync(repeatType)
     }
 
