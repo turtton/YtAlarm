@@ -42,7 +42,6 @@ import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
-import net.turtton.ytalarm.util.UpdateSnoozeNotifyWorker
 import net.turtton.ytalarm.util.observeAlarm
 import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
@@ -51,6 +50,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
+import net.turtton.ytalarm.worker.UpdateSnoozeNotifyWorker
 import java.util.Calendar
 import kotlin.math.roundToInt
 

@@ -64,6 +64,6 @@
             android:turnScreenOn="true"
             android:launchMode="singleInstance">
         </activity>
-        <receiver android:name=".util.SnoozeRemoveReceiver"/>
+        <receiver android:name=".worker.SnoozeRemoveReceiver"/>
     </application>
 </manifest>

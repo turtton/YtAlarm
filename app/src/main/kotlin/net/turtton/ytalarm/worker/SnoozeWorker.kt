@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.util
+package net.turtton.ytalarm.worker
 
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
@@ -18,7 +18,6 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.extensions.compatPendingIntentFlag
 import net.turtton.ytalarm.util.extensions.pickNearestTime
-import net.turtton.ytalarm.worker.CoroutineIOWorker
 import java.util.*
 
 const val SNOOZE_NOTIFICATION = "net.turtton.ytalarm.SnoozeNotification"
