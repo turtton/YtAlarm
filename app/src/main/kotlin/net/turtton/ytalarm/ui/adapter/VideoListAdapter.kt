@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
+import net.turtton.ytalarm.util.extensions.deleteVideo
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
 import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
@@ -82,111 +83,17 @@ class VideoListAdapter<T>(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
-        holder.itemView.tag = data.id
-        holder.apply {
-            val state = data.stateData
-            val context = itemView.context
+        val itemView = holder.itemView
+        itemView.tag = data.id
+        val checkBox = holder.checkBox
 
-            when (state) {
-                is Video.State.Importing -> if (state.state is Video.WorkerState.Failed) {
-                    title.text = context.getString(R.string.item_video_list_import_failed)
-                    domainOrSize.text = context.getString(R.string.item_video_list_click_to_retry)
-                    thumbnail.setImageResource(R.drawable.ic_error)
-                    val url = state.state.url
-                    itemView.setOnClickListener { view ->
-                        val retryButtonMessage = R.string.dialog_video_import_failed_retry
-                        val clearButtonMessage = R.string.dialog_video_import_failed_clear
-                        AlertDialog.Builder(view.context)
-                            .setTitle(R.string.dialog_video_import_failed_title)
-                            .setMessage(url)
-                            .setPositiveButton(retryButtonMessage) { _, _ ->
-                                fragment.lifecycleScope.launch {
-                                    val targetPlaylists = fragment.playlistViewModel
-                                        .allPlaylistsAsync
-                                        .await()
-                                        .filter { it.videos.contains(data.id) }
-                                        .apply {
-                                            val edited = map { playlist ->
-                                                playlist.copy(
-                                                    videos = playlist.videos.filterNot {
-                                                        it == data.id
-                                                    }
-                                                )
-                                            }
-                                            fragment.playlistViewModel.update(edited).join()
-                                        }
-                                        .map { it.id }
-                                        .toLongArray()
-                                    VideoInfoDownloadWorker.registerWorker(
-                                        view.context,
-                                        url,
-                                        targetPlaylists
-                                    )
-                                    fragment.videoViewModel.delete(data)
-                                }
-                            }.setNegativeButton(clearButtonMessage) { _, _ ->
-                                fragment.lifecycleScope.launch {
-                                    val targetPlaylists = fragment.playlistViewModel
-                                        .allPlaylistsAsync
-                                        .await()
-                                        .filter { it.videos.contains(data.id) }
-                                    val edited = targetPlaylists.map { playlist ->
-                                        playlist.copy(
-                                            videos = playlist.videos.filterNot { it == data.id }
-                                        )
-                                    }
-                                    fragment.playlistViewModel.update(edited)
-                                    fragment.videoViewModel.delete(data)
-                                }
-                            }.show()
-                        selectable = false
-                    }
-                } else {
-                    title.text = data.title
-                    domainOrSize.visibility = View.GONE
-                    thumbnail.setImageResource(R.drawable.ic_download)
-                }
-                is Video.State.Downloading -> if (state.state is Video.WorkerState.Failed) {
-                    selectable = false
-                    TODO("implement in #65")
-                }
-                else -> {
-                    title.text = data.title
-                    domainOrSize.text = if (state is Video.State.Downloaded) {
-                        context.getString(
-                            R.string.item_video_list_data_size,
-                            state.fileSize / BYTE_CARRY_IN / BYTE_CARRY_IN
-                        )
-                    } else {
-                        data.domain
-                    }
-                    Glide.with(itemView).load(data.thumbnailUrl).into(thumbnail)
-                    itemView.setOnClickListener {
-                        val navController = it.findFragment<Fragment>().findNavController()
-
-                        val args = FragmentVideoPlayerArgs(data.videoId).toBundle()
-                        navController.navigate(R.id.nav_graph_video_player, args)
-                    }
-                }
-            }
-            tracker?.let {
-                var isSelected = it.isSelected(data.id)
-                if (isSelected && !selectable) {
-                    fragment.lifecycleScope.launch(Dispatchers.Main) {
-                        it.deselect(data.id)
-                    }
-                }
-                isSelected = isSelected && selectable
-                itemView.isActivated = isSelected
-                checkBox.isChecked = isSelected
-                checkBox.visibility = if (it.hasSelection() && selectable) {
-                    View.VISIBLE
-                } else {
-                    View.GONE
-                }
-            }
-            currentCheckBox.add(ViewContainer(data.id, checkBox, selectable))
+        when (val state = data.stateData) {
+            is Video.State.Importing -> setUpAsImporting(itemView, holder, data, state.state)
+            is Video.State.Downloading -> setUpAsDownloading(holder, state.state)
+            else -> setUpNormally(itemView, holder, data, state)
         }
+        tracker?.applyTrackerState(itemView, holder, holder.selectable, data.id)
+        currentCheckBox.add(ViewContainer(data.id, checkBox, holder.selectable))
     }
 
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
@@ -197,6 +104,121 @@ class VideoListAdapter<T>(
                 holder.selectable
             )
         )
+    }
+
+    private fun setUpAsImporting(
+        itemView: View,
+        holder: ViewHolder,
+        video: Video,
+        workerState: Video.WorkerState
+    ) {
+        val context = itemView.context
+        val title = holder.title
+        val domainOrSize = holder.domainOrSize
+        val thumbnail = holder.thumbnail
+        if (workerState is Video.WorkerState.Failed) {
+            title.text = context.getString(R.string.item_video_list_import_failed)
+            domainOrSize.text = context.getString(R.string.item_video_list_click_to_retry)
+            thumbnail.setImageResource(R.drawable.ic_error)
+
+            val url = workerState.url
+            itemView.setOnClickListener { view ->
+                val retryButtonMessage = R.string.dialog_video_import_failed_retry
+                val clearButtonMessage = R.string.dialog_video_import_failed_clear
+
+                AlertDialog.Builder(view.context)
+                    .setTitle(R.string.dialog_video_import_failed_title)
+                    .setMessage(url)
+                    .setPositiveButton(retryButtonMessage) { _, _ ->
+                        fragment.lifecycleScope.launch {
+                            val targetPlaylists = fragment.playlistViewModel
+                                .allPlaylistsAsync
+                                .await()
+                                .filter { it.videos.contains(video.id) }
+                                .apply {
+                                    fragment.playlistViewModel.update(deleteVideo(video.id)).join()
+                                }
+                                .map { it.id }
+                                .toLongArray()
+                            VideoInfoDownloadWorker.registerWorker(context, url, targetPlaylists)
+                            fragment.videoViewModel.delete(video)
+                        }
+                    }.setNegativeButton(clearButtonMessage) { _, _ ->
+                        fragment.lifecycleScope.launch {
+                            val targetPlaylists = fragment.playlistViewModel
+                                .allPlaylistsAsync
+                                .await()
+                                .filter { it.videos.contains(video.id) }
+                                .deleteVideo(video.id)
+                            fragment.playlistViewModel.update(targetPlaylists)
+                            fragment.videoViewModel.delete(video)
+                        }
+                    }.show()
+                holder.selectable = false
+            }
+        } else {
+            title.text = video.title
+            domainOrSize.visibility = View.GONE
+            thumbnail.setImageResource(R.drawable.ic_download)
+        }
+    }
+
+    private fun setUpAsDownloading(holder: ViewHolder, workerState: Video.WorkerState) {
+        if (workerState is Video.WorkerState.Failed) {
+            holder.selectable = false
+            TODO("implement in #65")
+        }
+    }
+
+    private fun setUpNormally(
+        itemView: View,
+        holder: ViewHolder,
+        video: Video,
+        state: Video.State
+    ) {
+        val context = itemView.context
+        val title = holder.title
+        val domainOrSize = holder.domainOrSize
+        val thumbnail = holder.thumbnail
+        title.text = video.title
+        domainOrSize.text = if (state is Video.State.Downloaded) {
+            context.getString(
+                R.string.item_video_list_data_size,
+                state.fileSize / BYTE_CARRY_IN / BYTE_CARRY_IN
+            )
+        } else {
+            video.domain
+        }
+        Glide.with(itemView).load(video.thumbnailUrl).into(thumbnail)
+        itemView.setOnClickListener {
+            val navController = it.findFragment<Fragment>().findNavController()
+
+            val args = FragmentVideoPlayerArgs(video.videoId).toBundle()
+            navController.navigate(R.id.nav_graph_video_player, args)
+        }
+    }
+
+    private fun SelectionTracker<Long>.applyTrackerState(
+        view: View,
+        holder: ViewHolder,
+        selectable: Boolean,
+        videoId: Long
+    ) {
+        var isSelected = isSelected(videoId)
+        if (isSelected && !selectable) {
+            fragment.lifecycleScope.launch(Dispatchers.Main) {
+                deselect(videoId)
+            }
+        }
+        isSelected = isSelected && selectable
+        view.isActivated = isSelected
+        val checkBox = holder.checkBox
+        checkBox.isChecked = isSelected
+        checkBox.visibility = if (hasSelection() && selectable) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
     }
 
     companion object {
