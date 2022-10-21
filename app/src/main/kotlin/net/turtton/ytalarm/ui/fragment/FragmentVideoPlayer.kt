@@ -142,9 +142,7 @@ class FragmentVideoPlayer : Fragment() {
                 val video = videoViewModel.getFromVideoIdAsync(id).await()
                 if (video == null) {
                     val message = R.string.snackbar_error_failed_to_get_video
-                    Snackbar.make(view, message, Snackbar.LENGTH_LONG)
-                        .setAction("Action", null)
-                        .show()
+                    Snackbar.make(view, message, Snackbar.LENGTH_LONG).show()
                     return@launch
                 }
                 playVideo(view, video)
@@ -329,9 +327,7 @@ class FragmentVideoPlayer : Fragment() {
                 val videoUrl = it.url
                 if (videoUrl.isNullOrEmpty()) {
                     val message = R.string.snackbar_error_failed_to_import_video
-                    Snackbar.make(view, message, Snackbar.LENGTH_LONG)
-                        .setAction("Action", null)
-                        .show()
+                    Snackbar.make(view, message, Snackbar.LENGTH_LONG).show()
                     Log.e(LOG_TAG, "failed to get stream url")
                     return@launch
                 } else {
@@ -341,9 +337,7 @@ class FragmentVideoPlayer : Fragment() {
                 }
             }.onFailure {
                 val message = R.string.snackbar_error_failed_to_import_video
-                Snackbar.make(view, message, Snackbar.LENGTH_LONG)
-                    .setAction("Action", null)
-                    .show()
+                Snackbar.make(view, message, Snackbar.LENGTH_LONG).show()
                 Log.e(LOG_TAG, "failed to get stream info", it)
             }
         }

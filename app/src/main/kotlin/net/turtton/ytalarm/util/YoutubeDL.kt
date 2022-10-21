@@ -24,8 +24,7 @@ fun AppCompatActivity.initYtDL(view: View) = lifecycleScope.launch {
                 view,
                 "Internal error occurred.",
                 Snackbar.LENGTH_LONG
-            ).setAction("Action", null)
-                .show()
+            ).show()
             Log.e(MainActivity.APP_TAG, "YtDL initialization failed", it)
         }
     }
