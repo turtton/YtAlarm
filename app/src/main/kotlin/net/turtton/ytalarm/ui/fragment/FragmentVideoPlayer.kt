@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
@@ -42,6 +43,9 @@ import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
+import net.turtton.ytalarm.util.extensions.hourOfDay
+import net.turtton.ytalarm.util.extensions.minute
+import net.turtton.ytalarm.util.extensions.plusAssign
 import net.turtton.ytalarm.util.observeAlarm
 import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
@@ -53,6 +57,7 @@ import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.UpdateSnoozeNotifyWorker
 import java.util.Calendar
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
@@ -92,37 +97,14 @@ class FragmentVideoPlayer : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         alarmViewModel.allAlarms.observeAlarm(this, view.context)
+        enableFullScreenMode(view)
 
-        // FullScreen
         val activity = requireActivity()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val windowInsetsController = view.windowInsetsController!!
-            windowInsetsController.systemBarsBehavior =
-                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            windowInsetsController.hide(WindowInsets.Type.systemBars())
-        } else {
-            val window = (activity as AppCompatActivity).window
-            val insetsController = WindowCompat.getInsetsController(window, view)
-            insetsController.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            insetsController.hide(WindowInsetsCompat.Type.systemBars())
-        }
-
-        // hide fab
         if (activity is MainActivity) {
-            val fab = activity.binding.fab
-            fab.clearAnimation()
-            fab.visibility = View.GONE
-
-            activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-            activity.binding.toolbar.visibility = View.GONE
+            hideFab(activity)
         }
 
-        val snoozeButton = binding.fragmentVideoPlayerButtonSnooze
-        val dismissButton = binding.fragmentVideoPlayerButtonDismiss
         val videoView = binding.videoView
-        val timeView = binding.fragmentVideoPlayerTextTime
-
         videoView.setOnPreparedListener {
             it.setOnInfoListener { _, what, _ ->
                 when (what) {
@@ -135,8 +117,13 @@ class FragmentVideoPlayer : Fragment() {
             }
         }
 
+        val dismissButton = binding.fragmentVideoPlayerButtonDismiss
+
         val isAlarm = args.isAlarm
         if (!isAlarm) {
+            val timeView = binding.fragmentVideoPlayerTextTime
+            val snoozeButton = binding.fragmentVideoPlayerButtonSnooze
+
             timeView.visibility = View.GONE
             snoozeButton.visibility = View.GONE
             dismissButton.text = view.context.getText(R.string.fragment_video_player_button_stop)
@@ -149,99 +136,7 @@ class FragmentVideoPlayer : Fragment() {
 
         val id = args.id
         if (isAlarm) {
-            lifecycleScope.launch {
-                val alarmList = alarmViewModel.getAllAlarmsAsync().await()
-                updateAlarmSchedule(view.context, alarmList)
-            }
-            startVibration()
-            val alarmId = id.toLong()
-            if (alarmId == -1L) {
-                Snackbar.make(
-                    view,
-                    "Failed to get target alarm data",
-                    Snackbar.LENGTH_SHORT
-                ).show()
-                Log.e("VideoPlayerFragment", "Alarm id is -1")
-                activity.finish()
-            }
-            val asyncAlarm = alarmViewModel.getFromIdAsync(alarmId)
-            lifecycleScope.launch {
-                val alarm = asyncAlarm.await()
-                // set snooze button
-                launch(Dispatchers.Main) {
-                    snoozeButton.setOnClickListener {
-                        val now = Calendar.getInstance()
-                        now.add(Calendar.MINUTE, alarm.snoozeMinute)
-                        val hour = now[Calendar.HOUR_OF_DAY]
-                        val minute = now[Calendar.MINUTE]
-                        val snoozeAlarm = alarm.copy(
-                            id = 0,
-                            hour = hour,
-                            minute = minute,
-                            repeatType = Alarm.RepeatType.Snooze
-                        )
-                        val job = alarmViewModel.insert(snoozeAlarm)
-                        lifecycleScope.launch {
-                            UpdateSnoozeNotifyWorker.registerWorker(view.context)
-                            job.join()
-                            lifecycleScope.launch(Dispatchers.Main) {
-                                if (!findNavController().navigateUp()) {
-                                    activity.finish()
-                                }
-                            }
-                        }
-                    }
-                }
-                // update alarm
-                var repeatType = alarm.repeatType
-                if (repeatType is Alarm.RepeatType.Date) {
-                    repeatType = Alarm.RepeatType.Once
-                }
-                when (repeatType) {
-                    is Alarm.RepeatType.Once -> {
-                        alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
-                    }
-                    is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
-                        alarmViewModel.update(alarm)
-                    }
-                    is Alarm.RepeatType.Snooze -> {
-                        alarmViewModel.delete(alarm)
-                    }
-                    else -> {}
-                }
-
-                val playlist = playlistViewModel.getFromIdsAsync(alarm.playListId).await()
-                val videos = playlist.flatMap { it.videos }
-                    .distinct()
-                    .let { videoViewModel.getFromIdsAsync(it).await() }
-                if (videos.isEmpty()) {
-                    launch(Dispatchers.Main) {
-                        Snackbar.make(view, "Video is Empty", Snackbar.LENGTH_SHORT).show()
-                    }
-                }
-                launch(Dispatchers.Main) {
-                    currentVolume = audioManager.getStreamVolume(musicStream)
-                    val volumeRate = alarm.volume.volume / Alarm.Volume.MAX_VOLUME.toFloat()
-                    val maxVolume = audioManager.getStreamMaxVolume(musicStream) * volumeRate
-                    audioManager.setStreamVolume(
-                        musicStream,
-                        maxVolume.roundToInt(),
-                        AudioManager.FLAG_PLAY_SOUND
-                    )
-                }
-                var queue = 0
-                playVideo(view, videos.first())
-                videoView.setOnCompletionListener {
-                    if (++queue >= videos.size) {
-                        if (alarm.shouldLoop) {
-                            queue = 0
-                        } else {
-                            return@setOnCompletionListener
-                        }
-                    }
-                    playVideo(view, videos[queue])
-                }
-            }
+            startAsAlarmMode(view, id.toLong())
         } else {
             lifecycleScope.launch {
                 val video = videoViewModel.getFromVideoIdAsync(id).await()
@@ -277,6 +172,129 @@ class FragmentVideoPlayer : Fragment() {
 
         vibrator?.cancel()
         super.onDestroyView()
+    }
+
+    private fun startAsAlarmMode(view: View, alarmId: Long) {
+        val activity = requireActivity()
+        val snoozeButton = binding.fragmentVideoPlayerButtonSnooze
+        val videoView = binding.videoView
+
+        lifecycleScope.launch {
+            val alarmList = alarmViewModel.getAllAlarmsAsync().await().filter { it.isEnable }
+            updateAlarmSchedule(view.context, alarmList)
+        }
+        startVibration()
+        if (alarmId == -1L) {
+            val message = R.string.snackbar_error_failed_to_get_alarm
+            Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+            Log.e(LOG_TAG, "Alarm id is -1")
+            activity.finish()
+        }
+        val asyncAlarm = alarmViewModel.getFromIdAsync(alarmId)
+        lifecycleScope.launch {
+            val alarm = asyncAlarm.await()
+            // set snooze button
+            launch(Dispatchers.Main) {
+                setUpSnoozeButton(view.context, snoozeButton, alarm)
+            }
+            updateAlarm(alarm)
+
+            val playlist = playlistViewModel.getFromIdsAsync(alarm.playListId).await()
+            val videos = playlist.flatMap { it.videos }
+                .distinct()
+                .let { videoViewModel.getFromIdsAsync(it).await() }
+            if (videos.isEmpty()) {
+                val message = R.string.snackbar_error_empty_video
+                Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                Log.e(LOG_TAG, "Could not start alarm due to empty videos")
+                return@launch
+            }
+            launch(Dispatchers.Main) {
+                currentVolume = audioManager.getStreamVolume(musicStream)
+                val volumeRate = alarm.volume.volume / Alarm.Volume.MAX_VOLUME.toFloat()
+                val maxVolume = audioManager.getStreamMaxVolume(musicStream)
+                val volume = (maxVolume * volumeRate).roundToInt()
+                audioManager.setStreamVolume(musicStream, volume, AudioManager.FLAG_PLAY_SOUND)
+            }
+            var queue = 0
+            playVideo(view, videos.first())
+            videoView.setOnCompletionListener {
+                if (++queue >= videos.size) {
+                    if (alarm.shouldLoop) {
+                        queue = 0
+                    } else {
+                        activity.finish()
+                    }
+                }
+                playVideo(view, videos[queue])
+            }
+        }
+    }
+
+    private fun enableFullScreenMode(view: View) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val windowInsetsController = view.windowInsetsController!!
+            windowInsetsController.systemBarsBehavior =
+                WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            windowInsetsController.hide(WindowInsets.Type.systemBars())
+        } else {
+            val window = (activity as AppCompatActivity).window
+            val insetsController = WindowCompat.getInsetsController(window, view)
+            insetsController.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            insetsController.hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    private fun hideFab(activity: MainActivity) {
+        val fab = activity.binding.fab
+        fab.clearAnimation()
+        fab.visibility = View.GONE
+
+        activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
+        activity.binding.toolbar.visibility = View.GONE
+    }
+
+    private fun updateAlarm(alarm: Alarm) {
+        var repeatType = alarm.repeatType
+        if (repeatType is Alarm.RepeatType.Date) {
+            repeatType = Alarm.RepeatType.Once
+        }
+        when (repeatType) {
+            is Alarm.RepeatType.Once -> {
+                alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
+            }
+            is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
+                alarmViewModel.update(alarm)
+            }
+            is Alarm.RepeatType.Snooze -> {
+                alarmViewModel.delete(alarm)
+            }
+            else -> {}
+        }
+    }
+
+    private fun setUpSnoozeButton(context: Context, snoozeButton: Button, alarm: Alarm) {
+        snoozeButton.setOnClickListener {
+            val now = Calendar.getInstance()
+            now += alarm.snoozeMinute.minutes
+            val snoozeAlarm = alarm.copy(
+                id = 0,
+                hour = now.hourOfDay,
+                minute = now.minute,
+                repeatType = Alarm.RepeatType.Snooze
+            )
+            val job = alarmViewModel.insert(snoozeAlarm)
+            lifecycleScope.launch {
+                UpdateSnoozeNotifyWorker.registerWorker(context)
+                job.join()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    if (!findNavController().navigateUp()) {
+                        activity?.finish()
+                    }
+                }
+            }
+        }
     }
 
     private fun playVideo(view: View, video: Video) = lifecycleScope.launch rootLaunch@{
@@ -326,7 +344,7 @@ class FragmentVideoPlayer : Fragment() {
                 Snackbar.make(view, "Error! Cannot get video data!!", Snackbar.LENGTH_LONG)
                     .setAction("Action", null)
                     .show()
-                Log.e("YtAram", "failed to get stream info", it)
+                Log.e(LOG_TAG, "failed to get stream info", it)
             }
         }
     }
@@ -353,5 +371,6 @@ class FragmentVideoPlayer : Fragment() {
     companion object {
         private val VIBRATION_LENGTH_MILLIS = 1.5.seconds.toLong(DurationUnit.MILLISECONDS)
         private const val VIBRATION_STRENGTH = 255
+        private const val LOG_TAG = "FragmentVideoPlayer"
     }
 }
