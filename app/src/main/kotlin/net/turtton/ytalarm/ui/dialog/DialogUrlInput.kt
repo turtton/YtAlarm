@@ -40,7 +40,7 @@ class DialogUrlInput(
                 val targetId = playlistId?.let { longArrayOf(it) } ?: longArrayOf()
                 VideoInfoDownloadWorker
                     .registerWorker(view.context, url, targetId)
-                Snackbar.make(view, R.string.snackbar_start_download, 600).show()
+                Snackbar.make(view, R.string.snackbar_start_download, Snackbar.LENGTH_LONG).show()
             }.show(childFragmentManager, "UrlInput")
         }
     }

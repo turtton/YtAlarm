@@ -267,7 +267,7 @@ class FragmentVideoList :
                 if (currentPlaylist == null || currentState !is Playlist.Type.CloudPlaylist) {
                     launch(Dispatchers.Main) {
                         val errorId = R.string.snackbar_error_unexpected_playlist_state
-                        Snackbar.make(requireView(), errorId, 900).show()
+                        Snackbar.make(requireView(), errorId, Snackbar.LENGTH_SHORT).show()
                         findNavController().navigateUp()
                     }.join()
                     return@launch
@@ -279,7 +279,11 @@ class FragmentVideoList :
                     ?.takeUnless { it.isFinished }
                     ?.let { _ ->
                         launch(Dispatchers.Main) {
-                            Snackbar.make(it, R.string.snackbar_sync_is_running, 900).show()
+                            Snackbar.make(
+                                it,
+                                R.string.snackbar_sync_is_running,
+                                Snackbar.LENGTH_LONG
+                            ).show()
                         }.join()
                         return@launch
                     }

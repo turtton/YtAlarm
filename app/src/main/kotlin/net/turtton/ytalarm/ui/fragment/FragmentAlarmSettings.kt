@@ -80,7 +80,11 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
         fab.setOnClickListener {
             val currentData = alarmData.value
             if (currentData.playListId.isEmpty()) {
-                Snackbar.make(view, R.string.snackbar_error_playlistid_is_null, 300).show()
+                Snackbar.make(
+                    view,
+                    R.string.snackbar_error_playlistid_is_null,
+                    Snackbar.LENGTH_SHORT
+                ).show()
                 return@setOnClickListener
             }
             if (currentData.id == 0L) {

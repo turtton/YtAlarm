@@ -305,8 +305,11 @@ class AlarmSettingsAdapter(
                                 val isPastDate = nowYear == year && nowDay > dayOfYear
                                 val newDate = if (nowYear > year || isPastDate) {
                                     val pastError = R.string.snackbar_error_target_is_the_past_date
-                                    Snackbar.make(fragment.requireView(), pastError, 600)
-                                        .show()
+                                    Snackbar.make(
+                                        fragment.requireView(),
+                                        pastError,
+                                        Snackbar.LENGTH_SHORT
+                                    ).show()
                                     Date(nowCalendar.timeInMillis)
                                 } else {
                                     Date(calendar.timeInMillis)

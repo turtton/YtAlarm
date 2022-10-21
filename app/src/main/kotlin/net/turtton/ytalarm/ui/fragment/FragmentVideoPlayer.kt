@@ -154,7 +154,11 @@ class FragmentVideoPlayer : Fragment() {
             startVibration()
             val alarmId = id.toLong()
             if (alarmId == -1L) {
-                Snackbar.make(view, "Failed to get target alarm data", 900).show()
+                Snackbar.make(
+                    view,
+                    "Failed to get target alarm data",
+                    Snackbar.LENGTH_SHORT
+                ).show()
                 Log.e("VideoPlayerFragment", "Alarm id is -1")
                 activity.finish()
             }
@@ -217,7 +221,7 @@ class FragmentVideoPlayer : Fragment() {
                     .let { videoViewModel.getFromIdsAsync(it).await() }
                 if (videos.isEmpty()) {
                     launch(Dispatchers.Main) {
-                        Snackbar.make(view, "Video is Empty", 900).show()
+                        Snackbar.make(view, "Video is Empty", Snackbar.LENGTH_SHORT).show()
                     }
                 }
                 launch(Dispatchers.Main) {

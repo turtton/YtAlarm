@@ -154,7 +154,7 @@ class FragmentPlaylist :
                                 Snackbar.make(
                                     fragment.requireView(),
                                     R.string.snackbar_detect_playlist_usage,
-                                    1200
+                                    Snackbar.LENGTH_LONG
                                 ).show()
                             }
                         }

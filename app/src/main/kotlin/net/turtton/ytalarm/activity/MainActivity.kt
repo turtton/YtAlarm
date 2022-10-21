@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
                             Snackbar.make(
                                 binding.root.rootView,
                                 R.string.snackbar_failed_to_check_restriction,
-                                900
+                                Snackbar.LENGTH_LONG
                             ).show()
                         }
                     }
