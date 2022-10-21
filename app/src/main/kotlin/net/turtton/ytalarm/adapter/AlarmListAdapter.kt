@@ -16,8 +16,8 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentAlarmList
 import net.turtton.ytalarm.fragment.FragmentAlarmListDirections
-import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.structure.Playlist
+import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.util.BasicComparator
 import net.turtton.ytalarm.util.extensions.getDisplayTime
 import net.turtton.ytalarm.util.extensions.joinStringWithSlash

@@ -22,8 +22,8 @@ import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.structure.Playlist
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.VideoInformation
 
 const val VIDEO_DOWNLOAD_NOTIFICATION = "net.turtton.ytalarm.VideoDLNotification"

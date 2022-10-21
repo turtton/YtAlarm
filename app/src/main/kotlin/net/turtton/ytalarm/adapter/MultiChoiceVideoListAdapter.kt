@@ -10,8 +10,8 @@ import androidx.annotation.DrawableRes
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.structure.Playlist
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 
 class MultiChoiceVideoListAdapter<T>(

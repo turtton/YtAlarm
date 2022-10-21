@@ -20,8 +20,8 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.adapter.PlaylistAdapter
 import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
-import net.turtton.ytalarm.structure.Playlist
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer

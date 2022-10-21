@@ -3,9 +3,9 @@ package net.turtton.ytalarm
 import androidx.annotation.WorkerThread
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.database.AppDatabase
-import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.structure.Playlist
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.RepeatType
 
 class DataRepository(private val database: AppDatabase) {

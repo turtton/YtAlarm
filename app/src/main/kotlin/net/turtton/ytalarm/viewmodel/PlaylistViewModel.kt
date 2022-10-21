@@ -9,7 +9,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
-import net.turtton.ytalarm.structure.Playlist
+import net.turtton.ytalarm.database.structure.Playlist
 
 class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
     val allPlaylists: LiveData<List<Playlist>> by lazy { repository.allPlaylists.asLiveData() }

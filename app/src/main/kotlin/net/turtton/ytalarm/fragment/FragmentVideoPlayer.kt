@@ -40,7 +40,7 @@ import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.RepeatType
 import net.turtton.ytalarm.util.UpdateSnoozeNotifyWorker
 import net.turtton.ytalarm.util.observeAlarm

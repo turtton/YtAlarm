@@ -12,9 +12,9 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.database.dao.AlarmDao
 import net.turtton.ytalarm.database.dao.PlaylistDao
 import net.turtton.ytalarm.database.dao.VideoDao
-import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.structure.Playlist
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.converter.LongListConverter
 import net.turtton.ytalarm.util.converter.PlaylistThumbnailConverter
 import net.turtton.ytalarm.util.converter.PlaylistTypeConverter

@@ -32,7 +32,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.fragment.FragmentAlarmSettings
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
-import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
 import net.turtton.ytalarm.util.RepeatType

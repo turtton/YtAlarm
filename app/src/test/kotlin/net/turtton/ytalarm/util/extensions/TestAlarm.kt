@@ -3,7 +3,7 @@ package net.turtton.ytalarm.util.extensions
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.shouldBe
-import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.RepeatType
 import java.util.Calendar

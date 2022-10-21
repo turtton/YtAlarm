@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.structure
+package net.turtton.ytalarm.database.structure
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

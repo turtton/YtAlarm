@@ -23,7 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.fragment.FragmentVideoPlayerArgs
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.BasicComparator
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.VideoViewContainer

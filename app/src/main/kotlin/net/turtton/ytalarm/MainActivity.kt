@@ -31,7 +31,7 @@ import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter
 import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.databinding.ActivityMainBinding
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
-import net.turtton.ytalarm.structure.Playlist
+import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.util.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.util.initYtDL
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel

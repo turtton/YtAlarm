@@ -9,7 +9,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Video
 
 class VideoViewModel(private val repository: DataRepository) : ViewModel() {
     val allVideos: LiveData<List<Video>> by lazy { repository.allVideos.asLiveData() }

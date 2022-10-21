@@ -7,7 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
-import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.RepeatType
 
 @Dao

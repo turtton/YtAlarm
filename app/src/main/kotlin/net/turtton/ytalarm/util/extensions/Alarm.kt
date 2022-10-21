@@ -1,6 +1,6 @@
 package net.turtton.ytalarm.util.extensions
 
-import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.RepeatType
 import java.util.Calendar
 

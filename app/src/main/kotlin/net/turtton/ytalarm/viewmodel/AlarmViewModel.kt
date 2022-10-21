@@ -9,7 +9,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
-import net.turtton.ytalarm.structure.Alarm
+import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.RepeatType
 
 class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
