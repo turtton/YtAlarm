@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.app.Dialog
 import android.app.TimePickerDialog
+import android.content.Context
 import android.os.Bundle
 import android.text.format.DateFormat
 import android.util.Log
@@ -264,79 +265,85 @@ class AlarmSettingsAdapter(
             return AlertDialog.Builder(fragment.activity)
                 .setTitle(R.string.dialog_repeat_choice_title)
                 .setItems(R.array.dialog_repeat_type_choice) { _, index ->
-                    @Suppress("MagicNumber")
                     when (index) {
-                        // ONCE
-                        0 -> {
-                            alarmState.update {
-                                it.copy(repeatType = Alarm.RepeatType.Once)
-                            }
-                            description.text = alarmState.value.repeatType.getDisplay(context)
-                        }
-                        // EVERYDAY
-                        1 -> {
-                            alarmState.update {
-                                it.copy(repeatType = Alarm.RepeatType.Everyday)
-                            }
-                            description.text = alarmState.value.repeatType.getDisplay(context)
-                        }
-                        // DAYS
-                        2 -> {
-                            val current = alarmState.value.repeatType as? Alarm.RepeatType.Days
-                            DayChoiceFragment(current?.days) { dayOfWeekCompats ->
-                                if (dayOfWeekCompats.size == 7) {
-                                    alarmState.update {
-                                        it.copy(repeatType = Alarm.RepeatType.Everyday)
-                                    }
-                                } else {
-                                    alarmState.update {
-                                        it.copy(
-                                            repeatType = Alarm.RepeatType.Days(dayOfWeekCompats)
-                                        )
-                                    }
-                                }
-                                description.text = alarmState.value.repeatType.getDisplay(
-                                    context
-                                )
-                            }.show(fragment.childFragmentManager, "DayChoice")
-                        }
-                        // DATE
-                        3 -> {
-                            val current = alarmState.value.repeatType as? Alarm.RepeatType.Date
-                            SettingDatePickerFragment(current?.targetDate) { _, year, month, day ->
-                                val nowCalendar = Calendar.getInstance()
-                                val nowYear = nowCalendar[Calendar.YEAR]
-                                val nowDay = nowCalendar[Calendar.DAY_OF_YEAR]
-                                val calendar = GregorianCalendar(year, month, day)
-                                val dayOfYear = calendar[Calendar.DAY_OF_YEAR]
-                                val isPastDate = nowYear == year && nowDay > dayOfYear
-                                val newDate = if (nowYear > year || isPastDate) {
-                                    val pastError = R.string.snackbar_error_target_is_the_past_date
-                                    Snackbar.make(
-                                        fragment.requireView(),
-                                        pastError,
-                                        Snackbar.LENGTH_SHORT
-                                    ).show()
-                                    Date(nowCalendar.timeInMillis)
-                                } else {
-                                    Date(calendar.timeInMillis)
-                                }
-                                alarmState.update {
-                                    it.copy(repeatType = Alarm.RepeatType.Date(newDate))
-                                }
-                                description.text = alarmState.value.repeatType.getDisplay(
-                                    context
-                                )
-                            }.show(fragment.childFragmentManager, "DatePicker")
-                        }
-                        else -> {
-                            Log.e(
-                                "AlarmSettingAdapter",
-                                "RepeatTypeSelector OutOfBoundsException index:$index"
-                            )
-                        }
+                        ONCE -> once(context)
+                        EVERYDAY -> everyday(context)
+                        DAYS -> days(context)
+                        DATE -> date(context)
+                        else -> Log.e(TAG, "RepeatTypeSelector OutOfBounds index:$index")
                     }
                 }.create()
+        }
+
+        private fun once(context: Context) {
+            alarmState.update {
+                it.copy(repeatType = Alarm.RepeatType.Once)
+            }
+            description.text = alarmState.value.repeatType.getDisplay(context)
+        }
+
+        private fun everyday(context: Context) {
+            alarmState.update {
+                it.copy(repeatType = Alarm.RepeatType.Everyday)
+            }
+            description.text = alarmState.value.repeatType.getDisplay(context)
+        }
+
+        private fun days(context: Context) {
+            val current = alarmState.value.repeatType as? Alarm.RepeatType.Days
+            DayChoiceFragment(current?.days) { dayOfWeekCompats ->
+                if (dayOfWeekCompats.size == DayOfWeekCompat.values().size) {
+                    alarmState.update {
+                        it.copy(repeatType = Alarm.RepeatType.Everyday)
+                    }
+                } else {
+                    alarmState.update {
+                        it.copy(
+                            repeatType = Alarm.RepeatType.Days(dayOfWeekCompats)
+                        )
+                    }
+                }
+                description.text = alarmState.value.repeatType.getDisplay(
+                    context
+                )
+            }.show(fragment.childFragmentManager, "DayChoice")
+        }
+
+        private fun date(context: Context) {
+            val current = alarmState.value.repeatType as? Alarm.RepeatType.Date
+            SettingDatePickerFragment(current?.targetDate) { _, year, month, day ->
+                val nowCalendar = Calendar.getInstance()
+                val nowYear = nowCalendar[Calendar.YEAR]
+                val nowDay = nowCalendar[Calendar.DAY_OF_YEAR]
+                val calendar = GregorianCalendar(year, month, day)
+                val dayOfYear = calendar[Calendar.DAY_OF_YEAR]
+                val isPastDate = nowYear == year && nowDay > dayOfYear
+                val newDate = if (nowYear > year || isPastDate) {
+                    val pastError = R.string.snackbar_error_target_is_the_past_date
+                    Snackbar.make(
+                        fragment.requireView(),
+                        pastError,
+                        Snackbar.LENGTH_SHORT
+                    ).show()
+                    Date(nowCalendar.timeInMillis)
+                } else {
+                    Date(calendar.timeInMillis)
+                }
+                alarmState.update {
+                    it.copy(repeatType = Alarm.RepeatType.Date(newDate))
+                }
+                description.text = alarmState.value.repeatType.getDisplay(
+                    context
+                )
+            }.show(fragment.childFragmentManager, "DatePicker")
+        }
+
+        companion object {
+            private const val TAG = "RepeatTypePickFragment"
+            private const val ONCE = 0
+            private const val EVERYDAY = 1
+            private const val DAYS = 2
+            private const val DATE = 3
         }
     }
 
