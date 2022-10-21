@@ -23,12 +23,12 @@ data class Alarm(
     val playListId: List<Long> = emptyList(),
     val shouldLoop: Boolean = false,
     // max 100(%)
-    val volume: Volume = Volume(50),
+    val volume: Volume = Volume(),
     val snoozeMinute: Int = 5,
     val isEnable: Boolean = false
 ) {
 
-    data class Volume(val volume: Int) {
+    data class Volume(val volume: Int = 50) {
         init {
             check(volume in REQUIRED_RANGE)
         }
