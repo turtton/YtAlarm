@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.fragment.FragmentPlaylistDirections
-import net.turtton.ytalarm.util.BasicComparator
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
 

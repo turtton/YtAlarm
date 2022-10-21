@@ -18,7 +18,6 @@ import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.fragment.FragmentAlarmList
 import net.turtton.ytalarm.ui.fragment.FragmentAlarmListDirections
-import net.turtton.ytalarm.util.BasicComparator
 import net.turtton.ytalarm.util.extensions.getDisplayTime
 import net.turtton.ytalarm.util.extensions.joinStringWithSlash
 
