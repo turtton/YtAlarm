@@ -69,6 +69,12 @@ android {
         }
         animationsDisabled = true
     }
+
+    lint {
+        warningsAsErrors = true
+
+        disable += "GradleDependency"
+    }
 }
 
 dependencies {
