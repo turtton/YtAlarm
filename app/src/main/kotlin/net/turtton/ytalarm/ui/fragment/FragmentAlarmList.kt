@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.fragment
+package net.turtton.ytalarm.ui.fragment
 
 import android.os.Bundle
 import android.view.View
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.YtApplication.Companion.repository
-import net.turtton.ytalarm.adapter.AlarmListAdapter
+import net.turtton.ytalarm.ui.adapter.AlarmListAdapter
 import net.turtton.ytalarm.util.RepeatType
 import net.turtton.ytalarm.util.observeAlarm
 import net.turtton.ytalarm.viewmodel.AlarmViewModel

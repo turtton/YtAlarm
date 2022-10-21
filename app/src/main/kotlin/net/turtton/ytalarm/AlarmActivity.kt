@@ -6,7 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import net.turtton.ytalarm.databinding.ActivityAlarmBinding
-import net.turtton.ytalarm.fragment.FragmentVideoPlayerArgs
+import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
 import net.turtton.ytalarm.util.initYtDL
 
 class AlarmActivity : AppCompatActivity() {

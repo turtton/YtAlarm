@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.fragment.dialog
+package net.turtton.ytalarm.ui.dialog
 
 import android.app.AlertDialog
 import android.app.Dialog

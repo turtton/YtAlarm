@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/all_video_list_fragment"
-        android:name="net.turtton.ytalarm.fragment.FragmentAllVideoList"
+        android:name="net.turtton.ytalarm.ui.fragment.FragmentAllVideoList"
         android:label="@string/allvideolist_fragment_label"
         tools:layout="@layout/fragment_list"/>
 </navigation>

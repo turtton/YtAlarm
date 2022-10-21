@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.adapter
+package net.turtton.ytalarm.ui.adapter
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
@@ -29,9 +29,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
-import net.turtton.ytalarm.fragment.FragmentAlarmSettings
-import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
+import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
+import net.turtton.ytalarm.ui.fragment.FragmentAlarmSettings
+import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder

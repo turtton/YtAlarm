@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.fragment.dialog
+package net.turtton.ytalarm.ui.dialog
 
 import android.app.AlertDialog
 import android.app.Dialog
@@ -7,7 +7,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter
+import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter
 
 class DialogMultiChoiceVideo<T>(
     private val displayDataList: List<MultiChoiceVideoListAdapter.DisplayData<T>>,

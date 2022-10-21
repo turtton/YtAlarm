@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.fragment
+package net.turtton.ytalarm.ui.fragment
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -18,8 +18,8 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
-import net.turtton.ytalarm.adapter.PlaylistAdapter
-import net.turtton.ytalarm.fragment.dialog.DialogRemoveVideo
+import net.turtton.ytalarm.ui.adapter.PlaylistAdapter
+import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.AttachableMenuProvider

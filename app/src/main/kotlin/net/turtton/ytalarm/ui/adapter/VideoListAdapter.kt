@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.adapter
+package net.turtton.ytalarm.ui.adapter
 
 import android.app.AlertDialog
 import android.view.LayoutInflater
@@ -22,7 +22,7 @@ import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.fragment.FragmentVideoPlayerArgs
+import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.BasicComparator
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer

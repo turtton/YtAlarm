@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.adapter
+package net.turtton.ytalarm.ui.adapter
 
 import android.view.LayoutInflater
 import android.view.View

@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.fragment
+package net.turtton.ytalarm.ui.fragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
