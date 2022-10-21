@@ -16,7 +16,7 @@ enum class DayOfWeekCompat {
     SUNDAY;
 
     fun getDisplay(context: Context): CharSequence? {
-        val format = if (Build.VERSION.SDK_INT >= 26) {
+        val format = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Calendar.SHORT_FORMAT
         } else {
             Calendar.SHORT
