@@ -10,11 +10,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CompoundButton
 import android.widget.DatePicker
 import android.widget.NumberPicker
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.TimePicker
+import androidx.annotation.StringRes
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -31,7 +33,6 @@ import net.turtton.ytalarm.adapter.MultiChoiceVideoListAdapter.DisplayData.Compa
 import net.turtton.ytalarm.fragment.FragmentAlarmSettings
 import net.turtton.ytalarm.fragment.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.structure.AlarmSettingData
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.OnSeekBarChangeListenerBuilder
 import net.turtton.ytalarm.util.RepeatType
@@ -198,6 +199,28 @@ class AlarmSettingsAdapter(
     }
 
     override fun getItemCount(): Int = dataSet.size
+
+    sealed interface AlarmSettingData {
+        val nameResourceId: Int
+
+        data class NormalData(
+            @StringRes override val nameResourceId: Int,
+            var value: String,
+            var onClick: ((View, description: TextView) -> Unit)? = null
+        ) : AlarmSettingData
+        data class ToggleData(
+            @StringRes override val nameResourceId: Int,
+            var value: Boolean,
+            @StringRes val descriptionKeyId: Int? = null,
+            var onCheckedChanged: ((CompoundButton, Boolean) -> Unit)? = null
+        ) : AlarmSettingData
+        data class PercentData(
+            @StringRes override val nameResourceId: Int,
+            var value: Int,
+            val max: Int,
+            val builder: OnSeekBarChangeListenerBuilder.() -> Unit
+        ) : AlarmSettingData
+    }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val title: TextView = view.findViewById(R.id.item_aram_setting_name)
