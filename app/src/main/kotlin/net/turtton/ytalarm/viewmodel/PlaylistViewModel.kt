@@ -57,7 +57,7 @@ class PlaylistViewModelFactory(private val repository: DataRepository) : ViewMod
             @Suppress("UNCHECKED_CAST")
             return PlaylistViewModel(repository) as T
         } else {
-            throw IllegalStateException("Unknown ViewModel class")
+            error("Unknown ViewModel class")
         }
     }
 }

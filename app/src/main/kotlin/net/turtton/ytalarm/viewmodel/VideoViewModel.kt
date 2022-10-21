@@ -73,7 +73,7 @@ class VideoViewModelFactory(private val repository: DataRepository) : ViewModelP
             @Suppress("UNCHECKED_CAST")
             return VideoViewModel(repository) as T
         } else {
-            throw IllegalStateException("Unknown ViewModel class")
+            error("Unknown ViewModel class")
         }
     }
 }
