@@ -29,7 +29,7 @@ class AttachableMenuProvider(
             val icon = it.icon ?: return@forEach
             icon.mutate()
             val colorRes = parent.resources.getColor(iconColors, null)
-            if (Build.VERSION.SDK_INT > 29) {
+            if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
                 icon.colorFilter = BlendModeColorFilter(colorRes, BlendMode.SRC_ATOP)
             } else {
                 icon.colorFilter = PorterDuffColorFilter(colorRes, PorterDuff.Mode.SRC_ATOP)
