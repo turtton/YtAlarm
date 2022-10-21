@@ -5,7 +5,6 @@ import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.shouldBe
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.DayOfWeekCompat
-import net.turtton.ytalarm.util.RepeatType
 import java.util.Calendar
 import java.util.Date
 
@@ -33,7 +32,7 @@ class TestAlarm : FunSpec({
             get(Calendar.MINUTE) shouldBeExactly minute
         }
         context("no date specification") {
-            val alarm = Alarm(repeatType = RepeatType.Once)
+            val alarm = Alarm(repeatType = Alarm.RepeatType.Once)
             test("near future") {
                 val hour = 12
                 val minute = 30
@@ -57,7 +56,7 @@ class TestAlarm : FunSpec({
                 val minute = 30
 
                 val repeatType =
-                    RepeatType.Days(listOf(DayOfWeekCompat.FRIDAY, DayOfWeekCompat.SATURDAY))
+                    Alarm.RepeatType.Days(listOf(DayOfWeekCompat.FRIDAY, DayOfWeekCompat.SATURDAY))
                 val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
                     .toCalendar(calendar)
 
@@ -72,7 +71,7 @@ class TestAlarm : FunSpec({
                 val minute = 30
 
                 val repeatType =
-                    RepeatType.Days(listOf(DayOfWeekCompat.FRIDAY))
+                    Alarm.RepeatType.Days(listOf(DayOfWeekCompat.FRIDAY))
                 val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
                     .toCalendar(calendar)
 
@@ -86,7 +85,7 @@ class TestAlarm : FunSpec({
                 val minute = 30
 
                 val repeatType =
-                    RepeatType.Days(listOf(DayOfWeekCompat.SATURDAY, DayOfWeekCompat.MONDAY))
+                    Alarm.RepeatType.Days(listOf(DayOfWeekCompat.SATURDAY, DayOfWeekCompat.MONDAY))
                 val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
                     .toCalendar(calendar)
 
@@ -100,7 +99,7 @@ class TestAlarm : FunSpec({
                 val minute = 30
 
                 val repeatType =
-                    RepeatType.Days(listOf(DayOfWeekCompat.MONDAY, DayOfWeekCompat.WEDNESDAY))
+                    Alarm.RepeatType.Days(listOf(DayOfWeekCompat.MONDAY, DayOfWeekCompat.WEDNESDAY))
                 val target = Alarm(hour = hour, minute = minute, repeatType = repeatType)
                     .toCalendar(calendar)
 
@@ -126,7 +125,7 @@ class TestAlarm : FunSpec({
             val alarm = Alarm(
                 hour = hour,
                 minute = minute,
-                repeatType = RepeatType.Date(targetDate)
+                repeatType = Alarm.RepeatType.Date(targetDate)
             )
             val target = alarm.toCalendar(calendar)
 

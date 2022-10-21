@@ -91,103 +91,130 @@ class PlaylistAdapter<T>(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = getItem(position)
-        holder.itemView.tag = data.id
-        holder.apply {
-            title.text = data.title
-            val size = data.videos.size
-            if (data.videos.isNotEmpty()) {
-                videoCount.text = itemView.context.resources.getQuantityString(
-                    R.plurals.playlist_item_video_count,
-                    size,
-                    size
-                )
-            } else {
-                videoCount.text = itemView.context.getString(
-                    R.string.playlist_item_video_count_none
-                )
-            }
+        val itemView = holder.itemView
+        val title = holder.title
+        val videoCount = holder.videoCount
+        val thumbnail = holder.thumbnail
+        val optionButton = holder.optionButton
+        val checkBox = holder.checkBox
 
-            fragment.lifecycleScope.launch {
-                when (val thumbnailData = data.thumbnail) {
-                    is Playlist.Thumbnail.Video -> {
-                        val thumbnailUrl = fragment.videoViewModel
-                            .getFromIdAsync(thumbnailData.id)
+        itemView.tag = data.id
+
+        title.text = data.title
+        val size = data.videos.size
+        if (data.videos.isNotEmpty()) {
+            videoCount.text = itemView.context.resources.getQuantityString(
+                R.plurals.playlist_item_video_count,
+                size,
+                size
+            )
+        } else {
+            videoCount.text = itemView.context.getString(
+                R.string.playlist_item_video_count_none
+            )
+        }
+
+        fragment.lifecycleScope.launch {
+            attachThumbnail(itemView, thumbnail, data)
+        }
+
+        if (data.type !is Playlist.Type.Importing) {
+            setClickActions(itemView, optionButton, title.text.toString(), data.id)
+        } else {
+            title.text = itemView.context.getString(R.string.playlist_name_importing)
+            videoCount.visibility = View.GONE
+            optionButton.visibility = View.GONE
+            holder.selectable = false
+        }
+
+        tracker?.applyTrackerState(itemView, checkBox, optionButton, data.id, holder.selectable)
+
+        currentCheckBox += ViewContainer(data.id, checkBox, optionButton, holder.selectable)
+    }
+
+    private suspend fun attachThumbnail(view: View, thumbnail: ImageView, data: Playlist) {
+        when (val thumbnailData = data.thumbnail) {
+            is Playlist.Thumbnail.Video -> {
+                val thumbnailUrl = fragment.videoViewModel
+                    .getFromIdAsync(thumbnailData.id)
+                    .await()
+                    ?.thumbnailUrl
+                    ?: data.videos.firstOrNull()?.let { video ->
+                        fragment.videoViewModel
+                            .getFromIdAsync(video)
                             .await()
-                            ?.thumbnailUrl
-                            ?: data.videos.firstOrNull()?.let { video ->
-                                fragment.videoViewModel
-                                    .getFromIdAsync(video)
-                                    .await()
-                                    ?.takeIf {
-                                        val thumbnailUrl = it.thumbnailUrl
-                                        thumbnailUrl.isNotEmpty() && thumbnailUrl.isNotBlank()
-                                    }
-                            }?.also {
-                                fragment.playlistViewModel.update(
-                                    data.copy(thumbnail = Playlist.Thumbnail.Video(it.id))
-                                )
-                            }?.thumbnailUrl
-                        Glide.with(itemView).load(thumbnailUrl).into(thumbnail)
-                    }
-                    is Playlist.Thumbnail.Drawable -> thumbnail.setImageResource(thumbnailData.id)
-                }
-            }
-
-            if (data.type !is Playlist.Type.Importing) {
-                itemView.setOnClickListener {
-                    val action =
-                        FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment(
-                            data.id
-                        )
-                    itemView.findNavController().navigate(action)
-                }
-
-                optionButton.setOnClickListener {
-                    val menu =
-                        PopupMenu(it.context, it.findViewById(R.id.item_playlist_option_button))
-                    menu.inflate(R.menu.menu_playlist_option)
-                    menu.setOnMenuItemClickListener { menuItem ->
-                        when (menuItem.itemId) {
-                            R.id.menu_playlist_option_rename -> {
-                                DialogNameInput(data.id, fragment, title.text.toString())
-                                    .show(fragment.childFragmentManager, "DialogNameInput")
-                                true
+                            ?.takeIf {
+                                val thumbnailUrl = it.thumbnailUrl
+                                thumbnailUrl.isNotEmpty() && thumbnailUrl.isNotBlank()
                             }
-                            else -> false
-                        }
-                    }
-                    menu.show()
-                }
-            } else {
-                title.text = itemView.context.getString(R.string.playlist_name_importing)
-                videoCount.visibility = View.GONE
-                optionButton.visibility = View.GONE
-                selectable = false
+                    }?.also {
+                        fragment.playlistViewModel.update(
+                            data.copy(thumbnail = Playlist.Thumbnail.Video(it.id))
+                        )
+                    }?.thumbnailUrl
+                Glide.with(view).load(thumbnailUrl).into(thumbnail)
             }
+            is Playlist.Thumbnail.Drawable -> thumbnail.setImageResource(thumbnailData.id)
+        }
+    }
 
-            tracker?.let {
-                var isSelected = it.isSelected(data.id)
-                if (isSelected && !selectable) {
-                    fragment.lifecycleScope.launch(Dispatchers.Main) {
-                        it.deselect(data.id)
+    private fun setClickActions(
+        view: View,
+        optionButton: ImageButton,
+        title: String,
+        playlistId: Long
+    ) {
+        view.setOnClickListener {
+            val action =
+                FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment(
+                    playlistId
+                )
+            view.findNavController().navigate(action)
+        }
+
+        optionButton.setOnClickListener {
+            val menu =
+                PopupMenu(it.context, it.findViewById(R.id.item_playlist_option_button))
+            menu.inflate(R.menu.menu_playlist_option)
+            menu.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.menu_playlist_option_rename -> {
+                        DialogNameInput(playlistId, fragment, title)
+                            .show(fragment.childFragmentManager, "DialogNameInput")
+                        true
                     }
-                }
-                isSelected = isSelected && selectable
-                itemView.isActivated = isSelected
-                checkBox.isChecked = isSelected
-                checkBox.visibility = if (it.hasSelection() && selectable) {
-                    View.VISIBLE
-                } else {
-                    View.GONE
-                }
-                optionButton.visibility = if (it.hasSelection() || !selectable) {
-                    View.GONE
-                } else {
-                    View.VISIBLE
+                    else -> false
                 }
             }
+            menu.show()
+        }
+    }
 
-            currentCheckBox += ViewContainer(data.id, checkBox, optionButton, selectable)
+    private fun SelectionTracker<Long>.applyTrackerState(
+        itemView: View,
+        checkBox: CheckBox,
+        optionButton: ImageButton,
+        playlistId: Long,
+        selectable: Boolean
+    ) {
+        var isSelected = isSelected(playlistId)
+        if (isSelected && !selectable) {
+            fragment.lifecycleScope.launch(Dispatchers.Main) {
+                deselect(playlistId)
+            }
+        }
+        isSelected = isSelected && selectable
+        itemView.isActivated = isSelected
+        checkBox.isChecked = isSelected
+        checkBox.visibility = if (hasSelection() && selectable) {
+            View.VISIBLE
+        } else {
+            View.GONE
+        }
+        optionButton.visibility = if (hasSelection() || !selectable) {
+            View.GONE
+        } else {
+            View.VISIBLE
         }
     }
 
