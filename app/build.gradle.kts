@@ -106,7 +106,7 @@ dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:$it")
     }
 
-    implementation("com.github.yausername.youtubedl-android:library:0.14.+")?.also {
+    implementation("com.github.yausername.youtubedl-android:library:4f00394209")?.also {
         implementation("com.github.yausername.youtubedl-android:common:${it.version}")
     }
     implementation("com.github.bumptech.glide:glide:4.14.2")?.also {
