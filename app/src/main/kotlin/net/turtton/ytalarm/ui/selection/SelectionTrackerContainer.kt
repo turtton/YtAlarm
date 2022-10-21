@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.util
+package net.turtton.ytalarm.ui.selection
 
 import androidx.recyclerview.selection.SelectionTracker
 

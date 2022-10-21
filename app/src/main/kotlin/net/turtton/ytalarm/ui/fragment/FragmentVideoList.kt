@@ -34,8 +34,8 @@ import net.turtton.ytalarm.ui.dialog.DialogUrlInput.Companion.showVideoImportDia
 import net.turtton.ytalarm.ui.fragment.FragmentAllVideoList.Companion.updatePlaylistThumbnails
 import net.turtton.ytalarm.ui.menu.AttachableMenuProvider
 import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
-import net.turtton.ytalarm.util.SelectionTrackerContainer
-import net.turtton.ytalarm.util.TagKeyProvider
+import net.turtton.ytalarm.ui.selection.SelectionTrackerContainer
+import net.turtton.ytalarm.ui.selection.TagKeyProvider
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
