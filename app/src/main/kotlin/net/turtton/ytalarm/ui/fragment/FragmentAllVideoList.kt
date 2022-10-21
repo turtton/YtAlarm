@@ -20,8 +20,8 @@ import net.turtton.ytalarm.ui.adapter.VideoListAdapter
 import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.ui.dialog.DialogUrlInput.Companion.showVideoImportDialog
-import net.turtton.ytalarm.util.AttachableMenuProvider
-import net.turtton.ytalarm.util.SelectionMenuObserver
+import net.turtton.ytalarm.ui.menu.AttachableMenuProvider
+import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.TagKeyProvider
 import net.turtton.ytalarm.util.extensions.collectGarbage

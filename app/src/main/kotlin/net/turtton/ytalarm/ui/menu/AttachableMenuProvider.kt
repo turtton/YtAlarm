@@ -1,4 +1,4 @@
-package net.turtton.ytalarm.util
+package net.turtton.ytalarm.ui.menu
 
 import android.graphics.BlendMode
 import android.graphics.BlendModeColorFilter

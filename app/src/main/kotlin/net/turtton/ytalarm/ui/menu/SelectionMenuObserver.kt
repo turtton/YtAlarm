@@ -1,8 +1,9 @@
-package net.turtton.ytalarm.util
+package net.turtton.ytalarm.ui.menu
 
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.selection.SelectionTracker.SelectionObserver
+import net.turtton.ytalarm.util.SelectionTrackerContainer
 
 abstract class SelectionMenuObserver<T, F>(
     protected val fragment: F,

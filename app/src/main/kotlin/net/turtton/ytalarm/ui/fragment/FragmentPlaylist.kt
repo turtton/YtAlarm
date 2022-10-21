@@ -22,8 +22,8 @@ import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.adapter.PlaylistAdapter
 import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
-import net.turtton.ytalarm.util.AttachableMenuProvider
-import net.turtton.ytalarm.util.SelectionMenuObserver
+import net.turtton.ytalarm.ui.menu.AttachableMenuProvider
+import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
 import net.turtton.ytalarm.util.TagKeyProvider
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
