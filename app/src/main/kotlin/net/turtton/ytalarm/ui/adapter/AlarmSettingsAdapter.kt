@@ -103,16 +103,19 @@ class AlarmSettingsAdapter(
                 }
             }
 
-        val volumeProgress =
-            AlarmSettingData.PercentData(R.string.setting_volume, alarm.volume, 100) {
-                onProgressChanged = { _, progress, isUser ->
-                    if (isUser) {
-                        alarmState.update {
-                            it.copy(volume = progress)
-                        }
+        val volumeProgress = AlarmSettingData.PercentData(
+            R.string.setting_volume,
+            alarm.volume.volume,
+            Alarm.Volume.MAX_VOLUME
+        ) {
+            onProgressChanged = { _, progress, isUser ->
+                if (isUser) {
+                    alarmState.update {
+                        it.copy(volume = Alarm.Volume(progress))
                     }
                 }
             }
+        }
         val getSnoozeMinute = { minute: Int ->
             context.resources.getQuantityString(R.plurals.setting_snooze_time, minute, minute)
         }
@@ -208,12 +211,14 @@ class AlarmSettingsAdapter(
             var value: String,
             var onClick: ((View, description: TextView) -> Unit)? = null
         ) : AlarmSettingData
+
         data class ToggleData(
             @StringRes override val nameResourceId: Int,
             var value: Boolean,
             @StringRes val descriptionKeyId: Int? = null,
             var onCheckedChanged: ((CompoundButton, Boolean) -> Unit)? = null
         ) : AlarmSettingData
+
         data class PercentData(
             @StringRes override val nameResourceId: Int,
             var value: Int,

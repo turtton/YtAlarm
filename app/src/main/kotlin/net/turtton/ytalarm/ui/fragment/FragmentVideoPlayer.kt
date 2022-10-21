@@ -226,8 +226,8 @@ class FragmentVideoPlayer : Fragment() {
                 }
                 launch(Dispatchers.Main) {
                     currentVolume = audioManager.getStreamVolume(musicStream)
-                    val maxVolume =
-                        audioManager.getStreamMaxVolume(musicStream) * (alarm.volume / 100f)
+                    val volumeRate = alarm.volume.volume / Alarm.Volume.MAX_VOLUME.toFloat()
+                    val maxVolume = audioManager.getStreamMaxVolume(musicStream) * volumeRate
                     audioManager.setStreamVolume(
                         musicStream,
                         maxVolume.roundToInt(),

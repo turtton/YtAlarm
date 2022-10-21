@@ -15,6 +15,7 @@ import net.turtton.ytalarm.database.dao.VideoDao
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.util.converter.AlarmVolumeConverter
 import net.turtton.ytalarm.util.converter.LongListConverter
 import net.turtton.ytalarm.util.converter.PlaylistThumbnailConverter
 import net.turtton.ytalarm.util.converter.PlaylistTypeConverter
@@ -29,7 +30,8 @@ import net.turtton.ytalarm.util.converter.VideoStateConverter
     RepeatTypeConverter::class,
     VideoStateConverter::class,
     PlaylistTypeConverter::class,
-    PlaylistThumbnailConverter::class
+    PlaylistThumbnailConverter::class,
+    AlarmVolumeConverter::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun alarmDao(): AlarmDao

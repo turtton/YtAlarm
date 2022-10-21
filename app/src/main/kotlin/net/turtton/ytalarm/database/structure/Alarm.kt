@@ -23,10 +23,21 @@ data class Alarm(
     val playListId: List<Long> = emptyList(),
     val shouldLoop: Boolean = false,
     // max 100(%)
-    val volume: Int = 50,
+    val volume: Volume = Volume(50),
     val snoozeMinute: Int = 5,
     val isEnable: Boolean = false
 ) {
+
+    data class Volume(val volume: Int) {
+        init {
+            check(volume in REQUIRED_RANGE)
+        }
+        companion object {
+            const val MAX_VOLUME = 100
+            const val MIN_VOLUME = 0
+            private val REQUIRED_RANGE = MIN_VOLUME..MAX_VOLUME
+        }
+    }
 
     @Serializable
     sealed interface RepeatType {
