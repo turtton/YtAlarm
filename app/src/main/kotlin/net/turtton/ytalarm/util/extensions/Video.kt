@@ -3,7 +3,10 @@ package net.turtton.ytalarm.util.extensions
 import android.annotation.SuppressLint
 import androidx.work.WorkManager
 import androidx.work.await
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Video
+
+fun Video.copyAsFailed(url: String) =
+    copy(stateData = Video.State.Importing(Video.WorkerState.Failed(url)))
 
 /**
  * Collects videos which finished downloading or importing except state is [Video.WorkerState.Failed].
@@ -26,3 +29,6 @@ suspend fun List<Video>.collectGarbage(workManager: WorkManager): List<Video> = 
             }
     } ?: false
 }
+
+val List<Video>.hasUpdatingVideo: Boolean
+    get() = any { it.stateData.isUpdating() }

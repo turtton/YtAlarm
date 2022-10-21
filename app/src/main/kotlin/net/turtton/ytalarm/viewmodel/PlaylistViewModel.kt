@@ -9,7 +9,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
-import net.turtton.ytalarm.structure.Playlist
+import net.turtton.ytalarm.database.structure.Playlist
 
 class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
     val allPlaylists: LiveData<List<Playlist>> by lazy { repository.allPlaylists.asLiveData() }
@@ -57,7 +57,7 @@ class PlaylistViewModelFactory(private val repository: DataRepository) : ViewMod
             @Suppress("UNCHECKED_CAST")
             return PlaylistViewModel(repository) as T
         } else {
-            throw IllegalStateException("Unknown ViewModel class")
+            error("Unknown ViewModel class")
         }
     }
 }

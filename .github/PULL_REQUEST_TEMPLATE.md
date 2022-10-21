@@ -25,8 +25,8 @@ Please check all in lists before say ready to merge.
 
 - [ ] I read the [Contributing guide](https://github.com/turtton/YtAlarm/blob/HEAD/.github/CONTRIBUTING.md).  
   [コントリビューションガイド](https://github.com/turtton/YtAlarm/blob/HEAD/docs/contributing/CONTRIBUTING_ja.md)を熟読しました
-- [ ] Run Gradle tasks `formatKotlin` and `check` and make sure no error message is displayed and  `app/build/reports/lint-results-debug.html` says no warning.  
-  GradleTaskの`formatKotlin`と`check`を実行し、エラーが無いこと、`app/build/reports/lint-results-debug.html`で警告が表示されていないことを確認しました
+- [ ] Run Gradle tasks `formatKotlin` and `check` and make sure no error message is displayed.  
+  GradleTaskの`formatKotlin`と`check`を実行し、エラーが無いことを確認しました
 - [ ] Removed unnecessary commented out code and debug print code.  
   不要なコメントアウトとデバッグ用のコードを削除しました
 

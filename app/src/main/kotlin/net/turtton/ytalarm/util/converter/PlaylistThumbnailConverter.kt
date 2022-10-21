@@ -5,7 +5,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
-import net.turtton.ytalarm.structure.Playlist
+import net.turtton.ytalarm.database.structure.Playlist
 
 @OptIn(ExperimentalSerializationApi::class)
 class PlaylistThumbnailConverter {

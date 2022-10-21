@@ -5,7 +5,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Video
 
 @OptIn(ExperimentalSerializationApi::class)
 class VideoStateConverter {

@@ -9,8 +9,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
-import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.util.RepeatType
+import net.turtton.ytalarm.database.structure.Alarm
 
 class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
     val allAlarms: LiveData<List<Alarm>> by lazy { repository.allAlarms.asLiveData() }
@@ -23,7 +22,7 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getAlarmFromIdSync(id)
     }
 
-    fun getMatchedAsync(repeatType: RepeatType) = viewModelScope.async {
+    fun getMatchedAsync(repeatType: Alarm.RepeatType) = viewModelScope.async {
         repository.getMatchedAlarmSync(repeatType)
     }
 
@@ -46,7 +45,7 @@ class AlarmViewModelFactory(private val repository: DataRepository) : ViewModelP
             @Suppress("UNCHECKED_CAST")
             return AlarmViewModel(repository) as T
         } else {
-            throw IllegalStateException("Unknown ViewModel class")
+            error("Unknown ViewModel class")
         }
     }
 }

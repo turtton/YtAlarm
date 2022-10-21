@@ -11,7 +11,7 @@
 
     <fragment
         android:id="@+id/video_player_fragment"
-        android:name="net.turtton.ytalarm.fragment.FragmentVideoPlayer"
+        android:name="net.turtton.ytalarm.ui.fragment.FragmentVideoPlayer"
         android:label="@string/videoplayer_fragment_label"
         tools:layout="@layout/fragment_video_player">
         <argument

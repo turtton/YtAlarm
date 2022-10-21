@@ -4,10 +4,6 @@
     <color name="teal_700">#ff009666</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="red_200">#f59ca6</color>
     <color name="red_500">#ff384d</color>
     <color name="red_700">#e22545</color>
-
-
-    <color name="drawer_header">@color/red_500</color>
 </resources>

@@ -9,7 +9,9 @@ import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.turtton.ytalarm.MainActivity
+import kotlinx.serialization.Serializable
+import net.turtton.ytalarm.activity.MainActivity
+import net.turtton.ytalarm.util.serializer.VideoInformationSerializer
 
 fun AppCompatActivity.initYtDL(view: View) = lifecycleScope.launch {
     withContext(Dispatchers.IO) {
@@ -22,9 +24,28 @@ fun AppCompatActivity.initYtDL(view: View) = lifecycleScope.launch {
                 view,
                 "Internal error occurred.",
                 Snackbar.LENGTH_LONG
-            ).setAction("Action", null)
-                .show()
+            ).show()
             Log.e(MainActivity.APP_TAG, "YtDL initialization failed", it)
         }
+    }
+}
+
+@Serializable(with = VideoInformationSerializer::class)
+data class VideoInformation(
+    val id: String,
+    val title: String? = null,
+    val url: String,
+    val domain: String,
+    val typeData: Type
+) {
+    sealed interface Type {
+        data class Video(
+            val fullTitle: String,
+            val thumbnailUrl: String,
+            val videoUrl: String
+        ) : Type
+        data class Playlist(
+            val entries: List<VideoInformation>
+        ) : Type
     }
 }

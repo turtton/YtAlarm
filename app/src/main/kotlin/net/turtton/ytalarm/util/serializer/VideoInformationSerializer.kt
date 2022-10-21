@@ -37,7 +37,7 @@ object VideoInformationSerializer : KSerializer<VideoInformation> {
     }
 
     @Serializable
-    private class VideoInformationSurrogate(
+    private data class VideoInformationSurrogate(
         val id: String,
         val title: String? = null,
         @SerialName("webpage_url")

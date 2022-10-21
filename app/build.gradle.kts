@@ -5,6 +5,7 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.20"
     id("org.jmailen.kotlinter")
+    id("io.gitlab.arturbosch.detekt")
 }
 
 android {
@@ -69,6 +70,12 @@ android {
         }
         animationsDisabled = true
     }
+
+    lint {
+        warningsAsErrors = true
+
+        disable += "GradleDependency"
+    }
 }
 
 dependencies {
@@ -99,7 +106,7 @@ dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:$it")
     }
 
-    implementation("com.github.yausername.youtubedl-android:library:0.14.+")?.also {
+    implementation("com.github.yausername.youtubedl-android:library:4f00394209")?.also {
         implementation("com.github.yausername.youtubedl-android:common:${it.version}")
     }
     implementation("com.github.bumptech.glide:glide:4.14.2")?.also {
@@ -127,4 +134,9 @@ dependencies {
 
 kotlinter {
     experimentalRules = true
+}
+
+detekt {
+    config = files("../detekt.yml")
+    buildUponDefaultConfig = true
 }

@@ -8,7 +8,7 @@
 
     <fragment
         android:id="@+id/playlist_fragment"
-        android:name="net.turtton.ytalarm.fragment.FragmentPlaylist"
+        android:name="net.turtton.ytalarm.ui.fragment.FragmentPlaylist"
         android:label="@string/playlist_fragment_label"
         tools:layout="@layout/fragment_list">
 
@@ -19,7 +19,7 @@
 
     <fragment
         android:id="@+id/videolist_fragment"
-        android:name="net.turtton.ytalarm.fragment.FragmentVideoList"
+        android:name="net.turtton.ytalarm.ui.fragment.FragmentVideoList"
         android:label="@string/videolist_fragment_label"
         tools:layout="@layout/fragment_list">
 

@@ -7,7 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
-import net.turtton.ytalarm.structure.Video
+import net.turtton.ytalarm.database.structure.Video
 
 @Dao
 interface VideoDao {

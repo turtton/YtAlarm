@@ -1,7 +1,7 @@
 package net.turtton.ytalarm.util.extensions
 
-import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.util.RepeatType
+import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.util.DayOfWeekCompat.Companion.A_WEEK
 import java.util.Calendar
 
 fun Alarm.toCalendar(now: Calendar): Calendar {
@@ -14,28 +14,28 @@ fun Alarm.toCalendar(now: Calendar): Calendar {
 
     val nowDayOfWeek = now[flagDayOfWeek]
     when (repeatType) {
-        is RepeatType.Once, is RepeatType.Everyday, is RepeatType.Snooze -> {
+        is Alarm.RepeatType.Once, is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Snooze -> {
             if (now.isPrevOrSameTime(hour, minute)) {
                 calendar.add(Calendar.DATE, 1)
             }
         }
-        is RepeatType.Days -> {
+        is Alarm.RepeatType.Days -> {
             val targetDays = repeatType.days
             var week = targetDays.getNearestWeek(nowDayOfWeek).convertCalenderCode()
             if (nowDayOfWeek == week && now.isPrevOrSameTime(hour, minute)) {
-                val nextDay = nowDayOfWeek.let { if (it == 7) 0 else it + 1 }
+                val nextDay = nowDayOfWeek.let { if (it == Calendar.THURSDAY) 0 else it + 1 }
                 val nextTarget = targetDays.getNearestWeek(nextDay).convertCalenderCode()
                 if (week == nextTarget) {
-                    calendar.add(Calendar.DATE, 7)
+                    calendar.add(Calendar.DATE, A_WEEK)
                 }
                 week = nextTarget
             }
             if (nowDayOfWeek > week) {
-                calendar.add(Calendar.DATE, 7)
+                calendar.add(Calendar.DATE, A_WEEK)
             }
             calendar.set(flagDayOfWeek, week)
         }
-        is RepeatType.Date -> {
+        is Alarm.RepeatType.Date -> {
             calendar.timeInMillis = repeatType.targetDate.time
         }
     }

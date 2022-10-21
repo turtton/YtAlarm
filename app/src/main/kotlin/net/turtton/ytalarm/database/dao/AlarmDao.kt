@@ -7,8 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
-import net.turtton.ytalarm.structure.Alarm
-import net.turtton.ytalarm.util.RepeatType
+import net.turtton.ytalarm.database.structure.Alarm
 
 @Dao
 interface AlarmDao {
@@ -22,7 +21,7 @@ interface AlarmDao {
     suspend fun getFromIdSync(id: Long): Alarm
 
     @Query("SELECT * FROM alarms WHERE repeatType = :repeatType")
-    suspend fun getMatchedSync(repeatType: RepeatType): List<Alarm>
+    suspend fun getMatchedSync(repeatType: Alarm.RepeatType): List<Alarm>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(alarm: Alarm)

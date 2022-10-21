@@ -31,10 +31,10 @@ jobs:
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1
 
-      - name: Build with Gradle
+      - name: Check and Prepare report
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: :rootCoverageReport
+          arguments: check :rootCoverageReport
 
       - name: Generate report
         uses: actions/upload-artifact@v3
