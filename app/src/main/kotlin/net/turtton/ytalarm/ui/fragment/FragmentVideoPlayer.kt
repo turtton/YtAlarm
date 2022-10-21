@@ -141,7 +141,8 @@ class FragmentVideoPlayer : Fragment() {
             lifecycleScope.launch {
                 val video = videoViewModel.getFromVideoIdAsync(id).await()
                 if (video == null) {
-                    Snackbar.make(view, "Error! Cannot get video data.", Snackbar.LENGTH_LONG)
+                    val message = R.string.snackbar_error_failed_to_get_video
+                    Snackbar.make(view, message, Snackbar.LENGTH_LONG)
                         .setAction("Action", null)
                         .show()
                     return@launch
@@ -327,13 +328,11 @@ class FragmentVideoPlayer : Fragment() {
             infoResult.onSuccess {
                 val videoUrl = it.url
                 if (videoUrl.isNullOrEmpty()) {
-                    Snackbar.make(
-                        view,
-                        "Error! Failed to get video stream url!!",
-                        Snackbar.LENGTH_LONG
-                    )
+                    val message = R.string.snackbar_error_failed_to_import_video
+                    Snackbar.make(view, message, Snackbar.LENGTH_LONG)
                         .setAction("Action", null)
                         .show()
+                    Log.e(LOG_TAG, "failed to get stream url")
                     return@launch
                 } else {
                     binding.progressBar.visibility = View.GONE
@@ -341,7 +340,8 @@ class FragmentVideoPlayer : Fragment() {
                     videoView.start()
                 }
             }.onFailure {
-                Snackbar.make(view, "Error! Cannot get video data!!", Snackbar.LENGTH_LONG)
+                val message = R.string.snackbar_error_failed_to_import_video
+                Snackbar.make(view, message, Snackbar.LENGTH_LONG)
                     .setAction("Action", null)
                     .show()
                 Log.e(LOG_TAG, "failed to get stream info", it)

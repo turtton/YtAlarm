@@ -106,7 +106,9 @@
     <string name="snackbar_error_unexpected_playlist_state">Please reenter playlist.</string>
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
-    <string name="snackbar_error_failed_to_get_alarm">Failed to get target alarm data</string>
+    <string name="snackbar_error_failed_to_get_alarm">Failed to get alarm data</string>
+    <string name="snackbar_error_failed_to_get_video">Failed to get video data</string>
+    <string name="snackbar_error_failed_to_import_video">Failed to import video</string>
     <string name="snackbar_error_empty_video">Video is Empty</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
     <string name="snackbar_sync_is_running">Download worker is already working. Please wait.</string>
