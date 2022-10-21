@@ -53,6 +53,8 @@ import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.UpdateSnoozeNotifyWorker
 import java.util.Calendar
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 
 class FragmentVideoPlayer : Fragment() {
     private val args: FragmentVideoPlayerArgs by navArgs()
@@ -169,16 +171,9 @@ class FragmentVideoPlayer : Fragment() {
                 launch(Dispatchers.Main) {
                     snoozeButton.setOnClickListener {
                         val now = Calendar.getInstance()
-                        var hour = now[Calendar.HOUR_OF_DAY]
-                        var minute = now[Calendar.MINUTE]
-                        minute += alarm.snoozeMinute
-                        if (minute > 59) {
-                            minute %= 60
-                            hour += 1
-                        }
-                        if (hour > 23) {
-                            hour %= 24
-                        }
+                        now.add(Calendar.MINUTE, alarm.snoozeMinute)
+                        val hour = now[Calendar.HOUR_OF_DAY]
+                        val minute = now[Calendar.MINUTE]
                         val snoozeAlarm = alarm.copy(
                             id = 0,
                             hour = hour,
@@ -340,14 +335,23 @@ class FragmentVideoPlayer : Fragment() {
         vibrator = requireContext().getSystemService()
         lifecycleScope.launch {
             while (true) {
-                delay(3000)
+                delay(VIBRATION_LENGTH_MILLIS * 2)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    vibrator?.vibrate(VibrationEffect.createOneShot(1500, 255))
+                    val oneShot = VibrationEffect.createOneShot(
+                        VIBRATION_LENGTH_MILLIS,
+                        VIBRATION_STRENGTH
+                    )
+                    vibrator?.vibrate(oneShot)
                 } else {
                     @Suppress("DEPRECATION")
-                    vibrator?.vibrate(1500)
+                    vibrator?.vibrate(VIBRATION_LENGTH_MILLIS)
                 }
             }
         }
+    }
+
+    companion object {
+        private val VIBRATION_LENGTH_MILLIS = 1.5.seconds.toLong(DurationUnit.MILLISECONDS)
+        private const val VIBRATION_STRENGTH = 255
     }
 }
