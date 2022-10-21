@@ -1,6 +1,12 @@
 package net.turtton.ytalarm.util.extensions
 
+import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
+
+fun createImportingPlaylist() = Playlist(
+    type = Playlist.Type.Importing,
+    thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_download)
+)
 
 fun Playlist.updateThumbnail(): Playlist? {
     val targetVideoId = videos.firstOrNull() ?: return null

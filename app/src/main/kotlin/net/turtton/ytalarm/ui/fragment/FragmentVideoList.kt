@@ -36,6 +36,7 @@ import net.turtton.ytalarm.ui.menu.AttachableMenuProvider
 import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
 import net.turtton.ytalarm.ui.selection.SelectionTrackerContainer
 import net.turtton.ytalarm.ui.selection.TagKeyProvider
+import net.turtton.ytalarm.util.extensions.createImportingPlaylist
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
@@ -167,10 +168,7 @@ class FragmentVideoList :
             animateFab(it)
             lifecycleScope.launch {
                 if (currentId.value == 0L) {
-                    val newPlaylist = Playlist(
-                        type = Playlist.Type.Importing,
-                        thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_download)
-                    )
+                    val newPlaylist = createImportingPlaylist()
                     val newId = playlistViewModel.insertAsync(newPlaylist).await()
                     currentId.update { newId }
                     updateListObserver()

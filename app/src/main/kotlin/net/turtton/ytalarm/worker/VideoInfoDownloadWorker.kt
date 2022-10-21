@@ -26,6 +26,7 @@ import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.VideoInformation
 import net.turtton.ytalarm.util.extensions.copyAsFailed
+import net.turtton.ytalarm.util.extensions.createImportingPlaylist
 import net.turtton.ytalarm.util.extensions.deleteVideo
 import net.turtton.ytalarm.util.extensions.hasUpdatingVideo
 import net.turtton.ytalarm.util.extensions.insertVideos
@@ -233,11 +234,7 @@ class VideoInfoDownloadWorker(
     private suspend fun LongArray.insertVideoInPlaylists(video: Video) = map {
         val playlist =
             if (it == 0L) {
-                val icon = R.drawable.ic_download
-                Playlist(
-                    thumbnail = Playlist.Thumbnail.Drawable(icon),
-                    type = Playlist.Type.Importing
-                )
+                createImportingPlaylist()
             } else {
                 repository.getPlaylistFromIdSync(it) ?: return@map null
             }
