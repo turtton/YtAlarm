@@ -155,7 +155,7 @@ class VideoListAdapter<T>(
                     domainOrSize.text = if (state is Video.State.Downloaded) {
                         context.getString(
                             R.string.item_video_list_data_size,
-                            state.fileSize / 1024f / 1024f
+                            state.fileSize / BYTE_CARRY_IN / BYTE_CARRY_IN
                         )
                     } else {
                         data.domain
@@ -197,6 +197,10 @@ class VideoListAdapter<T>(
                 holder.selectable
             )
         )
+    }
+
+    companion object {
+        const val BYTE_CARRY_IN = 1024f
     }
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {

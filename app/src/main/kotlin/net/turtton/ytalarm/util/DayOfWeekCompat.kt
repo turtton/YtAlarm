@@ -36,4 +36,8 @@ enum class DayOfWeekCompat {
         SATURDAY -> Calendar.SATURDAY
         SUNDAY -> Calendar.SUNDAY
     }
+
+    companion object {
+        const val A_WEEK = 7
+    }
 }

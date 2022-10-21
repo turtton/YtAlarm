@@ -35,6 +35,7 @@ import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Co
 import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.ui.fragment.FragmentAlarmSettings
 import net.turtton.ytalarm.util.DayOfWeekCompat
+import net.turtton.ytalarm.util.DayOfWeekCompat.Companion.A_WEEK
 import net.turtton.ytalarm.util.extensions.getDisplayTime
 import net.turtton.ytalarm.util.extensions.joinStringWithSlash
 import java.util.Calendar
@@ -123,8 +124,8 @@ class AlarmSettingsAdapter(
             ) { _, description ->
                 val numberPicker = NumberPicker(context)
                 numberPicker.value = alarmState.value.snoozeMinute
-                numberPicker.maxValue = 60
-                numberPicker.minValue = 1
+                numberPicker.maxValue = MAX_MINUTES
+                numberPicker.minValue = MIN_MINUTES
 
                 AlertDialog.Builder(context)
                     .setTitle(snoozeTitle)
@@ -258,6 +259,7 @@ class AlarmSettingsAdapter(
             return AlertDialog.Builder(fragment.activity)
                 .setTitle(R.string.dialog_repeat_choice_title)
                 .setItems(R.array.dialog_repeat_type_choice) { _, index ->
+                    @Suppress("MagicNumber")
                     when (index) {
                         // ONCE
                         0 -> {
@@ -333,16 +335,22 @@ class AlarmSettingsAdapter(
         }
     }
 
+    companion object {
+        const val MAX_MINUTES = 60
+        const val MIN_MINUTES = 10
+    }
+
     class DayChoiceFragment(
         current: List<DayOfWeekCompat>? = null,
         val onConfirm: (List<DayOfWeekCompat>) -> Unit
     ) : DialogFragment() {
-        private val checkedItem = BooleanArray(7) { false }
+        private val checkedItem = BooleanArray(A_WEEK) { false }
         private val currentDay = arrayListOf<DayOfWeekCompat>()
 
         init {
             current?.let {
                 it.forEach { day ->
+                    @Suppress("MagicNumber")
                     when (day) {
                         DayOfWeekCompat.MONDAY -> checkedItem[0] = true
                         DayOfWeekCompat.TUESDAY -> checkedItem[1] = true
@@ -366,6 +374,7 @@ class AlarmSettingsAdapter(
                     val addOrRemove: (DayOfWeekCompat) -> Unit = {
                         if (isChecked) currentDay += it else currentDay.remove(it)
                     }
+                    @Suppress("MagicNumber")
                     when (index) {
                         0 -> addOrRemove(DayOfWeekCompat.MONDAY)
                         1 -> addOrRemove(DayOfWeekCompat.TUESDAY)

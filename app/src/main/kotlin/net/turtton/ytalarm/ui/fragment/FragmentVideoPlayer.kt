@@ -93,7 +93,7 @@ class FragmentVideoPlayer : Fragment() {
 
         // FullScreen
         val activity = requireActivity()
-        if (Build.VERSION.SDK_INT >= 30) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val windowInsetsController = view.windowInsetsController!!
             windowInsetsController.systemBarsBehavior =
                 WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE

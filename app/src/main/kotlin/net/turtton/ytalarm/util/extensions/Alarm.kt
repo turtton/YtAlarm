@@ -1,6 +1,7 @@
 package net.turtton.ytalarm.util.extensions
 
 import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.util.DayOfWeekCompat.Companion.A_WEEK
 import java.util.Calendar
 
 fun Alarm.toCalendar(now: Calendar): Calendar {
@@ -22,15 +23,15 @@ fun Alarm.toCalendar(now: Calendar): Calendar {
             val targetDays = repeatType.days
             var week = targetDays.getNearestWeek(nowDayOfWeek).convertCalenderCode()
             if (nowDayOfWeek == week && now.isPrevOrSameTime(hour, minute)) {
-                val nextDay = nowDayOfWeek.let { if (it == 7) 0 else it + 1 }
+                val nextDay = nowDayOfWeek.let { if (it == Calendar.THURSDAY) 0 else it + 1 }
                 val nextTarget = targetDays.getNearestWeek(nextDay).convertCalenderCode()
                 if (week == nextTarget) {
-                    calendar.add(Calendar.DATE, 7)
+                    calendar.add(Calendar.DATE, A_WEEK)
                 }
                 week = nextTarget
             }
             if (nowDayOfWeek > week) {
-                calendar.add(Calendar.DATE, 7)
+                calendar.add(Calendar.DATE, A_WEEK)
             }
             calendar.set(flagDayOfWeek, week)
         }
