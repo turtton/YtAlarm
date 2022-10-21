@@ -29,5 +29,5 @@ fun List<DayOfWeekCompat>.getNearestWeekOrNull(calendarDayOfWeek: Int): DayOfWee
 }
 
 fun List<DayOfWeekCompat>.getNearestWeek(calendarDayOfWeek: Int): DayOfWeekCompat {
-    return getNearestWeekOrNull(calendarDayOfWeek) ?: throw IllegalStateException("Empty list")
+    return getNearestWeekOrNull(calendarDayOfWeek) ?: error("Empty list")
 }
