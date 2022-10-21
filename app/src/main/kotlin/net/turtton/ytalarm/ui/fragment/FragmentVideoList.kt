@@ -24,14 +24,14 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
+import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.ui.adapter.VideoListAdapter
-import net.turtton.ytalarm.ui.fragment.FragmentAllVideoList.Companion.updatePlaylistThumbnails
 import net.turtton.ytalarm.ui.dialog.DialogExecuteProgress
 import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.ui.dialog.DialogUrlInput.Companion.showVideoImportDialog
-import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.ui.fragment.FragmentAllVideoList.Companion.updatePlaylistThumbnails
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer

@@ -16,8 +16,8 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
-import net.turtton.ytalarm.ui.adapter.AlarmSettingsAdapter
 import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.ui.adapter.AlarmSettingsAdapter
 import net.turtton.ytalarm.util.extensions.joinStringWithSlash
 import net.turtton.ytalarm.util.observeAlarm
 import net.turtton.ytalarm.viewmodel.AlarmViewModel

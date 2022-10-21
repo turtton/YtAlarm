@@ -18,10 +18,10 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
-import net.turtton.ytalarm.ui.adapter.PlaylistAdapter
-import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.ui.adapter.PlaylistAdapter
+import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.util.AttachableMenuProvider
 import net.turtton.ytalarm.util.SelectionMenuObserver
 import net.turtton.ytalarm.util.SelectionTrackerContainer
