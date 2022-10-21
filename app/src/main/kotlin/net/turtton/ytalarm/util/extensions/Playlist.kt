@@ -8,6 +8,12 @@ fun createImportingPlaylist() = Playlist(
     thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_download)
 )
 
+fun Playlist.insertVideos(videoIds: Set<Long>): Playlist {
+    val newVideoSet = videos.toMutableSet()
+    newVideoSet += videoIds
+    return copy(videos = newVideoSet.toList())
+}
+
 fun Playlist.updateThumbnail(): Playlist? {
     val targetVideoId = videos.firstOrNull() ?: return null
     return copy(thumbnail = Playlist.Thumbnail.Video(targetVideoId))

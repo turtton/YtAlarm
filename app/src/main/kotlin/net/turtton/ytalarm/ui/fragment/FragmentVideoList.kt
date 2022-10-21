@@ -1,6 +1,5 @@
 package net.turtton.ytalarm.ui.fragment
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.view.View
@@ -8,14 +7,16 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import androidx.work.await
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,9 @@ import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
 import net.turtton.ytalarm.ui.selection.SelectionTrackerContainer
 import net.turtton.ytalarm.ui.selection.TagKeyProvider
 import net.turtton.ytalarm.util.extensions.createImportingPlaylist
+import net.turtton.ytalarm.util.extensions.insertVideos
+import net.turtton.ytalarm.util.extensions.takeStateIfNotFinished
+import net.turtton.ytalarm.util.extensions.updateThumbnail
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
@@ -178,8 +182,8 @@ class FragmentVideoList :
                 }
             }
         }
-        addFromVideoFab.setOnClickListener {
-            animateFab(it)
+        addFromVideoFab.setOnClickListener { view ->
+            animateFab(view)
             val progressDialog =
                 DialogExecuteProgress(R.string.dialog_execute_progress_title_loading)
             progressDialog.show(childFragmentManager, "LoadPlaylist")
@@ -190,31 +194,26 @@ class FragmentVideoList :
                     ?: emptyList()
                 val targetVideos = videoViewModel.getExceptIdsAsync(currentVideo)
                     .await()
-                    .map { video -> video.toDisplayData() }
+                    .map { it.toDisplayData() }
                 launch(Dispatchers.Main) {
                     progressDialog.dismiss()
                     DialogMultiChoiceVideo(targetVideos) { _, selectedId ->
                         // I don't know why but without lifecycleScope, it do not work
                         lifecycleScope.launch(Dispatchers.IO) {
-                            val playlist = playlistViewModel.getFromIdAsync(currentId.value)
+                            var playlist = playlistViewModel.getFromIdAsync(currentId.value)
                                 .await()
                                 ?: kotlin.run {
                                     val icon = R.drawable.ic_download
                                     Playlist(thumbnail = Playlist.Thumbnail.Drawable(icon))
                                 }
-                            // Converts set to avoid duplicating ids
-                            val newVideoTargets = (playlist.videos + selectedId).distinct()
-                            var newPlaylist = playlist.copy(videos = newVideoTargets)
+                            playlist = playlist.insertVideos(selectedId)
                             if (playlist.id == 0L) {
-                                newVideoTargets.firstOrNull()?.let { targetId ->
-                                    val video = Playlist.Thumbnail.Video(targetId)
-                                    newPlaylist = newPlaylist.copy(thumbnail = video)
-                                }
-                                val newId = playlistViewModel.insertAsync(newPlaylist).await()
+                                playlist.updateThumbnail()?.let { playlist = it }
+                                val newId = playlistViewModel.insertAsync(playlist).await()
                                 currentId.update { newId }
                                 updateListObserver()
                             } else {
-                                playlistViewModel.update(newPlaylist)
+                                playlistViewModel.update(playlist)
                             }
                         }
                     }.show(childFragmentManager, "SelectVideos")
@@ -223,7 +222,6 @@ class FragmentVideoList :
         }
     }
 
-    @SuppressLint("RestrictedApi")
     private fun listenFabWithSyncMode(context: Context, typeState: Playlist.Type.CloudPlaylist) {
         val binding = (activity as MainActivity).binding
         val addVideoFab = binding.fabAddVideo
@@ -234,22 +232,10 @@ class FragmentVideoList :
         lifecycleScope.launch {
             val workerId = typeState.workerId
             workManager.getWorkInfoById(workerId)
-                .await()
-                ?.state
-                ?.takeUnless { it.isFinished }
-                ?.let {
-                    workManager.getWorkInfoByIdLiveData(workerId)
-                        .observe(viewLifecycleOwner) {
-                            if (it == null || it.state.isFinished) {
-                                lifecycleScope.launch(Dispatchers.Main) {
-                                    addVideoFab.clearAnimation()
-                                }
-                            } else {
-                                lifecycleScope.launch(Dispatchers.Main) {
-                                    addVideoFab.startAnimation(animFabRotateInfinity)
-                                }
-                            }
-                        }
+                .takeStateIfNotFinished()
+                ?.let { _ ->
+                    val workInfo = workManager.getWorkInfoByIdLiveData(workerId)
+                    linkAnimation(addVideoFab, workInfo, true)
                 }
         }
 
@@ -264,47 +250,33 @@ class FragmentVideoList :
 
                 if (currentPlaylist == null || currentState !is Playlist.Type.CloudPlaylist) {
                     launch(Dispatchers.Main) {
-                        val errorId = R.string.snackbar_error_unexpected_playlist_state
-                        Snackbar.make(requireView(), errorId, Snackbar.LENGTH_SHORT).show()
+                        val errorMessage = R.string.snackbar_error_unexpected_playlist_state
+                        Snackbar.make(requireView(), errorMessage, Snackbar.LENGTH_SHORT).show()
                         findNavController().navigateUp()
                     }.join()
                     return@launch
                 }
 
                 workManager.getWorkInfoById(currentState.workerId)
-                    .await()
-                    ?.state
-                    ?.takeUnless { it.isFinished }
+                    .takeStateIfNotFinished()
                     ?.let { _ ->
                         launch(Dispatchers.Main) {
-                            Snackbar.make(
-                                it,
-                                R.string.snackbar_sync_is_running,
-                                Snackbar.LENGTH_LONG
-                            ).show()
+                            val message = R.string.snackbar_sync_is_running
+                            Snackbar.make(it, message, Snackbar.LENGTH_LONG).show()
                         }.join()
                         return@launch
                     }
 
-                val (request, enqueueTask) = VideoInfoDownloadWorker
-                    .prepareWorker(
-                        currentState.url,
-                        longArrayOf(currentPlaylist.id)
-                    )
+                val playlistArray = longArrayOf(currentPlaylist.id)
+                val (request, enqueueTask) =
+                    VideoInfoDownloadWorker.prepareWorker(currentState.url, playlistArray)
 
                 val newState = currentState.copy(workerId = request.id)
                 playlistViewModel.update(currentPlaylist.copy(type = newState)).join()
 
                 workManager.enqueueTask()
-                workManager.getWorkInfoByIdLiveData(request.id)
-                    .observe(viewLifecycleOwner) {
-                        if (it == null) return@observe
-                        if (it.state.isFinished) {
-                            lifecycleScope.launch(Dispatchers.Main) {
-                                addVideoFab.clearAnimation()
-                            }
-                        }
-                    }
+                val workInfo = workManager.getWorkInfoByIdLiveData(request.id)
+                linkAnimation(addVideoFab, workInfo, false)
             }
         }
     }
@@ -354,6 +326,25 @@ class FragmentVideoList :
                                 adapter.submitList(it)
                             }
                         }
+                }
+            }
+        }
+    }
+
+    private fun linkAnimation(
+        fab: FloatingActionButton,
+        workLiveData: LiveData<WorkInfo>,
+        stopIfNull: Boolean
+    ) {
+        workLiveData.observe(viewLifecycleOwner) {
+            if (!stopIfNull && it == null) return@observe
+            if (it == null || it.state.isFinished) {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    fab.clearAnimation()
+                }
+            } else {
+                lifecycleScope.launch(Dispatchers.Main) {
+                    fab.startAnimation(animFabRotateInfinity)
                 }
             }
         }
