@@ -7,7 +7,7 @@ import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import net.turtton.ytalarm.AlarmActivity
+import net.turtton.ytalarm.activity.AlarmActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.extensions.compatPendingIntentFlag
 import net.turtton.ytalarm.util.extensions.pickNearestTime

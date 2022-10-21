@@ -36,9 +36,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
+import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding

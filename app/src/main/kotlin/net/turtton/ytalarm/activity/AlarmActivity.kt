@@ -1,10 +1,11 @@
-package net.turtton.ytalarm
+package net.turtton.ytalarm.activity
 
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
+import net.turtton.ytalarm.R
 import net.turtton.ytalarm.databinding.ActivityAlarmBinding
 import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
 import net.turtton.ytalarm.util.initYtDL

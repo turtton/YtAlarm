@@ -15,9 +15,9 @@ import androidx.work.await
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
+import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.adapter.PlaylistAdapter

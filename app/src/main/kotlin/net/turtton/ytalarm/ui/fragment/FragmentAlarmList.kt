@@ -8,8 +8,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.YtApplication.Companion.repository
+import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.ui.adapter.AlarmListAdapter
 import net.turtton.ytalarm.util.observeAlarm

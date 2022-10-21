@@ -1,4 +1,4 @@
-package net.turtton.ytalarm
+package net.turtton.ytalarm.activity
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -26,6 +26,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.databinding.ActivityMainBinding

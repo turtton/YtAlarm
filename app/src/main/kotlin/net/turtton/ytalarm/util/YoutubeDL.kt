@@ -10,7 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import net.turtton.ytalarm.MainActivity
+import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.util.serializer.VideoInformationSerializer
 
 fun AppCompatActivity.initYtDL(view: View) = lifecycleScope.launch {

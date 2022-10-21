@@ -37,7 +37,7 @@
                 tools:node="remove" />
         </provider>
         <activity
-            android:name="net.turtton.ytalarm.MainActivity"
+            android:name="net.turtton.ytalarm.activity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.YtAlarm.NoActionBar">
             <nav-graph android:value="@navigation/video_player"/>
@@ -55,7 +55,7 @@
                 android:value="androidx.sharetarget.ChooserTargetServiceCompat"/>
         </activity>
         <activity
-            android:name=".AlarmActivity"
+            android:name=".activity.AlarmActivity"
             android:excludeFromRecents="true"
             android:exported="true"
             android:theme="@style/Theme.YtAlarm.NoActionBar"

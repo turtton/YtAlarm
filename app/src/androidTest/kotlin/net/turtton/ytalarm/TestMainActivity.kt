@@ -12,8 +12,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.fragment.FragmentPlaylistDirections
-import net.turtton.ytalarm.fragment.FragmentVideoPlayerArgs
+import net.turtton.ytalarm.activity.MainActivity
+import net.turtton.ytalarm.ui.fragment.FragmentPlaylistDirections
+import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

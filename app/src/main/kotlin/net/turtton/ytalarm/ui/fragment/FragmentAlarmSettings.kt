@@ -13,9 +13,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.MainActivity
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
+import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.ui.adapter.AlarmSettingsAdapter
 import net.turtton.ytalarm.util.extensions.joinStringWithSlash
