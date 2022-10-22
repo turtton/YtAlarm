@@ -9,15 +9,14 @@ import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.WorkManager
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.addNewPlaylist
 import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.ui.adapter.VideoListAdapter
-import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.ui.dialog.DialogUrlInput.Companion.showVideoImportDialog
 import net.turtton.ytalarm.ui.menu.AttachableMenuProvider
@@ -25,6 +24,7 @@ import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
 import net.turtton.ytalarm.ui.selection.SelectionTrackerContainer
 import net.turtton.ytalarm.ui.selection.TagKeyProvider
 import net.turtton.ytalarm.util.extensions.collectGarbage
+import net.turtton.ytalarm.util.extensions.showInsertVideoToPlaylistsDialog
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
@@ -106,23 +106,15 @@ class FragmentAllVideoList :
                     val playlists = fragment.playlistViewModel.allPlaylistsAsync
                         .await()
                         .map { it.toDisplayData(fragment.videoViewModel) }
-                    launch(Dispatchers.Main) {
-                        DialogMultiChoiceVideo(playlists) { _, selectedId ->
-                            val targetIdList = selectedId.toList()
-                            val targetList = fragment.playlistViewModel
-                                .getFromIdsAsync(targetIdList)
-                            fragment.lifecycleScope.launch {
-                                val targetPlaylist = targetList.await()
-                                targetPlaylist.map {
-                                    val videoList = it.videos.toMutableSet()
-                                    videoList += selection
-                                    it.copy(videos = videoList.toList())
-                                }.also {
-                                    fragment.playlistViewModel.update(it)
-                                }
-                            }
-                        }.show(fragment.childFragmentManager, "PlaylistSelectDialog")
-                    }
+                        .toMutableList()
+                        .addNewPlaylist()
+
+                    showInsertVideoToPlaylistsDialog(
+                        fragment,
+                        playlists,
+                        selection,
+                        "PlaylistSelectDialog"
+                    )
                 }
                 true
             },
