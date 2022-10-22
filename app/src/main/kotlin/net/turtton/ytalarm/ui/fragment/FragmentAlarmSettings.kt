@@ -1,6 +1,7 @@
 package net.turtton.ytalarm.ui.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
@@ -61,7 +62,12 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
         if (alarmId != -1L) {
             val async = alarmViewModel.getFromIdAsync(alarmId)
             lifecycleScope.launch {
-                val alarm = async.await()
+                val alarm = async.await() ?: kotlin.run {
+                    val message = R.string.snackbar_error_failed_to_get_alarm
+                    Snackbar.make(view, message, Snackbar.LENGTH_LONG).show()
+                    Log.e(TAG, "Failed to get alarm. Id:$alarmId")
+                    return@launch
+                }
                 alarmData.update { alarm }
                 val plTitle = playlistViewModel.getFromIdsAsync(alarm.playListId)
                     .await()
@@ -94,5 +100,9 @@ class FragmentAlarmSettings : FragmentAbstractList(), PlaylistViewContainer {
             }
             findNavController().navigate(R.id.action_AlarmSettingFragment_to_AlarmListFragment)
         }
+    }
+
+    companion object {
+        const val TAG = "FragmentAlarmSettings"
     }
 }

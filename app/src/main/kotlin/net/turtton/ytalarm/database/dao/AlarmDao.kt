@@ -18,7 +18,7 @@ interface AlarmDao {
     suspend fun getAllSync(): List<Alarm>
 
     @Query("SELECT * FROM alarms WHERE id = :id")
-    suspend fun getFromIdSync(id: Long): Alarm
+    suspend fun getFromIdSync(id: Long): Alarm?
 
     @Query("SELECT * FROM alarms WHERE repeatType = :repeatType")
     suspend fun getMatchedSync(repeatType: Alarm.RepeatType): List<Alarm>

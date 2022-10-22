@@ -191,8 +191,13 @@ class FragmentVideoPlayer : Fragment() {
         }
         val asyncAlarm = alarmViewModel.getFromIdAsync(alarmId)
         lifecycleScope.launch {
-            val alarm = asyncAlarm.await()
-            // set snooze button
+            val alarm = asyncAlarm.await() ?: kotlin.run {
+                val message = R.string.snackbar_error_failed_to_get_alarm
+                Snackbar.make(view, message, Snackbar.LENGTH_LONG).show()
+                Log.e(LOG_TAG, "Failed to get alarm. TargetId: $alarmId")
+                activity.finish()
+                return@launch
+            }
             launch(Dispatchers.Main) {
                 setUpSnoozeButton(view.context, snoozeButton, alarm)
             }

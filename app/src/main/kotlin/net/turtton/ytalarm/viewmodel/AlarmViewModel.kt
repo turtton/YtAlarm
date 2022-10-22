@@ -18,7 +18,7 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getAllAlarmsSync()
     }
 
-    fun getFromIdAsync(id: Long): Deferred<Alarm> = viewModelScope.async {
+    fun getFromIdAsync(id: Long): Deferred<Alarm?> = viewModelScope.async {
         repository.getAlarmFromIdSync(id)
     }
 
