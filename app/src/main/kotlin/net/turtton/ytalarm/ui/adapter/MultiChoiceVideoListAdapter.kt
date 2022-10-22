@@ -76,6 +76,12 @@ class MultiChoiceVideoListAdapter<T>(
             }.let {
                 DisplayData(id, title, it)
             }
+
+            fun <T : MutableCollection<DisplayData<Long>>> T.addNewPlaylist() = apply {
+                val title = "Create New Playlist"
+                val drawable = Thumbnail.Drawable(R.drawable.ic_add_playlist)
+                add(DisplayData(0, title, drawable))
+            }
         }
 
         sealed interface Thumbnail {

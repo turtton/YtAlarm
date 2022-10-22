@@ -30,7 +30,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.databinding.ActivityMainBinding
-import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter
+import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.addNewPlaylist
 import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.util.initYtDL
@@ -153,13 +153,7 @@ class MainActivity : AppCompatActivity() {
                         .filter { it.type is Playlist.Type.Original }
                         .map { it.toDisplayData(videoViewModel) }
                         .toMutableList()
-                        .apply {
-                            val title = "Create New Playlist"
-                            val drawable = MultiChoiceVideoListAdapter.DisplayData
-                                .Thumbnail
-                                .Drawable(R.drawable.ic_add_playlist)
-                            add(MultiChoiceVideoListAdapter.DisplayData(0, title, drawable))
-                        }
+                        .addNewPlaylist()
 
                     DialogMultiChoiceVideo(playlists) { _, id ->
                         lifecycleScope.launch {

@@ -71,11 +71,11 @@ class VideoInfoDownloadWorker(
         when (type) {
             is Type.Video -> {
                 val video = videos.first()
-                insertVideo(playlistArray, video)
+                insertVideo(playlistArray, video, targetVideo)
             }
             is Type.Playlist -> {
                 repository.delete(targetVideo)
-                insertCloudPlaylist(playlistArray, videos, targetVideoId, type.url)
+                insertCloudPlaylist(playlistArray, videos, targetVideoId, type)
             }
         }
 
@@ -145,12 +145,16 @@ class VideoInfoDownloadWorker(
         }
     )
 
-    private suspend fun insertVideo(playlistArray: LongArray?, video: Video) {
-        val updatedPlaylist = checkVideoDuplication(video.videoId, video.domain)
+    private suspend fun insertVideo(
+        playlistArray: LongArray?,
+        newVideo: Video,
+        pendingVideo: Video
+    ) {
+        val updatedPlaylist = checkVideoDuplication(newVideo.videoId, newVideo.domain)
             ?.let { duplicatedId ->
-                repository.delete(video)
+                repository.delete(pendingVideo)
                 playlistArray?.let { repository.getPlaylistFromIdsSync(it.toList()) }
-                    ?.deleteVideo(video.id)
+                    ?.deleteVideo(newVideo.id)
                     ?.map { playlist ->
                         val videoSet = playlist.videos.toMutableSet()
                         videoSet += duplicatedId
@@ -167,7 +171,7 @@ class VideoInfoDownloadWorker(
                         newPlaylist
                     }
             } ?: kotlin.run {
-            val importedVideo = video.copy(id = video.id)
+            val importedVideo = newVideo.copy(id = pendingVideo.id)
             repository.update(importedVideo)
             playlistArray?.let {
                 repository.getPlaylistFromIdsSync(it.toList())
@@ -200,7 +204,7 @@ class VideoInfoDownloadWorker(
         playlistArray: LongArray?,
         videos: List<Video>,
         deletedVideoId: Long,
-        url: String
+        type: Type.Playlist
     ) {
         val targetIds = mutableListOf<Long>()
         val newVideos = videos.filter {
@@ -215,11 +219,10 @@ class VideoInfoDownloadWorker(
 
         playlistArray?.let { _ ->
             var playlists = repository.getPlaylistFromIdsSync(playlistArray.toList())
-            playlists = playlists.deleteVideo(deletedVideoId)
-            playlists = playlists.insertVideos(targetIds)
-            val playlistType = Playlist.Type.CloudPlaylist(url, id)
+            playlists = playlists.deleteVideo(deletedVideoId).insertVideos(targetIds)
+            val playlistType = Playlist.Type.CloudPlaylist(type.url, id)
             playlists = playlists.map { playlist ->
-                var newPlaylist = playlist.copy(type = playlistType)
+                var newPlaylist = playlist.copy(type = playlistType, title = type.title)
                 if (newPlaylist.thumbnail is Playlist.Thumbnail.Drawable) {
                     newPlaylist.updateThumbnail()?.let {
                         newPlaylist = it

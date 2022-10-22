@@ -67,7 +67,7 @@ class FragmentVideoList :
     lateinit var adapter: VideoListAdapter<FragmentVideoList>
 
     private val args by navArgs<FragmentVideoListArgs>()
-    private val currentId = MutableStateFlow(0L)
+    val currentId = MutableStateFlow(0L)
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
