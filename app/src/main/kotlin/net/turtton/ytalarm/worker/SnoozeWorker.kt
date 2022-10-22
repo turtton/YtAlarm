@@ -33,7 +33,7 @@ class SnoozeRemoveWorker(
         }
 
         withContext(Dispatchers.IO) {
-            val target = repository.getAlarmFromIdSync(targetId)
+            val target = repository.getAlarmFromIdSync(targetId) ?: return@withContext
             repository.delete(target)
         }
 

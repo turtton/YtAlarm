@@ -187,12 +187,10 @@ class FragmentVideoPlayer : Fragment() {
             val message = R.string.snackbar_error_failed_to_get_alarm
             Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
             Log.e(LOG_TAG, "Alarm id is -1")
-            activity.finish()
         }
         val asyncAlarm = alarmViewModel.getFromIdAsync(alarmId)
         lifecycleScope.launch {
-            val alarm = asyncAlarm.await()
-            // set snooze button
+            val alarm = asyncAlarm.await() ?: onFailedToGetAlarm(alarmId)
             launch(Dispatchers.Main) {
                 setUpSnoozeButton(view.context, snoozeButton, alarm)
             }
@@ -360,6 +358,19 @@ class FragmentVideoPlayer : Fragment() {
                 }
             }
         }
+    }
+
+    private suspend fun onFailedToGetAlarm(invalidId: Long): Alarm {
+        binding.fragmentVideoPlayerTextError.visibility = View.VISIBLE
+        Log.e(LOG_TAG, "Failed to get alarm. TargetId: $invalidId")
+        val allPlaylist = playlistViewModel.allPlaylistsAsync.await().map { it.id }
+        return Alarm(
+            repeatType = Alarm.RepeatType.Snooze,
+            shouldLoop = true,
+            isEnable = true,
+            playListId = allPlaylist,
+            snoozeMinute = 10
+        )
     }
 
     companion object {

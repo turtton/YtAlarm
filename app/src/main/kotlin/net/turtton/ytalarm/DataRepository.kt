@@ -18,7 +18,7 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun getAlarmFromIdSync(id: Long): Alarm {
+    suspend fun getAlarmFromIdSync(id: Long): Alarm? {
         return database.alarmDao().getFromIdSync(id)
     }
 

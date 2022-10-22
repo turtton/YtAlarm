@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.ui.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
@@ -40,8 +42,13 @@ class AlarmListAdapter(
                 val async = parentFragment.alarmViewModel.getFromIdAsync(data.id)
                 button.isClickable = false
                 parentFragment.lifecycleScope.launch {
-                    val alarm = async.await().copy(isEnable = isChecked)
-                    parentFragment.alarmViewModel.update(alarm).join()
+                    async.await()?.copy(isEnable = isChecked)?.let {
+                        parentFragment.alarmViewModel.update(it).join()
+                    } ?: kotlin.run {
+                        val message = R.string.snackbar_error_failed_to_get_alarm
+                        Snackbar.make(itemView, message, Snackbar.LENGTH_SHORT).show()
+                        Log.e(TAG, "Failed to get alarm. Id: ${data.id}")
+                    }
                     launch(Dispatchers.Main) {
                         button.isClickable = true
                     }
@@ -83,5 +90,9 @@ class AlarmListAdapter(
         val playlistName: TextView = view.findViewById(R.id.item_aram_playlist_name)
         val alarmThumbnail: ImageView = view.findViewById(R.id.item_playlist_thumbnail)
         val alarmSwitch: SwitchCompat = view.findViewById(R.id.item_aram_switch)
+    }
+
+    companion object {
+        private const val TAG = "AlarmListAdapter"
     }
 }
