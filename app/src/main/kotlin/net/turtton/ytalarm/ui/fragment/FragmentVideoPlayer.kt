@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -16,7 +17,6 @@ import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -34,7 +34,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
@@ -55,7 +54,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.UpdateSnoozeNotifyWorker
-import java.util.Calendar
+import java.util.*
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -182,7 +181,6 @@ class FragmentVideoPlayer : Fragment() {
             val alarmList = alarmViewModel.getAllAlarmsAsync().await().filter { it.isEnable }
             updateAlarmSchedule(view.context, alarmList)
         }
-        startVibration()
         if (alarmId == -1L) {
             val message = R.string.snackbar_error_failed_to_get_alarm
             Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
@@ -195,6 +193,12 @@ class FragmentVideoPlayer : Fragment() {
                 setUpSnoozeButton(view.context, snoozeButton, alarm)
             }
             updateAlarm(alarm)
+
+            if (alarm.shouldVibrate) {
+                launch(Dispatchers.Main) {
+                    startVibration(view)
+                }
+            }
 
             val playlist = playlistViewModel.getFromIdsAsync(alarm.playListId).await()
             val videos = playlist.flatMap { it.videos }
@@ -341,22 +345,31 @@ class FragmentVideoPlayer : Fragment() {
         }
     }
 
-    private fun startVibration() {
-        vibrator = requireContext().getSystemService()
-        lifecycleScope.launch {
-            while (true) {
-                delay(VIBRATION_LENGTH_MILLIS * 2)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val oneShot = VibrationEffect.createOneShot(
-                        VIBRATION_LENGTH_MILLIS,
-                        VIBRATION_STRENGTH
-                    )
-                    vibrator?.vibrate(oneShot)
-                } else {
-                    @Suppress("DEPRECATION")
-                    vibrator?.vibrate(VIBRATION_LENGTH_MILLIS)
-                }
-            }
+    private fun startVibration(view: View) {
+        val context = view.context
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager =
+                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager?
+            manager?.defaultVibrator
+        } else {
+            @Suppress("Deprecation")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator?
+        } ?: kotlin.run {
+            val message = R.string.snackbar_error_failed_to_prepare_vibration
+            Snackbar.make(view, message, Snackbar.LENGTH_LONG).show()
+            Log.e(LOG_TAG, "Failed to get vibrator service. Null")
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val wave = VibrationEffect.createWaveform(
+                VIBRATION_TIMINGS,
+                VIBRATION_AMPLITUDES,
+                VIBRATION_REPEAT_POS
+            )
+            vibrator?.vibrate(wave)
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator?.vibrate(VIBRATION_TIMINGS, VIBRATION_REPEAT_POS)
         }
     }
 
@@ -374,8 +387,11 @@ class FragmentVideoPlayer : Fragment() {
     }
 
     companion object {
-        private val VIBRATION_LENGTH_MILLIS = 1.5.seconds.toLong(DurationUnit.MILLISECONDS)
+        private val VIBRATION_MILLIS = 1.5.seconds.toLong(DurationUnit.MILLISECONDS)
         private const val VIBRATION_STRENGTH = 255
+        private val VIBRATION_TIMINGS = longArrayOf(VIBRATION_MILLIS, VIBRATION_MILLIS)
+        private val VIBRATION_AMPLITUDES = intArrayOf(0, VIBRATION_STRENGTH)
+        private const val VIBRATION_REPEAT_POS = 0
         private const val LOG_TAG = "FragmentVideoPlayer"
     }
 }
