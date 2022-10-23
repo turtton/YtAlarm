@@ -41,6 +41,14 @@ data class Playlist(
         object Original : Type
 
         @Serializable
-        data class CloudPlaylist(val url: String, val workerId: UUID) : Type
+        data class CloudPlaylist(
+            val url: String,
+            val workerId: UUID,
+            val syncRule: SyncRule = SyncRule.ALWAYS_ADD
+        ) : Type
+    }
+
+    enum class SyncRule {
+        ALWAYS_ADD, DELETE_IF_NOT_EXIST
     }
 }
