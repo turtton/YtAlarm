@@ -16,14 +16,14 @@ abstract class SelectionMenuObserver<T, F>(
         if (fragment.selectionTracker.hasSelection()) {
             if (!isAdded) {
                 if (fragment is MenuProviderContainer) {
-                    activity.removeMenuProvider(fragment.menuProvider)
+                    fragment.menuProvider?.let { activity.removeMenuProvider(it) }
                 }
                 activity.addMenuProvider(provider, fragment.viewLifecycleOwner)
                 isAdded = true
             }
         } else {
             if (fragment is MenuProviderContainer) {
-                activity.addMenuProvider(fragment.menuProvider)
+                fragment.menuProvider?.let { activity.addMenuProvider(it) }
             }
             activity.removeMenuProvider(provider)
             isAdded = false
