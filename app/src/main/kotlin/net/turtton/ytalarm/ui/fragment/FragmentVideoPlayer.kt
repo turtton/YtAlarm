@@ -345,7 +345,7 @@ class FragmentVideoPlayer : Fragment() {
         }
     }
 
-    fun startVibration(view: View) {
+    private fun startVibration(view: View) {
         val context = view.context
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val manager =
