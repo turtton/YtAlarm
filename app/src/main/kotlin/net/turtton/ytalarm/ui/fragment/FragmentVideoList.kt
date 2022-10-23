@@ -109,7 +109,7 @@ class FragmentVideoList :
         lifecycleScope.launch {
             createMenuProvider(view)?.let {
                 menuProvider = it
-                activity?.addMenuProvider(it)
+                activity?.addMenuProvider(it, viewLifecycleOwner)
             }
         }
 
