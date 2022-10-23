@@ -219,9 +219,15 @@ class VideoInfoDownloadWorker(
 
         playlistArray?.let { _ ->
             var playlists = repository.getPlaylistFromIdsSync(playlistArray.toList())
-            playlists = playlists.deleteVideo(deletedVideoId).insertVideos(targetIds)
-            val playlistType = Playlist.Type.CloudPlaylist(type.url, id)
+            playlists = playlists.deleteVideo(deletedVideoId)
+            playlists = checkPlaylistSyncRule(playlists, targetIds)
+            playlists = playlists.insertVideos(targetIds)
+
+            var playlistType = Playlist.Type.CloudPlaylist(type.url, id)
             playlists = playlists.map { playlist ->
+                if (playlist.type is Playlist.Type.CloudPlaylist) {
+                    playlistType = playlistType.copy(syncRule = playlist.type.syncRule)
+                }
                 var newPlaylist = playlist.copy(type = playlistType, title = type.title)
                 if (newPlaylist.thumbnail is Playlist.Thumbnail.Drawable) {
                     newPlaylist.updateThumbnail()?.let {
@@ -232,6 +238,31 @@ class VideoInfoDownloadWorker(
             }
             repository.update(playlists)
         }
+    }
+
+    private fun checkPlaylistSyncRule(
+        playlists: List<Playlist>,
+        targetIds: List<Long>
+    ): List<Playlist> = playlists.map { immutablePlaylist ->
+        var playlist = immutablePlaylist
+        val playlistType = playlist.type
+        val expectedRule = Playlist.SyncRule.DELETE_IF_NOT_EXIST
+        if (playlistType is Playlist.Type.CloudPlaylist && playlistType.syncRule == expectedRule) {
+            val currentVideos = playlist.videos
+            val removeTarget = currentVideos.filterNot { targetIds.contains(it) }
+            val thumbnail = playlist.thumbnail
+            if (thumbnail is Playlist.Thumbnail.Video && removeTarget.contains(thumbnail.id)) {
+                val newThumbnail = targetIds.firstOrNull()?.let {
+                    Playlist.Thumbnail.Video(it)
+                } ?: run {
+                    val noImage = R.drawable.ic_no_image
+                    Playlist.Thumbnail.Drawable(noImage)
+                }
+                playlist = playlist.copy(thumbnail = newThumbnail)
+            }
+            playlist = playlist.copy(videos = emptyList())
+        }
+        playlist
     }
 
     private suspend fun LongArray.insertVideoInPlaylists(video: Video) = map {

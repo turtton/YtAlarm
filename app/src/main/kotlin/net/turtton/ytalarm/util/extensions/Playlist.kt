@@ -25,6 +25,12 @@ fun List<Playlist>.deleteVideo(videoId: Long): List<Playlist> = map {
     it.copy(videos = newVideoList.toList())
 }
 
+fun List<Playlist>.deleteVideos(videoIds: Collection<Long>): List<Playlist> = map { playlist ->
+    val newVideos = playlist.videos.toMutableList()
+    newVideos.removeAll(videoIds)
+    playlist.copy(videos = newVideos)
+}
+
 fun List<Playlist>.insertVideos(videoIds: List<Long>): List<Playlist> = map {
     val newVideoSet = it.videos.toMutableSet()
     newVideoSet += videoIds

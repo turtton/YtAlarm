@@ -24,6 +24,7 @@ import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
 import net.turtton.ytalarm.ui.selection.SelectionTrackerContainer
 import net.turtton.ytalarm.ui.selection.TagKeyProvider
 import net.turtton.ytalarm.util.extensions.collectGarbage
+import net.turtton.ytalarm.util.extensions.deleteVideos
 import net.turtton.ytalarm.util.extensions.showInsertVideoToPlaylistsDialog
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -71,15 +72,21 @@ class FragmentAllVideoList :
             selectionTracker.onRestoreInstanceState(it)
         }
 
-        videoViewModel.allVideos.observe(requireActivity()) {
-            if (it == null) return@observe
+        videoViewModel.allVideos.observe(requireActivity()) { videoList ->
+            if (videoList == null) return@observe
             lifecycleScope.launch {
-                val garbage = it.collectGarbage(WorkManager.getInstance(view.context))
+                val garbage = videoList.collectGarbage(WorkManager.getInstance(view.context))
                 if (garbage.isNotEmpty()) {
+                    val updatedPlaylists = playlistViewModel.allPlaylistsAsync
+                        .await()
+                        .filter { playlist ->
+                            garbage.any { playlist.videos.contains(it.id) }
+                        }.deleteVideos(garbage.map { it.id })
+                    playlistViewModel.update(updatedPlaylists)
                     videoViewModel.delete(garbage)
                 }
             }
-            adapter.submitList(it)
+            adapter.submitList(videoList)
         }
 
         val fab = (requireActivity() as MainActivity).binding.fab

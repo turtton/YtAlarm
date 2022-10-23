@@ -1,18 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/menu_video_list_option_set_thumbnail"
-        android:title="@string/menu_video_list_option_set_thumbnail"/>
-
-    <item
-        android:id="@+id/menu_video_list_option_download"
-        android:title="@string/menu_video_list_option_download"/>
-
-    <item
-        android:id="@+id/menu_video_list_option_reimport"
-        android:title="@string/menu_video_list_option_reimport"/>
-
-    <item
-        android:id="@+id/menu_video_list_option_delete"
-        android:title="@string/menu_video_list_option_delete"/>
+        android:id="@+id/menu_video_list_option_sync_rule"
+        android:title="@string/menu_video_list_option_sync_rule"
+        app:showAsAction="never"/>
 </menu>

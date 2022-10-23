@@ -12,14 +12,20 @@ abstract class SelectionMenuObserver<T, F>(
     private var isAdded = false
 
     override fun onSelectionChanged() {
+        val activity = fragment.requireActivity()
         if (fragment.selectionTracker.hasSelection()) {
             if (!isAdded) {
-                fragment.requireActivity()
-                    .addMenuProvider(provider, fragment.viewLifecycleOwner)
+                if (fragment is MenuProviderContainer) {
+                    fragment.menuProvider?.let { activity.removeMenuProvider(it) }
+                }
+                activity.addMenuProvider(provider, fragment.viewLifecycleOwner)
                 isAdded = true
             }
         } else {
-            fragment.requireActivity().removeMenuProvider(provider)
+            if (fragment is MenuProviderContainer) {
+                fragment.menuProvider?.let { activity.addMenuProvider(it) }
+            }
+            activity.removeMenuProvider(provider)
             isAdded = false
         }
     }
