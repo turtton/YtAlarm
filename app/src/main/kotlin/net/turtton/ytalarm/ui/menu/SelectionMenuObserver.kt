@@ -13,7 +13,8 @@ abstract class SelectionMenuObserver<T, F>(
 
     override fun onSelectionChanged() {
         val activity = fragment.requireActivity()
-        if (fragment.selectionTracker.hasSelection()) {
+        val selectionTracker = fragment.selectionTracker ?: return
+        if (selectionTracker.hasSelection()) {
             if (!isAdded) {
                 if (fragment is MenuProviderContainer) {
                     fragment.menuProvider?.let { activity.removeMenuProvider(it) }

@@ -50,7 +50,7 @@ class FragmentPlaylist :
         AlarmViewModelFactory(requireActivity().application.repository)
     }
 
-    override lateinit var selectionTracker: SelectionTracker<Long>
+    override var selectionTracker: SelectionTracker<Long>? = null
 
     @SuppressLint("RestrictedApi")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -72,10 +72,10 @@ class FragmentPlaylist :
         ).build()
         adapter.tracker = selectionTracker
 
-        selectionTracker.addObserver(PlaylistSelectionObserver(this))
+        selectionTracker?.addObserver(PlaylistSelectionObserver(this))
 
         savedInstanceState?.let {
-            selectionTracker.onRestoreInstanceState(it)
+            selectionTracker?.onRestoreInstanceState(it)
         }
 
         playlistViewModel.allPlaylists.observe(viewLifecycleOwner) {
@@ -120,7 +120,7 @@ class FragmentPlaylist :
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        selectionTracker.onSaveInstanceState(outState)
+        selectionTracker?.onSaveInstanceState(outState)
     }
 
     class PlaylistSelectionObserver(
@@ -130,8 +130,9 @@ class FragmentPlaylist :
         AttachableMenuProvider(
             fragment,
             R.menu.menu_playlist_action,
-            R.id.menu_playlist_action_remove to {
-                val selection = fragment.selectionTracker.selection.toList()
+            R.id.menu_playlist_action_remove to to@{
+                val selectionTracker = fragment.selectionTracker ?: return@to false
+                val selection = selectionTracker.selection.toList()
                 DialogRemoveVideo { _, _ ->
                     val alarmsAsync = fragment.alarmViewModel.getAllAlarmsAsync()
                     val async = fragment.playlistViewModel.getFromIdsAsync(selection)
@@ -159,7 +160,7 @@ class FragmentPlaylist :
                             }
                         }
                     }
-                    fragment.selectionTracker.clearSelection()
+                    selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "PlaylistRemoveDialog")
                 true
             }

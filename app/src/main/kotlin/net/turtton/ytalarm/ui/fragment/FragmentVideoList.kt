@@ -67,7 +67,7 @@ class FragmentVideoList :
 
     var isAddVideoFabRotated = false
 
-    override lateinit var selectionTracker: SelectionTracker<Long>
+    override var selectionTracker: SelectionTracker<Long>? = null
     lateinit var adapter: VideoListAdapter<FragmentVideoList>
     override var menuProvider: MenuProvider? = null
 
@@ -98,10 +98,10 @@ class FragmentVideoList :
         ).build()
         adapter.tracker = selectionTracker
 
-        selectionTracker.addObserver(VideoSelectionObserver(this))
+        selectionTracker?.addObserver(VideoSelectionObserver(this))
 
         savedInstanceState?.let {
-            selectionTracker.onRestoreInstanceState(it)
+            selectionTracker?.onRestoreInstanceState(it)
         }
 
         updateListObserver()
@@ -153,7 +153,7 @@ class FragmentVideoList :
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        selectionTracker.onSaveInstanceState(outState)
+        selectionTracker?.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -450,13 +450,14 @@ class FragmentVideoList :
         AttachableMenuProvider(
             fragment,
             R.menu.menu_video_list_in_playlist,
-            R.id.menu_video_list_in_pl_action_remove to {
-                val selection = fragment.selectionTracker.selection.distinct()
+            R.id.menu_video_list_in_pl_action_remove to to@{
+                val selectionTracker = fragment.selectionTracker ?: return@to false
+                val selection = selectionTracker.selection.distinct()
                 DialogRemoveVideo { _, _ ->
                     fragment.lifecycleScope.launch {
                         fragment.updatePlaylistThumbnails(selection, fragment.currentId.value)
                     }
-                    fragment.selectionTracker.clearSelection()
+                    selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "VideoRemoveDialog")
                 true
             }

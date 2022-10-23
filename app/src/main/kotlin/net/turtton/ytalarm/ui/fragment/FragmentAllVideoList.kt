@@ -38,7 +38,7 @@ class FragmentAllVideoList :
     VideoViewContainer,
     PlaylistViewContainer,
     SelectionTrackerContainer<Long> {
-    override lateinit var selectionTracker: SelectionTracker<Long>
+    override var selectionTracker: SelectionTracker<Long>? = null
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
@@ -66,10 +66,10 @@ class FragmentAllVideoList :
         ).build()
         adapter.tracker = selectionTracker
 
-        selectionTracker.addObserver(VideoSelectionObserver(this))
+        selectionTracker?.addObserver(VideoSelectionObserver(this))
 
         savedInstanceState?.let {
-            selectionTracker.onRestoreInstanceState(it)
+            selectionTracker?.onRestoreInstanceState(it)
         }
 
         videoViewModel.allVideos.observe(requireActivity()) { videoList ->
@@ -97,7 +97,7 @@ class FragmentAllVideoList :
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        selectionTracker.onSaveInstanceState(outState)
+        selectionTracker?.onSaveInstanceState(outState)
     }
 
     class VideoSelectionObserver(
@@ -107,8 +107,8 @@ class FragmentAllVideoList :
         AttachableMenuProvider(
             fragment,
             R.menu.menu_video_list_action,
-            R.id.menu_video_list_action_add_to to { _ ->
-                val selection = fragment.selectionTracker.selection
+            R.id.menu_video_list_action_add_to to to@{ _ ->
+                val selection = fragment.selectionTracker?.selection ?: return@to false
                 fragment.lifecycleScope.launch {
                     val playlists = fragment.playlistViewModel.allPlaylistsAsync
                         .await()
@@ -125,8 +125,9 @@ class FragmentAllVideoList :
                 }
                 true
             },
-            R.id.menu_video_list_action_remove to {
-                val selection = fragment.selectionTracker.selection.toList()
+            R.id.menu_video_list_action_remove to to@{
+                val selectionTracker = fragment.selectionTracker ?: return@to false
+                val selection = selectionTracker.selection.toList()
                 DialogRemoveVideo { _, _ ->
                     val videoViewModel = fragment.videoViewModel
                     val async = videoViewModel.getFromIdsAsync(selection)
@@ -135,7 +136,7 @@ class FragmentAllVideoList :
                         videoViewModel.delete(videos)
                         fragment.updatePlaylistThumbnails(selection)
                     }
-                    fragment.selectionTracker.clearSelection()
+                    selectionTracker.clearSelection()
                 }.show(fragment.childFragmentManager, "VideoRemoveDialog")
                 true
             }
