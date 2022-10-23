@@ -145,13 +145,22 @@ class AlarmSettingsAdapter(
                     .show()
             }
 
+        val vibrationTitle = R.string.setting_vibration
+        val vibration =
+            AlarmSettingData.ToggleData(vibrationTitle, alarm.shouldVibrate) { _, shouldVibrate ->
+                alarmState.update {
+                    it.copy(shouldVibrate = shouldVibrate)
+                }
+            }
+
         dataSet = arrayOf(
             timeSelector,
             repeatTypeSelector,
             playlistSelector,
             loopToggle,
             volumeProgress,
-            snoozeTime
+            snoozeTime,
+            vibration
         )
     }
 

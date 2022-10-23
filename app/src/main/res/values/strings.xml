@@ -29,6 +29,7 @@
         <item quantity="one">%d minute</item>
         <item quantity="other">%d minutes</item>
     </plurals>
+    <string name="setting_vibration">Vibration</string>
     <string name="menu_item_aram_list">AramList</string>
     <string name="menu_title_playlist">PlayList</string>
     <string name="item_video_list_data_size">%02.1fMB</string>
@@ -111,6 +112,7 @@
     <string name="snackbar_error_failed_to_get_video">Failed to get video data</string>
     <string name="snackbar_error_failed_to_get_playlist">Failed to get playlist data</string>
     <string name="snackbar_error_failed_to_import_video">Failed to import video</string>
+    <string name="snackbar_error_failed_to_prepare_vibration">Failed to prepare vibration system.</string>
     <string name="snackbar_error_empty_video">Video is Empty</string>
     <string name="snackbar_error_unknown">Unknown Error.</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
