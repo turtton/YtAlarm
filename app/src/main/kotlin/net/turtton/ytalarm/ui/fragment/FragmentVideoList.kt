@@ -182,32 +182,53 @@ class FragmentVideoList :
                 this,
                 R.menu.menu_video_list_option,
                 R.id.menu_video_list_option_sync_rule to {
-                    showSyncRuleSelectDialog(view)
+                    lifecycleScope.launch {
+                        showSyncRuleSelectDialog(view)
+                    }
                     true
                 }
             )
         }
     }
 
-    private fun showSyncRuleSelectDialog(view: View) {
-        AlertDialog.Builder(view.context).setItems(R.array.dialog_video_list_syncrule) { _, i ->
-            when (i) {
-                DIALOG_ITEM_SYNC_ALWAYS_ADD -> {
-                    lifecycleScope.launch {
-                        updateCloudPlaylistSyncRule(view, Playlist.SyncRule.ALWAYS_ADD)
-                    }
-                }
-                DIALOG_ITEM_SYNC_DELETE_IF_NOT_EXIST -> {
-                    lifecycleScope.launch {
-                        updateCloudPlaylistSyncRule(view, Playlist.SyncRule.DELETE_IF_NOT_EXIST)
-                    }
-                }
-                else -> {
-                    val message = R.string.snackbar_error_unknown
-                    Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
-                }
+    private suspend fun showSyncRuleSelectDialog(view: View) {
+        val playlist = playlistViewModel.getFromIdAsync(currentId.value).await() ?: kotlin.run {
+            val message = R.string.snackbar_error_failed_to_get_playlist
+            Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
+        }
+        val current = playlist.type.let { it as? Playlist.Type.CloudPlaylist }
+            ?.syncRule
+            ?.ordinal
+            ?: kotlin.run {
+                val message = R.string.snackbar_error_unexpected_playlist_state
+                Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                findNavController().navigateUp()
+                return
             }
-        }.show()
+        AlertDialog.Builder(view.context)
+            .setSingleChoiceItems(R.array.dialog_video_list_syncrule, current) { dialog, i ->
+                when (i) {
+                    DIALOG_ITEM_SYNC_ALWAYS_ADD -> {
+                        lifecycleScope.launch {
+                            updateCloudPlaylistSyncRule(view, Playlist.SyncRule.ALWAYS_ADD)
+                            dialog.dismiss()
+                        }
+                    }
+                    DIALOG_ITEM_SYNC_DELETE_IF_NOT_EXIST -> {
+                        lifecycleScope.launch {
+                            updateCloudPlaylistSyncRule(view, Playlist.SyncRule.DELETE_IF_NOT_EXIST)
+                            dialog.dismiss()
+                        }
+                    }
+                    else -> {
+                        val message = R.string.snackbar_error_unknown
+                        Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    }
+                }
+            }.show()
     }
 
     private suspend fun updateCloudPlaylistSyncRule(view: View, rule: Playlist.SyncRule) {
