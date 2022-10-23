@@ -239,7 +239,7 @@ class VideoListAdapter<T>(
     ) {
         holder.optionButton.setOnClickListener { view ->
             val menu = PopupMenu(view.context, view.findViewById(R.id.item_video_option_button))
-            menu.inflate(R.menu.menu_video_list_option)
+            menu.inflate(R.menu.menu_video_list_item_option)
             menu.setOnMenuItemClickListener { menuItem ->
                 onVideoListMenuClicked(view, fragment, menuItem, video)
             }
@@ -255,7 +255,7 @@ class VideoListAdapter<T>(
         video: Video
     ): Boolean {
         when (menuItem.itemId) {
-            R.id.menu_video_list_option_set_thumbnail -> {
+            R.id.menu_video_list_item_option_set_thumbnail -> {
                 fragment.lifecycleScope.launch {
                     val playlistId = fragment.currentId.value
                     val playlist = fragment.playlistViewModel.getFromIdAsync(playlistId).await()
@@ -272,9 +272,9 @@ class VideoListAdapter<T>(
                     Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
                 }
             }
-            R.id.menu_video_list_option_download -> downloadVideo(view)
-            R.id.menu_video_list_option_reimport -> reimportVideo(view, fragment as T, video)
-            R.id.menu_video_list_option_delete -> deleteVideo(fragment as T, video)
+            R.id.menu_video_list_item_option_download -> downloadVideo(view)
+            R.id.menu_video_list_item_option_reimport -> reimportVideo(view, fragment as T, video)
+            R.id.menu_video_list_item_option_delete -> deleteVideo(fragment as T, video)
             else -> return false
         }
         return true

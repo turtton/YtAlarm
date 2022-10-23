@@ -2,6 +2,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/menu_playlist_option_rename"
+        android:id="@+id/menu_playlist_item_option_rename"
         android:title="@string/menu_playlist_option_rename" />
 </menu>

@@ -175,10 +175,10 @@ class PlaylistAdapter<T>(
         optionButton.setOnClickListener {
             val menu =
                 PopupMenu(it.context, it.findViewById(R.id.item_playlist_option_button))
-            menu.inflate(R.menu.menu_playlist_option)
+            menu.inflate(R.menu.menu_playlist_item_option)
             menu.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
-                    R.id.menu_playlist_option_rename -> {
+                    R.id.menu_playlist_item_option_rename -> {
                         DialogNameInput(playlistId, fragment, title)
                             .show(fragment.childFragmentManager, "DialogNameInput")
                         true

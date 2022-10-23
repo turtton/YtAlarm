@@ -137,10 +137,10 @@
     <string name="menu_playlist_option_rename">Rename</string>
     <string name="item_playlist_more_button_description">Option Button</string>
 
-    <string name="menu_video_list_option_set_thumbnail">Set as playlist thumbnail</string>
-    <string name="menu_video_list_option_download">Download</string>
-    <string name="menu_video_list_option_reimport">Reimport</string>
-    <string name="menu_video_list_option_delete">Delete</string>
+    <string name="menu_video_list_item_option_set_thumbnail">Set as playlist thumbnail</string>
+    <string name="menu_video_list_item_option_download">Download</string>
+    <string name="menu_video_list_item_option_reimport">Reimport</string>
+    <string name="menu_video_list_item_option_delete">Delete</string>
 
-    <string name="menu_all_video_list_option_add_to_playlist">Add to Playlist</string>
+    <string name="menu_all_video_list_item_option_add_to_playlist">Add to Playlist</string>
 </resources>
