@@ -5,6 +5,8 @@ import android.app.DatePickerDialog
 import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.text.format.DateFormat
 import android.util.Log
@@ -18,6 +20,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.TimePicker
 import androidx.annotation.StringRes
+import androidx.core.net.toUri
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -149,6 +152,18 @@ class AlarmSettingsAdapter(
         val vibration =
             AlarmSettingData.ToggleData(vibrationTitle, alarm.shouldVibrate) { _, shouldVibrate ->
                 alarmState.update {
+                    if (shouldVibrate && Build.VERSION.SDK_INT == Build.VERSION_CODES.S) {
+                        val showIssue = R.string.dialog_vibration_warning_show_issue
+                        AlertDialog.Builder(context)
+                            .setIcon(R.drawable.ic_warning)
+                            .setTitle(R.string.dialog_vibration_waring_title)
+                            .setMessage(R.string.dialog_vibration_waring_message)
+                            .setPositiveButton(showIssue) { _, _ ->
+                                val url = "https://github.com/turtton/YtAlarm/issues/117".toUri()
+                                val intent = Intent(Intent.ACTION_VIEW, url)
+                                fragment.startActivity(intent)
+                            }.show()
+                    }
                     it.copy(shouldVibrate = shouldVibrate)
                 }
             }

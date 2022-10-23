@@ -105,6 +105,10 @@
     <string name="dialog_video_import_failed_retry">Retry</string>
     <string name="dialog_video_import_failed_clear">Clear</string>
 
+    <string name="dialog_vibration_waring_title">Attention</string>
+    <string name="dialog_vibration_waring_message">Vibration system may not work in Android12.</string>
+    <string name="dialog_vibration_warning_show_issue">Open Issue</string>
+
     <string name="snackbar_error_unexpected_playlist_state">Please reenter playlist.</string>
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
