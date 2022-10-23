@@ -1,10 +1,12 @@
 package net.turtton.ytalarm.ui.fragment
 
+import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.core.view.MenuProvider
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
@@ -34,6 +36,7 @@ import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.ui.dialog.DialogUrlInput.Companion.showVideoImportDialog
 import net.turtton.ytalarm.ui.fragment.FragmentAllVideoList.Companion.updatePlaylistThumbnails
 import net.turtton.ytalarm.ui.menu.AttachableMenuProvider
+import net.turtton.ytalarm.ui.menu.MenuProviderContainer
 import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
 import net.turtton.ytalarm.ui.selection.SelectionTrackerContainer
 import net.turtton.ytalarm.ui.selection.TagKeyProvider
@@ -54,7 +57,8 @@ class FragmentVideoList :
     FragmentAbstractList(),
     VideoViewContainer,
     PlaylistViewContainer,
-    SelectionTrackerContainer<Long> {
+    SelectionTrackerContainer<Long>,
+    MenuProviderContainer {
     lateinit var animFabAppear: Animation
     lateinit var animFabDisappear: Animation
     lateinit var animFabRotateForward: Animation
@@ -65,6 +69,7 @@ class FragmentVideoList :
 
     override lateinit var selectionTracker: SelectionTracker<Long>
     lateinit var adapter: VideoListAdapter<FragmentVideoList>
+    override var menuProvider: MenuProvider? = null
 
     private val args by navArgs<FragmentVideoListArgs>()
     val currentId = MutableStateFlow(0L)
@@ -100,6 +105,13 @@ class FragmentVideoList :
         }
 
         updateListObserver()
+
+        lifecycleScope.launch {
+            createMenuProvider(view)?.let {
+                menuProvider = it
+                activity?.addMenuProvider(it)
+            }
+        }
 
         val activity = requireActivity() as MainActivity
         activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
@@ -159,6 +171,61 @@ class FragmentVideoList :
         val fabAddVideoFromLink = binding.fabAddVideoFromLink
         fabAddVideoFromLink.visibility = View.GONE
         fabAddVideoFromLink.clearAnimation()
+    }
+
+    private suspend fun createMenuProvider(view: View): MenuProvider? {
+        val type = playlistViewModel.getFromIdAsync(currentId.value).await()?.type ?: return null
+        return when (type) {
+            is Playlist.Type.Importing -> null
+            is Playlist.Type.Original -> null
+            is Playlist.Type.CloudPlaylist -> AttachableMenuProvider(
+                this,
+                R.menu.menu_video_list_option,
+                R.id.menu_video_list_option_sync_rule to {
+                    showSyncRuleSelectDialog(view)
+                    true
+                }
+            )
+        }
+    }
+
+    private fun showSyncRuleSelectDialog(view: View) {
+        AlertDialog.Builder(view.context).setItems(R.array.dialog_video_list_syncrule) { _, i ->
+            when (i) {
+                DIALOG_ITEM_SYNC_ALWAYS_ADD -> {
+                    lifecycleScope.launch {
+                        updateCloudPlaylistSyncRule(view, Playlist.SyncRule.ALWAYS_ADD)
+                    }
+                }
+                DIALOG_ITEM_SYNC_DELETE_IF_NOT_EXIST -> {
+                    lifecycleScope.launch {
+                        updateCloudPlaylistSyncRule(view, Playlist.SyncRule.DELETE_IF_NOT_EXIST)
+                    }
+                }
+                else -> {
+                    val message = R.string.snackbar_error_unknown
+                    Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                }
+            }
+        }.show()
+    }
+
+    private suspend fun updateCloudPlaylistSyncRule(view: View, rule: Playlist.SyncRule) {
+        val id = currentId.value
+        val playlist = playlistViewModel.getFromIdAsync(id).await() ?: kotlin.run {
+            val message = R.string.snackbar_error_failed_to_get_playlist
+            Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+            return
+        }
+        var type = playlist.type
+        if (type !is Playlist.Type.CloudPlaylist) {
+            val message = R.string.snackbar_error_unexpected_playlist_state
+            Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+            findNavController().navigateUp()
+            return
+        }
+        type = type.copy(syncRule = rule)
+        playlistViewModel.update(playlist.copy(type = type))
     }
 
     private fun listenFabWithOriginalMode() {
@@ -348,6 +415,11 @@ class FragmentVideoList :
                 }
             }
         }
+    }
+
+    companion object {
+        const val DIALOG_ITEM_SYNC_ALWAYS_ADD = 0
+        const val DIALOG_ITEM_SYNC_DELETE_IF_NOT_EXIST = 1
     }
 
     class VideoSelectionObserver(
