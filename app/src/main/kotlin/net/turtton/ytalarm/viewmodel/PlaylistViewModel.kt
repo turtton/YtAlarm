@@ -10,6 +10,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
 import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.util.extensions.updateDate
 
 class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
     val allPlaylists: LiveData<List<Playlist>> by lazy { repository.allPlaylists.asLiveData() }
@@ -31,11 +32,11 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
     }
 
     fun update(playlist: Playlist) = viewModelScope.launch {
-        repository.update(playlist)
+        repository.update(playlist.updateDate())
     }
 
     fun update(playlists: List<Playlist>) = viewModelScope.launch {
-        repository.update(playlists)
+        repository.update(playlists.updateDate())
     }
 
     fun insertAsync(playlist: Playlist): Deferred<Long> = viewModelScope.async {

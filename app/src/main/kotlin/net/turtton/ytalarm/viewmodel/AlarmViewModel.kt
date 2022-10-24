@@ -10,6 +10,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.DataRepository
 import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.util.extensions.updateDate
 
 class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
     val allAlarms: LiveData<List<Alarm>> by lazy { repository.allAlarms.asLiveData() }
@@ -31,7 +32,7 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
     }
 
     fun update(alarm: Alarm) = viewModelScope.launch {
-        repository.update(alarm)
+        repository.update(alarm.updateDate())
     }
 
     fun delete(alarm: Alarm) = viewModelScope.launch {
