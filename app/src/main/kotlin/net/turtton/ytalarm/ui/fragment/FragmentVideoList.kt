@@ -180,7 +180,7 @@ class FragmentVideoList :
             is Playlist.Type.Original -> null
             is Playlist.Type.CloudPlaylist -> AttachableMenuProvider(
                 this,
-                R.menu.menu_video_list_option,
+                R.menu.menu_video_list_option_syncmode,
                 R.id.menu_video_list_option_sync_rule to {
                     lifecycleScope.launch {
                         showSyncRuleSelectDialog(view)
