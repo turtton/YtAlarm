@@ -2,11 +2,20 @@ package net.turtton.ytalarm.ui.fragment
 
 import android.app.AlertDialog
 import android.content.Context
+import android.graphics.BlendMode
+import android.graphics.BlendModeColorFilter
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import androidx.core.view.MenuProvider
+import androidx.core.view.forEach
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
@@ -42,8 +51,13 @@ import net.turtton.ytalarm.ui.selection.SelectionTrackerContainer
 import net.turtton.ytalarm.ui.selection.TagKeyProvider
 import net.turtton.ytalarm.util.extensions.createImportingPlaylist
 import net.turtton.ytalarm.util.extensions.insertVideos
+import net.turtton.ytalarm.util.extensions.privatePreferences
+import net.turtton.ytalarm.util.extensions.showMessageIfNull
 import net.turtton.ytalarm.util.extensions.takeStateIfNotFinished
 import net.turtton.ytalarm.util.extensions.updateThumbnail
+import net.turtton.ytalarm.util.extensions.videoOrderRule
+import net.turtton.ytalarm.util.extensions.videoOrderUp
+import net.turtton.ytalarm.util.order.VideoOrder
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
@@ -104,7 +118,7 @@ class FragmentVideoList :
             selectionTracker?.onRestoreInstanceState(it)
         }
 
-        updateListObserver()
+        updateListObserver(view)
 
         lifecycleScope.launch {
             createMenuProvider(view)?.let {
@@ -177,17 +191,8 @@ class FragmentVideoList :
         val type = playlistViewModel.getFromIdAsync(currentId.value).await()?.type ?: return null
         return when (type) {
             is Playlist.Type.Importing -> null
-            is Playlist.Type.Original -> null
-            is Playlist.Type.CloudPlaylist -> AttachableMenuProvider(
-                this,
-                R.menu.menu_video_list_option_syncmode,
-                R.id.menu_video_list_option_sync_rule to {
-                    lifecycleScope.launch {
-                        showSyncRuleSelectDialog(view)
-                    }
-                    true
-                }
-            )
+            is Playlist.Type.Original -> VideoListMenuProvider(this, view)
+            is Playlist.Type.CloudPlaylist -> VideoListSyncModeMenuProvider(this, view)
         }
     }
 
@@ -263,7 +268,7 @@ class FragmentVideoList :
                     val newPlaylist = createImportingPlaylist()
                     val newId = playlistViewModel.insertAsync(newPlaylist).await()
                     currentId.update { newId }
-                    updateListObserver()
+                    updateListObserver(it)
                 }
                 launch(Dispatchers.Main) {
                     showVideoImportDialog(it, currentId.value)
@@ -299,7 +304,7 @@ class FragmentVideoList :
                                 playlist.updateThumbnail()?.let { playlist = it }
                                 val newId = playlistViewModel.insertAsync(playlist).await()
                                 currentId.update { newId }
-                                updateListObserver()
+                                updateListObserver(view)
                             } else {
                                 playlistViewModel.update(playlist)
                             }
@@ -404,16 +409,31 @@ class FragmentVideoList :
         }
     }
 
-    private fun updateListObserver() {
+    private fun updateListObserver(view: View) {
         lifecycleScope.launch(Dispatchers.Main) mainThread@{
             playlistViewModel.getFromId(currentId.value).observe(viewLifecycleOwner) { playlist ->
                 playlist?.videos?.also { videos ->
-                    videoViewModel.getFromIds(videos)
-                        .observe(viewLifecycleOwner) { list ->
-                            list?.also {
-                                adapter.submitList(it)
+                    videoViewModel.getFromIds(videos).observe(viewLifecycleOwner) { list ->
+                        list?.also submit@{ immutableList ->
+                            val targetList = immutableList.toMutableList()
+                            val preferences =
+                                activity?.privatePreferences.showMessageIfNull(view)
+                                    ?: kotlin.run {
+                                        findNavController().navigateUp()
+                                        return@submit
+                                    }
+                            when (preferences.videoOrderRule) {
+                                VideoOrder.TITLE -> targetList.sortBy { it.title }
+                                VideoOrder.CREATION_DATE -> targetList.sortBy {
+                                    it.creationDate.timeInMillis
+                                }
                             }
+                            if (!preferences.videoOrderUp) {
+                                targetList.reverse()
+                            }
+                            adapter.submitList(targetList)
                         }
+                    }
                 }
             }
         }
@@ -463,4 +483,162 @@ class FragmentVideoList :
             }
         )
     )
+
+    private class VideoListMenuProvider(
+        private val fragment: FragmentVideoList,
+        private val view: View
+    ) : MenuProvider {
+        override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+            menuInflater.inflate(R.menu.menu_video_list_option, menu)
+            menu.forEach {
+                val icon = it.icon ?: return@forEach
+                icon.mutate()
+                val colorRes = fragment.resources.getColor(R.color.white, null)
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                    icon.colorFilter = BlendModeColorFilter(colorRes, BlendMode.SRC_ATOP)
+                } else {
+                    icon.colorFilter = PorterDuffColorFilter(colorRes, PorterDuff.Mode.SRC_ATOP)
+                }
+
+                if (it.itemId == R.id.menu_video_list_option_order) {
+                    val preferences = fragment.activity?.privatePreferences ?: kotlin.run {
+                        val message = R.string.snackbar_error_failed_to_access_settings_data
+                        Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                        fragment.findNavController().navigateUp()
+                        return
+                    }
+                    val drawable = if (preferences.videoOrderUp) {
+                        R.drawable.ic_arrow_upward
+                    } else {
+                        R.drawable.ic_arrow_downward
+                    }
+                    it.setIcon(drawable)
+                }
+            }
+        }
+
+        override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+            return when (menuItem.itemId) {
+                R.id.menu_video_list_option_order -> {
+                    val preferences = fragment.activity?.privatePreferences.showMessageIfNull(view)
+                        ?: kotlin.run {
+                            fragment.findNavController().navigateUp()
+                            return false
+                        }
+                    val next = !preferences.videoOrderUp
+                    preferences.videoOrderUp = next
+                    val drawable = if (next) {
+                        R.drawable.ic_arrow_upward
+                    } else {
+                        R.drawable.ic_arrow_downward
+                    }
+                    menuItem.setIcon(drawable)
+                    fragment.updateListObserver(view)
+                    true
+                }
+                R.id.menu_video_list_option_sortrule -> {
+                    val preferences = fragment.activity?.privatePreferences.showMessageIfNull(view)
+                        ?: kotlin.run {
+                            fragment.findNavController().navigateUp()
+                            return false
+                        }
+                    val current = preferences.videoOrderRule
+                    val selectionString = R.array.dialog_video_order
+                    AlertDialog.Builder(view.context)
+                        .setSingleChoiceItems(
+                            selectionString,
+                            current.ordinal
+                        ) { dialog, selected ->
+                            preferences.videoOrderRule = VideoOrder.values()[selected]
+                            dialog.dismiss()
+                            fragment.updateListObserver(view)
+                        }.show()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private class VideoListSyncModeMenuProvider(
+        val fragment: FragmentVideoList,
+        val view: View
+    ) : MenuProvider {
+        override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+            menuInflater.inflate(R.menu.menu_video_list_option_syncmode, menu)
+            menu.forEach {
+                val icon = it.icon ?: return@forEach
+                icon.mutate()
+                val colorRes = fragment.resources.getColor(R.color.white, null)
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                    icon.colorFilter = BlendModeColorFilter(colorRes, BlendMode.SRC_ATOP)
+                } else {
+                    icon.colorFilter = PorterDuffColorFilter(colorRes, PorterDuff.Mode.SRC_ATOP)
+                }
+
+                if (it.itemId == R.id.menu_video_list_option_sync_order) {
+                    val preferences = fragment.activity?.privatePreferences ?: kotlin.run {
+                        val message = R.string.snackbar_error_failed_to_access_settings_data
+                        Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                        fragment.findNavController().navigateUp()
+                        return
+                    }
+                    val drawable = if (preferences.videoOrderUp) {
+                        R.drawable.ic_arrow_upward
+                    } else {
+                        R.drawable.ic_arrow_downward
+                    }
+                    it.setIcon(drawable)
+                }
+            }
+        }
+
+        override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+            return when (menuItem.itemId) {
+                R.id.menu_video_list_option_sync_order -> {
+                    val preferences = fragment.activity?.privatePreferences.showMessageIfNull(view)
+                        ?: kotlin.run {
+                            fragment.findNavController().navigateUp()
+                            return false
+                        }
+                    val next = !preferences.videoOrderUp
+                    preferences.videoOrderUp = next
+                    val drawable = if (next) {
+                        R.drawable.ic_arrow_upward
+                    } else {
+                        R.drawable.ic_arrow_downward
+                    }
+                    menuItem.setIcon(drawable)
+                    fragment.updateListObserver(view)
+                    true
+                }
+                R.id.menu_video_list_option_sync_sortrule -> {
+                    val preferences = fragment.activity?.privatePreferences.showMessageIfNull(view)
+                        ?: kotlin.run {
+                            fragment.findNavController().navigateUp()
+                            return false
+                        }
+                    val current = preferences.videoOrderRule
+                    val selectionString = R.array.dialog_video_order
+                    AlertDialog.Builder(view.context)
+                        .setSingleChoiceItems(
+                            selectionString,
+                            current.ordinal
+                        ) { dialog, selected ->
+                            preferences.videoOrderRule = VideoOrder.values()[selected]
+                            dialog.dismiss()
+                            fragment.updateListObserver(view)
+                        }.show()
+                    true
+                }
+                R.id.menu_video_list_option_sync_rule -> {
+                    fragment.lifecycleScope.launch {
+                        fragment.showSyncRuleSelectDialog(view)
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
+    }
 }

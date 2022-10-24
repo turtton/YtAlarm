@@ -1,14 +1,27 @@
 package net.turtton.ytalarm.ui.fragment
 
+import android.app.AlertDialog
+import android.graphics.BlendMode
+import android.graphics.BlendModeColorFilter
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.os.Build
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
+import androidx.core.view.MenuProvider
+import androidx.core.view.forEach
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.work.WorkManager
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
@@ -20,12 +33,18 @@ import net.turtton.ytalarm.ui.adapter.VideoListAdapter
 import net.turtton.ytalarm.ui.dialog.DialogRemoveVideo
 import net.turtton.ytalarm.ui.dialog.DialogUrlInput.Companion.showVideoImportDialog
 import net.turtton.ytalarm.ui.menu.AttachableMenuProvider
+import net.turtton.ytalarm.ui.menu.MenuProviderContainer
 import net.turtton.ytalarm.ui.menu.SelectionMenuObserver
 import net.turtton.ytalarm.ui.selection.SelectionTrackerContainer
 import net.turtton.ytalarm.ui.selection.TagKeyProvider
 import net.turtton.ytalarm.util.extensions.collectGarbage
 import net.turtton.ytalarm.util.extensions.deleteVideos
+import net.turtton.ytalarm.util.extensions.privatePreferences
 import net.turtton.ytalarm.util.extensions.showInsertVideoToPlaylistsDialog
+import net.turtton.ytalarm.util.extensions.showMessageIfNull
+import net.turtton.ytalarm.util.extensions.videoOrderRule
+import net.turtton.ytalarm.util.extensions.videoOrderUp
+import net.turtton.ytalarm.util.order.VideoOrder
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
@@ -37,8 +56,12 @@ class FragmentAllVideoList :
     FragmentAbstractList(),
     VideoViewContainer,
     PlaylistViewContainer,
-    SelectionTrackerContainer<Long> {
+    SelectionTrackerContainer<Long>,
+    MenuProviderContainer {
     override var selectionTracker: SelectionTracker<Long>? = null
+    override var menuProvider: MenuProvider? = null
+
+    lateinit var adapter: VideoListAdapter<FragmentAllVideoList>
 
     override val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
@@ -54,7 +77,7 @@ class FragmentAllVideoList :
 
         val recyclerView = binding.recyclerList
         recyclerView.layoutManager = LinearLayoutManager(view.context)
-        val adapter = VideoListAdapter(this)
+        adapter = VideoListAdapter(this)
         recyclerView.adapter = adapter
 
         selectionTracker = SelectionTracker.Builder(
@@ -72,6 +95,21 @@ class FragmentAllVideoList :
             selectionTracker?.onRestoreInstanceState(it)
         }
 
+        updateObserver(view)
+
+        AllVideoListMenuProvider(this, view).also {
+            menuProvider = it
+            activity.addMenuProvider(it, viewLifecycleOwner)
+        }
+
+        val fab = (requireActivity() as MainActivity).binding.fab
+        fab.shrink()
+        fab.visibility = View.VISIBLE
+
+        fab.setOnClickListener { showVideoImportDialog(it) }
+    }
+
+    private fun updateObserver(view: View) {
         videoViewModel.allVideos.observe(requireActivity()) { videoList ->
             if (videoList == null) return@observe
             lifecycleScope.launch {
@@ -86,14 +124,25 @@ class FragmentAllVideoList :
                     videoViewModel.delete(garbage)
                 }
             }
-            adapter.submitList(videoList)
+            val targetList = videoList.toMutableList()
+            val preferences = activity?.privatePreferences ?: kotlin.run {
+                val message =
+                    R.string.snackbar_error_failed_to_access_settings_data
+                Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                findNavController().navigateUp()
+                return@observe
+            }
+            when (preferences.videoOrderRule) {
+                VideoOrder.TITLE -> targetList.sortBy { it.title }
+                VideoOrder.CREATION_DATE -> targetList.sortBy {
+                    it.creationDate.timeInMillis
+                }
+            }
+            if (!preferences.videoOrderUp) {
+                targetList.reverse()
+            }
+            adapter.submitList(targetList)
         }
-
-        val fab = (requireActivity() as MainActivity).binding.fab
-        fab.shrink()
-        fab.visibility = View.VISIBLE
-
-        fab.setOnClickListener { showVideoImportDialog(it) }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -182,6 +231,82 @@ class FragmentAllVideoList :
                 }
             }
             playlistViewModel.update(newList)
+        }
+    }
+
+    private class AllVideoListMenuProvider(
+        private val fragment: FragmentAllVideoList,
+        private val view: View
+    ) : MenuProvider {
+        override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+            menuInflater.inflate(R.menu.menu_allvideos_option, menu)
+            menu.forEach {
+                val icon = it.icon ?: return@forEach
+                icon.mutate()
+                val colorRes = fragment.resources.getColor(R.color.white, null)
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
+                    icon.colorFilter = BlendModeColorFilter(colorRes, BlendMode.SRC_ATOP)
+                } else {
+                    icon.colorFilter = PorterDuffColorFilter(colorRes, PorterDuff.Mode.SRC_ATOP)
+                }
+
+                if (it.itemId == R.id.menu_allvideos_option_sync_order) {
+                    val preferences = fragment.activity?.privatePreferences ?: kotlin.run {
+                        val message = R.string.snackbar_error_failed_to_access_settings_data
+                        Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                        fragment.findNavController().navigateUp()
+                        return
+                    }
+                    val drawable = if (preferences.videoOrderUp) {
+                        R.drawable.ic_arrow_upward
+                    } else {
+                        R.drawable.ic_arrow_downward
+                    }
+                    it.setIcon(drawable)
+                }
+            }
+        }
+
+        override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+            return when (menuItem.itemId) {
+                R.id.menu_allvideos_option_sync_order -> {
+                    val preferences = fragment.activity?.privatePreferences.showMessageIfNull(view)
+                        ?: kotlin.run {
+                            fragment.findNavController().navigateUp()
+                            return false
+                        }
+                    val next = !preferences.videoOrderUp
+                    preferences.videoOrderUp = next
+                    val drawable = if (next) {
+                        R.drawable.ic_arrow_upward
+                    } else {
+                        R.drawable.ic_arrow_downward
+                    }
+                    menuItem.setIcon(drawable)
+                    fragment.updateObserver(view)
+                    true
+                }
+                R.id.menu_allvideos_option_sync_sortrule -> {
+                    val preferences = fragment.activity?.privatePreferences.showMessageIfNull(view)
+                        ?: kotlin.run {
+                            fragment.findNavController().navigateUp()
+                            return false
+                        }
+                    val current = preferences.videoOrderRule
+                    val selectionString = R.array.dialog_video_order
+                    AlertDialog.Builder(view.context)
+                        .setSingleChoiceItems(
+                            selectionString,
+                            current.ordinal
+                        ) { dialog, selected ->
+                            preferences.videoOrderRule = VideoOrder.values()[selected]
+                            dialog.dismiss()
+                            fragment.updateObserver(view)
+                        }.show()
+                    true
+                }
+                else -> false
+            }
         }
     }
 }
