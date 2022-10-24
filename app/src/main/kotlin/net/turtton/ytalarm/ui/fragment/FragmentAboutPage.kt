@@ -34,7 +34,9 @@ class FragmentAboutPage : Fragment() {
         fab.visibility = View.GONE
 
         val version = BuildConfig.VERSION_NAME
-        binding.fragmentAboutVersion.text = view.context.getString(R.string.version, version)
+        val versionCode = BuildConfig.VERSION_CODE
+        val versionText = view.context.getString(R.string.version, version, versionCode)
+        binding.fragmentAboutVersion.text = versionText
 
         val aboutList = binding.fragmentAboutList
         aboutList.layoutManager = LinearLayoutManager(view.context)
