@@ -16,6 +16,7 @@ import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.converter.AlarmVolumeConverter
+import net.turtton.ytalarm.util.converter.CalendarConverter
 import net.turtton.ytalarm.util.converter.LongListConverter
 import net.turtton.ytalarm.util.converter.PlaylistThumbnailConverter
 import net.turtton.ytalarm.util.converter.PlaylistTypeConverter
@@ -27,6 +28,7 @@ import net.turtton.ytalarm.util.converter.VideoStateConverter
 @TypeConverters(
     StringListConverter::class,
     LongListConverter::class,
+    CalendarConverter::class,
     RepeatTypeConverter::class,
     VideoStateConverter::class,
     PlaylistTypeConverter::class,
