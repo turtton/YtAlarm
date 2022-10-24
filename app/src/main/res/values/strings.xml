@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">YtAlarm</string>
-    <string name="version">v%s</string>
+    <string name="version">v%s(%d)</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">Alarms</string>
     <string name="second_fragment_label">Alarm Settings</string>
