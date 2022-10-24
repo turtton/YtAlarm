@@ -2,18 +2,13 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/menu_video_list_option_sync_order"
+        android:id="@+id/menu_alarm_option_order"
         android:title="@string/menu_option_order"
         android:icon="@drawable/ic_arrow_upward"
         app:showAsAction="ifRoom"/>
     <item
-        android:id="@+id/menu_video_list_option_sync_sortrule"
+        android:id="@+id/menu_alarm_option_sortrule"
         android:title="@string/menu_option_sortrule"
         android:icon="@drawable/ic_sort"
         app:showAsAction="ifRoom" />
-
-    <item
-        android:id="@+id/menu_video_list_option_sync_rule"
-        android:title="@string/menu_video_list_option_sync_rule"
-        app:showAsAction="never"/>
 </menu>
