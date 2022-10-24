@@ -16,8 +16,12 @@ android {
         applicationId = "net.turtton.ytalarm"
         minSdk = 24
         targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+
+        val major = 0
+        val minor = 1
+        val patch = 0
+        versionCode =(major * 10000 + minor * 100 + patch)
+        versionName = "$major.$minor.$patch"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
