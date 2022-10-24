@@ -7,7 +7,7 @@ on:
 
 jobs:
   react:
-    if: ${{ github.repository_owner == 'turtton' }}
+    if: ${{ github.repository_owner == 'turtton' && github.actor == 'turtton' }}
     runs-on: ubuntu-latest
     steps:
       - name: React comment
