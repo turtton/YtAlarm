@@ -20,7 +20,7 @@ android {
         val major = 0
         val minor = 1
         val patch = 0
-        versionCode =(major * 10000 + minor * 100 + patch)
+        versionCode = (major * 10000 + minor * 100 + patch)
         versionName = "$major.$minor.$patch"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
