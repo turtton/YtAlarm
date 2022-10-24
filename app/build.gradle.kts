@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") version "1.7.20-1.0.7"
     id("androidx.navigation.safeargs.kotlin")
+    id("com.google.android.gms.oss-licenses-plugin")
     kotlin("plugin.serialization") version "1.7.20"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
@@ -100,6 +101,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.7.1")?.version?.also {
         androidTestImplementation("androidx.work:work-testing:$it")
     }
+    implementation("com.google.android.gms:play-services-oss-licenses:17.0.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")?.version?.also {

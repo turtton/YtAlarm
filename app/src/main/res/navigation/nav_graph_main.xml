@@ -8,4 +8,5 @@
     <include app:graph="@navigation/playlist"/>
     <include app:graph="@navigation/all_video_list"/>
     <include app:graph="@navigation/video_player"/>
+    <include app:graph="@navigation/aboutpage"/>
 </navigation>

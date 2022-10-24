@@ -70,8 +70,14 @@ class MainActivity : AppCompatActivity() {
         navController = mainNav!!.findNavController()
         findViewById<NavigationView>(R.id.nav_view).setupWithNavController(navController)
         drawerLayout = findViewById(R.id.drawer_layout)
+        val topLevelFragments = setOf(
+            R.id.aram_list_fragment,
+            R.id.playlist_fragment,
+            R.id.all_video_list_fragment,
+            R.id.aboutpage_fragment
+        )
         appBarConfiguration = AppBarConfiguration(
-            setOf(R.id.aram_list_fragment, R.id.playlist_fragment, R.id.all_video_list_fragment),
+            topLevelFragments,
             drawerLayout
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
