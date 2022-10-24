@@ -24,7 +24,7 @@ data class Alarm(
     val shouldLoop: Boolean = false,
     // max 100(%)
     val volume: Volume = Volume(),
-    val snoozeMinute: Int = 5,
+    val snoozeMinute: Int = 10,
     val shouldVibrate: Boolean = true,
     val isEnable: Boolean = false,
     @ColumnInfo(name = "creation_date")
