@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">YtAlarm</string>
+    <string name="version">v%s</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">Alarms</string>
     <string name="second_fragment_label">Alarm Settings</string>
@@ -30,8 +31,6 @@
         <item quantity="other">%d minutes</item>
     </plurals>
     <string name="setting_vibration">Vibration</string>
-    <string name="menu_item_aram_list">AramList</string>
-    <string name="menu_title_playlist">PlayList</string>
     <string name="item_video_list_data_size">%02.1fMB</string>
     <string name="item_video_list_click_to_retry">Click to retry</string>
     <string name="item_video_list_import_failed">Import failed</string>
@@ -44,8 +43,10 @@
     <string name="repeat_type_once">Once</string>
     <string name="repeat_type_everyday">Everyday</string>
 
-    <string name="menu_drawer_title_video">Video</string>
+    <string name="menu_item_aram_list">AramList</string>
+    <string name="menu_title_playlist">PlayList</string>
     <string name="menu_title_video_list">VideoList</string>
+    <string name="menu_title_aboutpage">AboutPage</string>
 
     <string name="dialog_snooze_time_input_ok">OK</string>
     <string name="dialog_snooze_time_input_cancel">Cancel</string>
@@ -117,6 +118,7 @@
     <string name="snackbar_error_failed_to_get_playlist">Failed to get playlist data</string>
     <string name="snackbar_error_failed_to_import_video">Failed to import video</string>
     <string name="snackbar_error_failed_to_prepare_vibration">Failed to prepare vibration system.</string>
+    <string name="snackbar_error_failed_to_access_clipboard">Failed to access clipboard system.</string>
     <string name="snackbar_error_empty_video">Video is Empty</string>
     <string name="snackbar_error_unknown">Unknown Error.</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
@@ -125,6 +127,7 @@
     <string name="snackbar_failed_to_check_restriction">Failed to check app restriction status.</string>
     <string name="snackbar_thumbnail_updated">Thumbnail Updated</string>
     <string name="snackbar_not_implemented">This feature coming soon</string>
+    <string name="snackbar_copied">Copied</string>
 
     <string name="notification_channel_name">YtAlarm</string>
     <string name="notification_snooze_channel_description">Snooze notification channel</string>
@@ -156,4 +159,12 @@
         <item>Always add</item>
         <item>Delete if not exist</item>
     </string-array>
+
+    <string name="item_aboutpage_title">Title</string>
+    <string name="item_aboutpage_details">Details</string>
+    <string name="item_aboutpage_title_github">GitHub</string>
+    <string name="item_aboutpage_details_github">Open and get the YtAlarm source code.</string>
+    <string name="item_aboutpage_title_license">License</string>
+    <string name="item_aboutpage_details_license">YtAlarm licensed under GNU General Public License v3.0.</string>
+    <string name="item_aboutpage_title_tirdpartylicenses">Third-party Licenses</string>
 </resources>
