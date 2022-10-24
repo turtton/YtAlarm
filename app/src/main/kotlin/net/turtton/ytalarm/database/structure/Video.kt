@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.turtton.ytalarm.util.serializer.UUIDSerializer
+import java.util.Calendar
 import java.util.UUID
 
 @Entity(tableName = "videos")
@@ -23,7 +24,9 @@ data class Video(
     val videoUrl: String = "",
     val domain: String = "",
     @ColumnInfo(name = "state_data", typeAffinity = ColumnInfo.BLOB)
-    val stateData: State
+    val stateData: State,
+    @ColumnInfo(name = "creation_date")
+    val creationDate: Calendar = Calendar.getInstance()
 ) {
     @Serializable
     sealed interface State {

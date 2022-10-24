@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.util.serializer.UUIDSerializer
-import java.util.UUID
+import java.util.*
 
 @Entity(tableName = "playlists")
 data class Playlist(
@@ -21,7 +21,11 @@ data class Playlist(
     @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     var videos: List<Long> = emptyList(),
     @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
-    val type: Type = Type.Original
+    val type: Type = Type.Original,
+    @ColumnInfo(name = "creation_date")
+    val creationDate: Calendar = Calendar.getInstance(),
+    @ColumnInfo(name = "last_updated")
+    val lastUpdated: Calendar = Calendar.getInstance()
 ) {
     @Serializable
     sealed interface Thumbnail {
