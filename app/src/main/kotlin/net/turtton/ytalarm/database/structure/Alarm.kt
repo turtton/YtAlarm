@@ -26,7 +26,11 @@ data class Alarm(
     val volume: Volume = Volume(),
     val snoozeMinute: Int = 5,
     val shouldVibrate: Boolean = true,
-    val isEnable: Boolean = false
+    val isEnable: Boolean = false,
+    @ColumnInfo(name = "creation_date")
+    val creationDate: Calendar = Calendar.getInstance(),
+    @ColumnInfo(name = "last_updated")
+    val lastUpdated: Calendar = Calendar.getInstance()
 ) {
 
     data class Volume(val volume: Int = 50) {

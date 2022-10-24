@@ -110,6 +110,23 @@
     <string name="dialog_vibration_waring_message">Vibration system may not work in Android12.</string>
     <string name="dialog_vibration_warning_show_issue">Open Issue</string>
 
+    <string-array name="dialog_alarm_order">
+        <item>Title</item>
+        <item>Creation date</item>
+        <item>Last updated</item>
+    </string-array>
+
+    <string-array name="dialog_playlist_order">
+        <item>Title</item>
+        <item>Creation date</item>
+        <item>Last updated</item>
+    </string-array>
+
+    <string-array name="dialog_video_order">
+        <item>Title</item>
+        <item>Imported date</item>
+    </string-array>
+
     <string name="snackbar_error_unexpected_playlist_state">Please reenter playlist.</string>
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
@@ -119,6 +136,7 @@
     <string name="snackbar_error_failed_to_import_video">Failed to import video</string>
     <string name="snackbar_error_failed_to_prepare_vibration">Failed to prepare vibration system.</string>
     <string name="snackbar_error_failed_to_access_clipboard">Failed to access clipboard system.</string>
+    <string name="snackbar_error_failed_to_access_settings_data">Failed to access settings data.</string>
     <string name="snackbar_error_empty_video">Video is Empty</string>
     <string name="snackbar_error_unknown">Unknown Error.</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
@@ -146,6 +164,9 @@
     <string name="allvideolist_fragment_label">All Videos</string>
     <string name="menu_playlist_option_rename">Rename</string>
     <string name="item_playlist_more_button_description">Option Button</string>
+
+    <string name="menu_option_sortrule">SortRule</string>
+    <string name="menu_option_order">Order</string>
 
     <string name="menu_video_list_item_option_set_thumbnail">Set as playlist thumbnail</string>
     <string name="menu_video_list_item_option_download">Download</string>

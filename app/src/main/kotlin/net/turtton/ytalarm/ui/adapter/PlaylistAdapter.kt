@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.fragment.FragmentPlaylistDirections
+import net.turtton.ytalarm.util.extensions.updateDate
 import net.turtton.ytalarm.viewmodel.PlaylistViewContainer
 import net.turtton.ytalarm.viewmodel.VideoViewContainer
 
@@ -149,7 +150,7 @@ class PlaylistAdapter<T>(
                             }
                     }?.also {
                         fragment.playlistViewModel.update(
-                            data.copy(thumbnail = Playlist.Thumbnail.Video(it.id))
+                            data.copy(thumbnail = Playlist.Thumbnail.Video(it.id)).updateDate()
                         )
                     }?.thumbnailUrl
                 Glide.with(view).load(thumbnailUrl).into(thumbnail)

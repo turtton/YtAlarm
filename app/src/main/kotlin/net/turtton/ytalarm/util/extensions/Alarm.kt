@@ -49,6 +49,8 @@ fun Alarm.toCalendar(now: Calendar): Calendar {
 
 fun Alarm.getDisplayTime(): String = "%02d:%02d".format(hour, minute)
 
+fun Alarm.updateDate(): Alarm = copy(lastUpdated = Calendar.getInstance())
+
 fun List<Alarm>.pickNearestTime(nowTime: Calendar): Pair<Alarm, Calendar>? {
     return associateWith { it.toCalendar(nowTime) }
         .minByOrNull { (_, calendar) -> calendar.timeInMillis }

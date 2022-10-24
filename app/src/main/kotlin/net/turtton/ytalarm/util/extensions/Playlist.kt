@@ -2,6 +2,7 @@ package net.turtton.ytalarm.util.extensions
 
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
+import java.util.*
 
 fun createImportingPlaylist() = Playlist(
     type = Playlist.Type.Importing,
@@ -18,6 +19,10 @@ fun Playlist.updateThumbnail(): Playlist? {
     val targetVideoId = videos.firstOrNull() ?: return null
     return copy(thumbnail = Playlist.Thumbnail.Video(targetVideoId))
 }
+
+fun Playlist.updateDate(): Playlist = copy(lastUpdated = Calendar.getInstance())
+
+fun List<Playlist>.updateDate(): List<Playlist> = map { it.updateDate() }
 
 fun List<Playlist>.deleteVideo(videoId: Long): List<Playlist> = map {
     val newVideoList = it.videos.toMutableSet()
