@@ -287,7 +287,7 @@ class VideoListAdapter<T>(
     ) {
         holder.optionButton.setOnClickListener { view ->
             val menu = PopupMenu(view.context, view.findViewById(R.id.item_video_option_button))
-            menu.inflate(R.menu.menu_all_video_list_option)
+            menu.inflate(R.menu.menu_all_video_list_item_option)
             menu.setOnMenuItemClickListener { menuItem ->
                 onAllVideoListMenuClicked(view, fragment, menuItem, video)
             }
