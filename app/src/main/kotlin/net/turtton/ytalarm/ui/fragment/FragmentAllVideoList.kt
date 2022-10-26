@@ -235,7 +235,7 @@ class FragmentAllVideoList :
     }
 
     private class AllVideoListMenuProvider(
-        private val fragment: FragmentAllVideoList,
+        private val fragment: FragmentAllVideoList
     ) : MenuProvider {
         override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
             menuInflater.inflate(R.menu.menu_allvideos_option, menu)
