@@ -42,6 +42,7 @@ class VideoInfoDownloadWorker(
 
     @SuppressLint("RestrictedApi")
     override suspend fun doWork(): Result {
+        setForegroundAsync(getForegroundInfo())
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
         var playlistArray = inputData.getLongArray(KEY_PLAYLIST)
 
