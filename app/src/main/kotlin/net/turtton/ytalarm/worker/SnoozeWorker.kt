@@ -18,6 +18,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.extensions.compatPendingIntentFlag
 import net.turtton.ytalarm.util.extensions.pickNearestTime
+import net.turtton.ytalarm.util.updateAlarmSchedule
 import java.util.*
 
 const val SNOOZE_NOTIFICATION = "net.turtton.ytalarm.SnoozeNotification"
@@ -35,6 +36,7 @@ class SnoozeRemoveWorker(
         withContext(Dispatchers.IO) {
             val target = repository.getAlarmFromIdSync(targetId) ?: return@withContext
             repository.delete(target)
+            updateAlarmSchedule(applicationContext, repository.getAllAlarmsSync())
         }
 
         UpdateSnoozeNotifyWorker.registerWorker(applicationContext)
@@ -81,7 +83,7 @@ class UpdateSnoozeNotifyWorker(
         val title = applicationContext.getString(R.string.notification_snooze_title)
         val description = applicationContext.resources
             .getQuantityString(R.plurals.notification_snooze_remain, minute, minute)
-        val removeText = applicationContext.getString(R.string.notification_snooze_remove)
+        val cancelText = applicationContext.getString(R.string.notification_snooze_cancel)
 
         val removeIntent = SnoozeRemoveReceiver.getIntent(applicationContext, nextSnooze.id)
 
@@ -91,7 +93,7 @@ class UpdateSnoozeNotifyWorker(
                 .setContentTitle(title)
                 .setContentText(description)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .addAction(R.drawable.ic_trash, removeText, removeIntent)
+                .addAction(R.drawable.ic_trash, cancelText, removeIntent)
 
         notificationManager
             .notify(NOTIFICATION_ID, builder.build())
