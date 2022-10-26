@@ -154,7 +154,7 @@
         <item quantity="one">Alarm will start after %d minute</item>
         <item quantity="other">Alarm will start after %d minutes</item>
         </plurals>
-    <string name="notification_snooze_remove">Remove</string>
+    <string name="notification_snooze_cancel">Cancel</string>
     <string name="notification_download_video_info_channel_description">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
     <string name="notification_download_video_info_cancel">Cancel</string>
