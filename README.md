@@ -9,7 +9,7 @@ Other languages: [日本語](docs/readme/README_ja.md)
 
 YtAlarm is a simple alarm application using [youtubedl-android](https://github.com/yausername/youtubedl-android). It makes be possible to wake up with a video/music which you like.  
 This application does not use Google's developer services or service-dpendent APIs such as YoutubeAPI, so it will work without problems on any Android device that meets the supported Api level(probably).  
-Also, you do not need an account for each service to use this app.
+Also, you do not need an account for each service to use this application.
 
 # Feature
 
