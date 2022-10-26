@@ -95,9 +95,9 @@ class FragmentAllVideoList :
             selectionTracker?.onRestoreInstanceState(it)
         }
 
-        updateObserver(view)
+        updateObserver()
 
-        AllVideoListMenuProvider(this, view).also {
+        AllVideoListMenuProvider(this).also {
             menuProvider = it
             activity.addMenuProvider(it, viewLifecycleOwner)
         }
@@ -109,11 +109,11 @@ class FragmentAllVideoList :
         fab.setOnClickListener { showVideoImportDialog(it) }
     }
 
-    private fun updateObserver(view: View) {
+    private fun updateObserver() {
         videoViewModel.allVideos.observe(requireActivity()) { videoList ->
             if (videoList == null) return@observe
             lifecycleScope.launch {
-                val garbage = videoList.collectGarbage(WorkManager.getInstance(view.context))
+                val garbage = videoList.collectGarbage(WorkManager.getInstance(requireContext()))
                 if (garbage.isNotEmpty()) {
                     val updatedPlaylists = playlistViewModel.allPlaylistsAsync
                         .await()
@@ -128,7 +128,7 @@ class FragmentAllVideoList :
             val preferences = activity?.privatePreferences ?: kotlin.run {
                 val message =
                     R.string.snackbar_error_failed_to_access_settings_data
-                Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT).show()
                 findNavController().navigateUp()
                 return@observe
             }
@@ -235,8 +235,7 @@ class FragmentAllVideoList :
     }
 
     private class AllVideoListMenuProvider(
-        private val fragment: FragmentAllVideoList,
-        private val view: View
+        private val fragment: FragmentAllVideoList
     ) : MenuProvider {
         override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
             menuInflater.inflate(R.menu.menu_allvideos_option, menu)
@@ -253,7 +252,7 @@ class FragmentAllVideoList :
                 if (it.itemId == R.id.menu_allvideos_option_sync_order) {
                     val preferences = fragment.activity?.privatePreferences ?: kotlin.run {
                         val message = R.string.snackbar_error_failed_to_access_settings_data
-                        Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
+                        Snackbar.make(fragment.requireView(), message, Snackbar.LENGTH_SHORT).show()
                         fragment.findNavController().navigateUp()
                         return
                     }
@@ -268,6 +267,7 @@ class FragmentAllVideoList :
         }
 
         override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+            val view = fragment.requireView()
             return when (menuItem.itemId) {
                 R.id.menu_allvideos_option_sync_order -> {
                     val preferences = fragment.activity?.privatePreferences.showMessageIfNull(view)
@@ -283,7 +283,7 @@ class FragmentAllVideoList :
                         R.drawable.ic_arrow_downward
                     }
                     menuItem.setIcon(drawable)
-                    fragment.updateObserver(view)
+                    fragment.updateObserver()
                     true
                 }
                 R.id.menu_allvideos_option_sync_sortrule -> {
@@ -301,7 +301,7 @@ class FragmentAllVideoList :
                         ) { dialog, selected ->
                             preferences.videoOrderRule = VideoOrder.values()[selected]
                             dialog.dismiss()
-                            fragment.updateObserver(view)
+                            fragment.updateObserver()
                         }.show()
                     true
                 }
