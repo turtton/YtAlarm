@@ -18,6 +18,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.util.extensions.compatPendingIntentFlag
 import net.turtton.ytalarm.util.extensions.pickNearestTime
+import net.turtton.ytalarm.util.updateAlarmSchedule
 import java.util.*
 
 const val SNOOZE_NOTIFICATION = "net.turtton.ytalarm.SnoozeNotification"
@@ -35,6 +36,7 @@ class SnoozeRemoveWorker(
         withContext(Dispatchers.IO) {
             val target = repository.getAlarmFromIdSync(targetId) ?: return@withContext
             repository.delete(target)
+            updateAlarmSchedule(applicationContext, repository.getAllAlarmsSync())
         }
 
         UpdateSnoozeNotifyWorker.registerWorker(applicationContext)
