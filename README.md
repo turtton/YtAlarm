@@ -1,5 +1,8 @@
 <p align="center"><img src="docs/logo/logo-no-background.png"></p>
 <h4 align="center"><b>A simple alarm app using youtubedl-android</b></h4>
+<p align="center">
+[![Check code](https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml/badge.svg)](https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml)
+</p>
 
 ------
 
