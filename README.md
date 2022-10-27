@@ -1,8 +1,15 @@
 <p align="center"><img src="docs/logo/logo-no-background.png"></p>
 <h4 align="center"><b>A simple alarm app using youtubedl-android</b></h4>
+
 <p align="center">
 <a href="https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml">
     <img src="https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml/badge.svg">
+</a>
+<a href="https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=turtton/YtAlarm&amp;utm_campaign=Badge_Grade">
+    <img src="https://app.codacy.com/project/badge/Grade/5f8c410c677a4172a5641242bf40d6c4">
+</a>
+<a href="https://codecov.io/gh/turtton/YtAlarm"> 
+    <img src="https://codecov.io/gh/turtton/YtAlarm/branch/main/graph/badge.svg?token=KBB10HH0TL"/> 
 </a>
 </p>
 
