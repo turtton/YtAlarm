@@ -217,17 +217,21 @@ class FragmentVideoPlayer : Fragment() {
                 val volume = (maxVolume * volumeRate).roundToInt()
                 audioManager.setStreamVolume(musicStream, volume, AudioManager.FLAG_PLAY_SOUND)
             }
-            var queue = 0
-            playVideo(view, videos.first())
+            var queue = if (alarm.shouldShuffle) {
+                videos.shuffled().iterator()
+            } else {
+                videos.listIterator()
+            }
+            playVideo(view, queue.next())
             videoView.setOnCompletionListener {
-                if (++queue >= videos.size) {
+                if (!queue.hasNext()) {
                     if (alarm.shouldLoop) {
-                        queue = 0
+                        queue = videos.iterator()
                     } else {
                         activity.finish()
                     }
                 }
-                playVideo(view, videos[queue])
+                playVideo(view, queue.next())
             }
         }
     }

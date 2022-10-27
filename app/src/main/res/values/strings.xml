@@ -24,6 +24,7 @@
     <string name="setting_repeat">Repeat</string>
     <string name="setting_playlist">Playlist</string>
     <string name="setting_loop">Loop</string>
+    <string name="setting_shuffle">Shuffle</string>
     <string name="setting_volume">Volume</string>
     <string name="setting_snooze">Snooze</string>
     <plurals name="setting_snooze_time">
