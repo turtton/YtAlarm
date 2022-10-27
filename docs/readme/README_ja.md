@@ -4,7 +4,7 @@
 
 **注意：このアプリおよびそのフォークをGooglePlayStoreに掲載しないでください。これはGoogleの利用規約に反します。**
 
-YtAlarmはyoutubedl-androidを使用したシンプルな目覚ましアプリです。好きな動画や音楽で目覚めることができます。  
+YtAlarmは[youtubedl-android](https://github.com/yausername/youtubedl-android)を使用したシンプルな目覚ましアプリです。好きな動画や音楽で目覚めることができます。  
 本アプリはGoogleの開発者向けサービス及びYoutubeAPI等のサービス依存のAPIを使用していないため、サポートされているApiレベルを満たしたAndroidデバイスであれば全て問題無く動作します(たぶん)  
 またこのアプリを使用するために各サービスのアカウントは必要ありません  
 
@@ -28,7 +28,7 @@ YtAlarmはyoutubedl-androidを使用したシンプルな目覚ましアプリ�
 
 # 対応サービス
 
-内部的にはyt-dlpを叩いてるだけなので[ここ](https://github.com/yt-dlp/yt-dlp/tree/master/yt_dlp/extractor)にあるサービスは動くと思いますが、一部サービスではダウンロードモードのみが動作する場合があります。
+内部的には[yt-dlp](https://github.com/yt-dlp/yt-dlp)を叩いてるだけなので[ここ](https://github.com/yt-dlp/yt-dlp/tree/master/yt_dlp/extractor)にあるサービスは動くと思いますが、一部サービスではダウンロードモードのみが動作する場合があります。
 
 [確認済みリスト](../AVAILABLE_SERVICES.md)
 
