@@ -113,7 +113,8 @@ class FragmentAllVideoList :
         videoViewModel.allVideos.observe(requireActivity()) { videoList ->
             if (videoList == null) return@observe
             lifecycleScope.launch {
-                val garbage = videoList.collectGarbage(WorkManager.getInstance(requireContext()))
+                val context = context ?: return@launch
+                val garbage = videoList.collectGarbage(WorkManager.getInstance(context))
                 if (garbage.isNotEmpty()) {
                     val updatedPlaylists = playlistViewModel.allPlaylistsAsync
                         .await()
@@ -126,9 +127,10 @@ class FragmentAllVideoList :
             }
             val targetList = videoList.toMutableList()
             val preferences = activity?.privatePreferences ?: kotlin.run {
+                val view = view ?: return@observe
                 val message =
                     R.string.snackbar_error_failed_to_access_settings_data
-                Snackbar.make(requireView(), message, Snackbar.LENGTH_SHORT).show()
+                Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()
                 findNavController().navigateUp()
                 return@observe
             }

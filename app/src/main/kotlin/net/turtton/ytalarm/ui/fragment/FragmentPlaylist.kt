@@ -161,12 +161,7 @@ class FragmentPlaylist :
             .getWorkInfoById(state.workerId)
             .await()
             ?.state
-        state.workerId
-        if (workerState == null || workerState.isFinished) {
-            true
-        } else {
-            true
-        }
+        workerState == null || workerState.isFinished
     }
 
     class PlaylistSelectionObserver(

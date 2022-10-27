@@ -211,25 +211,33 @@ class FragmentVideoPlayer : Fragment() {
                 return@launch
             }
             launch(Dispatchers.Main) {
-                currentVolume = audioManager.getStreamVolume(musicStream)
-                val volumeRate = alarm.volume.volume / Alarm.Volume.MAX_VOLUME.toFloat()
-                val maxVolume = audioManager.getStreamMaxVolume(musicStream)
-                val volume = (maxVolume * volumeRate).roundToInt()
-                audioManager.setStreamVolume(musicStream, volume, AudioManager.FLAG_PLAY_SOUND)
+                setVolume(alarm.volume.volume)
             }
-            var queue = 0
-            playVideo(view, videos.first())
+            var queue = if (alarm.shouldShuffle) {
+                videos.shuffled().iterator()
+            } else {
+                videos.listIterator()
+            }
+            playVideo(view, queue.next())
             videoView.setOnCompletionListener {
-                if (++queue >= videos.size) {
+                if (!queue.hasNext()) {
                     if (alarm.shouldLoop) {
-                        queue = 0
+                        queue = videos.iterator()
                     } else {
                         activity.finish()
                     }
                 }
-                playVideo(view, videos[queue])
+                playVideo(view, queue.next())
             }
         }
+    }
+
+    private fun setVolume(alarmVolume: Int) {
+        currentVolume = audioManager.getStreamVolume(musicStream)
+        val volumeRate = alarmVolume / Alarm.Volume.MAX_VOLUME.toFloat()
+        val maxVolume = audioManager.getStreamMaxVolume(musicStream)
+        val volume = (maxVolume * volumeRate).roundToInt()
+        audioManager.setStreamVolume(musicStream, volume, AudioManager.FLAG_PLAY_SOUND)
     }
 
     private fun enableFullScreenMode(view: View) {

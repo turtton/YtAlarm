@@ -107,6 +107,14 @@ class AlarmSettingsAdapter(
                 }
             }
 
+        val shuffle = R.string.setting_shuffle
+        val shuffleToggle =
+            AlarmSettingData.ToggleData(shuffle, alarm.shouldShuffle) { _, shouldShuffle ->
+                alarmState.update {
+                    it.copy(shouldShuffle = shouldShuffle)
+                }
+            }
+
         val volumeProgress = AlarmSettingData.PercentData(
             R.string.setting_volume,
             alarm.volume.volume,
@@ -173,6 +181,7 @@ class AlarmSettingsAdapter(
             repeatTypeSelector,
             playlistSelector,
             loopToggle,
+            shuffleToggle,
             volumeProgress,
             snoozeTime,
             vibration

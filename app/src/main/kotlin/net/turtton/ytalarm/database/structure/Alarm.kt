@@ -22,7 +22,7 @@ data class Alarm(
     @ColumnInfo(typeAffinity = ColumnInfo.BLOB)
     val playListId: List<Long> = emptyList(),
     val shouldLoop: Boolean = false,
-    // max 100(%)
+    val shouldShuffle: Boolean = false,
     val volume: Volume = Volume(),
     val snoozeMinute: Int = 10,
     val shouldVibrate: Boolean = true,
