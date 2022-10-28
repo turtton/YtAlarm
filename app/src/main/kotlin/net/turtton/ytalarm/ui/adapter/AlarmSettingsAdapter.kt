@@ -325,7 +325,11 @@ class AlarmSettingsAdapter(
         private fun days(context: Context) {
             val current = alarmState.value.repeatType as? Alarm.RepeatType.Days
             DayChoiceFragment(current?.days) { dayOfWeekCompats ->
-                if (dayOfWeekCompats.size == DayOfWeekCompat.values().size) {
+                if (dayOfWeekCompats.isEmpty()) {
+                    alarmState.update {
+                        it.copy(repeatType = Alarm.RepeatType.Once)
+                    }
+                }else if (dayOfWeekCompats.size == DayOfWeekCompat.values().size) {
                     alarmState.update {
                         it.copy(repeatType = Alarm.RepeatType.Everyday)
                     }
@@ -394,6 +398,7 @@ class AlarmSettingsAdapter(
 
         init {
             current?.let {
+                currentDay += it
                 it.forEach { day ->
                     @Suppress("MagicNumber")
                     when (day) {
