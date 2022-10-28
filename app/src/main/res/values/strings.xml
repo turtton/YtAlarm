@@ -165,6 +165,7 @@
     <string name="allvideolist_fragment_label">All Videos</string>
     <string name="menu_playlist_option_rename">Rename</string>
     <string name="item_playlist_more_button_description">Option Button</string>
+    <string name="item_video_download_description">Download Button</string>
 
     <string name="menu_option_sortrule">SortRule</string>
     <string name="menu_option_order">Order</string>
