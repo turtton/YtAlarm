@@ -211,7 +211,13 @@ class VideoListAdapter<T>(
             video.domain
         }
         Glide.with(itemView).load(video.thumbnailUrl).into(thumbnail)
-        if ((video.stateData as Video.State.Information).downloadOnly) {
+        if ((video.stateData as Video.State.Information).isStreamable) {
+            itemView.setOnClickListener {
+                val navController = it.findFragment<Fragment>().findNavController()
+                val args = FragmentVideoPlayerArgs(video.videoId).toBundle()
+                navController.navigate(R.id.nav_graph_video_player, args)
+            }
+        } else {
             val warning = "W:${title.text}"
             title.text = warning
             val gray = context.getColor(R.color.gray)
@@ -225,12 +231,7 @@ class VideoListAdapter<T>(
                 val message = R.string.snackbar_only_supports_downloadmode
                 Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
             }
-        } else {
-            itemView.setOnClickListener {
-                val navController = it.findFragment<Fragment>().findNavController()
-                val args = FragmentVideoPlayerArgs(video.videoId).toBundle()
-                navController.navigate(R.id.nav_graph_video_player, args)
-            }
+
         }
 
         addVideoMenu(holder, video, state)

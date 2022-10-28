@@ -41,8 +41,8 @@ data class Video(
 
         @Serializable
         data class Information(
-            @SerialName("download_only")
-            val downloadOnly: Boolean = false
+            @SerialName("is_streamable")
+            val isStreamable: Boolean = true
         ) : State
 
         @Serializable
