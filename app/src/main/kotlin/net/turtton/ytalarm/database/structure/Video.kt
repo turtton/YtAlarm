@@ -39,7 +39,7 @@ data class Video(
         data class Importing(val state: WorkerState) : State
 
         @Serializable
-        object Information : State
+        data class Information(val downloadOnly: Boolean = false) : State
 
         @Serializable
         data class Downloading(val state: WorkerState) : State

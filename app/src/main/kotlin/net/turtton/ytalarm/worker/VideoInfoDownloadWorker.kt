@@ -113,30 +113,15 @@ class VideoInfoDownloadWorker(
         success = {
             when (it.typeData) {
                 is VideoInformation.Type.Video -> {
-                    val video = Video(
-                        0,
-                        it.id,
-                        it.typeData.fullTitle,
-                        it.typeData.thumbnailUrl,
-                        it.url,
-                        it.domain,
-                        Video.State.Information
-                    )
-                    return@mapBoth listOf(video) to Type.Video
+                    return@mapBoth listOf(it.toVideo()) to Type.Video
                 }
                 is VideoInformation.Type.Playlist -> {
-                    return@mapBoth it.typeData.entries.map { entry ->
-                        entry.typeData as VideoInformation.Type.Video
-                        Video(
-                            0,
-                            entry.id,
-                            entry.typeData.fullTitle,
-                            entry.typeData.thumbnailUrl,
-                            entry.url,
-                            entry.domain,
-                            Video.State.Information
-                        )
-                    } to Type.Playlist(it.title!!, it.url)
+                    return@mapBoth it.typeData
+                        .entries
+                        .map(VideoInformation::toVideo)
+                        .let { videos ->
+                            videos to Type.Playlist(it.title!!, it.url)
+                        }
                 }
             }
         },
