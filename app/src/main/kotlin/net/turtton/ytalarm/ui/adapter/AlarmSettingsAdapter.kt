@@ -329,7 +329,7 @@ class AlarmSettingsAdapter(
                     alarmState.update {
                         it.copy(repeatType = Alarm.RepeatType.Once)
                     }
-                }else if (dayOfWeekCompats.size == DayOfWeekCompat.values().size) {
+                } else if (dayOfWeekCompats.size == DayOfWeekCompat.values().size) {
                     alarmState.update {
                         it.copy(repeatType = Alarm.RepeatType.Everyday)
                     }
