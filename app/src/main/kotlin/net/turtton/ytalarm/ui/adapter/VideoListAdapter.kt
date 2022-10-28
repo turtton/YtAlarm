@@ -231,7 +231,6 @@ class VideoListAdapter<T>(
                 val message = R.string.snackbar_only_supports_downloadmode
                 Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
             }
-
         }
 
         addVideoMenu(holder, video, state)
