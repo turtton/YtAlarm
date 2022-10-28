@@ -88,7 +88,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.5.1")
     implementation("com.google.android.material:material:1.7.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.5.2")?.version?.also {
+    implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")?.version?.also {
         implementation("androidx.navigation:navigation-ui-ktx:$it")
         androidTestImplementation("androidx.navigation:navigation-testing:$it")
     }
@@ -100,8 +100,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")?.also {
         implementation("androidx.lifecycle:lifecycle-livedata-ktx:${it.version}")
     }
-    implementation("androidx.activity:activity-ktx:1.6.0")
-    implementation("androidx.fragment:fragment-ktx:1.5.3")
+    implementation("androidx.activity:activity-ktx:1.6.1")
+    implementation("androidx.fragment:fragment-ktx:1.5.4")
     implementation("androidx.work:work-runtime-ktx:2.7.1")?.version?.also {
         androidTestImplementation("androidx.work:work-testing:$it")
     }
@@ -123,7 +123,7 @@ dependencies {
     }
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("io.kotest:kotest-runner-junit5:5.5.1")?.version?.also {
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.3")?.version?.also {
         testImplementation("io.kotest:kotest-assertions-core:$it")?.also { dep ->
             androidTestImplementation(dep)
         }
