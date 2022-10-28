@@ -217,7 +217,7 @@ class FragmentPlaylist :
             menu.forEach {
                 val icon = it.icon ?: return@forEach
                 icon.mutate()
-                val colorRes = fragment.resources.getColor(R.color.white, null)
+                val colorRes = fragment.context?.getColor(R.color.white) ?: return
                 if (Build.VERSION.SDK_INT > Build.VERSION_CODES.Q) {
                     icon.colorFilter = BlendModeColorFilter(colorRes, BlendMode.SRC_ATOP)
                 } else {
