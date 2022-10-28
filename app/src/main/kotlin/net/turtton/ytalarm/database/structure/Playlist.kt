@@ -6,6 +6,7 @@ import androidx.annotation.DrawableRes
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.turtton.ytalarm.R
@@ -47,7 +48,9 @@ data class Playlist(
         @Serializable
         data class CloudPlaylist(
             val url: String,
+            @SerialName("worker_id")
             val workerId: UUID,
+            @SerialName("sync_rule")
             val syncRule: SyncRule = SyncRule.ALWAYS_ADD
         ) : Type
     }
