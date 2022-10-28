@@ -147,6 +147,7 @@
     <string name="snackbar_thumbnail_updated">Thumbnail Updated</string>
     <string name="snackbar_not_implemented">This feature coming soon</string>
     <string name="snackbar_copied">Copied</string>
+    <string name="snackbar_only_supports_downloadmode">This video only supports download mode</string>
 
     <string name="notification_channel_name">YtAlarm</string>
     <string name="notification_snooze_channel_description">Snooze notification channel</string>

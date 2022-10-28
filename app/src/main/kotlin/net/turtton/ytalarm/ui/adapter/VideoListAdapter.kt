@@ -200,6 +200,7 @@ class VideoListAdapter<T>(
         val title = holder.title
         val domainOrSize = holder.domainOrSize
         val thumbnail = holder.thumbnail
+        val downloadButton = holder.downloadButton
         title.text = video.title
         domainOrSize.text = if (state is Video.State.Downloaded) {
             context.getString(
@@ -210,12 +211,28 @@ class VideoListAdapter<T>(
             video.domain
         }
         Glide.with(itemView).load(video.thumbnailUrl).into(thumbnail)
-        itemView.setOnClickListener {
-            val navController = it.findFragment<Fragment>().findNavController()
-
-            val args = FragmentVideoPlayerArgs(video.videoId).toBundle()
-            navController.navigate(R.id.nav_graph_video_player, args)
+        if ((video.stateData as Video.State.Information).downloadOnly) {
+            val warning = "W:${title.text}"
+            title.text = warning
+            val gray = context.getColor(R.color.gray)
+            title.setTextColor(gray)
+            downloadButton.visibility = View.VISIBLE
+            downloadButton.setColorFilter(gray)
+            downloadButton.setOnClickListener {
+                Snackbar.make(it, R.string.snackbar_not_implemented, Snackbar.LENGTH_SHORT).show()
+            }
+            itemView.setOnClickListener {
+                val message = R.string.snackbar_only_supports_downloadmode
+                Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+            }
+        } else {
+            itemView.setOnClickListener {
+                val navController = it.findFragment<Fragment>().findNavController()
+                val args = FragmentVideoPlayerArgs(video.videoId).toBundle()
+                navController.navigate(R.id.nav_graph_video_player, args)
+            }
         }
+
         addVideoMenu(holder, video, state)
     }
 
@@ -411,6 +428,7 @@ class VideoListAdapter<T>(
         val thumbnail: ImageView = view.findViewById(R.id.item_video_list_thumbnail)
         val checkBox: CheckBox = view.findViewById(R.id.item_video_checkbox)
         val optionButton: ImageButton = view.findViewById(R.id.item_video_option_button)
+        val downloadButton: ImageButton = view.findViewById(R.id.item_video_download_button)
 
         var selectable: Boolean = true
 
