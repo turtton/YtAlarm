@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.util.DayOfWeekCompat
@@ -79,6 +80,7 @@ data class Alarm(
         @Serializable
         data class Date(
             @Serializable(DateSerializer::class)
+            @SerialName("target_date")
             val targetDate: java.util.Date
         ) : RepeatType {
             override fun getDisplay(context: Context): String {

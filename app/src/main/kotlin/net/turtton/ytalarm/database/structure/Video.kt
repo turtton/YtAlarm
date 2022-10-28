@@ -40,7 +40,10 @@ data class Video(
         data class Importing(val state: WorkerState) : State
 
         @Serializable
-        data class Information(val downloadOnly: Boolean = false) : State
+        data class Information(
+            @SerialName("is_streamable")
+            val isStreamable: Boolean = true
+        ) : State
 
         @Serializable
         data class Downloading(val state: WorkerState) : State
@@ -63,6 +66,9 @@ data class Video(
         data class Failed(val url: String) : WorkerState
 
         @Serializable
-        data class Working(val workerId: UUID) : WorkerState
+        data class Working(
+            @SerialName("worker_id")
+            val workerId: UUID
+        ) : WorkerState
     }
 }
