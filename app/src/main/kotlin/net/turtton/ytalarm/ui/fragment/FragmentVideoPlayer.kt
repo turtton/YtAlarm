@@ -204,6 +204,7 @@ class FragmentVideoPlayer : Fragment() {
             val videos = playlist.flatMap { it.videos }
                 .distinct()
                 .let { videoViewModel.getFromIdsAsync(it).await() }
+                .filter { it.stateData is Video.State.Information }
             if (videos.isEmpty()) {
                 val message = R.string.snackbar_error_empty_video
                 Snackbar.make(view, message, Snackbar.LENGTH_SHORT).show()

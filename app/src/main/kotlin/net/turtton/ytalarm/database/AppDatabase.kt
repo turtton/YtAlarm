@@ -98,7 +98,7 @@ abstract class AppDatabase : RoomDatabase() {
                 "https://i.ytimg.com/vi_webp/aLexJOGZ_gw/maxresdefault.webp",
                 "https://www.youtube.com/watch?v=aLexJOGZ_gw",
                 "youtube.com",
-                Video.State.Information
+                Video.State.Information()
             )
         )
     }

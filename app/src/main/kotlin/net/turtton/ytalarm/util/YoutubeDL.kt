@@ -11,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import net.turtton.ytalarm.activity.MainActivity
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.serializer.VideoInformationSerializer
 
 fun AppCompatActivity.initYtDL(view: View) = lifecycleScope.launch {
@@ -38,12 +39,26 @@ data class VideoInformation(
     val domain: String,
     val typeData: Type
 ) {
+    fun toVideo(): Video {
+        check(typeData is Type.Video) { "failed to convert video due to typeData mismatch" }
+        return Video(
+            0,
+            id,
+            typeData.fullTitle,
+            typeData.thumbnailUrl,
+            url,
+            domain,
+            Video.State.Information(!typeData.videoUrl.startsWith("http"))
+        )
+    }
+
     sealed interface Type {
         data class Video(
             val fullTitle: String,
             val thumbnailUrl: String,
             val videoUrl: String
         ) : Type
+
         data class Playlist(
             val entries: List<VideoInformation>
         ) : Type

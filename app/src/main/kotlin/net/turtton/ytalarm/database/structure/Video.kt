@@ -5,6 +5,7 @@ package net.turtton.ytalarm.database.structure
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import net.turtton.ytalarm.util.serializer.UUIDSerializer
@@ -39,17 +40,20 @@ data class Video(
         data class Importing(val state: WorkerState) : State
 
         @Serializable
-        object Information : State
+        data class Information(val downloadOnly: Boolean = false) : State
 
         @Serializable
         data class Downloading(val state: WorkerState) : State
 
         @Serializable
         data class Downloaded(
-            @ColumnInfo(name = "internal_link")
-            val internalLink: String = "",
+            @SerialName("internal_link")
+            val internalLink: String,
             // byte size
-            val fileSize: Int
+            @SerialName("file_size")
+            val fileSize: Int,
+            @SerialName("is_streamable")
+            val isStreamable: Boolean
         ) : State
     }
 
