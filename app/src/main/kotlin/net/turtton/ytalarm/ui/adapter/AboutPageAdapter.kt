@@ -15,7 +15,6 @@ import androidx.annotation.StringRes
 import androidx.core.net.toUri
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import com.google.android.material.snackbar.Snackbar
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.ui.adapter.AboutPageAdapter.Thumbnail.Url.Companion.toThumbnail
@@ -42,15 +41,12 @@ class AboutPageAdapter(
             "https://github.com/turtton/YtAlarm/blob/HEAD/LICENSE"
         )
         val thirdPartyLicensesTitle = R.string.item_aboutpage_title_tirdpartylicenses
-        val thirdPartyLicense = AboutPageData.ActionData(
+        val thirdPartyLicense = AboutPageData.LinkEmbedData(
             Thumbnail.Drawable(R.drawable.ic_menu_book),
             thirdPartyLicensesTitle,
-            null
-        ) {
-            val context = it.context
-            OssLicensesMenuActivity.setActivityTitle(context.getString(thirdPartyLicensesTitle))
-            context.startActivity(Intent(context, OssLicensesMenuActivity::class.java))
-        }
+            null,
+               "https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm"
+        )
         dataSet = arrayOf(github, license, thirdPartyLicense)
     }
 
