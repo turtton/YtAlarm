@@ -11,6 +11,7 @@
 <a href="https://codecov.io/gh/turtton/YtAlarm"> 
     <img src="https://codecov.io/gh/turtton/YtAlarm/branch/main/graph/badge.svg?token=KBB10HH0TL"/> 
 </a>
+<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fturtton%2FYtAlarm?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fturtton%2FYtAlarm.svg?type=shield"/></a>
 </p>
 
 ------
@@ -53,3 +54,7 @@ Whether bug reporting, feature requests, translations, code changes, help is alw
 
 See [Contributing](.github/CONTRIBUTING.md) for more information.
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fturtton%2FYtAlarm.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fturtton%2FYtAlarm?ref=badge_large)
