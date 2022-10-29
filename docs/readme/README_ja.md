@@ -37,3 +37,12 @@ YtAlarmは[youtubedl-android](https://github.com/yausername/youtubedl-android)�
 バグ報告、機能の提案、翻訳、コード変更などなんでも大歓迎です
 
 詳しくは[Contributing(日本語)](../contributing/CONTRIBUTING_ja.md)をご覧ください
+
+
+## License
+
+YtAlarmは[GNU General Public License v3.0](https://github.com/turtton/YtAlarm/blob/HEAD/LICENSE)ライセンス下で公開されています
+
+他の使用ライブラリとツールのライセンスについては以下より確認できます
+
+[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm.svg?type=large)](https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm?ref=badge_large)
