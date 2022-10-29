@@ -53,7 +53,7 @@ class AboutPageAdapter(
             "https://en.liberapay.com/assets/liberapay/icon-v2_white-on-yellow.200.png?save_as=liberapay_logo_white-on-yellow_200px.png".toThumbnail(),
             R.string.item_aboutpage_liberapay_title,
             R.string.item_aboutpage_liberapay_details,
-            "https://en.liberapay.com/turtton/"
+            "https://liberapay.com/turtton/donate"
         )
 
         @Suppress("ktlint:max-line-length")
