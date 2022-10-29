@@ -46,11 +46,6 @@ jobs:
         with:
           arguments: check :rootCoverageReport
 
-      - name: Analize Dependencies
-        uses: fossas/fossa-action@main
-        with:
-          api-key: ${{ secrets.FOSSA_TOKEN }}
-
       - name: Generate report
         uses: actions/upload-artifact@v3
         with:
@@ -68,3 +63,8 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: "build/reports/jacoco.xml"
+
+      - name: Analize Dependencies
+        uses: fossas/fossa-action@main
+        with:
+          api-key: ${{ secrets.FOSSA_TOKEN }}
