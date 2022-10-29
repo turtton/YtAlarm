@@ -45,7 +45,7 @@ class AboutPageAdapter(
             Thumbnail.Drawable(R.drawable.ic_menu_book),
             thirdPartyLicensesTitle,
             null,
-               "https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm"
+            "https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm"
         )
         dataSet = arrayOf(github, license, thirdPartyLicense)
     }
