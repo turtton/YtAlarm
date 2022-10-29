@@ -11,7 +11,7 @@
 <a href="https://codecov.io/gh/turtton/YtAlarm"> 
     <img src="https://codecov.io/gh/turtton/YtAlarm/branch/main/graph/badge.svg?token=KBB10HH0TL"/> 
 </a>
-<a href="https://app.fossa.com/projects/git%2Bgithub.com%2Fturtton%2FYtAlarm?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/git%2Bgithub.com%2Fturtton%2FYtAlarm.svg?type=shield"/></a>
+<a href="https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm.svg?type=shield"/></a>
 </p>
 
 ------
@@ -36,7 +36,7 @@ Also, you do not need an account for each service to use this application.
 ### Media player
 
 - streaming
-- ~~download~~(In progress [#65](https://github.com/turtton/YtAlarm/issues/65))
+- ~~download~~(In progress [#140](https://github.com/turtton/YtAlarm/issues/140))
 
 ### Media Management
 
@@ -57,4 +57,9 @@ See [Contributing](.github/CONTRIBUTING.md) for more information.
 
 
 ## License
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fturtton%2FYtAlarm.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fturtton%2FYtAlarm?ref=badge_large)
+
+YtAlarm licensed under [GNU General Public License v3.0](https://github.com/turtton/YtAlarm/blob/HEAD/LICENSE)
+
+Other libraries/tools licenses used by this project can be seen below.
+
+[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm.svg?type=large)](https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm?ref=badge_large)
