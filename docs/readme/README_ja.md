@@ -20,7 +20,7 @@ YtAlarmは[youtubedl-android](https://github.com/yausername/youtubedl-android)�
 ### プレイヤー
 
 - ストリーミング
-- ~~ダウンロード~~(準備中 [#65](https://github.com/turtton/YtAlarm/issues/65))
+- ~~ダウンロード~~(準備中 [#140](https://github.com/turtton/YtAlarm/issues/140))
 
 ### メディア管理
 
