@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.Button
+import android.widget.VideoView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
@@ -34,6 +35,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
@@ -42,6 +44,7 @@ import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
+import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.util.extensions.hourOfDay
 import net.turtton.ytalarm.util.extensions.minute
 import net.turtton.ytalarm.util.extensions.plusAssign
@@ -102,19 +105,14 @@ class FragmentVideoPlayer : Fragment() {
         if (activity is MainActivity) {
             hideFab(activity)
         }
+        if (activity is VideoPlayerLoadingResourceContainer) {
+            activity.videoPlayerLoadingResourceController
+                .videoPlayerLoadingResource
+                ?.isIdleNow = false
+        }
 
         val videoView = binding.videoView
-        videoView.setOnPreparedListener {
-            it.setOnInfoListener { _, what, _ ->
-                when (what) {
-                    MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START -> {
-                        videoView.background = null
-                        true
-                    }
-                    else -> false
-                }
-            }
-        }
+        prepareVideoView(videoView)
 
         val dismissButton = binding.fragmentVideoPlayerButtonDismiss
 
@@ -145,6 +143,29 @@ class FragmentVideoPlayer : Fragment() {
                     return@launch
                 }
                 playVideo(view, video)
+            }
+        }
+    }
+
+    private fun prepareVideoView(videoView: VideoView) {
+        videoView.setOnPreparedListener {
+            it.setOnInfoListener { _, what, _ ->
+                when (what) {
+                    MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START -> {
+                        videoView.background = null
+                        lifecycleScope.launch {
+                            delay(3.seconds)
+                            val activity = activity
+                            if (activity is VideoPlayerLoadingResourceContainer) {
+                                activity.videoPlayerLoadingResourceController
+                                    .videoPlayerLoadingResource
+                                    ?.isIdleNow = true
+                            }
+                        }
+                        true
+                    }
+                    else -> false
+                }
             }
         }
     }

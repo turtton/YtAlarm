@@ -26,10 +26,13 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
+import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.databinding.ActivityMainBinding
+import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
+import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
 import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.addNewPlaylist
 import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
@@ -42,12 +45,14 @@ import net.turtton.ytalarm.worker.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
 import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
 
     private lateinit var navController: NavController
     private lateinit var appBarConfiguration: AppBarConfiguration
     lateinit var binding: ActivityMainBinding
     lateinit var drawerLayout: DrawerLayout
+
+    override val videoPlayerLoadingResourceController = VideoPlayerLoadingResourceController()
 
     val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(application.repository)
@@ -100,6 +105,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestPermission() {
+        if (BuildConfig.DEBUG) return
         val hasDrawPerm = { Settings.canDrawOverlays(this) }
         val activity = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()

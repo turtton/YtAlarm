@@ -7,12 +7,16 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.databinding.ActivityAlarmBinding
+import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
+import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
 import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
 import net.turtton.ytalarm.util.initYtDL
 
-class AlarmActivity : AppCompatActivity() {
+class AlarmActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
     private lateinit var navController: NavController
     lateinit var binding: ActivityAlarmBinding
+
+    override val videoPlayerLoadingResourceController = VideoPlayerLoadingResourceController()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

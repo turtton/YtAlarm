@@ -28,4 +28,10 @@ platform :android do
     # sh "your_script.sh"
     # You can also use other beta testing services here
   end
+
+  desc("Build debug and test APK for screenshots")
+    lane(:build_and_screengrab) do
+      gradle(task: "assembleDebug assembleAndroidTest -PnoSplits")
+      screengrab()
+    end
 end

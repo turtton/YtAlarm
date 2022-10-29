@@ -134,7 +134,12 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit-ktx:1.1.3")
     androidTestImplementation("androidx.test:rules:1.4.0")
     androidTestImplementation("androidx.test:runner:1.4.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")?.version?.also {
+        implementation("androidx.test.espresso:espresso-idling-resource:$it")
+        androidTestImplementation("androidx.test.espresso:espresso-contrib:$it")
+    }
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:")
+    androidTestImplementation("tools.fastlane:screengrab:2.1.1")
     androidTestImplementation("androidx.room:room-testing:${room?.version}")
 }
 
