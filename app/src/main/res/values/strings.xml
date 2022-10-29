@@ -47,7 +47,7 @@
     <string name="menu_item_aram_list">AramList</string>
     <string name="menu_title_playlist">PlayList</string>
     <string name="menu_title_video_list">VideoList</string>
-    <string name="menu_title_aboutpage">AboutPage</string>
+    <string name="menu_title_aboutpage">About</string>
 
     <string name="dialog_snooze_time_input_ok">OK</string>
     <string name="dialog_snooze_time_input_cancel">Cancel</string>
