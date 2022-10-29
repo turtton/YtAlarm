@@ -14,6 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "net.turtton.ytalarm"
+        namespace = applicationId
         minSdk = 24
         targetSdk = 33
 
