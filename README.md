@@ -54,9 +54,17 @@ Whether bug reporting, feature requests, translations, code changes, help is alw
 
 See [Contributing](.github/CONTRIBUTING.md) for more information.
 
+# Donate
+
+If you like YtAlarm, you're welcome to send a donation.
+
+| ![](https://liberapay.com/assets/liberapay/logo-v2_black-on-yellow.svg?etag=.yjV53S_Yb2wp7l1bfBotLA~~) | <img src="docs/qr/qr_liberapay.png" alt="image-20221029181632991" style="zoom: 33%;" /> | <a href="https://liberapay.com/turtton/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" style="zoom:200%;"   ></a> |
+| :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
+|        ![](https://bitcoin.org/img/icons/logotop.svg)        | ![](https://bitflyer.com/ex/qr?text=3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t) |              3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t              |
 
 
-## License
+
+# License
 
 YtAlarm licensed under [GNU General Public License v3.0](https://github.com/turtton/YtAlarm/blob/HEAD/LICENSE)
 
