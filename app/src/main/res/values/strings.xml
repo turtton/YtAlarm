@@ -191,4 +191,8 @@
     <string name="item_aboutpage_title_license">License</string>
     <string name="item_aboutpage_details_license">YtAlarm licensed under GNU General Public License v3.0.</string>
     <string name="item_aboutpage_title_tirdpartylicenses">Third-party Licenses</string>
+    <string name="item_aboutpage_liberapay_title">Liberapay</string>
+    <string name="item_aboutpage_liberapay_details">Click to open liberapay</string>
+    <string name="item_aboutpage_bitcoin_title">Bitcoin</string>
+    <string name="item_aboutpage_bitcoin_address">3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t</string>
 </resources>

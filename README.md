@@ -54,9 +54,25 @@ Whether bug reporting, feature requests, translations, code changes, help is alw
 
 See [Contributing](.github/CONTRIBUTING.md) for more information.
 
+# Donate
+
+If you like YtAlarm, you're welcome to send a donation.
+
+<table>
+    <tr>
+        <td><img src="https://liberapay.com/assets/liberapay/logo-v2_black-on-yellow.svg?etag=.yjV53S_Yb2wp7l1bfBotLA~~"></td>
+        <td><p align="center"><a href="https://liberapay.com/turtton/donate"><img src="docs/qr/qr_liberapay.png" width="33%" height="33%"></a></p></td>
+        <td><a href="https://liberapay.com/turtton/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" width="50%" height="50%"></a></td>
+    </tr>
+    <tr>
+        <td><p align="center"><img src="https://bitcoin.org/img/icons/logotop.svg"></p></td>
+        <td><p align="center"><img src="https://bitflyer.com/ex/qr?text=3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t" width="33%" height="33%"></p></td>
+        <td>3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t  </td>
+    </tr>
+</table>
 
 
-## License
+# License
 
 YtAlarm licensed under [GNU General Public License v3.0](https://github.com/turtton/YtAlarm/blob/HEAD/LICENSE)
 
