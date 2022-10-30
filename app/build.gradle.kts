@@ -46,15 +46,24 @@ android {
             proguardFiles(proguardFile, "proguard-rules.pro")
         }
     }
+    val schemaDir = "$projectDir/schemas"
     compileOptions {
         sourceCompatibility(JavaVersion.VERSION_1_8)
         targetCompatibility(JavaVersion.VERSION_1_8)
+
+        ksp {
+            arg("room.schemaLocation", schemaDir)
+        }
     }
     kotlinOptions {
         jvmTarget = "1.8"
     }
     buildFeatures {
         viewBinding = true
+    }
+
+    sourceSets {
+        getByName("androidTest").assets.srcDirs(file(schemaDir))
     }
 
     splits {
