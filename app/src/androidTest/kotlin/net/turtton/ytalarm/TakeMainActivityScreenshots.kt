@@ -62,6 +62,10 @@ class TakeMainActivityScreenshots {
 
     @Test
     fun testTakeScreenshot() {
+        // Wait until loading thumbnail
+        onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
+        onView(withId(R.id.drawer_layout)).perform(DrawerActions.close())
+
         Screengrab.screenshot("alarms")
 
         onView(withId(R.id.recycler_list))
