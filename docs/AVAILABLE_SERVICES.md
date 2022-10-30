@@ -10,4 +10,5 @@ Please confirm that they are working at [yt-dlp](https://github.com/yt-dlp/yt-dl
 | Youtube    | youtube.com, youtu.be | :white_check_mark:        |
 | SoundCloud | soundcloud.com        | :white_check_mark:        |
 | Niconico   | nicovideo.jp          | :warning:(Only downloads) |
+| Twitter    | twitter.com           | :white_check_mark:        |
 
