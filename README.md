@@ -24,6 +24,18 @@ YtAlarm is a simple alarm application using [youtubedl-android](https://github.c
 This application does not use Google's developer services or service-dpendent APIs such as YoutubeAPI, so it will work without problems on any Android device that meets the supported Api level(probably).  
 Also, you do not need an account for each service to use this application.
 
+# Screenshots
+
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarm_1667061852912.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarm_1667061852912.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarms_1667061902697.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarms_1667061902697.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarmSettings_1667061903458.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarmSettings_1667061903458.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/playlist_1667061905194.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/playlist_1667061905194.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/allvideos_1667061907392.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/allvideos_1667061907392.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/drawer_1667061904293.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/drawer_1667061904293.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/videoplayer_1667061916622.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videoplayer_1667061916622.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage_1667061918625.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage_1667061918625.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage_1667061918625.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage_1667061918625.png)
+
 # Feature
 
 ### Alarm
