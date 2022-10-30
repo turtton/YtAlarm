@@ -81,7 +81,13 @@ class TakeMainActivityScreenshots {
         onView(withId(R.id.recycler_list))
             .perform(actionOnItemAtPosition<PlaylistAdapter.ViewHolder>(0, click()))
 
-        Screengrab.screenshot("videos")
+        Screengrab.screenshot("videos-origin")
+
+        pressBack()
+        onView(withId(R.id.recycler_list))
+            .perform(actionOnItemAtPosition<PlaylistAdapter.ViewHolder>(1, click()))
+
+        Screengrab.screenshot("videos-playlist")
 
         pressBack()
         onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
