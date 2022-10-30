@@ -26,16 +26,16 @@ Also, you do not need an account for each service to use this application.
 
 # Screenshots
 
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarm.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarm.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarms.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarms.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarmSettings.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarmSettings.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/playlist.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/playlist.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/videos-origin.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videos-origin.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/videos-playlist.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videos-playlist.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/allvideos.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/allvideos.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/drawer.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/drawer.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/videoplayer.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videoplayer.png)
-[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage.png" with=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarm.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarm.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarms.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarms.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/alarmSettings.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarmSettings.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/playlist.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/playlist.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/videos-origin.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videos-origin.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/videos-playlist.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videos-playlist.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/allvideos.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/allvideos.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/drawer.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/drawer.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/videoplayer.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videoplayer.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage.png)
 
 # Feature
 
