@@ -14,5 +14,8 @@ clear_previous_screenshots(true)
 # disable timestamp suffix
 use_timestamp_suffix(false)
 
+# copy screenshot any time
+exit_on_test_failure(false)
+
 # For more information about all available options run
 #   fastlane screengrab --help
