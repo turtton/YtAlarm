@@ -47,18 +47,18 @@ class VideoListAdapter<T>(
               T : LifecycleOwner,
               T : PlaylistViewContainer,
               T : VideoViewContainer {
-    private val currentCheckBox = hashSetOf<ViewContainer>()
+    private val currentCheckBox = hashSetOf<ViewHolder>()
 
     var tracker: SelectionTracker<Long>? = null
         set(value) {
             value?.let {
                 it.addObserver(object : SelectionObserver<Long>() {
                     override fun onSelectionChanged() {
-                        val selected = currentCheckBox.filter { current ->
-                            it.isSelected(current.id)
+                        val selected = currentCheckBox.filter { holder ->
+                            it.isSelected(holder.videoId)
                         }
-                        val unSelectable = selected.filter { current ->
-                            !current.selectable
+                        val unSelectable = selected.filter { holder ->
+                            !holder.selectable
                         }
                         if (unSelectable.isNotEmpty() && unSelectable.size == selected.size) {
                             fragment.lifecycleScope.launch(Dispatchers.Main) {
@@ -67,25 +67,32 @@ class VideoListAdapter<T>(
                             return
                         }
 
-                        currentCheckBox.forEach { (id, box, option, selectable) ->
-                            if (!selectable) {
+                        currentCheckBox.forEach { holder ->
+                            val id = holder.videoId
+                            if (!holder.selectable) {
                                 fragment.lifecycleScope.launch(Dispatchers.Main) {
                                     it.deselect(id)
                                 }
                                 return@forEach
                             }
-                            box.visibility = if (it.hasSelection()) {
+                            holder.checkBox.visibility = if (it.hasSelection()) {
                                 View.VISIBLE
                             } else {
                                 View.GONE
                             }
-                            box.isChecked = it.isSelected(id)
+                            holder.checkBox.isChecked = it.isSelected(id)
 
-                            option.visibility = if (it.hasSelection()) {
+                            holder.optionButton.visibility = if (it.hasSelection()) {
                                 View.GONE
                             } else {
                                 View.VISIBLE
                             }
+                            holder.downloadButton.visibility =
+                                if (holder.isStreamable || it.hasSelection()) {
+                                    View.GONE
+                                } else {
+                                    View.VISIBLE
+                                }
                         }
                     }
                 })
@@ -103,7 +110,6 @@ class VideoListAdapter<T>(
         val data = getItem(position)
         val itemView = holder.itemView
         itemView.tag = data.id
-        val checkBox = holder.checkBox
 
         when (val state = data.stateData) {
             is Video.State.Importing -> setUpAsImporting(itemView, holder, data, state.state)
@@ -111,19 +117,11 @@ class VideoListAdapter<T>(
             else -> setUpNormally(itemView, holder, data, state)
         }
         tracker?.applyTrackerState(itemView, holder, holder.selectable, data.id)
-        val container = ViewContainer(data.id, checkBox, holder.optionButton, holder.selectable)
-        currentCheckBox.add(container)
+        currentCheckBox.add(holder)
     }
 
     override fun onViewDetachedFromWindow(holder: ViewHolder) {
-        currentCheckBox.remove(
-            ViewContainer(
-                holder.itemView.tag as Long,
-                holder.checkBox,
-                holder.optionButton,
-                holder.selectable
-            )
-        )
+        currentCheckBox.remove(holder)
     }
 
     private fun setUpAsImporting(
@@ -211,7 +209,10 @@ class VideoListAdapter<T>(
             video.domain
         }
         Glide.with(itemView).load(video.thumbnailUrl).into(thumbnail)
-        if ((video.stateData as Video.State.Information).isStreamable) {
+
+        val isStreamable = (video.stateData as? Video.State.Information)?.isStreamable == true
+        holder.isStreamable = isStreamable
+        if (isStreamable) {
             itemView.setOnClickListener {
                 val navController = it.findFragment<Fragment>().findNavController()
                 val args = FragmentVideoPlayerArgs(video.videoId).toBundle()
@@ -404,6 +405,11 @@ class VideoListAdapter<T>(
         } else {
             View.VISIBLE
         }
+        holder.downloadButton.visibility = if (holder.isStreamable || hasSelection()) {
+            View.GONE
+        } else {
+            View.VISIBLE
+        }
     }
 
     /**
@@ -431,10 +437,13 @@ class VideoListAdapter<T>(
         val downloadButton: ImageButton = view.findViewById(R.id.item_video_download_button)
 
         var selectable: Boolean = true
+        var isStreamable: Boolean = true
 
         init {
             checkBox.visibility = View.GONE
         }
+
+        val videoId get() = itemView.tag as Long
 
         fun toItemDetail(): ItemDetailsLookup.ItemDetails<Long> =
             object : ItemDetailsLookup.ItemDetails<Long>() {
@@ -455,11 +464,4 @@ class VideoListAdapter<T>(
             }
         }
     }
-
-    private data class ViewContainer(
-        val id: Long,
-        val checkBox: CheckBox,
-        val optionButton: ImageButton,
-        val selectable: Boolean
-    )
 }
