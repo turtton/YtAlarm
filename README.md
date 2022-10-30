@@ -3,15 +3,16 @@
 
 <p align="center">
 <a href="https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml">
-    <img src="https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml/badge.svg">
-</a>
+    <img src="https://img.shields.io/github/checks-status/turtton/YtAlarm/main?style=flat-square">
 <a href="https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=turtton/YtAlarm&amp;utm_campaign=Badge_Grade">
-    <img src="https://app.codacy.com/project/badge/Grade/5f8c410c677a4172a5641242bf40d6c4">
+    <img alt="Codacy branch grade" src="https://img.shields.io/codacy/grade/5f8c410c677a4172a5641242bf40d6c4/main?style=flat-square">
 </a>
 <a href="https://codecov.io/gh/turtton/YtAlarm"> 
-    <img src="https://codecov.io/gh/turtton/YtAlarm/branch/main/graph/badge.svg?token=KBB10HH0TL"/> 
+    <img alt="Codecov branch" src="https://img.shields.io/codecov/c/github/turtton/YtAlarm/main?style=flat-square&token=KBB10HH0TL">
 </a>
-<a href="https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm?ref=badge_shield" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm.svg?type=shield"/></a>
+<a href="https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm?ref=badge_shield" alt="FOSSA Status">
+    <img src="https://app.fossa.com/api/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm.svg?type=shield"/>
+</a>
 </p>
 
 ------
