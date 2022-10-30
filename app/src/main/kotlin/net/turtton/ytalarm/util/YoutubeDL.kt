@@ -48,7 +48,7 @@ data class VideoInformation(
             typeData.thumbnailUrl,
             url,
             domain,
-            Video.State.Information(!typeData.videoUrl.startsWith("http"))
+            Video.State.Information(typeData.videoUrl.startsWith("http"))
         )
     }
 
