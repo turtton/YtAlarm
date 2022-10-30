@@ -27,7 +27,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            abiFilters += setOf("x86", "x86_64", "armeabi-v7a", "arm64-v8a")
+            val abiFilters: String by project
+            this.abiFilters += abiFilters.split(';')
         }
     }
 
