@@ -3,7 +3,6 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") version "1.7.20-1.0.7"
     id("androidx.navigation.safeargs.kotlin")
-    id("com.google.android.gms.oss-licenses-plugin")
     kotlin("plugin.serialization") version "1.7.20"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
