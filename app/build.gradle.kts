@@ -8,6 +8,14 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
 }
 
+// This versioning probably follows semver.org
+val major = 0
+val minor = 1
+// Max:19
+// Patch always calculated at five times in versionName and also adds abiFilter numberings in versionCode.
+// Please see actualPatchVer.
+val patch = 0
+
 android {
     compileSdk = 33
 
@@ -17,17 +25,35 @@ android {
         minSdk = 24
         targetSdk = 33
 
-        val major = 0
-        val minor = 1
-        val patch = 0
-        versionCode = (major * 10000 + minor * 100 + patch)
-        versionName = "$major.$minor.$patch"
+        val versionNamePatchVer = patch * 5
+        val abiFilterList = property("abiFilters").toString().split(';')
+        val singleAbiNum = when (abiFilterList.takeIf { it.size == 1 }?.first()) {
+            "armeabi-v7a" -> 1
+            "arm64-v8a" -> 2
+            "x86" -> 3
+            "x86_64" -> 4
+            else -> 0
+        }
+        val versionCodePatchVer = versionNamePatchVer + singleAbiNum
+
+        versionCode = major * 10000 + minor * 100 + versionCodePatchVer
+        versionName = "$major.$minor.$versionNamePatchVer"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            val abiFilters: String by project
-            this.abiFilters += abiFilters.split(';')
+            abiFilters += abiFilterList
+        }
+
+        tasks.preBuild {
+            doLast {
+                val androidConfig = android.defaultConfig
+                val text = """
+                versionCode=${androidConfig.versionCode}
+                versionName=${androidConfig.versionName}
+                """.trimIndent()
+                file("$rootDir/VERSION").writeText(text)
+            }
         }
     }
 
