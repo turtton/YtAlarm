@@ -16,6 +16,8 @@ val minor = 1
 // Please see actualPatchVer.
 val patch = 0
 
+val hasNoSplits = hasProperty("noSplits")
+
 android {
     compileSdk = 33
 
@@ -32,7 +34,7 @@ android {
             "arm64-v8a" -> 2
             "x86" -> 3
             "x86_64" -> 4
-            else -> 0
+            else -> if (hasNoSplits) 0 else 4
         }
         val versionCodePatchVer = versionNamePatchVer + singleAbiNum
 
@@ -45,16 +47,11 @@ android {
             abiFilters += abiFilterList
         }
 
-        tasks.preBuild {
-            doLast {
-                val androidConfig = android.defaultConfig
-                val text = """
-                versionCode=${androidConfig.versionCode}
-                versionName=${androidConfig.versionName}
-                """.trimIndent()
-                file("$rootDir/VERSION").writeText(text)
-            }
-        }
+        val androidConfig = android.defaultConfig
+        val text = """
+        versionCode=${androidConfig.versionCode}
+        """.trimIndent()
+        file("$rootDir/VERSION_CODE").writeText(text)
     }
 
     packagingOptions {
@@ -94,7 +91,7 @@ android {
 
     splits {
         abi {
-            isEnable = !hasProperty("noSplits")
+            isEnable = !hasNoSplits
             reset()
             include("x86", "x86_64", "armeabi-v7a", "arm64-v8a")
             isUniversalApk = true
