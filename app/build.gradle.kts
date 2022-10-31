@@ -27,14 +27,14 @@ android {
 
         val versionNamePatchVer = patch * 5
         val abiFilterList = property("abiFilters").toString().split(';')
-        val versionCodePatchVer = versionNamePatchVer +
-                when (abiFilterList.takeIf { it.size == 1 }?.first()) {
-                    "armeabi-v7a" -> 1
-                    "arm64-v8a" -> 2
-                    "x86" -> 3
-                    "x86_64" -> 4
-                    else -> 0
-                }
+        val singleAbiNum = when (abiFilterList.takeIf { it.size == 1 }?.first()) {
+            "armeabi-v7a" -> 1
+            "arm64-v8a" -> 2
+            "x86" -> 3
+            "x86_64" -> 4
+            else -> 0
+        }
+        val versionCodePatchVer = versionNamePatchVer + singleAbiNum
 
         versionCode = major * 10000 + minor * 100 + versionCodePatchVer
         versionName = "$major.$minor.$versionNamePatchVer"
