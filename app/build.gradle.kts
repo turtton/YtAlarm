@@ -44,6 +44,17 @@ android {
         ndk {
             abiFilters += abiFilterList
         }
+
+        tasks.preBuild {
+            doLast {
+                val androidConfig = android.defaultConfig
+                val text = """
+                versionCode=${androidConfig.versionCode}
+                versionName=${androidConfig.versionName}
+                """.trimIndent()
+                file("$rootDir/VERSION").writeText(text)
+            }
+        }
     }
 
     packagingOptions {
