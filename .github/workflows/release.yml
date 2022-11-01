@@ -35,14 +35,22 @@ jobs:
           ls | sed -n 's/\(.*\)-unsigned.apk/mv \0 \1.apk/p' | sh
           
       - name: Sign apk
-        uses: r0adkll/sign-android-release@v1
+        uses: ilharp/sign-android-release@v1
         id: sign_app
         with:
-          releaseDirectory: app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.APK_SIGNING_KEY }}
-          alias: ${{ secrets.APK_SIGNING_ALIAS }}
+          releaseDir: app/build/outputs/apk/release
+          signingKey: ${{ secrets.APK_SIGNING_KEY }}
+          keyAlias: ${{ secrets.APK_SIGNING_ALIAS }}
           keyStorePassword: ${{ secrets.APK_KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.APK_KEY_PASSWORD }}
+          buildToolsVersion: 33.0.0
+
+      - name: Split signed files
+        uses: jungwinter/split@v1
+        id: signed_files
+        with:
+          msg: ${{ steps.sign_app.outputs.signedFiles }}
+          separator: ':'
 
       - name: Conventional Changelog Action
         id: changelog
@@ -58,8 +66,8 @@ jobs:
           token: "${{ secrets.GITHUB_TOKEN }}"
           body: ${{ steps.changelog.outputs.clean_changelog }}
           files: |
-            ${{ steps.sign_app.signedReleaseFile0 }}
-            ${{ steps.sign_app.signedReleaseFile1 }}
-            ${{ steps.sign_app.signedReleaseFile2 }}
-            ${{ steps.sign_app.signedReleaseFile3 }}
-            ${{ steps.sign_app.signedReleaseFile4 }}
+            ${{ steps.signed_files.outputs._0 }}
+            ${{ steps.signed_files.outputs._1 }}
+            ${{ steps.signed_files.outputs._2 }}
+            ${{ steps.signed_files.outputs._3 }}
+            ${{ steps.signed_files.outputs._4 }}
