@@ -50,6 +50,7 @@ jobs:
         with:
           github-token: ${{ secrets.github_token }}
           output-file: "false"
+          git-pull-method: --ff-only -f
 
       - name: Example Release
         uses: softprops/action-gh-release@v1
