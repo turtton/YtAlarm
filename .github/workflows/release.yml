@@ -50,7 +50,7 @@ jobs:
         id: signed_files
         with:
           msg: ${{ steps.sign_app.outputs.signedFiles }}
-          separator: ':'
+          seperator: ':'
 
       - name: Conventional Changelog Action
         id: changelog
