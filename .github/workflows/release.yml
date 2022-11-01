@@ -1,8 +1,9 @@
 name: Release apks
 
 on:
-  pull_request:
-    branches: [ "main" ]
+  push:
+    tags:
+      - "v*"
 
 jobs:
   release:
@@ -33,7 +34,6 @@ jobs:
           cd app/build/outputs/apk/release
           ls | sed -n 's/\(.*\)-unsigned.apk/mv \0 \1.apk/p' | sh
           
-
       - name: Sign apk
         uses: r0adkll/sign-android-release@v1
         id: sign_app
@@ -44,8 +44,27 @@ jobs:
           keyStorePassword: ${{ secrets.APK_KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.APK_KEY_PASSWORD }}
 
-      - name: Upload signed apks
-        uses: actions/upload-artifact@v3
+      - uses: jungwinter/split@v1
+          id: signed_files
+          with:
+            msg: ${{ steps.sign_app.signedReleaseFiles }}
+            separator: ':'
+
+      - name: Conventional Changelog Action
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v3
         with:
-          name: Signed app bundle
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          github-token: ${{ secrets.github_token }}
+          output-file: "false"
+
+      - name: Example Release
+          uses: softprops/action-gh-release@v1
+          with:
+            token: "${{ secrets.GITHUB_TOKEN }}"
+            body: ${{ steps.changelog.outputs.clean_changelog }}
+            files: |
+              ${{ steps.signed_files._0 }}
+              ${{ steps.signed_files._1 }}
+              ${{ steps.signed_files._2 }}
+              ${{ steps.signed_files._3 }}
+              ${{ steps.signed_files._4 }}
