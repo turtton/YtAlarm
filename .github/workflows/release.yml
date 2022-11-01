@@ -28,6 +28,12 @@ jobs:
         with:
           arguments: assembleRelease
 
+      - name: Rename apks
+        run: |
+          cd app/build/outputs/apk/release
+          ls | sed -n 's/\(.*\)-unsigned.apk/mv \0 \1.apk/p' | sh
+          
+
       - name: Sign apk
         uses: r0adkll/sign-android-release@v1
         id: sign_app
