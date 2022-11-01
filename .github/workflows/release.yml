@@ -6,7 +6,6 @@ on:
 
 jobs:
   release:
-    strategy:
     runs-on: ubuntu-latest
 
     if: ${{ github.repository_owner == 'turtton' }}
