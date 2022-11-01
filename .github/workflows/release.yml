@@ -1,0 +1,70 @@
+name: Release apks
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    if: ${{ github.repository_owner == 'turtton' }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Gradle Wrapper Validation
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Build apk
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: assembleRelease
+
+      - name: Rename apks
+        run: |
+          cd app/build/outputs/apk/release
+          ls | sed -n 's/\(.*\)-unsigned.apk/mv \0 \1.apk/p' | sh
+          
+      - name: Sign apk
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.APK_SIGNING_KEY }}
+          alias: ${{ secrets.APK_SIGNING_ALIAS }}
+          keyStorePassword: ${{ secrets.APK_KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.APK_KEY_PASSWORD }}
+
+      - uses: jungwinter/split@v1
+          id: signed_files
+          with:
+            msg: ${{ steps.sign_app.signedReleaseFiles }}
+            separator: ':'
+
+      - name: Conventional Changelog Action
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v3
+        with:
+          github-token: ${{ secrets.github_token }}
+          output-file: "false"
+
+      - name: Example Release
+          uses: softprops/action-gh-release@v1
+          with:
+            token: "${{ secrets.GITHUB_TOKEN }}"
+            body: ${{ steps.changelog.outputs.clean_changelog }}
+            files: |
+              ${{ steps.signed_files._0 }}
+              ${{ steps.signed_files._1 }}
+              ${{ steps.signed_files._2 }}
+              ${{ steps.signed_files._3 }}
+              ${{ steps.signed_files._4 }}
