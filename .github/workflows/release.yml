@@ -1,8 +1,8 @@
 name: Release apks
 
 on:
-  push:
-    branches: [ "*" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   release:
