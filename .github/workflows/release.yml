@@ -44,12 +44,6 @@ jobs:
           keyStorePassword: ${{ secrets.APK_KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.APK_KEY_PASSWORD }}
 
-      - uses: jungwinter/split@v1
-        id: signed_files
-        with:
-          msg: ${{ steps.sign_app.signedReleaseFiles }}
-          separator: ':'
-
       - name: Conventional Changelog Action
         id: changelog
         uses: TriPSs/conventional-changelog-action@v3
@@ -63,8 +57,8 @@ jobs:
           token: "${{ secrets.GITHUB_TOKEN }}"
           body: ${{ steps.changelog.outputs.clean_changelog }}
           files: |
-            ${{ steps.signed_files._0 }}
-            ${{ steps.signed_files._1 }}
-            ${{ steps.signed_files._2 }}
-            ${{ steps.signed_files._3 }}
-            ${{ steps.signed_files._4 }}
+            ${{ steps.sign_app.signedReleaseFile0 }}
+            ${{ steps.sign_app.signedReleaseFile1 }}
+            ${{ steps.sign_app.signedReleaseFile2 }}
+            ${{ steps.sign_app.signedReleaseFile3 }}
+            ${{ steps.sign_app.signedReleaseFile4 }}
