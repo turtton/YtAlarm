@@ -27,7 +27,7 @@ jobs:
       - name: Build apk
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: assembleRelease
+          arguments: clean assembleRelease
 
       - name: Rename apks
         run: |
@@ -45,26 +45,24 @@ jobs:
           keyPassword: ${{ secrets.APK_KEY_PASSWORD }}
           buildToolsVersion: 33.0.0
 
+      - name: Upload to artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: Signed app bundle
+          path: ${{ steps.sign_app.outputs.signedFile }}
+
       - name: Split signed files
-        uses: jungwinter/split@v1
+        uses: jungwinter/split@v2
         id: signed_files
         with:
           msg: ${{ steps.sign_app.outputs.signedFiles }}
-          seperator: ':'
+          separator: ':'
 
-      - name: Conventional Changelog Action
-        id: changelog
-        uses: TriPSs/conventional-changelog-action@v3
-        with:
-          github-token: ${{ secrets.github_token }}
-          output-file: "false"
-          skip-git-pull: "true"
-
-      - name: Example Release
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          body: ${{ steps.changelog.outputs.clean_changelog }}
+          draft: true
           files: |
             ${{ steps.signed_files.outputs._0 }}
             ${{ steps.signed_files.outputs._1 }}
