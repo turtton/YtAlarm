@@ -46,7 +46,7 @@ jobs:
           buildToolsVersion: 33.0.0
 
       - name: Split signed files
-        uses: jungwinter/split@v1
+        uses: jungwinter/split@v2
         id: signed_files
         with:
           msg: ${{ steps.sign_app.outputs.signedFiles }}
