@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.7.20-1.0.7"
+    id("com.google.devtools.ksp") version "1.7.20-1.0.8"
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.7.20"
     id("org.jmailen.kotlinter")
@@ -155,7 +155,7 @@ dependencies {
     }
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("io.kotest:kotest-runner-junit5:5.5.3")?.version?.also {
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.4")?.version?.also {
         testImplementation("io.kotest:kotest-assertions-core:$it")?.also { dep ->
             androidTestImplementation(dep)
         }
