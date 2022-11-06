@@ -2,6 +2,9 @@
 <h4 align="center"><b>A simple alarm app using youtubedl-android</b></h4>
 
 <p align="center">
+<a href="https://f-droid.org/packages/net.turtton.ytalarm">
+    <img alt="F-Droid" src="https://img.shields.io/f-droid/v/net.turtton.ytalarm?style=flat-square">
+</a>
 <a href="https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml">
     <img src="https://img.shields.io/github/checks-status/turtton/YtAlarm/main?style=flat-square">
 <a href="https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=turtton/YtAlarm&amp;utm_campaign=Badge_Grade">
