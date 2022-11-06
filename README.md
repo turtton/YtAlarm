@@ -18,6 +18,13 @@
 </a>
 </p>
 
+<p align="center">
+<a href="https://f-droid.org/packages/net.turtton.ytalarm">
+    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">
+</a>
+<p/>
+
+
 ------
 
 Other languages: [日本語](docs/readme/README_ja.md)
