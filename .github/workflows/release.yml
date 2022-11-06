@@ -62,6 +62,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
+          body: '[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"alt="Get it on F-Droid"height="80">](https://f-droid.org/packages/net.turtton.ytalarm)'
           draft: true
           files: |
             ${{ steps.signed_files.outputs._0 }}
