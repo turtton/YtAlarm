@@ -1,9 +1,9 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.7.20-1.0.8"
+    id("com.google.devtools.ksp") version "1.7.21-1.0.8"
     id("androidx.navigation.safeargs.kotlin")
-    kotlin("plugin.serialization") version "1.7.20"
+    kotlin("plugin.serialization") version "1.7.21"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
 }
@@ -163,10 +163,10 @@ dependencies {
     }
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation("org.robolectric:robolectric:4.9")
-    androidTestImplementation("androidx.test.ext:junit-ktx:1.1.3")
-    androidTestImplementation("androidx.test:rules:1.4.0")
-    androidTestImplementation("androidx.test:runner:1.4.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")?.version?.also {
+    androidTestImplementation("androidx.test.ext:junit-ktx:1.1.4")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+    androidTestImplementation("androidx.test:runner:1.5.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")?.version?.also {
         implementation("androidx.test.espresso:espresso-idling-resource:$it")
         androidTestImplementation("androidx.test.espresso:espresso-contrib:$it")
     }
