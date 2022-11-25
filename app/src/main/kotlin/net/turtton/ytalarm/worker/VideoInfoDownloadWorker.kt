@@ -85,7 +85,7 @@ class VideoInfoDownloadWorker(
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val title = applicationContext.getString(R.string.notification_download_video_info_title)
-        val cancel = applicationContext.getString(R.string.notification_download_video_info_cancel)
+        val cancel = applicationContext.getString(R.string.cancel)
         val cancelIntent = WorkManager.getInstance(applicationContext)
             .createCancelPendingIntent(id)
         val notification =

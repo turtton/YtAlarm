@@ -145,14 +145,14 @@ class AlarmSettingsAdapter(
                 AlertDialog.Builder(context)
                     .setTitle(snoozeTitle)
                     .setView(numberPicker)
-                    .setPositiveButton(R.string.dialog_snooze_time_input_ok) { _, _ ->
+                    .setPositiveButton(R.string.ok) { _, _ ->
                         numberPicker.clearFocus()
                         val minute = numberPicker.value
                         alarmState.update {
                             it.copy(snoozeMinute = minute)
                         }
                         description.text = getSnoozeMinute(minute)
-                    }.setNegativeButton(R.string.dialog_snooze_time_input_cancel) { _, _ -> }
+                    }.setNegativeButton(R.string.cancel) { _, _ -> }
                     .show()
             }
 
@@ -436,7 +436,7 @@ class AlarmSettingsAdapter(
                     }
                 }.setPositiveButton(R.string.dialog_repeat_days_ok) { _, _ ->
                     onConfirm(currentDay.toList())
-                }.setNegativeButton(R.string.dialog_repeat_days_cancel) { _, _ -> }
+                }.setNegativeButton(R.string.cancel) { _, _ -> }
                 .create()
         }
     }

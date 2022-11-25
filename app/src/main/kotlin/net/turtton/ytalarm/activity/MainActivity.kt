@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
             AlertDialog.Builder(this)
                 .setTitle(R.string.dialog_require_permission)
                 .setMessage(R.string.dialog_require_overlay_perm)
-                .setPositiveButton(R.string.dialog_require_overlay_perm_ok) { _, _ ->
+                .setPositiveButton(R.string.ok) { _, _ ->
                     activity.launch(intent)
                 }.show()
         } else {
@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
                                 .setTitle(R.string.dialog_require_configuration)
                                 .setMessage(R.string.dialog_require_disable_restrictions)
                                 .setPositiveButton(
-                                    R.string.dialog_require_disable_restrictions_ok
+                                    R.string.ok
                                 ) { _, _ ->
                                     activity.launch(intent)
                                 }.show()
@@ -157,7 +157,7 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
                         AlertDialog.Builder(applicationContext)
                             .setTitle(R.string.dialog_shared_text_should_be_url_title)
                             .setMessage(R.string.dialog_shared_text_should_be_url_description)
-                            .setPositiveButton(R.string.dialog_shared_text_should_be_url_ok, null)
+                            .setPositiveButton(R.string.ok, null)
                             .show()
                     }
 

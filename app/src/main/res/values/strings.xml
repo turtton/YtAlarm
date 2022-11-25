@@ -1,6 +1,11 @@
 <resources>
     <string name="app_name">YtAlarm</string>
     <string name="version">v%s(%d)</string>
+
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="remove">Remove</string>
+
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">Alarms</string>
     <string name="second_fragment_label">Alarm Settings</string>
@@ -49,12 +54,8 @@
     <string name="menu_title_video_list">VideoList</string>
     <string name="menu_title_aboutpage">About</string>
 
-    <string name="dialog_snooze_time_input_ok">OK</string>
-    <string name="dialog_snooze_time_input_cancel">Cancel</string>
-
     <string name="dialog_video_input_url_hint">https://…</string>
     <string name="dialog_video_input_ok">Import</string>
-    <string name="dialog_video_input_cancel">Cancel</string>
 
     <string name="dialog_execute_progress_title">Importing…</string>
     <string name="dialog_execute_progress_title_loading">Loading…</string>
@@ -62,14 +63,10 @@
     <string name="fab_add_video_description">Add video Button</string>
 
     <string name="dialog_multichoice_ok">Confirm</string>
-    <string name="dialog_multichoice_cancel">Cancel</string>
     <string name="menu_video_list_add_to">AddTo</string>
-    <string name="menu_video_list_remove">Remove</string>
-    <string name="menu_playlist_remove">Remove</string>
 
     <string name="dialog_remove_title">Delete</string>
     <string name="dialog_remove_ok">Confirm</string>
-    <string name="dialog_remove_cancel">Cancel</string>
 
     <string name="dialog_repeat_choice_title">Repeat</string>
     <string-array name="dialog_repeat_type_choice">
@@ -80,7 +77,6 @@
     </string-array>
     <string name="dialog_repeat_days_title">Days</string>
     <string name="dialog_repeat_days_ok">Confirm</string>
-    <string name="dialog_repeat_days_cancel">Cancel</string>
     <string-array name="dialog_repeat_days_choice">
         <item name="dialog_repeat_days_choice_mon">Mon</item>
         <item name="dialog_repeat_days_choice_tue">Tue</item>
@@ -92,16 +88,12 @@
     </string-array>
     <string name="dialog_require_permission">Permission Required</string>
     <string name="dialog_require_overlay_perm">This application requires \"Display over other apps\" permission to display alarm.</string>
-    <string name="dialog_require_overlay_perm_ok">OK</string>
     <string name="dialog_require_configuration">Configuration Required</string>
     <string name="dialog_require_disable_restrictions">This application requires disabling the option \"Remove permissions if app is unused\"</string>
-    <string name="dialog_require_disable_restrictions_ok">OK</string>
     <string name="dialog_shared_text_should_be_url_title">Error</string>
     <string name="dialog_shared_text_should_be_url_description">The shared text should start \"http..\"</string>
-    <string name="dialog_shared_text_should_be_url_ok">OK</string>
 
     <string name="dialog_playlist_name_input_ok">Rename</string>
-    <string name="dialog_playlist_name_input_cancel">Cancel</string>
 
     <string name="dialog_video_import_failed_title">Failed Url</string>
     <string name="dialog_video_import_failed_retry">Retry</string>
@@ -156,10 +148,8 @@
         <item quantity="one">Alarm will start after %d minute</item>
         <item quantity="other">Alarm will start after %d minutes</item>
         </plurals>
-    <string name="notification_snooze_cancel">Cancel</string>
     <string name="notification_download_video_info_channel_description">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
-    <string name="notification_download_video_info_cancel">Cancel</string>
     <string name="playlist_fragment_label">Playlists</string>
     <string name="videolist_fragment_label">Videos</string>
     <string name="videoplayer_fragment_label">Playing</string>
