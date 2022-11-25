@@ -157,7 +157,7 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
                         AlertDialog.Builder(applicationContext)
                             .setTitle(R.string.dialog_shared_text_should_be_url_title)
                             .setMessage(R.string.dialog_shared_text_should_be_url_description)
-                            .setPositiveButton(R.string.dialog_shared_text_should_be_url_ok, null)
+                            .setPositiveButton(R.string.ok, null)
                             .show()
                     }
 

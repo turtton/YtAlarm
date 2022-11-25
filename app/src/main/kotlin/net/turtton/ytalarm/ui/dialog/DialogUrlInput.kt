@@ -25,7 +25,7 @@ class DialogUrlInput(
             .setView(editText)
             .setPositiveButton(R.string.dialog_video_input_ok) { _, _ ->
                 onConfirmImportDialog(this)
-            }.setNegativeButton(R.string.dialog_video_input_cancel) { _, _ -> }
+            }.setNegativeButton(R.string.cancel) { _, _ -> }
             .create()
     }
 

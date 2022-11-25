@@ -14,7 +14,7 @@ class DialogRemoveVideo(
         return AlertDialog.Builder(context)
             .setTitle(R.string.dialog_remove_title)
             .setPositiveButton(R.string.dialog_remove_ok, onConfirm)
-            .setNegativeButton(R.string.dialog_remove_cancel) { _, _ -> }
+            .setNegativeButton(R.string.cancel) { _, _ -> }
             .create()
     }
 }

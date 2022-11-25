@@ -10,6 +10,6 @@
     <item
         android:id="@+id/menu_video_list_action_remove"
         android:icon="@drawable/ic_trash"
-        android:title="@string/menu_video_list_remove"
+        android:title="@string/remove"
         app:showAsAction="ifRoom" />
 </menu>

@@ -5,6 +5,6 @@
     <item
         android:id="@+id/menu_playlist_action_remove"
         android:icon="@drawable/ic_trash"
-        android:title="@string/menu_playlist_remove"
+        android:title="@string/remove"
         app:showAsAction="ifRoom" />
 </menu>

@@ -291,7 +291,7 @@ class PlaylistAdapter<T>(
                                 viewModel.update(it.copy(title = editText.text.toString()))
                             }
                     }
-                }.setNegativeButton(R.string.dialog_playlist_name_input_cancel) { _, _ -> }
+                }.setNegativeButton(R.string.cancel) { _, _ -> }
                 .create()
         }
     }

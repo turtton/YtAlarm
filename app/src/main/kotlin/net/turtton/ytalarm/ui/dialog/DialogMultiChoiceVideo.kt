@@ -26,7 +26,7 @@ class DialogMultiChoiceVideo<T>(
             .setView(recyclerView)
             .setPositiveButton(R.string.dialog_multichoice_ok) { _, _ ->
                 confirmImportDialog(this, adapter.selectedId)
-            }.setNegativeButton(R.string.dialog_multichoice_cancel) { _, _ -> }
+            }.setNegativeButton(R.string.cancel) { _, _ -> }
             .create()
     }
 }

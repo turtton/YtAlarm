@@ -83,7 +83,7 @@ class UpdateSnoozeNotifyWorker(
         val title = applicationContext.getString(R.string.notification_snooze_title)
         val description = applicationContext.resources
             .getQuantityString(R.plurals.notification_snooze_remain, minute, minute)
-        val cancelText = applicationContext.getString(R.string.notification_snooze_cancel)
+        val cancelText = applicationContext.getString(R.string.cancel)
 
         val removeIntent = SnoozeRemoveReceiver.getIntent(applicationContext, nextSnooze.id)
 
