@@ -7,6 +7,7 @@
 </a>
 <a href="https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml">
     <img src="https://img.shields.io/github/checks-status/turtton/YtAlarm/main?style=flat-square">
+</a>
 <a href="https://www.codacy.com?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=turtton/YtAlarm&amp;utm_campaign=Badge_Grade">
     <img alt="Codacy branch grade" src="https://img.shields.io/codacy/grade/5f8c410c677a4172a5641242bf40d6c4/main?style=flat-square">
 </a>
@@ -22,7 +23,7 @@
 <a href="https://f-droid.org/packages/net.turtton.ytalarm">
     <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">
 </a>
-<p/>
+</p>>
 
 
 ------
