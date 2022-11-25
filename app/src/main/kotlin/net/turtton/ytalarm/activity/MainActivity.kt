@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
             AlertDialog.Builder(this)
                 .setTitle(R.string.dialog_require_permission)
                 .setMessage(R.string.dialog_require_overlay_perm)
-                .setPositiveButton(R.string.ok) { _, _ ->
+                .setPositiveButton(R.string.dialog_require_overlay_perm_ok) { _, _ ->
                     activity.launch(intent)
                 }.show()
         } else {
@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
                                 .setTitle(R.string.dialog_require_configuration)
                                 .setMessage(R.string.dialog_require_disable_restrictions)
                                 .setPositiveButton(
-                                    R.string.ok
+                                    R.string.dialog_require_disable_restrictions_ok
                                 ) { _, _ ->
                                     activity.launch(intent)
                                 }.show()

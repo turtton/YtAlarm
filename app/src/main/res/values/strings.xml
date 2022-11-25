@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">YtAlarm</string>
-    <string name="version">v%s(%d)</string>
+    <string name="app_name" translatable="false">YtAlarm</string>
+    <string name="version" translatable="false">v%s(%d)</string>
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
@@ -10,20 +10,20 @@
     <string name="first_fragment_label">Alarms</string>
     <string name="second_fragment_label">Alarm Settings</string>
 
-    <string name="alarm_time">00:00</string>
-    <string name="alarm_type">aram_type</string>
+    <string name="alarm_time" translatable="false">00:00</string>
+    <string name="alarm_type" translatable="false">aram_type</string>
     <string name="playlist_name_importing">Importing</string>
-    <string name="playlist_name">PlaylistName</string>
-    <string name="thumbnail_description">PlaylistThumbnail</string>
-    <string name="setting_name">SettingName</string>
-    <string name="setting_description">SettingDescription</string>
+    <string name="playlist_name" translatable="false">PlaylistName</string>
+    <string name="thumbnail_description" translatable="false">PlaylistThumbnail</string>
+    <string name="setting_name" translatable="false">SettingName</string>
+    <string name="setting_description" translatable="false">SettingDescription</string>
     <string name="fab_save">Save</string>
     <plurals name="playlist_item_video_count">
         <item quantity="one">%d video</item>
         <item quantity="other">%d videos</item>
     </plurals>
     <string name="playlist_item_video_count_none">no video</string>
-    <string name="playlist_item_title">PlaylistTitle</string>
+    <string name="playlist_item_title" translatable="false">PlaylistTitle</string>
 
     <string name="setting_time">Time</string>
     <string name="setting_repeat">Repeat</string>
@@ -37,14 +37,14 @@
         <item quantity="other">%d minutes</item>
     </plurals>
     <string name="setting_vibration">Vibration</string>
-    <string name="item_video_list_data_size">%02.1fMB</string>
+    <string name="item_video_list_data_size" translatable="false">%02.1fMB</string>
     <string name="item_video_list_click_to_retry">Click to retry</string>
     <string name="item_video_list_import_failed">Import failed</string>
     <string name="item_video_list_state_importing">Importing</string>
     <string name="fragment_video_player_button_dismiss">Dismiss</string>
     <string name="fragment_video_player_button_snooze">Snooze</string>
     <string name="fragment_video_player_button_stop">Stop</string>
-    <string name="fragment_video_player_text_error">Error: Failed to get Alarm data</string>
+    <string name="fragment_video_player_text_error">Failed to get Alarm data</string>
 
     <string name="repeat_type_once">Once</string>
     <string name="repeat_type_everyday">Everyday</string>
@@ -54,13 +54,13 @@
     <string name="menu_title_video_list">VideoList</string>
     <string name="menu_title_aboutpage">About</string>
 
-    <string name="dialog_video_input_url_hint">https://…</string>
+    <string name="dialog_video_input_url_hint" translatable="false">https://…</string>
     <string name="dialog_video_input_ok">Import</string>
 
     <string name="dialog_execute_progress_title">Importing…</string>
     <string name="dialog_execute_progress_title_loading">Loading…</string>
     <string name="dialog_execute_progress_eta_init">calculating…</string>
-    <string name="fab_add_video_description">Add video Button</string>
+    <string name="fab_add_video_description" translatable="false">Add video Button</string>
 
     <string name="dialog_multichoice_ok">Confirm</string>
     <string name="menu_video_list_add_to">AddTo</string>
@@ -88,8 +88,10 @@
     </string-array>
     <string name="dialog_require_permission">Permission Required</string>
     <string name="dialog_require_overlay_perm">This application requires \"Display over other apps\" permission to display alarm.</string>
+    <string name="dialog_require_overlay_perm_ok">Settings</string>
     <string name="dialog_require_configuration">Configuration Required</string>
     <string name="dialog_require_disable_restrictions">This application requires disabling the option \"Remove permissions if app is unused\"</string>
+    <string name="dialog_require_disable_restrictions_ok">Settings</string>
     <string name="dialog_shared_text_should_be_url_title">Error</string>
     <string name="dialog_shared_text_should_be_url_description">The shared text should start \"http..\"</string>
 
@@ -141,22 +143,22 @@
     <string name="snackbar_copied">Copied</string>
     <string name="snackbar_only_supports_downloadmode">This video only supports download mode</string>
 
-    <string name="notification_channel_name">YtAlarm</string>
-    <string name="notification_snooze_channel_description">Snooze notification channel</string>
+    <string name="notification_channel_name" translatable="false">YtAlarm</string>
+    <string name="notification_snooze_channel_description" translatable="false">Snooze notification channel</string>
     <string name="notification_snooze_title">Snooze Enabled</string>
     <plurals name="notification_snooze_remain">
         <item quantity="one">Alarm will start after %d minute</item>
         <item quantity="other">Alarm will start after %d minutes</item>
-        </plurals>
-    <string name="notification_download_video_info_channel_description">Video Information download channel</string>
+    </plurals>
+    <string name="notification_download_video_info_channel_description" translatable="false">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
     <string name="playlist_fragment_label">Playlists</string>
     <string name="videolist_fragment_label">Videos</string>
     <string name="videoplayer_fragment_label">Playing</string>
     <string name="allvideolist_fragment_label">All Videos</string>
     <string name="menu_playlist_option_rename">Rename</string>
-    <string name="item_playlist_more_button_description">Option Button</string>
-    <string name="item_video_download_description">Download Button</string>
+    <string name="item_playlist_more_button_description" translatable="false">Option Button</string>
+    <string name="item_video_download_description" translatable="false">Download Button</string>
 
     <string name="menu_option_sortrule">SortRule</string>
     <string name="menu_option_order">Order</string>
@@ -174,15 +176,15 @@
         <item>Delete if not exist</item>
     </string-array>
 
-    <string name="item_aboutpage_title">Title</string>
-    <string name="item_aboutpage_details">Details</string>
-    <string name="item_aboutpage_title_github">GitHub</string>
+    <string name="item_aboutpage_title" translatable="false">Title</string>
+    <string name="item_aboutpage_details" translatable="false">Details</string>
+    <string name="item_aboutpage_title_github" translatable="false">GitHub</string>
     <string name="item_aboutpage_details_github">Open and get the YtAlarm source code.</string>
     <string name="item_aboutpage_title_license">License</string>
     <string name="item_aboutpage_details_license">YtAlarm licensed under GNU General Public License v3.0.</string>
     <string name="item_aboutpage_title_tirdpartylicenses">Third-party Licenses</string>
-    <string name="item_aboutpage_liberapay_title">Liberapay</string>
-    <string name="item_aboutpage_liberapay_details">Click to open liberapay</string>
-    <string name="item_aboutpage_bitcoin_title">Bitcoin</string>
-    <string name="item_aboutpage_bitcoin_address">3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t</string>
+    <string name="item_aboutpage_liberapay_title" translatable="false">Liberapay</string>
+    <string name="item_aboutpage_liberapay_details">Click to open</string>
+    <string name="item_aboutpage_bitcoin_title" translatable="false">Bitcoin</string>
+    <string name="item_aboutpage_bitcoin_address" translatable="false">3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t</string>
 </resources>
