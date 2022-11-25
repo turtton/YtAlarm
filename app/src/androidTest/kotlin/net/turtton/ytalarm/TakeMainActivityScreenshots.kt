@@ -66,48 +66,48 @@ class TakeMainActivityScreenshots {
         onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
         onView(withId(R.id.drawer_layout)).perform(DrawerActions.close())
 
-        Screengrab.screenshot("alarms")
+        Screengrab.screenshot("01-alarms")
 
         onView(withId(R.id.recycler_list))
             .perform(actionOnItemAtPosition<AlarmListAdapter.ViewHolder>(0, click()))
 
-        Screengrab.screenshot("alarmSettings")
+        Screengrab.screenshot("06-alarmSettings")
 
         pressBack()
         onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
 
-        Screengrab.screenshot("drawer")
+        Screengrab.screenshot("07-drawer")
 
         onView(withId(R.id.nav_graph_playlist)).perform(click())
 
-        Screengrab.screenshot("playlist")
+        Screengrab.screenshot("02-playlist")
 
         onView(withId(R.id.recycler_list))
             .perform(actionOnItemAtPosition<PlaylistAdapter.ViewHolder>(0, click()))
 
-        Screengrab.screenshot("videos-origin")
+        Screengrab.screenshot("03-videos-origin")
 
         pressBack()
         onView(withId(R.id.recycler_list))
             .perform(actionOnItemAtPosition<PlaylistAdapter.ViewHolder>(1, click()))
 
-        Screengrab.screenshot("videos-playlist")
+        Screengrab.screenshot("04-videos-playlist")
 
         pressBack()
         onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
         onView(withId(R.id.nav_graph_video_list)).perform(click())
 
-        Screengrab.screenshot("allvideos")
+        Screengrab.screenshot("05-allvideos")
 
         onView(withId(R.id.recycler_list))
             .perform(actionOnItemAtPosition<VideoListAdapter.ViewHolder>(0, click()))
 
-        Screengrab.screenshot("videoplayer")
+        Screengrab.screenshot("08-videoplayer")
 
         pressBack()
         onView(withId(R.id.drawer_layout)).perform(DrawerActions.open())
         onView(withId(R.id.nav_graph_aboutpage)).perform(click())
 
-        Screengrab.screenshot("aboutpage")
+        Screengrab.screenshot("09-aboutpage")
     }
 }
