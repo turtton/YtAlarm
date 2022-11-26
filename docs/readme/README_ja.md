@@ -10,16 +10,16 @@ YtAlarmは[youtubedl-android](https://github.com/yausername/youtubedl-android)�
 
 # スクリーンショット
 
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/00-alarm.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarm.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/01-alarms.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarms.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/06-alarmSettings.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/alarmSettings.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/02-playlist.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/playlist.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/03-videos-origin.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videos-origin.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/04-videos-playlist.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videos-playlist.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/05-allvideos.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/allvideos.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/07-drawer.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/drawer.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/08-videoplayer.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/videoplayer.png)
-[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/09-aboutpage.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/aboutpage.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/00-alarm.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/alarm.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/01-alarms.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/alarms.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/06-alarmSettings.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/alarmSettings.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/02-playlist.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/playlist.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/03-videos-origin.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/videos-origin.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/04-videos-playlist.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/videos-playlist.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/05-allvideos.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/allvideos.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/07-drawer.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/drawer.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/08-videoplayer.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/videoplayer.png)
+[<img src="fastlane/metadata/android/ja/images/phoneScreenshots/09-aboutpage.png" width=160>](fastlane/metadata/android/ja/images/phoneScreenshots/aboutpage.png)
 
 # 機能
 
