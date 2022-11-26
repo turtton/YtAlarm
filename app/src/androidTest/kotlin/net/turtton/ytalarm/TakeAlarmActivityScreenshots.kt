@@ -57,6 +57,6 @@ class TakeAlarmActivityScreenshots {
         // Wait for video player start.
         // I do not know why, but videoPlayerLoadingResourceController does not work in this test.
         Thread.sleep(15000)
-        Screengrab.screenshot("alarm")
+        Screengrab.screenshot("00-alarm")
     }
 }
