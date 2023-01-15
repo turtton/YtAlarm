@@ -7,6 +7,8 @@ import androidx.test.espresso.ViewInteraction
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.DrawerActions
+import androidx.test.espresso.contrib.DrawerMatchers.isOpen
+import androidx.test.espresso.contrib.NavigationViewActions.navigateTo
 import androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition
 import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
@@ -49,8 +51,8 @@ class TestMainActivity {
         checkAlarmListFragment()
 
         // AlarmList -> Playlist
-        onDrawerView().perform(DrawerActions.open())
-        onView(withId(R.id.nav_graph_playlist)).perform(click())
+        onDrawerView().perform(DrawerActions.open()).check(matches(isOpen()))
+        onNavView().perform(navigateTo(R.id.nav_graph_playlist))
 
         checkPlaylistFragment()
 
@@ -65,8 +67,8 @@ class TestMainActivity {
         checkPlaylistFragment()
 
         // Playlist -> AllVideoList
-        onDrawerView().perform(DrawerActions.open())
-        onView(withId(R.id.nav_graph_video_list))
+        onDrawerView().perform(DrawerActions.open()).check(matches(isOpen()))
+        onNavView().perform(navigateTo(R.id.nav_graph_video_list))
 
         checkAllVideoListFragment()
 
@@ -81,7 +83,7 @@ class TestMainActivity {
 
         // AllVideoList -> About
         onDrawerView().perform(DrawerActions.open())
-        onView(withId(R.id.nav_graph_aboutpage))
+        onNavView().perform(navigateTo(R.id.nav_graph_aboutpage))
 
         checkAboutPageFragment()
     }
@@ -98,6 +100,8 @@ class TestMainActivity {
         private fun onFabAddVideoView(): ViewInteraction = onView(withId(R.id.fab_add_video))
 
         private fun onDrawerView(): ViewInteraction = onView(withId(R.id.drawer_layout))
+
+        private fun onNavView(): ViewInteraction = onView(withId(R.id.nav_view))
 
         private fun checkAlarmListFragment() {
             onFabView().check(matches(allOf(isDisplayed(), isNotExtended())))
