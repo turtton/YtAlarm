@@ -47,10 +47,10 @@ abstract class AppDatabase : RoomDatabase() {
         const val DATABASE_NAME = "yt-aram-db"
 
         @Volatile
-        private var INSTANCE: AppDatabase? = null
+        private var instance: AppDatabase? = null
 
         fun getDataBase(context: Context, scope: CoroutineScope): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
+            return instance ?: synchronized(this) {
                 Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
@@ -59,7 +59,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addCallback(AppDatabaseCallback(scope))
                     .build()
                     .also {
-                        INSTANCE = it
+                        instance = it
                     }
             }
         }
@@ -67,7 +67,7 @@ abstract class AppDatabase : RoomDatabase() {
 
     private class AppDatabaseCallback(private val scope: CoroutineScope) : Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
-            INSTANCE?.let {
+            instance?.let {
                 scope.launch {
                     val videoId = populateVideoDatabase(it.videoDao())
                     val playlistId = populatePlaylistDatabase(it.playlistDao(), videoId)

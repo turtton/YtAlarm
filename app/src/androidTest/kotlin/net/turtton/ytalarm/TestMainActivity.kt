@@ -85,32 +85,32 @@ class TestMainActivity {
     }
 
     companion object {
-        private const val visible = View.VISIBLE
-        private const val invisible = View.INVISIBLE
-        private const val gone = View.GONE
+        private const val VISIBLE = View.VISIBLE
+        private const val INVISIBLE = View.INVISIBLE
+        private const val GONE = View.GONE
 
         private fun MainActivity.checkAlarmListFab() {
-            binding.fab.visibility shouldBe visible
+            binding.fab.visibility shouldBe VISIBLE
             binding.fab.isExtended shouldBe false
-            binding.fabAddVideoFromLink.visibility shouldBe gone
-            binding.fabAddVideoFromVideo.visibility shouldBe gone
+            binding.fabAddVideoFromLink.visibility shouldBe GONE
+            binding.fabAddVideoFromVideo.visibility shouldBe GONE
             drawerLayout.getDrawerLockMode(Gravity.LEFT) shouldBe DrawerLayout.LOCK_MODE_UNLOCKED
         }
 
         private fun MainActivity.checkAlarmSettingFab() {
-            binding.fab.visibility shouldBe visible
+            binding.fab.visibility shouldBe VISIBLE
             binding.fab.isExtended shouldBe true
-            binding.fabAddVideoFromLink.visibility shouldBe gone
-            binding.fabAddVideoFromVideo.visibility shouldBe gone
+            binding.fabAddVideoFromLink.visibility shouldBe GONE
+            binding.fabAddVideoFromVideo.visibility shouldBe GONE
             val drawerLockMode = drawerLayout.getDrawerLockMode(Gravity.LEFT)
             drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
         }
 
         private fun MainActivity.checkPlaylistFab() {
-            binding.fab.visibility shouldBe visible
+            binding.fab.visibility shouldBe VISIBLE
             binding.fab.isExtended shouldBe false
-            binding.fabAddVideoFromLink.visibility shouldBe gone
-            binding.fabAddVideoFromVideo.visibility shouldBe gone
+            binding.fabAddVideoFromLink.visibility shouldBe GONE
+            binding.fabAddVideoFromVideo.visibility shouldBe GONE
             drawerLayout.getDrawerLockMode(Gravity.LEFT) shouldBe DrawerLayout.LOCK_MODE_UNLOCKED
         }
 
@@ -120,15 +120,15 @@ class TestMainActivity {
          */
         private suspend fun MainActivity.checkVideoListFab(scope: CoroutineScope) {
             scope.launchMain {
-                binding.fab.visibility shouldBe gone
-                binding.fabAddVideoFromLink.visibility shouldBe invisible
-                binding.fabAddVideoFromVideo.visibility shouldBe invisible
+                binding.fab.visibility shouldBe GONE
+                binding.fabAddVideoFromLink.visibility shouldBe INVISIBLE
+                binding.fabAddVideoFromVideo.visibility shouldBe INVISIBLE
                 val drawerLockMode = drawerLayout.getDrawerLockMode(Gravity.LEFT)
                 drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
             }.join()
 
             scope.launch {
-                while (binding.fabAddVideo.visibility == gone) {
+                while (binding.fabAddVideo.visibility == GONE) {
                     delay(16.milliseconds)
                 }
             }.join()
@@ -151,19 +151,19 @@ class TestMainActivity {
         }
 
         private fun MainActivity.checkAllVideoListFab() {
-            binding.fab.visibility shouldBe visible
+            binding.fab.visibility shouldBe VISIBLE
             binding.fab.isExtended shouldBe false
-            binding.fabAddVideoFromLink.visibility shouldBe gone
-            binding.fabAddVideoFromVideo.visibility shouldBe gone
+            binding.fabAddVideoFromLink.visibility shouldBe GONE
+            binding.fabAddVideoFromVideo.visibility shouldBe GONE
 
             val drawerLockMode = drawerLayout.getDrawerLockMode(Gravity.LEFT)
             drawerLockMode shouldBe DrawerLayout.LOCK_MODE_UNLOCKED
         }
 
         private fun checkVideoPlayerFab(activity: MainActivity) {
-            activity.binding.fab.visibility shouldBe gone
-            activity.binding.fabAddVideoFromLink.visibility shouldBe gone
-            activity.binding.fabAddVideoFromVideo.visibility shouldBe gone
+            activity.binding.fab.visibility shouldBe GONE
+            activity.binding.fabAddVideoFromLink.visibility shouldBe GONE
+            activity.binding.fabAddVideoFromVideo.visibility shouldBe GONE
 
             val drawerLockMode = activity.drawerLayout.getDrawerLockMode(Gravity.LEFT)
             drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED

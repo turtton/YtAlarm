@@ -43,10 +43,10 @@ import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 class VideoListAdapter<T>(
     private val fragment: T
 ) : ListAdapter<Video, VideoListAdapter.ViewHolder>(BasicComparator<Video>())
-        where T : Fragment,
-              T : LifecycleOwner,
-              T : PlaylistViewContainer,
-              T : VideoViewContainer {
+    where T : Fragment,
+          T : LifecycleOwner,
+          T : PlaylistViewContainer,
+          T : VideoViewContainer {
     private val currentCheckBox = hashSetOf<ViewHolder>()
 
     var tracker: SelectionTracker<Long>? = null
