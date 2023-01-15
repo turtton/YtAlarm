@@ -1,175 +1,166 @@
 package net.turtton.ytalarm
 
-import android.view.Gravity
-import android.view.View
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.Espresso.pressBack
+import androidx.test.espresso.ViewInteraction
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.contrib.DrawerActions
+import androidx.test.espresso.contrib.RecyclerViewActions.actionOnItemAtPosition
+import androidx.test.espresso.matcher.ViewMatchers.isClickable
+import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.isNotClickable
+import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withTagValue
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import androidx.test.filters.LargeTest
 import net.turtton.ytalarm.activity.MainActivity
-import net.turtton.ytalarm.ui.fragment.FragmentPlaylistDirections
-import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
+import net.turtton.ytalarm.matcher.isExtended
+import net.turtton.ytalarm.matcher.isNotDisplayed
+import net.turtton.ytalarm.matcher.isNotExtended
+import net.turtton.ytalarm.matcher.withDrawerLockMode
+import net.turtton.ytalarm.ui.adapter.VideoListAdapter
+import org.hamcrest.Matchers.allOf
+import org.hamcrest.Matchers.equalTo
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.time.Duration.Companion.milliseconds
 
+@LargeTest
 @RunWith(AndroidJUnit4::class)
 class TestMainActivity {
     @get:Rule
     val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Test
-    fun basicFabTest() {
-        activityRule.scenario.onActivity {
-            val navController = it.supportFragmentManager
-                .findFragmentById(R.id.nav_host_fragment_content_main)!!
-                .findNavController()
+    fun fabTest() {
+        checkAlarmListFragment()
 
-            it.lifecycleScope.launch {
-                // alarmListFragment -> alarmSettingsFragment -> alarmListFragment
-                launchMain {
-                    it.checkAlarmListFab()
-                }.join()
+        // AlarmList -> AlarmSettings
+        onFabView().perform(click())
 
-                navController.navigate(R.id.action_AlarmListFragment_to_AlarmSettingsFragment)
-                launchMain {
-                    it.checkAlarmSettingFab()
-                }.join()
+        checkAlarmSettingsFragment()
 
-                navController.navigateUp()
-                launchMain {
-                    it.checkAlarmListFab()
-                }.join()
+        // AlarmSettings -> AlarmList
+        pressBack()
 
-                // playlistFragment -> videoListFragment -> playlistFragment
-                navController.navigate(R.id.nav_graph_playlist)
-                launchMain {
-                    it.checkPlaylistFab()
-                }.join()
+        checkAlarmListFragment()
 
-                navController.navigate(
-                    FragmentPlaylistDirections.actionPlaylistFragmentToVideoListFragment()
-                )
-                it.checkVideoListFab(this)
+        // AlarmList -> Playlist
+        onDrawerView().perform(DrawerActions.open())
+        onView(withId(R.id.nav_graph_playlist)).perform(click())
 
-                navController.navigateUp()
-                launchMain {
-                    it.checkPlaylistFab()
-                }.join()
+        checkPlaylistFragment()
 
-                // allVideoListFragment -> videoPlayerFragment -> allPlaylistFragment
-                navController.navigate(R.id.nav_graph_video_list)
-                launchMain {
-                    it.checkAllVideoListFab()
-                }.join()
+        // Playlist -> VideoList
+        onFabView().perform(click())
 
-                val args = FragmentVideoPlayerArgs("0").toBundle()
-                navController.navigate(R.id.nav_graph_video_player, args)
-                launchMain {
-                    checkVideoPlayerFab(it)
-                }.join()
+        checkVideoListFragment()
 
-                navController.navigateUp()
-                launchMain {
-                    it.checkAllVideoListFab()
-                }.join()
-            }
-        }
+        // VideoList -> Playlist
+        pressBack()
+
+        checkPlaylistFragment()
+
+        // Playlist -> AllVideoList
+        onDrawerView().perform(DrawerActions.open())
+        onView(withId(R.id.nav_graph_video_list))
+
+        checkAllVideoListFragment()
+
+        // AllVideoList -> VideoPlayer
+        onView(withId(R.id.recycler_list))
+            .perform(actionOnItemAtPosition<VideoListAdapter.ViewHolder>(0, click()))
+
+        checkVideoPlayerFragment()
+
+        // VideoPlayer -> AllVideoList
+        checkAllVideoListFragment()
+
+        // AllVideoList -> About
+        onDrawerView().perform(DrawerActions.open())
+        onView(withId(R.id.nav_graph_aboutpage))
+
+        checkAboutPageFragment()
     }
 
     companion object {
-        private const val VISIBLE = View.VISIBLE
-        private const val INVISIBLE = View.INVISIBLE
-        private const val GONE = View.GONE
+        private fun onFabView(): ViewInteraction = onView(withId(R.id.fab))
 
-        private fun MainActivity.checkAlarmListFab() {
-            binding.fab.visibility shouldBe VISIBLE
-            binding.fab.isExtended shouldBe false
-            binding.fabAddVideoFromLink.visibility shouldBe GONE
-            binding.fabAddVideoFromVideo.visibility shouldBe GONE
-            drawerLayout.getDrawerLockMode(Gravity.LEFT) shouldBe DrawerLayout.LOCK_MODE_UNLOCKED
+        private fun onFabAddFromLinkView(): ViewInteraction =
+            onView(withId(R.id.fab_add_video_from_link))
+
+        private fun onFabAddFromVideoView(): ViewInteraction =
+            onView(withId(R.id.fab_add_video_from_video))
+
+        private fun onFabAddVideoView(): ViewInteraction = onView(withId(R.id.fab_add_video))
+
+        private fun onDrawerView(): ViewInteraction = onView(withId(R.id.drawer_layout))
+
+        private fun checkAlarmListFragment() {
+            onFabView().check(matches(allOf(isDisplayed(), isNotExtended())))
+            onFabAddVideoView().check(matches(isNotDisplayed()))
+            onFabAddFromLinkView().check(matches(isNotDisplayed()))
+            onFabAddFromVideoView().check(matches(isNotDisplayed()))
+            onDrawerView().check(matches(withDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)))
         }
 
-        private fun MainActivity.checkAlarmSettingFab() {
-            binding.fab.visibility shouldBe VISIBLE
-            binding.fab.isExtended shouldBe true
-            binding.fabAddVideoFromLink.visibility shouldBe GONE
-            binding.fabAddVideoFromVideo.visibility shouldBe GONE
-            val drawerLockMode = drawerLayout.getDrawerLockMode(Gravity.LEFT)
-            drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+        private fun checkAlarmSettingsFragment() {
+            onFabView().check(matches(allOf(isDisplayed(), isExtended())))
+            onFabAddVideoView().check(matches(isNotDisplayed()))
+            onFabAddFromLinkView().check(matches(isNotDisplayed()))
+            onFabAddFromVideoView().check(matches(isNotDisplayed()))
+            onDrawerView().check(matches(withDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)))
         }
 
-        private fun MainActivity.checkPlaylistFab() {
-            binding.fab.visibility shouldBe VISIBLE
-            binding.fab.isExtended shouldBe false
-            binding.fabAddVideoFromLink.visibility shouldBe GONE
-            binding.fabAddVideoFromVideo.visibility shouldBe GONE
-            drawerLayout.getDrawerLockMode(Gravity.LEFT) shouldBe DrawerLayout.LOCK_MODE_UNLOCKED
+        private fun checkPlaylistFragment() {
+            onFabView().check(matches(allOf(isDisplayed(), isNotExtended())))
+            onFabAddVideoView().check(matches(isNotDisplayed()))
+            onFabAddFromLinkView().check(matches(isNotDisplayed()))
+            onFabAddFromVideoView().check(matches(isNotDisplayed()))
+            onDrawerView().check(matches(withDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)))
         }
 
-        /**
-         * This method is not good for testing, but I could not find good way to launching multiple coroutine.
-         * Please avoid including CoroutineScope field in arguments to make stack trace information easy to read.
-         */
-        private suspend fun MainActivity.checkVideoListFab(scope: CoroutineScope) {
-            scope.launchMain {
-                binding.fab.visibility shouldBe GONE
-                binding.fabAddVideoFromLink.visibility shouldBe INVISIBLE
-                binding.fabAddVideoFromVideo.visibility shouldBe INVISIBLE
-                val drawerLockMode = drawerLayout.getDrawerLockMode(Gravity.LEFT)
-                drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
-            }.join()
+        private fun checkVideoListFragment() {
+            onFabView().check(matches(isNotDisplayed()))
+            onFabAddFromLinkView().check(matches(isNotDisplayed()))
+            onFabAddFromVideoView().check(matches(isNotDisplayed()))
+            onDrawerView().check(matches(withDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)))
 
-            scope.launch {
-                while (binding.fabAddVideo.visibility == GONE) {
-                    delay(16.milliseconds)
-                }
-            }.join()
+            onFabAddVideoView().check(matches(isDisplayed()))
+                // TODO: suspend while processing concurrently(use idling system
+                .check(matches(withTagValue(equalTo(R.drawable.ic_add_video))))
+                .perform(click())
+                .check(matches(withTagValue(equalTo(R.drawable.ic_add))))
+            onFabAddFromLinkView().check(matches(isClickable()))
+            onFabAddFromVideoView().check(matches(isClickable()))
 
-            scope.launchMain {
-                binding.fabAddVideo.tag?.let { tag ->
-                    tag shouldBe R.drawable.ic_add_video
-                }
-
-                binding.fabAddVideo.performClick()
-                binding.fabAddVideo.tag shouldBe R.drawable.ic_add
-                binding.fabAddVideoFromLink.isClickable shouldBe true
-                binding.fabAddVideoFromVideo.isClickable shouldBe true
-
-                binding.fabAddVideo.performClick()
-                binding.fabAddVideo.tag shouldBe R.drawable.ic_add_video
-                binding.fabAddVideoFromLink.isClickable shouldBe false
-                binding.fabAddVideoFromVideo.isClickable shouldBe false
-            }.join()
+            onFabAddVideoView().perform(click())
+                .check(matches(withTagValue(equalTo(R.drawable.ic_add_video))))
+            onFabAddFromLinkView().check(matches(isNotClickable()))
+            onFabAddFromVideoView().check(matches(isNotClickable()))
         }
 
-        private fun MainActivity.checkAllVideoListFab() {
-            binding.fab.visibility shouldBe VISIBLE
-            binding.fab.isExtended shouldBe false
-            binding.fabAddVideoFromLink.visibility shouldBe GONE
-            binding.fabAddVideoFromVideo.visibility shouldBe GONE
-
-            val drawerLockMode = drawerLayout.getDrawerLockMode(Gravity.LEFT)
-            drawerLockMode shouldBe DrawerLayout.LOCK_MODE_UNLOCKED
+        private fun checkAllVideoListFragment() {
+            onFabView().check(matches(allOf(isDisplayed(), isNotExtended())))
+            onFabAddFromLinkView().check(matches(isNotDisplayed()))
+            onFabAddFromVideoView().check(matches(isNotDisplayed()))
+            onDrawerView().check(matches(withDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)))
         }
 
-        private fun checkVideoPlayerFab(activity: MainActivity) {
-            activity.binding.fab.visibility shouldBe GONE
-            activity.binding.fabAddVideoFromLink.visibility shouldBe GONE
-            activity.binding.fabAddVideoFromVideo.visibility shouldBe GONE
-
-            val drawerLockMode = activity.drawerLayout.getDrawerLockMode(Gravity.LEFT)
-            drawerLockMode shouldBe DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+        private fun checkVideoPlayerFragment() {
+            onFabView().check(matches(isNotDisplayed()))
+            onFabAddFromLinkView().check(matches(isNotDisplayed()))
+            onFabAddFromVideoView().check(matches(isNotDisplayed()))
+            onDrawerView().check(matches(withDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)))
         }
 
-        private fun CoroutineScope.launchMain(block: suspend CoroutineScope.() -> Unit) =
-            launch(Dispatchers.Main, block = block)
+        private fun checkAboutPageFragment() {
+            onFabView().check(matches(isNotDisplayed()))
+            onFabAddFromLinkView().check(matches(isNotDisplayed()))
+            onFabAddFromVideoView().check(matches(isNotDisplayed()))
+        }
     }
 }
