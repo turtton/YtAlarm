@@ -195,11 +195,8 @@ class VideoInfoDownloadWorker(
         val targetIds = mutableListOf<Long>()
         val newVideos = videos.filter {
             checkVideoDuplication(it.videoId, it.domain)
-                ?.also { duplicatedId ->
-                    targetIds += duplicatedId
-                }.let { duplicatedId ->
-                    duplicatedId == null
-                }
+                ?.also { duplicatedId -> targetIds += duplicatedId }
+                .let { duplicatedId -> duplicatedId == null }
         }
         targetIds += repository.insert(newVideos)
 

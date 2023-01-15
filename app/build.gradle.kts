@@ -1,9 +1,9 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.7.21-1.0.8"
+    id("com.google.devtools.ksp") version "1.8.0-1.0.8"
     id("androidx.navigation.safeargs.kotlin")
-    kotlin("plugin.serialization") version "1.7.21"
+    kotlin("plugin.serialization") version "1.8.0"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
 }
@@ -118,7 +118,7 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.appcompat:appcompat:1.5.1")
+    implementation("androidx.appcompat:appcompat:1.6.0")
     implementation("com.google.android.material:material:1.7.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")?.version?.also {
@@ -128,13 +128,13 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.2.1")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
     implementation("com.android.support:support-annotations:28.0.0")
-    val room = implementation("androidx.room:room-ktx:2.4.3")
+    val room = implementation("androidx.room:room-ktx:2.5.0")
     ksp("androidx.room:room-compiler:${room?.version}")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1")?.also {
         implementation("androidx.lifecycle:lifecycle-livedata-ktx:${it.version}")
     }
     implementation("androidx.activity:activity-ktx:1.6.1")
-    implementation("androidx.fragment:fragment-ktx:1.5.4")
+    implementation("androidx.fragment:fragment-ktx:1.5.5")
     implementation("androidx.work:work-runtime-ktx:2.7.1")?.version?.also {
         androidTestImplementation("androidx.work:work-testing:$it")
     }
@@ -161,12 +161,12 @@ dependencies {
         }
         testImplementation("io.kotest:kotest-property:$it")
     }
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
-    testImplementation("org.robolectric:robolectric:4.9")
-    androidTestImplementation("androidx.test.ext:junit-ktx:1.1.4")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
+    testImplementation("org.robolectric:robolectric:4.9.2")
+    androidTestImplementation("androidx.test.ext:junit-ktx:1.1.5")
     androidTestImplementation("androidx.test:rules:1.5.0")
-    androidTestImplementation("androidx.test:runner:1.5.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")?.version?.also {
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")?.version?.also {
         implementation("androidx.test.espresso:espresso-idling-resource:$it")
         androidTestImplementation("androidx.test.espresso:espresso-contrib:$it")
     }
