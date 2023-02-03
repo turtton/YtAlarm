@@ -1,9 +1,9 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.8.0-1.0.9"
+    id("com.google.devtools.ksp") version "1.8.10-1.0.9"
     id("androidx.navigation.safeargs.kotlin")
-    kotlin("plugin.serialization") version "1.8.0"
+    kotlin("plugin.serialization") version "1.8.10"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
 }
