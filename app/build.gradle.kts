@@ -118,7 +118,7 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.appcompat:appcompat:1.6.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.8.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.navigation:navigation-fragment-ktx:2.5.3")?.version?.also {
@@ -135,7 +135,7 @@ dependencies {
     }
     implementation("androidx.activity:activity-ktx:1.6.1")
     implementation("androidx.fragment:fragment-ktx:1.5.5")
-    implementation("androidx.work:work-runtime-ktx:2.7.1")?.version?.also {
+    implementation("androidx.work:work-runtime-ktx:2.8.0")?.version?.also {
         androidTestImplementation("androidx.work:work-testing:$it")
     }
 
@@ -155,7 +155,7 @@ dependencies {
     }
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("io.kotest:kotest-runner-junit5:5.5.4")?.version?.also {
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.5")?.version?.also {
         testImplementation("io.kotest:kotest-assertions-core:$it")?.also { dep ->
             androidTestImplementation(dep)
         }
