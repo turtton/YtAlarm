@@ -59,7 +59,7 @@ jobs:
           path: build/reports
 
       - name: Upload Report
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: "build/reports/jacoco.xml"
