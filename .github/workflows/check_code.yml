@@ -43,7 +43,7 @@ jobs:
       - name: Check and Prepare report
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: check :rootCoverageReport
+          arguments: check :rootCoverageReport --stacktrace
 
       - name: Generate report
         uses: actions/upload-artifact@v3
