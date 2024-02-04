@@ -19,7 +19,6 @@ import com.github.michaelbull.result.mapBoth
 import com.github.michaelbull.result.runCatching
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
@@ -42,7 +41,6 @@ class VideoInfoDownloadWorker(
 
     @SuppressLint("RestrictedApi")
     override suspend fun doWork(): Result {
-        setForegroundAsync(getForegroundInfo())
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
         var playlistArray = inputData.getLongArray(KEY_PLAYLIST)
 
