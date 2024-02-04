@@ -4,7 +4,9 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import net.turtton.ytalarm.activity.AlarmActivity
@@ -47,6 +49,12 @@ fun updateAlarmSchedule(context: Context, alarmList: List<Alarm>) {
 
     val targetTime = calendar.timeInMillis
     val clockInfo = AlarmManager.AlarmClockInfo(targetTime, null)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+        // TODO create more user friendly process
+        Toast.makeText(context, "Error: Can't schedule exact alarms", Toast.LENGTH_SHORT).show()
+        return
+    }
 
     alarmManager.setAlarmClock(clockInfo, pendingIntent)
     @Suppress("ktlint:max-line-length")

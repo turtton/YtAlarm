@@ -19,13 +19,13 @@ val patch = 0
 val hasNoSplits = hasProperty("noSplits")
 
 android {
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "net.turtton.ytalarm"
         namespace = applicationId
         minSdk = 24
-        targetSdk = 33
+        targetSdk = 34
 
         val versionNamePatchVer = patch * 5
         val abiFilterList = property("abiFilters").toString().split(';')
@@ -44,6 +44,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
+            //noinspection ChromeOsAbiSupport
             abiFilters += abiFilterList
         }
 
@@ -54,7 +55,7 @@ android {
         file("$rootDir/VERSION_CODE").writeText(text)
     }
 
-    packagingOptions {
+    packaging {
         resources.excludes += "META-INF/atomicfu.kotlin_module"
     }
 
@@ -98,6 +99,7 @@ android {
         }
     }
 
+    @Suppress("UnstableApiUsage")
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -175,11 +177,7 @@ dependencies {
     androidTestImplementation("androidx.room:room-testing:${room?.version}")
 }
 
-kotlinter {
-    experimentalRules = true
-}
-
 detekt {
-    config = files("../detekt.yml")
+    config.from(files("../detekt.yml"))
     buildUponDefaultConfig = true
 }

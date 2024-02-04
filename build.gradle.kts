@@ -8,16 +8,17 @@ buildscript {
     }
 }
 plugins {
-    id("com.android.application") version "7.4.2" apply false
-    id("com.android.library") version "7.4.2" apply false
+    id("com.android.application") version "8.3.0-alpha05" apply false
+    id("com.android.library") version "8.3.0-alpha05" apply false
     id("org.jetbrains.kotlin.android") version "1.9.22" apply false
     id("org.jmailen.kotlinter") version "3.15.0" apply false
     id("io.gitlab.arturbosch.detekt") version "1.23.5" apply false
-    id("nl.neotech.plugin.rootcoverage") version "1.7.1"
+    // Related: https://github.com/NeoTech-Software/Android-Root-Coverage-Plugin?tab=readme-ov-file#4-compatibility
+    id("nl.neotech.plugin.rootcoverage") version "1.8.0-SNAPSHOT"
 }
 
 tasks.create("clean") {
-    delete(rootProject.buildDir)
+    delete(rootProject.layout.buildDirectory)
 }
 
 rootCoverage {
