@@ -12,7 +12,7 @@ class YtApplication : Application(), Configuration.Provider {
     val database by lazy { AppDatabase.getDataBase(this, appCoroutineScope) }
     val repository by lazy { DataRepository(database) }
 
-    override fun getWorkManagerConfiguration(): Configuration = Configuration.Builder()
+    override val workManagerConfiguration: Configuration = Configuration.Builder()
         .setMinimumLoggingLevel(if (BuildConfig.DEBUG) Log.DEBUG else Log.ERROR)
         .build()
 

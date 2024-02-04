@@ -27,7 +27,7 @@ class AboutPageAdapter(
     private val dataSet: Array<AboutPageData>
 
     init {
-        @Suppress("ktlint:max-line-length")
+        @Suppress("ktlint:standard:max-line-length")
         val github = AboutPageData.LinkEmbedData(
             "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png".toThumbnail(),
             R.string.item_aboutpage_title_github,
@@ -48,7 +48,7 @@ class AboutPageAdapter(
             "https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm"
         )
 
-        @Suppress("ktlint:max-line-length")
+        @Suppress("ktlint:standard:max-line-length")
         val liberapay = AboutPageData.LinkEmbedData(
             "https://en.liberapay.com/assets/liberapay/icon-v2_white-on-yellow.200.png?save_as=liberapay_logo_white-on-yellow_200px.png".toThumbnail(),
             R.string.item_aboutpage_liberapay_title,
@@ -56,7 +56,7 @@ class AboutPageAdapter(
             "https://liberapay.com/turtton/donate"
         )
 
-        @Suppress("ktlint:max-line-length")
+        @Suppress("ktlint:standard:max-line-length")
         val bitcoin = AboutPageData.CopyableData(
             "https://camo.githubusercontent.com/d8f6d0e0aeafda23077ad6fdccd927fff87e1fff516534465269ebd9cffdaf4b/68747470733a2f2f656e2e626974636f696e2e69742f772f696d616765732f656e2f322f32392f42435f4c6f676f5f2e706e67".toThumbnail(),
             R.string.item_aboutpage_bitcoin_title,

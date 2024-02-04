@@ -28,15 +28,13 @@ jobs:
       - name: Lint check
         uses: musichin/ktlint-check@v2
         with:
-          annotate: true
-          experimental: true
+          ktlint-version: 1.0.0
 
-      - name: set up JDK 11
+      - name: set up JDK 17
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
-          cache: gradle
 
       - name: Gradle Wrapper Validation
         uses: gradle/wrapper-validation-action@v1
@@ -44,7 +42,7 @@ jobs:
       - name: Check and Prepare report
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: check :rootCoverageReport
+          arguments: check :rootCoverageReport --stacktrace
 
       - name: Generate report
         uses: actions/upload-artifact@v3

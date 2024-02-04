@@ -65,6 +65,8 @@ import kotlin.time.DurationUnit
 
 class FragmentVideoPlayer : Fragment() {
     private val args: FragmentVideoPlayerArgs by navArgs()
+
+    @Suppress("ktlint:standard:property-naming")
     private var _binding: FragmentVideoPlayerBinding? = null
     private val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)

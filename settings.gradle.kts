@@ -1,8 +1,11 @@
+@file:Suppress("UnstableApiUsage")
+
 pluginManagement {
     repositories {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
     }
 }
 dependencyResolutionManagement {
