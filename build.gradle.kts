@@ -11,7 +11,7 @@ plugins {
     id("com.android.application") version "7.4.1" apply false
     id("com.android.library") version "7.4.1" apply false
     id("org.jetbrains.kotlin.android") version "1.8.10" apply false
-    id("org.jmailen.kotlinter") version "3.13.0" apply false
+    id("org.jmailen.kotlinter") version "4.2.0" apply false
     id("io.gitlab.arturbosch.detekt") version "1.22.0" apply false
     id("nl.neotech.plugin.rootcoverage") version "1.6.0"
 }
