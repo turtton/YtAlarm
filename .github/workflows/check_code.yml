@@ -28,8 +28,7 @@ jobs:
       - name: Lint check
         uses: musichin/ktlint-check@v2
         with:
-          annotate: true
-          experimental: true
+          ktlint-version: 1.0.0
 
       - name: set up JDK 11
         uses: actions/setup-java@v3

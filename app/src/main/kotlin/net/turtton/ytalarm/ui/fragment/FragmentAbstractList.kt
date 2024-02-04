@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import net.turtton.ytalarm.databinding.FragmentListBinding
 
 abstract class FragmentAbstractList : Fragment() {
+    @Suppress("ktlint:standard:property-naming")
     private var _binding: FragmentListBinding? = null
 
     protected val binding get() = _binding!!

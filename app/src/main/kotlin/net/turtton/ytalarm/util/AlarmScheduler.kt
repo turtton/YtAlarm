@@ -57,7 +57,7 @@ fun updateAlarmSchedule(context: Context, alarmList: List<Alarm>) {
     }
 
     alarmManager.setAlarmClock(clockInfo, pendingIntent)
-    @Suppress("ktlint:max-line-length")
+    @Suppress("ktlint:standard:max-line-length")
     Log.d(
         "RegisterAlarm",
         "Id:${alarm.id},Year:${calendar[Calendar.YEAR]},Month:${calendar[Calendar.MONTH]},Day:${calendar[Calendar.DAY_OF_MONTH]},Hour:${calendar[Calendar.HOUR_OF_DAY]},Minute:${calendar[Calendar.MINUTE]}"

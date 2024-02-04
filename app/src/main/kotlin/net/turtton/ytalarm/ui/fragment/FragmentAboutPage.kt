@@ -13,7 +13,7 @@ import net.turtton.ytalarm.databinding.FragmentAboutBinding
 import net.turtton.ytalarm.ui.adapter.AboutPageAdapter
 
 class FragmentAboutPage : Fragment() {
-
+    @Suppress("ktlint:standard:property-naming")
     private var _binding: FragmentAboutBinding? = null
 
     private val binding get() = _binding!!

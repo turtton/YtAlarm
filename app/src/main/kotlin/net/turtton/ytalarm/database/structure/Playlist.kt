@@ -56,6 +56,7 @@ data class Playlist(
     }
 
     enum class SyncRule {
-        ALWAYS_ADD, DELETE_IF_NOT_EXIST
+        ALWAYS_ADD,
+        DELETE_IF_NOT_EXIST
     }
 }

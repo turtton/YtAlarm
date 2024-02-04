@@ -13,7 +13,7 @@ class OnSeekBarChangeListenerBuilder {
 
     var onStopTrackingTouch: NullableSeekBarFunction? = null
 
-    @Suppress("ktlint:argument-list-wrapping")
+    @Suppress("ktlint:standard:argument-list-wrapping")
     fun build(): SeekBar.OnSeekBarChangeListener =
         Impl(onProgressChanged, onStartTrackingTouch, onStopTrackingTouch)
 
