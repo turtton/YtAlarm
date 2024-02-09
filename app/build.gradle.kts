@@ -123,7 +123,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.6")?.version?.also {
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")?.version?.also {
         implementation("androidx.navigation:navigation-ui-ktx:$it")
         androidTestImplementation("androidx.navigation:navigation-testing:$it")
     }
@@ -146,7 +146,7 @@ dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:$it")
     }
 
-    implementation("com.github.yausername.youtubedl-android:library:ed652962e5")?.also {
+    implementation("com.github.yausername.youtubedl-android:library:0.15.0")?.also {
         implementation("com.github.yausername.youtubedl-android:common:${it.version}")
     }
     implementation("com.github.bumptech.glide:glide:4.16.0")?.also {
