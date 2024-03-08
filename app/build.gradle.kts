@@ -1,9 +1,9 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.9.22-1.0.18"
+    id("com.google.devtools.ksp") version "1.9.23-1.0.19"
     id("androidx.navigation.safeargs.kotlin")
-    kotlin("plugin.serialization") version "1.9.22"
+    kotlin("plugin.serialization") version "1.9.23"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
 }
@@ -152,7 +152,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")?.also {
         annotationProcessor("com.github.bumptech.glide:compiler:${it.version}")
     }
-    implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.18")?.also {
+    implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.20")?.also {
         implementation("com.michael-bull.kotlin-result:kotlin-result-coroutines:${it.version}")
     }
 
