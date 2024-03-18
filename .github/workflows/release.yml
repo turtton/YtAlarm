@@ -44,18 +44,23 @@ jobs:
           keyPassword: ${{ secrets.APK_KEY_PASSWORD }}
           buildToolsVersion: 33.0.0
 
-      - name: Upload to artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: Signed app bundle
-          path: ${{ steps.sign_app.outputs.signedFile }}
-
       - name: Split signed files
         uses: jungwinter/split@v2
         id: signed_files
         with:
           msg: ${{ steps.sign_app.outputs.signedFiles }}
           separator: ':'
+
+      - name: Upload to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Signed app bundle
+          path: |
+            ${{ steps.signed_files.outputs._0 }}
+            ${{ steps.signed_files.outputs._1 }}
+            ${{ steps.signed_files.outputs._2 }}
+            ${{ steps.signed_files.outputs._3 }}
+            ${{ steps.signed_files.outputs._4 }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
