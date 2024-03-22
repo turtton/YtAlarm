@@ -152,7 +152,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")?.also {
         annotationProcessor("com.github.bumptech.glide:compiler:${it.version}")
     }
-    implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.20")?.also {
+    implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.21")?.also {
         implementation("com.michael-bull.kotlin-result:kotlin-result-coroutines:${it.version}")
     }
 
