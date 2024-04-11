@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Lint check
-        uses: musichin/ktlint-check@v2
+        uses: musichin/ktlint-check@v3
         with:
           ktlint-version: 1.0.0
 
