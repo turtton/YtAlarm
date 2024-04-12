@@ -163,7 +163,7 @@ dependencies {
         }
         testImplementation("io.kotest:kotest-property:$it")
     }
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
     testImplementation("org.robolectric:robolectric:4.12.1")
     androidTestImplementation("androidx.test.ext:junit-ktx:1.1.5")
     androidTestImplementation("androidx.test:rules:1.5.0")
