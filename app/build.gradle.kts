@@ -1,7 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.9.23-1.0.20"
+    id("com.google.devtools.ksp") version "2.0.21-1.0.25"
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization") version "1.9.23"
     id("org.jmailen.kotlinter")
