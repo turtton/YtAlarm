@@ -1,9 +1,9 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.9.23-1.0.20"
+    id("com.google.devtools.ksp") version "1.9.25-1.0.20"
     id("androidx.navigation.safeargs.kotlin")
-    kotlin("plugin.serialization") version "1.9.23"
+    kotlin("plugin.serialization") version "1.9.25"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
 }
@@ -119,11 +119,11 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")?.version?.also {
+    implementation("androidx.navigation:navigation-fragment-ktx:2.8.3")?.version?.also {
         implementation("androidx.navigation:navigation-ui-ktx:$it")
         androidTestImplementation("androidx.navigation:navigation-testing:$it")
     }
@@ -132,17 +132,17 @@ dependencies {
     implementation("com.android.support:support-annotations:28.0.0")
     val room = implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:${room?.version}")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")?.also {
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")?.also {
         implementation("androidx.lifecycle:lifecycle-livedata-ktx:${it.version}")
     }
-    implementation("androidx.activity:activity-ktx:1.8.2")
-    implementation("androidx.fragment:fragment-ktx:1.6.2")
-    implementation("androidx.work:work-runtime-ktx:2.9.0")?.version?.also {
+    implementation("androidx.activity:activity-ktx:1.9.3")
+    implementation("androidx.fragment:fragment-ktx:1.8.4")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")?.version?.also {
         androidTestImplementation("androidx.work:work-testing:$it")
     }
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")?.version?.also {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")?.version?.also {
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-cbor:$it")
     }
 
@@ -157,18 +157,18 @@ dependencies {
     }
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("io.kotest:kotest-runner-junit5:5.8.1")?.version?.also {
+    testImplementation("io.kotest:kotest-runner-junit5:5.9.1")?.version?.also {
         testImplementation("io.kotest:kotest-assertions-core:$it")?.also { dep ->
             androidTestImplementation(dep)
         }
         testImplementation("io.kotest:kotest-property:$it")
     }
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
-    testImplementation("org.robolectric:robolectric:4.12.1")
-    androidTestImplementation("androidx.test.ext:junit-ktx:1.1.5")
-    androidTestImplementation("androidx.test:rules:1.5.0")
-    androidTestImplementation("androidx.test:runner:1.5.2")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")?.version?.also {
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+    testImplementation("org.robolectric:robolectric:4.13")
+    androidTestImplementation("androidx.test.ext:junit-ktx:1.2.1")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")?.version?.also {
         implementation("androidx.test.espresso:espresso-idling-resource:$it")
         androidTestImplementation("androidx.test.espresso:espresso-contrib:$it")
     }
