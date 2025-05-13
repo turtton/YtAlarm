@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") version "1.9.23-1.0.20"
     id("androidx.navigation.safeargs.kotlin")
-    kotlin("plugin.serialization") version "1.9.23"
+    kotlin("plugin.serialization") version "2.1.21"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
 }
