@@ -22,7 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.YtAlarm"
         android:extractNativeLibs="true"
-        tools:targetApi="31">
+        tools:targetApi="35">
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
