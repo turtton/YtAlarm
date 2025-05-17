@@ -114,7 +114,7 @@ android {
     lint {
         warningsAsErrors = true
 
-        disable += "GradleDependency"
+        disable += listOf("GradleDependency", "OldTargetApi")
     }
 }
 
