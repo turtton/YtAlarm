@@ -19,13 +19,13 @@ val patch = 1
 val hasNoSplits = hasProperty("noSplits")
 
 android {
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "net.turtton.ytalarm"
         namespace = applicationId
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
 
         val versionNamePatchVer = patch * 5
         val abiFilterList = property("abiFilters").toString().split(';')
@@ -114,7 +114,7 @@ android {
     lint {
         warningsAsErrors = true
 
-        disable += "GradleDependency"
+        disable += listOf("GradleDependency", "OldTargetApi")
     }
 }
 
