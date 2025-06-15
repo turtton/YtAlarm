@@ -1,11 +1,12 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp") version "1.9.23-1.0.20"
+    id("com.google.devtools.ksp") version "2.0.21-1.0.28"
     id("androidx.navigation.safeargs.kotlin")
-    kotlin("plugin.serialization") version "1.9.23"
+    kotlin("plugin.serialization") version "2.0.21"
     id("org.jmailen.kotlinter")
     id("io.gitlab.arturbosch.detekt")
+    id("androidx.room")
 }
 
 // This versioning probably follows semver.org
@@ -70,14 +71,9 @@ android {
             proguardFiles(proguardFile, "proguard-rules.pro")
         }
     }
-    val schemaDir = "$projectDir/schemas"
     compileOptions {
         sourceCompatibility(JavaVersion.VERSION_17)
         targetCompatibility(JavaVersion.VERSION_17)
-
-        ksp {
-            arg("room.schemaLocation", schemaDir)
-        }
     }
     kotlinOptions {
         jvmTarget = "17"
@@ -86,8 +82,12 @@ android {
         viewBinding = true
     }
 
+    val roomSchemaDir = "$projectDir/schemas"
+    room {
+        schemaDirectory(roomSchemaDir)
+    }
     sourceSets {
-        getByName("androidTest").assets.srcDirs(file(schemaDir))
+        getByName("androidTest").assets.srcDirs(file(roomSchemaDir))
     }
 
     splits {
@@ -130,8 +130,9 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.recyclerview:recyclerview-selection:1.1.0")
     implementation("com.android.support:support-annotations:28.0.0")
-    val room = implementation("androidx.room:room-ktx:2.6.1")
+    val room = implementation("androidx.room:room-ktx:2.7.1")
     ksp("androidx.room:room-compiler:${room?.version}")
+    implementation("androidx.room:room-runtime:${room?.version}")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")?.also {
         implementation("androidx.lifecycle:lifecycle-livedata-ktx:${it.version}")
     }
