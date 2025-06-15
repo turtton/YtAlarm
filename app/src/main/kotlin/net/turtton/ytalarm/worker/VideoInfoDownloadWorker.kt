@@ -14,9 +14,10 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.await
-import com.github.michaelbull.result.andThen
-import com.github.michaelbull.result.mapBoth
-import com.github.michaelbull.result.runCatching
+import arrow.core.flatMap
+import arrow.core.fold
+import arrow.core.raise.catch
+import arrow.core.raise.either
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.serialization.json.Json
@@ -97,35 +98,42 @@ class VideoInfoDownloadWorker(
         return ForegroundInfo(NOTIFICATION_ID, notification.build())
     }
 
-    private fun download(targetUrl: String): Pair<List<Video>, Type>? = runCatching {
-        val request = YoutubeDLRequest(targetUrl)
-            .addOption("--dump-single-json")
-            .addOption("-f", "b")
-        YoutubeDL.getInstance().execute(request) { _, _, _ -> }
-    }.andThen {
-        val output = it.out
-        runCatching {
-            json.decodeFromString<VideoInformation>(output)
+    private fun download(targetUrl: String): Pair<List<Video>, Type>? = either {
+        catch({
+            val request = YoutubeDLRequest(targetUrl)
+                .addOption("--dump-single-json")
+                .addOption("-f", "b")
+            YoutubeDL.getInstance().execute(request) { _, _, _ -> }
+        }) { error ->
+            raise(error)
         }
-    }.mapBoth(
-        success = {
-            when (it.typeData) {
+    }.flatMap { result ->
+        either {
+            catch({
+                json.decodeFromString<VideoInformation>(result.out)
+            }) { error ->
+                raise(error)
+            }
+        }
+    }.fold(
+        ifLeft = { error ->
+            Log.e(WORKER_ID, "Download failed. Url: $targetUrl", error)
+            null
+        },
+        ifRight = { videoInfo ->
+            when (videoInfo.typeData) {
                 is VideoInformation.Type.Video -> {
-                    return@mapBoth listOf(it.toVideo()) to Type.Video
+                    listOf(videoInfo.toVideo()) to Type.Video
                 }
                 is VideoInformation.Type.Playlist -> {
-                    return@mapBoth it.typeData
+                    videoInfo.typeData
                         .entries
                         .map(VideoInformation::toVideo)
                         .let { videos ->
-                            videos to Type.Playlist(it.title!!, it.url)
+                            videos to Type.Playlist(videoInfo.title!!, videoInfo.url)
                         }
                 }
             }
-        },
-        failure = {
-            Log.e(WORKER_ID, "Download failed. Url: $targetUrl", it)
-            null
         }
     )
 

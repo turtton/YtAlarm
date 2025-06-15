@@ -351,7 +351,7 @@ class VideoListAdapter<T>(
 
     private fun reimportVideo(view: View, fragment: T, video: Video) {
         fragment.lifecycleScope.launch {
-            com.github.michaelbull.result.runCatching {
+            runCatching {
                 val targetPlaylists = fragment.playlistViewModel
                     .allPlaylistsAsync
                     .await()
