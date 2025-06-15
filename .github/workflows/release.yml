@@ -5,28 +5,35 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: read
+
 jobs:
   release:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
 
     if: ${{ github.repository_owner == 'turtton' }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Gradle Wrapper Validation
-        uses: gradle/wrapper-validation-action@v2
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
+        with:
+          cache-disabled: true
 
       - name: Build apk
-        uses: gradle/gradle-build-action@v3
-        with:
-          arguments: clean assembleRelease
+        run: ./gradlew clean assembleRelease
 
       - name: Rename apks
         run: |
@@ -34,7 +41,7 @@ jobs:
           ls | sed -n 's/\(.*\)-unsigned.apk/mv \0 \1.apk/p' | sh
           
       - name: Sign apk
-        uses: ilharp/sign-android-release@v1
+        uses: ilharp/sign-android-release@13dd52242698526f951aa8bb8696204f6fea702a # v2.0.0
         id: sign_app
         with:
           releaseDir: app/build/outputs/apk/release
@@ -45,14 +52,14 @@ jobs:
           buildToolsVersion: 33.0.0
 
       - name: Split signed files
-        uses: winterjung/split@v2
+        uses: winterjung/split@d5c148c702e3aacdf08a98e33407c5af75d71e1e # v2.1.1-rc1
         id: signed_files
         with:
           msg: ${{ steps.sign_app.outputs.signedFiles }}
           separator: ':'
 
       - name: Upload to artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: Signed app bundle
           path: |
@@ -63,7 +70,7 @@ jobs:
             ${{ steps.signed_files.outputs._4 }}
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8 # v2.3.2
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           body: '[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"alt="Get it on F-Droid"height="80">](https://f-droid.org/packages/net.turtton.ytalarm)'

@@ -5,13 +5,18 @@ on:
     types:
       - created
 
+permissions:
+  contents: read
+
 jobs:
   react:
     if: ${{ github.repository_owner == 'turtton' && github.actor == 'turtton' }}
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: React comment
-        uses: xt0rted/slash-command-action@v2
+        uses: xt0rted/slash-command-action@bf51f8f5f4ea3d58abc7eca58f77104182b23e88 # v2.0.0
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           command: androidTest
@@ -24,51 +29,55 @@ jobs:
       matrix:
         sdk-version: [ 24, 25, 26, 27, 28, 29, 30, 31 ]
     runs-on: macos-latest
+    permissions:
+      actions: write
+      contents: read
     steps:
       - name: Get upstream branch
-        uses: xt0rted/pull-request-comment-branch@v1
+        uses: xt0rted/pull-request-comment-branch@e8b8daa837e8ea7331c0003c9c316a64c6d8b0b1 # v3.0.0
         id: upstreambranch
 
       - name: Notify pending status
-        uses: hkusu/status-create-action@v1
+        uses: hkusu/status-create-action@d8b475a6db14477e4f5ba9dec386226da7399e34 # v1.0.1
         with:
-          sha: ${{ steps.upstreambranch.outputs.sha }}
+          sha: ${{ steps.upstreambranch.outputs.head_sha }}
           state: pending
 
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: ${{ steps.upstreambranch.outputs.head_ref }}
+          persist-credentials: false
 
       - name: Set up jdk
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
           java-version: '11'
           distribution: 'temurin'
           cache: gradle
 
       - name: Check android test
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@1dcd0090116d15e7c562f8db72807de5e036a4ed # v2.34.0
         with:
           api-level: ${{ matrix.sdk-version }}
           target: google_apis
           script: ./gradlew connectedCheck --stacktrace
 
       - name: Notify pending status
-        uses: hkusu/status-create-action@v1
+        uses: hkusu/status-create-action@d8b475a6db14477e4f5ba9dec386226da7399e34 # v1.0.1
         with:
-          sha: ${{ steps.upstreambranch.outputs.sha }}
+          sha: ${{ steps.upstreambranch.outputs.head_sha }}
           state: success
 
       - name: Notify pending status
-        uses: hkusu/status-create-action@v1
+        uses: hkusu/status-create-action@d8b475a6db14477e4f5ba9dec386226da7399e34 # v1.0.1
         if: failure()
         with:
-          sha: ${{ steps.upstreambranch.outputs.sha }}
+          sha: ${{ steps.upstreambranch.outputs.head_sha }}
           state: failure
 
       - name: Save logcat output
-        uses: actions/upload-artifact@master
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: logcat
