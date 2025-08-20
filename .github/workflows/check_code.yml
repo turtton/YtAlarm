@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
 
       - name: Lint check
-        uses: musichin/ktlint-check@687a1d5d326566030e61fb1a1fce0af556a73162 # v3.1.0
+        uses: musichin/ktlint-check@af1ba3927d63a6321fcabec5f7d84a1d872d2e20 # v3.3.1
         with:
           ktlint-version: 1.0.0
 
@@ -46,7 +46,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup gradle
-        uses: gradle/actions/setup-gradle@ac638b010cf58a27ee6c972d7336334ccaf61c96 # v4.4.1
+        uses: gradle/actions/setup-gradle@017a9effdb900e5b5b2fddfb590a105619dca3c3 # v4.4.2
 
       - name: Check and Prepare report
         run: ./gradlew check :rootCoverageReport --stacktrace
@@ -64,7 +64,7 @@ jobs:
           path: build/reports
 
       - name: Upload Report
-        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        uses: codecov/codecov-action@fdcc8476540edceab3de004e990f80d881c6cc00 # v5.5.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: "build/reports/jacoco.xml"
