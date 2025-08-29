@@ -4,33 +4,33 @@ buildscript {
         google()
     }
     dependencies {
-        classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.7.7")
+        classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.9.3")
     }
     configurations.classpath {
         resolutionStrategy {
             force(
-                "com.pinterest.ktlint:ktlint-rule-engine:1.2.1",
-                "com.pinterest.ktlint:ktlint-rule-engine-core:1.2.1",
-                "com.pinterest.ktlint:ktlint-cli-reporter-core:1.2.1",
-                "com.pinterest.ktlint:ktlint-cli-reporter-checkstyle:1.2.1",
-                "com.pinterest.ktlint:ktlint-cli-reporter-json:1.2.1",
-                "com.pinterest.ktlint:ktlint-cli-reporter-html:1.2.1",
-                "com.pinterest.ktlint:ktlint-cli-reporter-plain:1.2.1",
-                "com.pinterest.ktlint:ktlint-cli-reporter-sarif:1.2.1",
-                "com.pinterest.ktlint:ktlint-ruleset-standard:1.2.1"
+                "com.pinterest.ktlint:ktlint-rule-engine:1.7.1",
+                "com.pinterest.ktlint:ktlint-rule-engine-core:1.7.1",
+                "com.pinterest.ktlint:ktlint-cli-reporter-core:1.7.1",
+                "com.pinterest.ktlint:ktlint-cli-reporter-checkstyle:1.7.1",
+                "com.pinterest.ktlint:ktlint-cli-reporter-json:1.7.1",
+                "com.pinterest.ktlint:ktlint-cli-reporter-html:1.7.1",
+                "com.pinterest.ktlint:ktlint-cli-reporter-plain:1.7.1",
+                "com.pinterest.ktlint:ktlint-cli-reporter-sarif:1.7.1",
+                "com.pinterest.ktlint:ktlint-ruleset-standard:1.7.1"
             )
         }
     }
 }
 plugins {
-    id("com.android.application") version "8.3.2" apply false
-    id("com.android.library") version "8.3.2" apply false
-    id("androidx.room") version "2.7.1" apply false
-    id("org.jetbrains.kotlin.android") version "2.0.21" apply false
-    id("org.jmailen.kotlinter") version "4.3.0" apply false
-    id("io.gitlab.arturbosch.detekt") version "1.23.6" apply false
+    id("com.android.application") version "8.12.2" apply false
+    id("com.android.library") version "8.12.2" apply false
+    id("androidx.room") version "2.7.2" apply false
+    id("org.jetbrains.kotlin.android") version "2.2.10" apply false
+    id("org.jmailen.kotlinter") version "4.5.0" apply false
+    id("io.gitlab.arturbosch.detekt") version "1.23.8" apply false
     // Related: https://github.com/NeoTech-Software/Android-Root-Coverage-Plugin?tab=readme-ov-file#4-compatibility
-    id("nl.neotech.plugin.rootcoverage") version "1.8.0"
+    id("nl.neotech.plugin.rootcoverage") version "1.11.0"
 }
 
 tasks.create("clean") {
