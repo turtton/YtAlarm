@@ -27,7 +27,7 @@ plugins {
     id("com.android.library") version "8.3.2" apply false
     id("androidx.room") version "2.7.1" apply false
     id("org.jetbrains.kotlin.android") version "2.0.21" apply false
-    id("org.jmailen.kotlinter") version "4.3.0" apply false
+    id("org.jmailen.kotlinter") version "5.2.0" apply false
     id("io.gitlab.arturbosch.detekt") version "1.23.6" apply false
     // Related: https://github.com/NeoTech-Software/Android-Root-Coverage-Plugin?tab=readme-ov-file#4-compatibility
     id("nl.neotech.plugin.rootcoverage") version "1.8.0"
