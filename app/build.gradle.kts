@@ -158,7 +158,7 @@ dependencies {
     }
 
     testImplementation("junit:junit:4.13.2")
-    testImplementation("io.kotest:kotest-runner-junit5:5.8.1")?.version?.also {
+    testImplementation("io.kotest:kotest-runner-junit5:6.0.4")?.version?.also {
         testImplementation("io.kotest:kotest-assertions-core:$it")?.also { dep ->
             androidTestImplementation(dep)
         }
