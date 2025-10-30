@@ -12,16 +12,27 @@
   - AlarmItemとPlaylistItemのComposable実装
   - ビルド成功・動作確認完了
 
-- ✅ **Phase 1: リストアイテムの移行** (完了)
+- ✅ **Phase 1: リストアイテムの移行** (完了 - 2025-10-30)
   - AlarmItem Composable実装
   - PlaylistItem Composable実装
   - VideoItem Composable実装
   - AlarmSettingItem Composable実装（汎用SettingItem含む）
-  - AlarmListComposeAdapter実装（テスト用）
+  - AlarmListComposeAdapter実装（実戦投入完了）
+  - FragmentAlarmList統合完了
+  - Switch機能修正完了
+  - ビルド成功・エミュレータ動作確認完了
+
+- ✅ **Phase 2: ダイアログの移行** (完了 - 2025-10-30)
+  - RemoveVideoDialog Composable実装
+  - UrlInputDialog Composable実装（TextFieldとフォーカス管理）
+  - ExecuteProgressDialog Composable実装（進行状況表示）
+  - MultiChoiceVideoDialog Composable実装（LazyColumn + Checkbox）
   - ビルド成功・動作確認完了
 
 ### 追加の改善
 - ✅ ステータスバーオーバーラップ問題の修正 (`activity_main.xml`に`fitsSystemWindows`追加)
+- ✅ AlarmItem Switchのタップ問題修正 (外側Rowから`.clickable`を削除し、内側Rowに移動)
+- ✅ Fragment統合完了 (FragmentAlarmListでComposeAdapterが正常動作)
 
 ### 実装済みファイル
 ```
@@ -29,20 +40,27 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/compose/
 ├── theme/
 │   ├── Color.kt                ✅ Material3カラー定義
 │   └── Theme.kt                ✅ AppTheme実装
-└── components/
-    ├── AlarmItem.kt            ✅ アラーム一覧アイテム
-    ├── PlaylistItem.kt         ✅ プレイリスト一覧アイテム
-    ├── VideoItem.kt            ✅ 動画一覧アイテム
-    └── AlarmSettingItem.kt     ✅ アラーム設定アイテム（汎用）
+├── components/
+│   ├── AlarmItem.kt            ✅ アラーム一覧アイテム
+│   ├── PlaylistItem.kt         ✅ プレイリスト一覧アイテム
+│   ├── VideoItem.kt            ✅ 動画一覧アイテム
+│   └── AlarmSettingItem.kt     ✅ アラーム設定アイテム（汎用）
+└── dialogs/
+    ├── RemoveVideoDialog.kt    ✅ 削除確認ダイアログ
+    ├── UrlInputDialog.kt       ✅ URL入力ダイアログ
+    ├── ExecuteProgressDialog.kt ✅ 進行状況表示ダイアログ
+    └── MultiChoiceVideoDialog.kt ✅ 複数選択ダイアログ
 
 app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
-└── AlarmListComposeAdapter.kt  ✅ Compose版AlarmListAdapter（テスト用）
+└── AlarmListComposeAdapter.kt  ✅ Compose版AlarmListAdapter（実戦投入済み）
 ```
 
 ### 次のステップ
-- [ ] **Phase 2**: ダイアログのCompose移行
-- [ ] **Fragment統合の完了**: FragmentAlarmListで実際にComposeAdapterを使用
+- [x] **Phase 2**: ダイアログのCompose移行 ✅
+- [x] **Fragment統合の完了**: FragmentAlarmListで実際にComposeAdapterを使用 ✅
 - [ ] **Phase 3**: シンプルな画面の移行（AboutPage、VideoPlayer）
+- [ ] **Phase 4**: リスト画面の移行（Playlist、VideoList、AlarmList）
+- [ ] **Phase 5**: 複雑な画面の移行（AlarmSettings）
 
 ### 技術スタック（移行後）
 - ✅ Compose BOM 2024.10.00
