@@ -411,6 +411,10 @@ class FragmentVideoList :
 
     private fun updateListObserver(view: View) {
         lifecycleScope.launch(Dispatchers.Main) mainThread@{
+            // 新規作成モード（playlistId = 0L）の場合は何もしない
+            if (currentId.value == 0L) {
+                return@mainThread
+            }
             playlistViewModel.getFromId(currentId.value).observe(viewLifecycleOwner) { playlist ->
                 playlist?.videos?.also { videos ->
                     videoViewModel.getFromIds(videos).observe(viewLifecycleOwner) { list ->
