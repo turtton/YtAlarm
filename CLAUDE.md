@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 YtAlarmは、YouTubeや他の動画サービスの音声/動画をアラーム音として使用できるAndroidアプリです。Google Play Storeの利用規約に違反しないよう、YouTubeAPIではなくyoutubedl-androidライブラリを使用しています。
 
+See @.github/CONTRIBUTING.md
+
 ## 開発環境とコマンド
 
 ### 必要環境
