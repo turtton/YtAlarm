@@ -150,7 +150,7 @@ dependencies {
     implementation("com.github.yausername.youtubedl-android:library:0.15.0")?.also {
         implementation("com.github.yausername.youtubedl-android:common:${it.version}")
     }
-    implementation("com.github.bumptech.glide:glide:4.16.0")?.also {
+    implementation("com.github.bumptech.glide:glide:5.0.5")?.also {
         annotationProcessor("com.github.bumptech.glide:compiler:${it.version}")
     }
     implementation("com.michael-bull.kotlin-result:kotlin-result:1.1.21")?.also {
