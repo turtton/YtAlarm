@@ -37,7 +37,7 @@ kotlinx-serialization = "1.6.3"
 
 # Third party
 youtubedl-android = "0.15.0"
-glide = "4.16.0"
+glide = "5.0.5"
 arrow = "2.1.0"
 ktlint = "1.2.1"
 
