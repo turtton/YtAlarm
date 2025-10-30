@@ -2,7 +2,7 @@
 
 ## 📊 進捗サマリー
 
-**最終更新**: 2025-10-30
+**最終更新**: 2025-10-31
 
 ### 完了済みフェーズ
 - ✅ **Phase 0: 準備** (完了)
@@ -29,6 +29,12 @@
   - MultiChoiceVideoDialog Composable実装（LazyColumn + Checkbox）
   - ビルド成功・動作確認完了
 
+- ✅ **Phase 3: シンプルな画面の移行** (完了 - 2025-10-31)
+  - AboutPageItem Composable実装
+  - AboutPageScreen Composable実装（LazyColumn + 情報リスト）
+  - VideoPlayerScreen Composable実装（AndroidView + VideoView統合）
+  - ビルド成功・動作確認完了
+
 ### 追加の改善
 - ✅ ステータスバーオーバーラップ問題の修正 (`activity_main.xml`に`fitsSystemWindows`追加)
 - ✅ AlarmItem Switchのタップ問題修正 (外側Rowから`.clickable`を削除し、内側Rowに移動)
@@ -44,12 +50,16 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/compose/
 │   ├── AlarmItem.kt            ✅ アラーム一覧アイテム
 │   ├── PlaylistItem.kt         ✅ プレイリスト一覧アイテム
 │   ├── VideoItem.kt            ✅ 動画一覧アイテム
-│   └── AlarmSettingItem.kt     ✅ アラーム設定アイテム（汎用）
-└── dialogs/
-    ├── RemoveVideoDialog.kt    ✅ 削除確認ダイアログ
-    ├── UrlInputDialog.kt       ✅ URL入力ダイアログ
-    ├── ExecuteProgressDialog.kt ✅ 進行状況表示ダイアログ
-    └── MultiChoiceVideoDialog.kt ✅ 複数選択ダイアログ
+│   ├── AlarmSettingItem.kt     ✅ アラーム設定アイテム（汎用）
+│   └── AboutPageItem.kt        ✅ About情報アイテム
+├── dialogs/
+│   ├── RemoveVideoDialog.kt    ✅ 削除確認ダイアログ
+│   ├── UrlInputDialog.kt       ✅ URL入力ダイアログ
+│   ├── ExecuteProgressDialog.kt ✅ 進行状況表示ダイアログ
+│   └── MultiChoiceVideoDialog.kt ✅ 複数選択ダイアログ
+└── screens/
+    ├── AboutPageScreen.kt      ✅ About画面
+    └── VideoPlayerScreen.kt    ✅ 動画プレーヤー画面
 
 app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
 └── AlarmListComposeAdapter.kt  ✅ Compose版AlarmListAdapter（実戦投入済み）
@@ -58,7 +68,7 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
 ### 次のステップ
 - [x] **Phase 2**: ダイアログのCompose移行 ✅
 - [x] **Fragment統合の完了**: FragmentAlarmListで実際にComposeAdapterを使用 ✅
-- [ ] **Phase 3**: シンプルな画面の移行（AboutPage、VideoPlayer）
+- [x] **Phase 3**: シンプルな画面の移行（AboutPage、VideoPlayer） ✅
 - [ ] **Phase 4**: リスト画面の移行（Playlist、VideoList、AlarmList）
 - [ ] **Phase 5**: 複雑な画面の移行（AlarmSettings）
 
