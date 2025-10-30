@@ -2,7 +2,7 @@
 
 ## 📊 進捗サマリー
 
-**最終更新**: 2025-01-30
+**最終更新**: 2025-10-30
 
 ### 完了済みフェーズ
 - ✅ **Phase 0: 準備** (完了)
@@ -12,6 +12,14 @@
   - AlarmItemとPlaylistItemのComposable実装
   - ビルド成功・動作確認完了
 
+- ✅ **Phase 1: リストアイテムの移行** (完了)
+  - AlarmItem Composable実装
+  - PlaylistItem Composable実装
+  - VideoItem Composable実装
+  - AlarmSettingItem Composable実装（汎用SettingItem含む）
+  - AlarmListComposeAdapter実装（テスト用）
+  - ビルド成功・動作確認完了
+
 ### 追加の改善
 - ✅ ステータスバーオーバーラップ問題の修正 (`activity_main.xml`に`fitsSystemWindows`追加)
 
@@ -19,17 +27,22 @@
 ```
 app/src/main/kotlin/net/turtton/ytalarm/ui/compose/
 ├── theme/
-│   ├── Color.kt          ✅ Material3カラー定義
-│   └── Theme.kt          ✅ AppTheme実装
+│   ├── Color.kt                ✅ Material3カラー定義
+│   └── Theme.kt                ✅ AppTheme実装
 └── components/
-    ├── AlarmItem.kt      ✅ アラーム一覧アイテム
-    └── PlaylistItem.kt   ✅ プレイリスト一覧アイテム
+    ├── AlarmItem.kt            ✅ アラーム一覧アイテム
+    ├── PlaylistItem.kt         ✅ プレイリスト一覧アイテム
+    ├── VideoItem.kt            ✅ 動画一覧アイテム
+    └── AlarmSettingItem.kt     ✅ アラーム設定アイテム（汎用）
+
+app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
+└── AlarmListComposeAdapter.kt  ✅ Compose版AlarmListAdapter（テスト用）
 ```
 
 ### 次のステップ
-- [ ] **Phase 1.3-1.4**: VideoItem、AlarmSettingItemのComposable実装
-- [ ] **Fragment統合**: FragmentAlarmListでComposeViewを使用してAlarmItemを表示
 - [ ] **Phase 2**: ダイアログのCompose移行
+- [ ] **Fragment統合の完了**: FragmentAlarmListで実際にComposeAdapterを使用
+- [ ] **Phase 3**: シンプルな画面の移行（AboutPage、VideoPlayer）
 
 ### 技術スタック（移行後）
 - ✅ Compose BOM 2024.10.00
@@ -220,7 +233,7 @@ Material3テーマを作成し、既存のカラーリソースを移行しま�
 
 ---
 
-## Phase 1: リストアイテムの移行（2-3日） 🔄 **進行中**
+## Phase 1: リストアイテムの移行（2-3日） ✅ **完了**
 
 最も再利用性が高く、独立したコンポーネントから開始します。
 
@@ -277,15 +290,53 @@ fun AlarmItem(
 - Material3デザイン対応
 - Previewアノテーション実装済み
 
-### 1.3 VideoItemComposable ⏳
+### 1.3 VideoItemComposable ✅
 `item_video_list.xml` → `VideoItem.kt`
 
-**次のステップで実装予定**
+**実装日**: 2025-10-30
+**ファイル**: `app/src/main/kotlin/net/turtton/ytalarm/ui/compose/components/VideoItem.kt`
 
-### 1.4 AlarmSettingItemComposable ⏳
+**実装内容：**
+- サムネイル画像表示（132dp x 64dp、CoilのAsyncImage使用）
+- 動画タイトル表示（1行、ellipsize end）
+- ドメイン/ファイルサイズ表示
+- チェックボックス（選択モード時表示）
+- メニューボタン（3点アイコン）
+- 選択状態管理サポート
+- クリックイベントハンドリング
+- Material3デザイン対応
+- Previewアノテーション実装済み（通常版と選択版）
+
+### 1.4 AlarmSettingItemComposable ✅
 `item_aram_setting.xml` → `AlarmSettingItem.kt`
 
-**次のステップで実装予定**
+**実装日**: 2025-10-30
+**ファイル**: `app/src/main/kotlin/net/turtton/ytalarm/ui/compose/components/AlarmSettingItem.kt`
+
+**実装内容：**
+- 汎用SettingItem Composable（基本コンポーネント）
+  - タイトル、説明テキスト
+  - トレーリングコンテンツ（スイッチなど）
+  - ボトムコンテンツ（スライダーなど）
+- SwitchSettingItem（スイッチ付き設定項目）
+- SliderSettingItem（スライダー付き設定項目）
+- ClickableSettingItem（クリック可能な設定項目）
+- Material3デザイン対応
+- 複数のPreviewアノテーション実装済み
+
+### 1.5 AlarmListComposeAdapter ✅
+`AlarmListAdapter` → `AlarmListComposeAdapter.kt`
+
+**実装日**: 2025-10-30
+**ファイル**: `app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/AlarmListComposeAdapter.kt`
+
+**実装内容：**
+- ComposeViewを使用したRecyclerView Adapter
+- AlarmItem Composableの統合
+- プレイリスト情報とサムネイルの非同期取得
+- スイッチのトグル処理
+- ナビゲーション処理
+- テスト用実装（実際のFragment統合は次フェーズ）
 
 **テスト方法（次のフェーズで実装）：**
 XMLレイアウト内に`ComposeView`を埋め込んで動作確認します。

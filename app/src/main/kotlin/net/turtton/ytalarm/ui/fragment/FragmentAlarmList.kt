@@ -17,6 +17,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,7 +25,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Alarm
-import net.turtton.ytalarm.ui.adapter.AlarmListAdapter
+import net.turtton.ytalarm.ui.adapter.AlarmListComposeAdapter
 import net.turtton.ytalarm.ui.menu.MenuProviderContainer
 import net.turtton.ytalarm.util.extensions.alarmOrderRule
 import net.turtton.ytalarm.util.extensions.alarmOrderUp
@@ -40,7 +41,7 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 class FragmentAlarmList : FragmentAbstractList(), MenuProviderContainer {
-    private lateinit var adapter: AlarmListAdapter
+    private lateinit var adapter: ListAdapter<Alarm, *>
 
     val alarmViewModel: AlarmViewModel by viewModels {
         AlarmViewModelFactory(requireActivity().application.repository)
@@ -63,7 +64,8 @@ class FragmentAlarmList : FragmentAbstractList(), MenuProviderContainer {
         activity.binding.fab.show()
 
         val layoutManager = LinearLayoutManager(view.context)
-        adapter = AlarmListAdapter(this)
+        // Compose版のAdapterを使用してテスト
+        adapter = AlarmListComposeAdapter(this)
         binding.recyclerList.layoutManager = layoutManager
         binding.recyclerList.adapter = adapter
         val allAlarms = alarmViewModel.allAlarms
