@@ -36,7 +36,7 @@ fun RepeatTypeDialog(
         title = { Text(stringResource(R.string.dialog_repeat_choice_title)) },
         text = {
             Column {
-                RepeatTypeSelection.values().forEachIndexed { index, type ->
+                RepeatTypeSelection.entries.forEachIndexed { index, type ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

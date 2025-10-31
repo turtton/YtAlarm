@@ -30,7 +30,7 @@ fun DayOfWeekPickerDialog(
 ) {
     val selectedDays = remember {
         mutableStateMapOf<DayOfWeekCompat, Boolean>().apply {
-            DayOfWeekCompat.values().forEach { day ->
+            DayOfWeekCompat.entries.forEach { day ->
                 this[day] = initialSelectedDays.contains(day)
             }
         }
@@ -43,7 +43,7 @@ fun DayOfWeekPickerDialog(
         title = { Text(stringResource(R.string.dialog_repeat_days_title)) },
         text = {
             Column {
-                DayOfWeekCompat.values().forEach { day ->
+                DayOfWeekCompat.entries.forEach { day ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

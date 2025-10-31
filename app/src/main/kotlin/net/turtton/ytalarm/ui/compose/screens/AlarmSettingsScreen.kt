@@ -239,7 +239,10 @@ fun AlarmSettingsScreenContent(
             is Alarm.RepeatType.Everyday -> RepeatTypeSelection.EVERYDAY
             is Alarm.RepeatType.Days -> RepeatTypeSelection.DAYS
             is Alarm.RepeatType.Date -> RepeatTypeSelection.DATE
-            else -> RepeatTypeSelection.ONCE
+            is Alarm.RepeatType.Snooze -> {
+                // Snoozeは設定画面では扱わない
+                RepeatTypeSelection.ONCE
+            }
         }
 
         RepeatTypeDialog(
@@ -272,8 +275,7 @@ fun AlarmSettingsScreenContent(
             initialSelectedDays = initialDays,
             onConfirm = { days ->
                 val newRepeatType = when {
-                    days.isEmpty() -> Alarm.RepeatType.Once
-                    days.size == DayOfWeekCompat.values().size -> Alarm.RepeatType.Everyday
+                    days.size == DayOfWeekCompat.entries.size -> Alarm.RepeatType.Everyday
                     else -> Alarm.RepeatType.Days(days)
                 }
                 onAlarmChange(alarm.copy(repeatType = newRepeatType))
@@ -286,10 +288,20 @@ fun AlarmSettingsScreenContent(
     // 日付選択
     if (showDatePickerDialog) {
         val initialMillis = (alarm.repeatType as? Alarm.RepeatType.Date)?.targetDate?.time
+        val scope = rememberCoroutineScope()
         AlarmDatePickerDialog(
             initialDateMillis = initialMillis,
             onConfirm = { millis ->
-                onAlarmChange(alarm.copy(repeatType = Alarm.RepeatType.Date(Date(millis))))
+                val selectedDate = Date(millis)
+                if (selectedDate.before(Date())) {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.snackbar_error_target_is_the_past_date)
+                        )
+                    }
+                } else {
+                    onAlarmChange(alarm.copy(repeatType = Alarm.RepeatType.Date(selectedDate)))
+                }
                 showDatePickerDialog = false
             },
             onDismiss = { showDatePickerDialog = false }
@@ -468,9 +480,9 @@ fun AlarmSettingsScreen(
     }
 
     // AlarmSettingsScreenContent呼び出し
-    if (editingAlarm != null) {
+    editingAlarm?.let { currentAlarm ->
         AlarmSettingsScreenContent(
-            alarm = editingAlarm!!,
+            alarm = currentAlarm,
             playlistTitle = playlistTitle,
             snackbarHostState = snackbarHostState,
             onAlarmChange = { updatedAlarm -> editingAlarm = updatedAlarm },
