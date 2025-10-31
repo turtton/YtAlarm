@@ -4,6 +4,7 @@
     <string name="setting_time">時刻</string>
     <string name="setting_repeat">繰り返し</string>
     <string name="setting_playlist">プレイリスト</string>
+    <string name="setting_playlist_empty">プレイリストを選択</string>
     <string name="setting_loop">ループ</string>
     <string name="setting_shuffle">シャッフル</string>
     <string name="setting_volume">音量</string>
@@ -28,6 +29,8 @@
 
     <!-- Navigation titles for Compose screens -->
     <string name="nav_alarm_list">アラーム一覧</string>
+    <string name="nav_new_alarm">新規アラーム</string>
+    <string name="nav_edit_alarm">アラーム編集</string>
     <string name="nav_playlist">プレイリスト一覧</string>
     <string name="nav_video_list">動画一覧</string>
     <string name="playlist_new_title">新しいプレイリスト</string>
@@ -77,6 +80,7 @@
     <string name="snackbar_error_playlistid_is_null">プレイリストを選択してください</string>
     <string name="snackbar_error_target_is_the_past_date">過去の日付です</string>
     <string name="snackbar_error_failed_to_get_alarm">アラームの取得に失敗しました</string>
+    <string name="snackbar_error_failed_to_save_alarm">アラームの保存に失敗しました</string>
     <string name="snackbar_error_failed_to_get_video">ビデオの取得に失敗しました</string>
     <string name="snackbar_error_failed_to_get_playlist">プレイリストの取得に失敗しました</string>
     <string name="snackbar_error_failed_to_import_video">ビデオのインポートに失敗しました</string>

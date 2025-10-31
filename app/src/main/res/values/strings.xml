@@ -28,6 +28,7 @@
     <string name="setting_time">Time</string>
     <string name="setting_repeat">Repeat</string>
     <string name="setting_playlist">Playlist</string>
+    <string name="setting_playlist_empty">Select playlist</string>
     <string name="setting_loop">Loop</string>
     <string name="setting_shuffle">Shuffle</string>
     <string name="setting_volume">Volume</string>
@@ -56,6 +57,8 @@
 
     <!-- Navigation titles for Compose screens -->
     <string name="nav_alarm_list">Alarms</string>
+    <string name="nav_new_alarm">New Alarm</string>
+    <string name="nav_edit_alarm">Edit Alarm</string>
     <string name="nav_playlist">Playlists</string>
     <string name="nav_video_list">Videos</string>
     <string name="playlist_new_title">New Playlist</string>
@@ -144,6 +147,7 @@
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
     <string name="snackbar_error_failed_to_get_alarm">Failed to get alarm data</string>
+    <string name="snackbar_error_failed_to_save_alarm">Failed to save alarm</string>
     <string name="snackbar_error_failed_to_get_video">Failed to get video data</string>
     <string name="snackbar_error_failed_to_get_playlist">Failed to get playlist data</string>
     <string name="snackbar_error_failed_to_import_video">Failed to import video</string>
