@@ -8,7 +8,7 @@ targetSdk = "35"
 # Kotlin
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.28"
-kotlinter = "4.3.0"
+kotlinter = "5.2.0"
 detekt = "1.23.6"
 
 # AndroidX
