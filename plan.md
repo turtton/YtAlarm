@@ -59,17 +59,66 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/compose/
 │   └── MultiChoiceVideoDialog.kt ✅ 複数選択ダイアログ
 └── screens/
     ├── AboutPageScreen.kt      ✅ About画面
-    └── VideoPlayerScreen.kt    ✅ 動画プレーヤー画面
+    ├── VideoPlayerScreen.kt    ✅ 動画プレーヤー画面
+    ├── PlaylistScreen.kt       🔄 プレイリスト一覧画面（ビルドエラー修正待ち）
+    ├── VideoListScreen.kt      🔄 動画一覧画面（ビルドエラー修正待ち）
+    └── AlarmListScreen.kt      🔄 アラーム一覧画面（ビルドエラー修正待ち）
 
 app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
 └── AlarmListComposeAdapter.kt  ✅ Compose版AlarmListAdapter（実戦投入済み）
 ```
 
+### 進行中フェーズ
+- ✅ **Phase 4: リスト画面の移行** (完了 - 2025-10-31)
+  - ✅ PlaylistScreen.kt 基本実装完了
+  - ✅ VideoListScreen.kt 基本実装完了
+  - ✅ AlarmListScreen.kt 基本実装完了
+  - ✅ **ビルド成功** - すべてのエラーを修正完了
+
+  **実装完了した機能:**
+  - PlaylistScreen: プレイリスト一覧表示、ソート、削除、選択機能
+  - VideoListScreen: 動画一覧表示、3モード対応（Original/Sync/Importing）、FAB展開
+  - AlarmListScreen: アラーム一覧表示、ソート、ON/OFF切り替え
+
+  **修正完了した問題:**
+  1. **依存関係の追加**
+     - ✅ `androidx.compose.runtime:runtime-livedata` 追加
+     - ✅ `androidx.compose.material:material-icons-extended` 追加
+
+  2. **型推論エラーの修正**
+     - ✅ `remember()`ブロック内のリスト操作に明示的な型指定を追加
+     - ✅ `List<Alarm>`, `MutableList<Alarm>` などを明示
+
+  3. **コンポーネントのパラメータ修正**
+     - ✅ `AlarmItem`: `playlistName` → `playlistTitle`に修正
+     - ✅ `PlaylistItem`: `thumbnailUrl`, `videoCount`パラメータの追加
+     - ✅ `Playlist.Thumbnail.Url` → `Playlist.Thumbnail.Video/Drawable`に修正
+
+  4. **String resourceの追加**
+     - ✅ ナビゲーションタイトル（nav_alarm_list, nav_playlist等）
+     - ✅ 空状態メッセージ（alarm_list_empty_message等）
+     - ✅ メニュー・ダイアログ用リソース
+     - ✅ 日本語翻訳も追加
+
+  5. **Context APIの問題解決**
+     - ✅ `Context.findActivity()` ヘルパー関数を追加
+     - ✅ Composable内で `context.findActivity()?.privatePreferences` を使用
+
+  **残存する警告（非ブロッカー）:**
+  - Icons.Filled.Sort等が deprecated（AutoMirrored版を使用すべき）
+  - PackagingOptions の設定に関する警告
+
+  **次のステップ:**
+  - ✅ エミュレータでの動作確認
+  - 必要に応じて警告の修正
+  - Screen設計の改善（Phase 4.5）
+
 ### 次のステップ
 - [x] **Phase 2**: ダイアログのCompose移行 ✅
 - [x] **Fragment統合の完了**: FragmentAlarmListで実際にComposeAdapterを使用 ✅
 - [x] **Phase 3**: シンプルな画面の移行（AboutPage、VideoPlayer） ✅
-- [ ] **Phase 4**: リスト画面の移行（Playlist、VideoList、AlarmList）
+- [x] **Phase 4**: リスト画面の移行（Playlist、VideoList、AlarmList） ✅
+- [ ] **Phase 4.5**: Screen設計の改善（プレビュー対応）← 次回作業
 - [ ] **Phase 5**: 複雑な画面の移行（AlarmSettings）
 
 ### 技術スタック（移行後）
@@ -466,6 +515,128 @@ fun VideoPlayerScreen(videoId: String) {
     }
 }
 ```
+
+---
+
+## Phase 4.5: Screen設計の改善（プレビュー対応）（1-2日）
+
+**目的:** ViewModelとの依存を分離し、プレビュー可能な設計に改善する
+
+### 設計パターン
+
+各Screenを以下の2つのComposableに分割：
+
+#### 1. ScreenContent（プレビュー可能）
+- ViewModelに依存しない純粋なComposable
+- すべてのデータと関数を引数として受け取る
+- `@Preview`アノテーションでプレビュー可能
+
+```kotlin
+@Composable
+fun AlarmListScreenContent(
+    alarms: List<Alarm>,
+    orderRule: AlarmOrder,
+    orderUp: Boolean,
+    onAlarmToggle: (Alarm, Boolean) -> Unit,
+    onAlarmClick: (Long) -> Unit,
+    onOpenDrawer: () -> Unit,
+    onSortRuleChange: (AlarmOrder) -> Unit,
+    onOrderUpToggle: () -> Unit,
+    onCreateAlarm: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // UI実装
+}
+
+@Preview(showBackground = true)
+@Composable
+fun AlarmListScreenContentPreview() {
+    AppTheme {
+        AlarmListScreenContent(
+            alarms = listOf(
+                // ダミーデータ
+            ),
+            orderRule = AlarmOrder.TIME,
+            orderUp = true,
+            onAlarmToggle = { _, _ -> },
+            onAlarmClick = {},
+            onOpenDrawer = {},
+            onSortRuleChange = {},
+            onOrderUpToggle = {},
+            onCreateAlarm = {}
+        )
+    }
+}
+```
+
+#### 2. Screen（ViewModelラッパー）
+- ViewModelを構築
+- ViewModelからデータを取得
+- ScreenContentにデータと関数を渡す
+
+```kotlin
+@Composable
+fun AlarmListScreen(
+    onNavigateToAlarmSettings: (alarmId: Long) -> Unit,
+    onOpenDrawer: () -> Unit,
+    modifier: Modifier = Modifier,
+    alarmViewModel: AlarmViewModel = viewModel(...)
+) {
+    val context = LocalContext.current
+    val activity = context.findActivity() ?: return
+
+    // ViewModelからデータ取得
+    val allAlarms by alarmViewModel.allAlarms.observeAsState(emptyList())
+    val preferences = activity.privatePreferences
+    val orderRule = preferences.alarmOrderRule
+    val orderUp = preferences.alarmOrderUp
+
+    // ソート処理
+    val sortedAlarms = remember(allAlarms, orderRule, orderUp) {
+        // ソートロジック
+    }
+
+    // ScreenContentに渡す
+    AlarmListScreenContent(
+        alarms = sortedAlarms,
+        orderRule = orderRule,
+        orderUp = orderUp,
+        onAlarmToggle = { alarm, isEnabled ->
+            // ViewModelの操作
+        },
+        onAlarmClick = onNavigateToAlarmSettings,
+        onOpenDrawer = onOpenDrawer,
+        onSortRuleChange = { rule ->
+            preferences.alarmOrderRule = rule
+        },
+        onOrderUpToggle = {
+            preferences.alarmOrderUp = !orderUp
+        },
+        onCreateAlarm = {
+            onNavigateToAlarmSettings(-1)
+        },
+        modifier = modifier
+    )
+}
+```
+
+### 実装対象
+
+- [ ] AlarmListScreen → AlarmListScreenContent + AlarmListScreen
+- [ ] PlaylistScreen → PlaylistScreenContent + PlaylistScreen
+- [ ] VideoListScreen → VideoListScreenContent + VideoListScreen
+
+### メリット
+
+1. **プレビュー可能**: ScreenContentはViewModelに依存しないため、簡単にプレビュー作成可能
+2. **テスト容易**: ScreenContentの単体テストが簡単
+3. **ロジック分離**: ViewModelとのやりとりがScreenに集約される
+4. **再利用性**: ScreenContentは他の場所でも使用可能
+
+### 注意点
+
+- 既存のScreenは動作しているので、段階的にリファクタリング
+- 各Screenで引数が多くなる場合は、data classでグルーピングを検討
 
 ---
 

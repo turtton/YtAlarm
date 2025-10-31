@@ -25,6 +25,18 @@
     <string name="menu_title_playlist">プレイリスト</string>
     <string name="menu_title_video_list">ビデオ</string>
     <string name="menu_title_aboutpage">概要</string>
+
+    <!-- Navigation titles for Compose screens -->
+    <string name="nav_alarm_list">アラーム一覧</string>
+    <string name="nav_playlist">プレイリスト一覧</string>
+    <string name="nav_video_list">動画一覧</string>
+    <string name="playlist_new_title">新しいプレイリスト</string>
+
+    <!-- Empty state messages -->
+    <string name="alarm_list_empty_message">アラームがありません。+をタップして作成してください。</string>
+    <string name="playlist_empty_message">プレイリストがありません。+をタップして作成してください。</string>
+    <string name="video_list_empty_message">動画がありません。+をタップして追加してください。</string>
+    <string name="video_list_empty_new_message">動画を追加して新しいプレイリストを作成してください。</string>
     <string name="dialog_video_input_ok">インポート</string>
     <string name="fab_save">保存</string>
     <plurals name="playlist_item_video_count">
@@ -38,6 +50,12 @@
     <string name="dialog_execute_progress_eta_init">計測中</string>
     <string name="menu_video_list_add_to">プレイリストに追加</string>
     <string name="dialog_remove_title">削除</string>
+
+    <!-- Remove video dialog -->
+    <string name="dialog_remove_video_title">動画を削除</string>
+    <string name="dialog_remove_video_message">選択した動画を削除しますか？</string>
+    <string name="dialog_remove_video_positive">削除</string>
+    <string name="dialog_remove_video_negative">キャンセル</string>
     <string name="dialog_repeat_choice_title">繰り返し</string>
     <string name="dialog_repeat_days_title">曜日</string>
     <string name="dialog_require_permission">権限が必要です</string>
@@ -69,6 +87,7 @@
     <string name="snackbar_error_unknown">原因不明のエラーが発生しました</string>
     <string name="snackbar_start_download">ダウンロード中</string>
     <string name="snackbar_sync_is_running">他のダウンロードが進行中です。しばらくお待ちください</string>
+    <string name="snackbar_sync_started">同期を開始しました</string>
     <string name="snackbar_detect_playlist_usage">プレイリストは既にアラームで使用されています</string>
     <string name="snackbar_failed_to_check_restriction">権限の制限機能の確認に失敗しました</string>
     <string name="snackbar_thumbnail_updated">サムネイルを更新しました</string>
@@ -87,6 +106,9 @@
     <string name="menu_playlist_option_rename">名称変更</string>
     <string name="menu_option_sortrule">並び替え</string>
     <string name="menu_option_order">順序</string>
+    <string name="menu_alarm_option_sortrule">アラームを並び替え</string>
+    <string name="menu_playlist_option_sortrule">プレイリストを並び替え</string>
+    <string name="menu_video_list_option_sortrule">動画を並び替え</string>
     <string name="menu_video_list_item_option_set_thumbnail">プレイリストのサムネイルに設定</string>
     <string name="menu_video_list_item_option_download">ダウンロード</string>
     <string name="menu_video_list_item_option_reimport">再インポート</string>

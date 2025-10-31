@@ -54,6 +54,18 @@
     <string name="menu_title_video_list">VideoList</string>
     <string name="menu_title_aboutpage">About</string>
 
+    <!-- Navigation titles for Compose screens -->
+    <string name="nav_alarm_list">Alarms</string>
+    <string name="nav_playlist">Playlists</string>
+    <string name="nav_video_list">Videos</string>
+    <string name="playlist_new_title">New Playlist</string>
+
+    <!-- Empty state messages -->
+    <string name="alarm_list_empty_message">No alarms. Tap + to create one.</string>
+    <string name="playlist_empty_message">No playlists. Tap + to create one.</string>
+    <string name="video_list_empty_message">No videos. Tap + to add one.</string>
+    <string name="video_list_empty_new_message">Add videos to create a new playlist.</string>
+
     <string name="dialog_video_input_url_hint" translatable="false">https://…</string>
     <string name="dialog_video_input_ok">Import</string>
 
@@ -67,6 +79,12 @@
 
     <string name="dialog_remove_title">Delete</string>
     <string name="dialog_remove_ok">Confirm</string>
+
+    <!-- Remove video dialog -->
+    <string name="dialog_remove_video_title">Delete Videos</string>
+    <string name="dialog_remove_video_message">Are you sure you want to delete the selected videos?</string>
+    <string name="dialog_remove_video_positive">Delete</string>
+    <string name="dialog_remove_video_negative">Cancel</string>
 
     <string name="dialog_repeat_choice_title">Repeat</string>
     <string-array name="dialog_repeat_type_choice">
@@ -136,6 +154,7 @@
     <string name="snackbar_error_unknown">Unknown Error.</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
     <string name="snackbar_sync_is_running">Download worker is already working. Please wait.</string>
+    <string name="snackbar_sync_started">Sync started</string>
     <string name="snackbar_detect_playlist_usage">Some playlists are used by alarms.</string>
     <string name="snackbar_failed_to_check_restriction">Failed to check app restriction status.</string>
     <string name="snackbar_thumbnail_updated">Thumbnail Updated</string>
@@ -162,6 +181,9 @@
 
     <string name="menu_option_sortrule">SortRule</string>
     <string name="menu_option_order">Order</string>
+    <string name="menu_alarm_option_sortrule">Sort Alarms</string>
+    <string name="menu_playlist_option_sortrule">Sort Playlists</string>
+    <string name="menu_video_list_option_sortrule">Sort Videos</string>
 
     <string name="menu_video_list_item_option_set_thumbnail">Set as playlist thumbnail</string>
     <string name="menu_video_list_item_option_download">Download</string>
