@@ -134,13 +134,50 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
   - Icons.Filled.Sort等が deprecated（AutoMirrored版を使用すべき）
   - PackagingOptions の設定に関する警告
 
+- ✅ **Phase 5: 複雑な画面の移行（AlarmSettings）** (完了 - 2025-10-31)
+  - ✅ 6つのダイアログコンポーネント実装完了
+    - TimePickerDialog: Material3 TimePicker使用
+    - DatePickerDialog: Material3 DatePicker使用
+    - RepeatTypeDialog: 繰り返しタイプ選択
+    - DayOfWeekPickerDialog: 曜日複数選択
+    - SnoozeMinutePickerDialog: スヌーズ時間選択
+    - VibrationWarningDialog: Android S警告
+  - ✅ AlarmSettingsScreen実装完了
+    - AlarmSettingsScreenContent（プレビュー可能）
+    - AlarmSettingsScreen（ViewModel連携）
+    - 8つの設定項目完全実装
+  - ✅ String resources追加（英語・日本語）
+  - ✅ **ビルド成功** - すべてのエラー修正完了
+  - ✅ **コードレビュー完了** - Critical指摘事項すべて修正
+
+  **実装完了した機能:**
+  - 時刻設定（Material3 TimePicker）
+  - 繰り返し設定（Once/Everyday/Days/Date 4タイプ対応）
+  - プレイリスト選択（TODO: MultiChoiceVideoDialog統合）
+  - ループ・シャッフル・音量・スヌーズ・バイブレーション設定
+  - エラーハンドリング（プレイリスト未選択、過去日付選択）
+  - Phase 4.5パターン準拠（ViewModel分離、プレビュー対応）
+
+  **修正完了した問題（コードレビュー対応）:**
+  1. ✅ Enum.values() → Enum.entries（非推奨API修正）
+  2. ✅ null安全性向上（editingAlarm!! → editingAlarm?.let {}）
+  3. ✅ UX改善（日付選択時の即座バリデーション）
+  4. ✅ 冗長ロジック削減（曜日選択時の最適化）
+  5. ✅ 型安全性向上（Snooze型の明示的処理）
+
+  **残タスク:**
+  - プレイリスト選択ダイアログ統合（MultiChoiceVideoDialog）
+  - ナビゲーション統合（Phase 6で実施）
+  - エミュレータ動作確認（Phase 6で実施）
+
 ### 次のステップ
 - [x] **Phase 2**: ダイアログのCompose移行 ✅
 - [x] **Fragment統合の完了**: FragmentAlarmListで実際にComposeAdapterを使用 ✅
 - [x] **Phase 3**: シンプルな画面の移行（AboutPage、VideoPlayer） ✅
 - [x] **Phase 4**: リスト画面の移行（Playlist、VideoList、AlarmList） ✅
 - [x] **Phase 4.5**: Screen設計の改善（プレビュー対応） ✅
-- [ ] **Phase 5**: 複雑な画面の移行（AlarmSettings）← 次回作業
+- [x] **Phase 5**: 複雑な画面の移行（AlarmSettings） ✅
+- [ ] **Phase 6**: Navigation統合（3-4日）← 次回作業
 
 ### 技術スタック（移行後）
 - ✅ Compose BOM 2024.10.00
