@@ -71,6 +71,276 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 /**
+ * 動画一覧画面のコンテンツ（プレビュー可能）
+ *
+ * ViewModelに依存せず、すべてのデータと関数を引数として受け取る純粋なComposable。
+ * これにより、@Previewアノテーションでプレビュー可能になる。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VideoListScreenContent(
+    playlistTitle: String,
+    isNewPlaylist: Boolean,
+    videos: List<net.turtton.ytalarm.database.structure.Video>,
+    playlistType: Playlist.Type?,
+    orderRule: VideoOrder,
+    orderUp: Boolean,
+    selectedItems: List<Long>,
+    isFabExpanded: Boolean,
+    onItemSelect: (Long, Boolean) -> Unit,
+    onItemClick: (Long) -> Unit,
+    onNavigateBack: () -> Unit,
+    onDeleteVideos: () -> Unit,
+    onSortRuleChange: (VideoOrder) -> Unit,
+    onOrderUpToggle: () -> Unit,
+    onSyncRuleChange: (Playlist.SyncRule) -> Unit,
+    onFabExpandToggle: () -> Unit,
+    onFabMainClick: () -> Unit,
+    onFabUrlClick: () -> Unit,
+    onFabMultiChoiceClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showSortDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var showSyncRuleDialog by remember { mutableStateOf(false) }
+
+    val isOriginalMode = playlistType is Playlist.Type.Original || playlistType == null
+    val isSyncMode = playlistType is Playlist.Type.CloudPlaylist
+    val isImportingMode = playlistType is Playlist.Type.Importing
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(playlistTitle) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    // 選択時の削除ボタン
+                    if (selectedItems.isNotEmpty() && !isSyncMode) {
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        }
+                    }
+                    // Syncモード時のSyncRuleボタン
+                    if (isSyncMode) {
+                        IconButton(onClick = { showSyncRuleDialog = true }) {
+                            Icon(Icons.Default.Sync, contentDescription = "Sync rule")
+                        }
+                    }
+                    // 並び替えボタン（Importingモード以外）
+                    if (!isImportingMode) {
+                        IconButton(onClick = onOrderUpToggle) {
+                            Icon(
+                                imageVector = if (orderUp) {
+                                    Icons.Default.KeyboardArrowUp
+                                } else {
+                                    Icons.Default.KeyboardArrowDown
+                                },
+                                contentDescription = if (orderUp) "Sort ascending" else "Sort descending"
+                            )
+                        }
+                        // ソートルール選択ボタン
+                        IconButton(onClick = { showSortDialog = true }) {
+                            Icon(Icons.Default.Sort, contentDescription = "Sort rule")
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        },
+        floatingActionButton = {
+            if (!isImportingMode) {
+                Column(horizontalAlignment = Alignment.End) {
+                    // Expanded状態のサブFAB
+                    AnimatedVisibility(visible = isFabExpanded && isOriginalMode) {
+                        Column {
+                            // URLから追加
+                            SmallFloatingActionButton(
+                                onClick = onFabUrlClick,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            ) {
+                                Icon(Icons.Default.Link, contentDescription = "Add from URL")
+                            }
+                            // 既存動画から追加
+                            SmallFloatingActionButton(
+                                onClick = onFabMultiChoiceClick,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            ) {
+                                Icon(Icons.Default.PlayArrow, contentDescription = "Add from videos")
+                            }
+                        }
+                    }
+
+                    // メインFAB
+                    FloatingActionButton(
+                        onClick = {
+                            if (isOriginalMode) {
+                                onFabExpandToggle()
+                            } else {
+                                onFabMainClick()
+                            }
+                        }
+                    ) {
+                        val rotation by animateFloatAsState(
+                            targetValue = if (isFabExpanded) 45f else 0f,
+                            label = "fab_rotation"
+                        )
+                        Icon(
+                            imageVector = if (isSyncMode) Icons.Default.Sync else Icons.Default.Add,
+                            contentDescription = if (isSyncMode) "Sync" else "Add video",
+                            modifier = Modifier.rotate(rotation)
+                        )
+                    }
+                }
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (videos.isEmpty()) {
+                Text(
+                    text = stringResource(
+                        if (isNewPlaylist) R.string.video_list_empty_new_message
+                        else R.string.video_list_empty_message
+                    ),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        items = videos,
+                        key = { it.id }
+                    ) { video ->
+                        VideoItem(
+                            video = video,
+                            domainOrSize = video.domain,
+                            isSelected = selectedItems.contains(video.id),
+                            showCheckbox = selectedItems.isNotEmpty(),
+                            onToggleSelection = {
+                                onItemSelect(video.id, !selectedItems.contains(video.id))
+                            },
+                            onClick = {
+                                if (selectedItems.isEmpty()) {
+                                    // TODO: 動画プレーヤーへ遷移
+                                } else {
+                                    onItemSelect(video.id, !selectedItems.contains(video.id))
+                                }
+                            },
+                            onMenuClick = {
+                                // 個別メニューアクション（今後実装）
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // ソートルール選択ダイアログ
+    if (showSortDialog) {
+        val sortOptions = stringArrayResource(R.array.dialog_video_order)
+        AlertDialog(
+            onDismissRequest = { showSortDialog = false },
+            title = { Text(stringResource(R.string.menu_video_list_option_sortrule)) },
+            text = {
+                Column {
+                    sortOptions.forEachIndexed { index, option ->
+                        androidx.compose.material3.RadioButton(
+                            selected = orderRule.ordinal == index,
+                            onClick = {
+                                onSortRuleChange(VideoOrder.values()[index])
+                                showSortDialog = false
+                            }
+                        )
+                        Text(
+                            text = option,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSortDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
+
+    // 削除確認ダイアログ
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.dialog_remove_video_title)) },
+            text = { Text(stringResource(R.string.dialog_remove_video_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeleteVideos()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.dialog_remove_video_positive))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.dialog_remove_video_negative))
+                }
+            }
+        )
+    }
+
+    // SyncRule選択ダイアログ（Syncモード時）
+    if (showSyncRuleDialog && isSyncMode) {
+        val syncRuleOptions = stringArrayResource(R.array.dialog_video_list_syncrule)
+        val currentRule = (playlistType as? Playlist.Type.CloudPlaylist)?.syncRule
+        AlertDialog(
+            onDismissRequest = { showSyncRuleDialog = false },
+            title = { Text(stringResource(R.string.menu_video_list_option_sync_rule)) },
+            text = {
+                Column {
+                    syncRuleOptions.forEachIndexed { index, option ->
+                        androidx.compose.material3.RadioButton(
+                            selected = currentRule?.ordinal == index,
+                            onClick = {
+                                onSyncRuleChange(Playlist.SyncRule.values()[index])
+                                showSyncRuleDialog = false
+                            }
+                        )
+                        Text(
+                            text = option,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSyncRuleDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
+}
+
+/**
  * 動画一覧画面（Compose版）
  *
  * 機能:
@@ -104,10 +374,6 @@ fun VideoListScreen(
     val currentId = remember { MutableStateFlow(playlistId) }
     val playlist by playlistViewModel.getFromId(currentId.value).observeAsState()
     val selectedItems = remember { mutableStateListOf<Long>() }
-
-    var showSortDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
-    var showSyncRuleDialog by remember { mutableStateOf(false) }
     var isFabExpanded by remember { mutableStateOf(false) }
 
     val activity = context.findActivity() ?: return
@@ -119,7 +385,6 @@ fun VideoListScreen(
     val playlistType = playlist?.type
     val isOriginalMode = playlistType is Playlist.Type.Original || playlistType == null
     val isSyncMode = playlistType is Playlist.Type.CloudPlaylist
-    val isImportingMode = playlistType is Playlist.Type.Importing
 
     // 動画リストを取得
     val videoIds = playlist?.videos ?: emptyList()
@@ -138,293 +403,139 @@ fun VideoListScreen(
         mutableList
     }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        playlist?.title ?: stringResource(
-                            if (currentId.value == 0L) R.string.playlist_new_title
-                            else R.string.nav_video_list
-                        )
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    // 選択時の削除ボタン
-                    if (selectedItems.isNotEmpty() && !isSyncMode) {
-                        IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete")
-                        }
-                    }
-                    // Syncモード時のSyncRuleボタン
-                    if (isSyncMode) {
-                        IconButton(onClick = { showSyncRuleDialog = true }) {
-                            Icon(Icons.Default.Sync, contentDescription = "Sync rule")
-                        }
-                    }
-                    // 並び替えボタン（Importingモード以外）
-                    if (!isImportingMode) {
-                        IconButton(onClick = {
-                            preferences.videoOrderUp = !orderUp
-                        }) {
-                            Icon(
-                                imageVector = if (orderUp) {
-                                    Icons.Default.KeyboardArrowUp
-                                } else {
-                                    Icons.Default.KeyboardArrowDown
-                                },
-                                contentDescription = if (orderUp) "Sort ascending" else "Sort descending"
-                            )
-                        }
-                        // ソートルール選択ボタン
-                        IconButton(onClick = { showSortDialog = true }) {
-                            Icon(Icons.Default.Sort, contentDescription = "Sort rule")
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        },
-        floatingActionButton = {
-            if (!isImportingMode) {
-                Column(horizontalAlignment = Alignment.End) {
-                    // Expanded状態のサブFAB
-                    AnimatedVisibility(visible = isFabExpanded && isOriginalMode) {
-                        Column {
-                            // URLから追加
-                            SmallFloatingActionButton(
-                                onClick = {
-                                    isFabExpanded = false
-                                    onShowUrlInputDialog(currentId.value)
-                                },
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            ) {
-                                Icon(Icons.Default.Link, contentDescription = "Add from URL")
-                            }
-                            // 既存動画から追加
-                            SmallFloatingActionButton(
-                                onClick = {
-                                    isFabExpanded = false
-                                    onShowMultiChoiceDialog(currentId.value)
-                                },
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            ) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = "Add from videos")
-                            }
-                        }
-                    }
+    val playlistTitle = playlist?.title ?: stringResource(
+        if (currentId.value == 0L) R.string.playlist_new_title
+        else R.string.nav_video_list
+    )
+    val isNewPlaylist = currentId.value == 0L
 
-                    // メインFAB
-                    FloatingActionButton(
-                        onClick = {
-                            when {
-                                isSyncMode -> {
-                                    // Syncモード: 同期実行
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            context.getString(R.string.snackbar_sync_started)
-                                        )
-                                        // TODO: 同期処理の実装
-                                    }
-                                }
-                                isOriginalMode -> {
-                                    // Originalモード: FABを展開
-                                    isFabExpanded = !isFabExpanded
-                                }
-                            }
-                        }
-                    ) {
-                        val rotation by animateFloatAsState(
-                            targetValue = if (isFabExpanded) 45f else 0f,
-                            label = "fab_rotation"
-                        )
-                        Icon(
-                            imageVector = if (isSyncMode) Icons.Default.Sync else Icons.Default.Add,
-                            contentDescription = if (isSyncMode) "Sync" else "Add video",
-                            modifier = Modifier.rotate(rotation)
-                        )
-                    }
-                }
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            if (sortedVideos.isEmpty()) {
-                Text(
-                    text = stringResource(
-                        if (currentId.value == 0L) R.string.video_list_empty_new_message
-                        else R.string.video_list_empty_message
-                    ),
-                    modifier = Modifier.align(Alignment.Center)
-                )
+    // VideoListScreenContentを呼び出す
+    VideoListScreenContent(
+        playlistTitle = playlistTitle,
+        isNewPlaylist = isNewPlaylist,
+        videos = sortedVideos,
+        playlistType = playlistType,
+        orderRule = orderRule,
+        orderUp = orderUp,
+        selectedItems = selectedItems.toList(),
+        isFabExpanded = isFabExpanded,
+        onItemSelect = { id, isSelected ->
+            if (isSelected) {
+                selectedItems.add(id)
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(
-                        items = sortedVideos,
-                        key = { it.id }
-                    ) { video ->
-                        VideoItem(
-                            video = video,
-                            domainOrSize = video.domain,
-                            isSelected = selectedItems.contains(video.id),
-                            showCheckbox = selectedItems.isNotEmpty(),
-                            onToggleSelection = {
-                                if (selectedItems.contains(video.id)) {
-                                    selectedItems.remove(video.id)
-                                } else {
-                                    selectedItems.add(video.id)
-                                }
-                            },
-                            onClick = {
-                                if (selectedItems.isEmpty()) {
-                                    // TODO: 動画プレーヤーへ遷移
-                                } else {
-                                    if (selectedItems.contains(video.id)) {
-                                        selectedItems.remove(video.id)
-                                    } else {
-                                        selectedItems.add(video.id)
-                                    }
-                                }
-                            },
-                            onMenuClick = {
-                                // 個別メニューアクション（今後実装）
-                            }
-                        )
-                    }
+                selectedItems.remove(id)
+            }
+        },
+        onItemClick = { _ ->
+            // TODO: 動画プレーヤーへ遷移
+        },
+        onNavigateBack = onNavigateBack,
+        onDeleteVideos = {
+            scope.launch(Dispatchers.IO) {
+                // 選択された動画をプレイリストから削除
+                val currentPlaylist = playlistViewModel.getFromIdAsync(currentId.value).await()
+                currentPlaylist?.let { pl ->
+                    val updatedVideos = pl.videos.filter { !selectedItems.contains(it) }
+                    playlistViewModel.update(pl.copy(videos = updatedVideos))
+                }
+
+                withContext(Dispatchers.Main) {
+                    selectedItems.clear()
                 }
             }
-        }
-    }
-
-    // ソートルール選択ダイアログ
-    if (showSortDialog) {
-        val sortOptions = stringArrayResource(R.array.dialog_video_order)
-        AlertDialog(
-            onDismissRequest = { showSortDialog = false },
-            title = { Text(stringResource(R.string.menu_video_list_option_sortrule)) },
-            text = {
-                Column {
-                    sortOptions.forEachIndexed { index, option ->
-                        androidx.compose.material3.RadioButton(
-                            selected = orderRule.ordinal == index,
-                            onClick = {
-                                preferences.videoOrderRule = VideoOrder.values()[index]
-                                showSortDialog = false
-                            }
-                        )
-                        Text(
-                            text = option,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showSortDialog = false }) {
-                    Text(stringResource(android.R.string.cancel))
+        },
+        onSortRuleChange = { rule ->
+            preferences.videoOrderRule = rule
+        },
+        onOrderUpToggle = {
+            preferences.videoOrderUp = !orderUp
+        },
+        onSyncRuleChange = { rule ->
+            scope.launch(Dispatchers.IO) {
+                val pl = playlistViewModel.getFromIdAsync(currentId.value).await()
+                val type = pl?.type as? Playlist.Type.CloudPlaylist
+                if (pl != null && type != null) {
+                    val updatedType = type.copy(syncRule = rule)
+                    playlistViewModel.update(pl.copy(type = updatedType))
                 }
             }
-        )
-    }
-
-    // 削除確認ダイアログ
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text(stringResource(R.string.dialog_remove_video_title)) },
-            text = { Text(stringResource(R.string.dialog_remove_video_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            // 選択された動画をプレイリストから削除
-                            val currentPlaylist = playlistViewModel.getFromIdAsync(currentId.value).await()
-                            currentPlaylist?.let { pl ->
-                                val updatedVideos = pl.videos.filter { !selectedItems.contains(it) }
-                                playlistViewModel.update(pl.copy(videos = updatedVideos))
-                            }
-
-                            withContext(Dispatchers.Main) {
-                                selectedItems.clear()
-                                showDeleteDialog = false
-                            }
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.dialog_remove_video_positive))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(R.string.dialog_remove_video_negative))
-                }
+        },
+        onFabExpandToggle = {
+            isFabExpanded = !isFabExpanded
+        },
+        onFabMainClick = {
+            // Syncモード: 同期実行
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    context.getString(R.string.snackbar_sync_started)
+                )
+                // TODO: 同期処理の実装
             }
-        )
-    }
-
-    // SyncRule選択ダイアログ（Syncモード時）
-    if (showSyncRuleDialog && isSyncMode) {
-        val syncRuleOptions = stringArrayResource(R.array.dialog_video_list_syncrule)
-        val currentRule = (playlistType as? Playlist.Type.CloudPlaylist)?.syncRule
-        AlertDialog(
-            onDismissRequest = { showSyncRuleDialog = false },
-            title = { Text(stringResource(R.string.menu_video_list_option_sync_rule)) },
-            text = {
-                Column {
-                    syncRuleOptions.forEachIndexed { index, option ->
-                        androidx.compose.material3.RadioButton(
-                            selected = currentRule?.ordinal == index,
-                            onClick = {
-                                scope.launch(Dispatchers.IO) {
-                                    val pl = playlistViewModel.getFromIdAsync(currentId.value).await()
-                                    val type = pl?.type as? Playlist.Type.CloudPlaylist
-                                    if (pl != null && type != null) {
-                                        val newRule = Playlist.SyncRule.values()[index]
-                                        val updatedType = type.copy(syncRule = newRule)
-                                        playlistViewModel.update(pl.copy(type = updatedType))
-                                    }
-                                }
-                                showSyncRuleDialog = false
-                            }
-                        )
-                        Text(
-                            text = option,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showSyncRuleDialog = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            }
-        )
-    }
+        },
+        onFabUrlClick = {
+            isFabExpanded = false
+            onShowUrlInputDialog(currentId.value)
+        },
+        onFabMultiChoiceClick = {
+            isFabExpanded = false
+            onShowMultiChoiceDialog(currentId.value)
+        },
+        modifier = modifier
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun VideoListScreenPreview() {
     AppTheme {
-        // Preview用のダミーデータは省略
+        // ダミーデータを作成
+        val dummyVideos = listOf(
+            net.turtton.ytalarm.database.structure.Video(
+                id = 1L,
+                videoId = "video1",
+                title = "Morning Meditation",
+                domain = "youtube.com",
+                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(isStreamable = true),
+                creationDate = java.util.Calendar.getInstance()
+            ),
+            net.turtton.ytalarm.database.structure.Video(
+                id = 2L,
+                videoId = "video2",
+                title = "Workout Music Mix",
+                domain = "youtube.com",
+                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(isStreamable = true),
+                creationDate = java.util.Calendar.getInstance()
+            ),
+            net.turtton.ytalarm.database.structure.Video(
+                id = 3L,
+                videoId = "video3",
+                title = "Relaxing Sounds",
+                domain = "soundcloud.com",
+                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(isStreamable = true),
+                creationDate = java.util.Calendar.getInstance()
+            )
+        )
+
+        VideoListScreenContent(
+            playlistTitle = "My Playlist",
+            isNewPlaylist = false,
+            videos = dummyVideos,
+            playlistType = Playlist.Type.Original,
+            orderRule = VideoOrder.TITLE,
+            orderUp = true,
+            selectedItems = emptyList(),
+            isFabExpanded = false,
+            onItemSelect = { _, _ -> },
+            onItemClick = { },
+            onNavigateBack = { },
+            onDeleteVideos = { },
+            onSortRuleChange = { },
+            onOrderUpToggle = { },
+            onSyncRuleChange = { },
+            onFabExpandToggle = { },
+            onFabMainClick = { },
+            onFabUrlClick = { },
+            onFabMultiChoiceClick = { }
+        )
     }
 }

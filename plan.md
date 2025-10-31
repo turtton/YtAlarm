@@ -68,7 +68,33 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
 └── AlarmListComposeAdapter.kt  ✅ Compose版AlarmListAdapter（実戦投入済み）
 ```
 
-### 進行中フェーズ
+### 完了済みフェーズ（追加）
+- ✅ **Phase 4.5: Screen設計の改善（プレビュー対応）** (完了 - 2025-10-31)
+  - ✅ AlarmListScreen → AlarmListScreenContent + AlarmListScreen
+  - ✅ PlaylistScreen → PlaylistScreenContent + PlaylistScreen
+  - ✅ VideoListScreen → VideoListScreenContent + VideoListScreen
+  - ✅ **ビルド成功** - すべてのエラーを修正完了
+  - ✅ **エミュレータ動作確認完了** - すべてのテスト成功
+
+  **実装完了した機能:**
+  - ViewModelからの分離: 各ScreenをScreenContentとScreenに分割
+  - プレビュー対応: すべてのScreenContentに@Previewアノテーション追加
+  - ダミーデータ作成: プレビュー用のダミーデータを実装
+
+  **達成されたメリット:**
+  - プレビュー可能: ScreenContentはViewModelに依存しない
+  - テスト容易: ScreenContentの単体テストが簡単
+  - ロジック分離: ViewModelとのやりとりがScreenに集約
+  - 再利用性: ScreenContentは他の場所でも使用可能
+
+  **エミュレータテスト結果:**
+  - AlarmListScreen: 正常表示・動作確認完了
+  - PlaylistScreen: 正常表示・動作確認完了
+  - VideoListScreen: 正常表示・動作確認完了
+  - インタラクション機能: ソート、ダイアログ、FAB、オプションメニューすべて正常動作
+  - UI/UX問題: なし
+  - クラッシュ/エラー: なし
+
 - ✅ **Phase 4: リスト画面の移行** (完了 - 2025-10-31)
   - ✅ PlaylistScreen.kt 基本実装完了
   - ✅ VideoListScreen.kt 基本実装完了
@@ -108,18 +134,13 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
   - Icons.Filled.Sort等が deprecated（AutoMirrored版を使用すべき）
   - PackagingOptions の設定に関する警告
 
-  **次のステップ:**
-  - ✅ エミュレータでの動作確認
-  - 必要に応じて警告の修正
-  - Screen設計の改善（Phase 4.5）
-
 ### 次のステップ
 - [x] **Phase 2**: ダイアログのCompose移行 ✅
 - [x] **Fragment統合の完了**: FragmentAlarmListで実際にComposeAdapterを使用 ✅
 - [x] **Phase 3**: シンプルな画面の移行（AboutPage、VideoPlayer） ✅
 - [x] **Phase 4**: リスト画面の移行（Playlist、VideoList、AlarmList） ✅
-- [ ] **Phase 4.5**: Screen設計の改善（プレビュー対応）← 次回作業
-- [ ] **Phase 5**: 複雑な画面の移行（AlarmSettings）
+- [x] **Phase 4.5**: Screen設計の改善（プレビュー対応） ✅
+- [ ] **Phase 5**: 複雑な画面の移行（AlarmSettings）← 次回作業
 
 ### 技術スタック（移行後）
 - ✅ Compose BOM 2024.10.00
@@ -518,7 +539,7 @@ fun VideoPlayerScreen(videoId: String) {
 
 ---
 
-## Phase 4.5: Screen設計の改善（プレビュー対応）（1-2日）
+## Phase 4.5: Screen設計の改善（プレビュー対応）（1-2日）✅ **完了 - 2025-10-31**
 
 **目的:** ViewModelとの依存を分離し、プレビュー可能な設計に改善する
 
@@ -531,112 +552,58 @@ fun VideoPlayerScreen(videoId: String) {
 - すべてのデータと関数を引数として受け取る
 - `@Preview`アノテーションでプレビュー可能
 
-```kotlin
-@Composable
-fun AlarmListScreenContent(
-    alarms: List<Alarm>,
-    orderRule: AlarmOrder,
-    orderUp: Boolean,
-    onAlarmToggle: (Alarm, Boolean) -> Unit,
-    onAlarmClick: (Long) -> Unit,
-    onOpenDrawer: () -> Unit,
-    onSortRuleChange: (AlarmOrder) -> Unit,
-    onOrderUpToggle: () -> Unit,
-    onCreateAlarm: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    // UI実装
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AlarmListScreenContentPreview() {
-    AppTheme {
-        AlarmListScreenContent(
-            alarms = listOf(
-                // ダミーデータ
-            ),
-            orderRule = AlarmOrder.TIME,
-            orderUp = true,
-            onAlarmToggle = { _, _ -> },
-            onAlarmClick = {},
-            onOpenDrawer = {},
-            onSortRuleChange = {},
-            onOrderUpToggle = {},
-            onCreateAlarm = {}
-        )
-    }
-}
-```
-
 #### 2. Screen（ViewModelラッパー）
 - ViewModelを構築
 - ViewModelからデータを取得
 - ScreenContentにデータと関数を渡す
 
-```kotlin
-@Composable
-fun AlarmListScreen(
-    onNavigateToAlarmSettings: (alarmId: Long) -> Unit,
-    onOpenDrawer: () -> Unit,
-    modifier: Modifier = Modifier,
-    alarmViewModel: AlarmViewModel = viewModel(...)
-) {
-    val context = LocalContext.current
-    val activity = context.findActivity() ?: return
+### 実装完了
 
-    // ViewModelからデータ取得
-    val allAlarms by alarmViewModel.allAlarms.observeAsState(emptyList())
-    val preferences = activity.privatePreferences
-    val orderRule = preferences.alarmOrderRule
-    val orderUp = preferences.alarmOrderUp
+- ✅ AlarmListScreen → AlarmListScreenContent + AlarmListScreen
+- ✅ PlaylistScreen → PlaylistScreenContent + PlaylistScreen
+- ✅ VideoListScreen → VideoListScreenContent + VideoListScreen
 
-    // ソート処理
-    val sortedAlarms = remember(allAlarms, orderRule, orderUp) {
-        // ソートロジック
-    }
+### 実施内容
 
-    // ScreenContentに渡す
-    AlarmListScreenContent(
-        alarms = sortedAlarms,
-        orderRule = orderRule,
-        orderUp = orderUp,
-        onAlarmToggle = { alarm, isEnabled ->
-            // ViewModelの操作
-        },
-        onAlarmClick = onNavigateToAlarmSettings,
-        onOpenDrawer = onOpenDrawer,
-        onSortRuleChange = { rule ->
-            preferences.alarmOrderRule = rule
-        },
-        onOrderUpToggle = {
-            preferences.alarmOrderUp = !orderUp
-        },
-        onCreateAlarm = {
-            onNavigateToAlarmSettings(-1)
-        },
-        modifier = modifier
-    )
-}
-```
+1. **AlarmListScreen リファクタリング**
+   - AlarmListScreenContent: 純粋なUIコンポーネント（プレビュー対応）
+   - AlarmListScreen: ViewModelラッパー
+   - プレビュー関数実装（ダミーデータ使用）
 
-### 実装対象
+2. **PlaylistScreen リファクタリング**
+   - PlaylistScreenContent: 純粋なUIコンポーネント（プレビュー対応）
+   - PlaylistScreen: ViewModelラッパー
+   - プレビュー関数実装（ダミーデータ使用）
 
-- [ ] AlarmListScreen → AlarmListScreenContent + AlarmListScreen
-- [ ] PlaylistScreen → PlaylistScreenContent + PlaylistScreen
-- [ ] VideoListScreen → VideoListScreenContent + VideoListScreen
+3. **VideoListScreen リファクタリング**
+   - VideoListScreenContent: 純粋なUIコンポーネント（プレビュー対応）
+   - VideoListScreen: ViewModelラッパー
+   - プレビュー関数実装（ダミーデータ使用）
 
-### メリット
+4. **ビルド成功**
+   - すべてのコンパイルエラーを解決
+   - プレビュー関数のダミーデータを正しい型に修正
+   - Deprecation警告あり（非ブロッカー）
 
-1. **プレビュー可能**: ScreenContentはViewModelに依存しないため、簡単にプレビュー作成可能
-2. **テスト容易**: ScreenContentの単体テストが簡単
-3. **ロジック分離**: ViewModelとのやりとりがScreenに集約される
-4. **再利用性**: ScreenContentは他の場所でも使用可能
+5. **エミュレータ動作確認完了**
+   - APKインストール成功
+   - AlarmListScreen表示確認完了
+   - PlaylistScreen表示確認完了
+   - VideoListScreen表示確認完了
+   - UI要素の配置と動作確認完了
+   - インタラクション機能確認完了（ソート、ダイアログ、FABなど）
+   - スクリーンショット保存完了
 
-### 注意点
+### 達成されたメリット
 
-- 既存のScreenは動作しているので、段階的にリファクタリング
-- 各Screenで引数が多くなる場合は、data classでグルーピングを検討
+1. **プレビュー可能**: ScreenContentはViewModelに依存しないため、簡単にプレビュー作成可能 ✅
+2. **テスト容易**: ScreenContentの単体テストが簡単 ✅
+3. **ロジック分離**: ViewModelとのやりとりがScreenに集約される ✅
+4. **再利用性**: ScreenContentは他の場所でも使用可能 ✅
+
+### 確認された問題
+
+**なし** - すべてのテストが成功し、UI表示、機能、パフォーマンスに問題は発見されませんでした。
 
 ---
 

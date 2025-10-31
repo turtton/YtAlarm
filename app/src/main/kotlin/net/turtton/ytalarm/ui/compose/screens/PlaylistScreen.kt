@@ -64,6 +64,198 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 /**
+ * プレイリスト一覧画面のコンテンツ（プレビュー可能）
+ *
+ * ViewModelに依存せず、すべてのデータと関数を引数として受け取る純粋なComposable。
+ * これにより、@Previewアノテーションでプレビュー可能になる。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PlaylistScreenContent(
+    playlists: List<Playlist>,
+    orderRule: PlaylistOrder,
+    orderUp: Boolean,
+    selectedItems: List<Long>,
+    onItemSelect: (Long, Boolean) -> Unit,
+    onItemClick: (Long) -> Unit,
+    onOpenDrawer: () -> Unit,
+    onDeletePlaylists: () -> Unit,
+    onSortRuleChange: (PlaylistOrder) -> Unit,
+    onOrderUpToggle: () -> Unit,
+    onCreatePlaylist: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showSortDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.nav_playlist)) },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    // 選択時の削除ボタン
+                    if (selectedItems.isNotEmpty()) {
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "Delete")
+                        }
+                    }
+                    // 並び替えボタン
+                    IconButton(onClick = onOrderUpToggle) {
+                        Icon(
+                            imageVector = if (orderUp) {
+                                Icons.Default.KeyboardArrowUp
+                            } else {
+                                Icons.Default.KeyboardArrowDown
+                            },
+                            contentDescription = if (orderUp) "Sort ascending" else "Sort descending"
+                        )
+                    }
+                    // ソートルール選択ボタン
+                    IconButton(onClick = { showSortDialog = true }) {
+                        Icon(Icons.Default.Sort, contentDescription = "Sort rule")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                    titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onCreatePlaylist
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add playlist")
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (playlists.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.playlist_empty_message),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        items = playlists,
+                        key = { it.id }
+                    ) { playlist ->
+                        val thumbnailUrl = playlist.thumbnail?.let { thumbnail ->
+                            when (thumbnail) {
+                                is Playlist.Thumbnail.Video -> {
+                                    // TODO: Load video thumbnail by ID
+                                    null
+                                }
+                                is Playlist.Thumbnail.Drawable -> {
+                                    thumbnail.id
+                                }
+                            }
+                        }
+                        val videoCount = playlist.videos.size
+
+                        PlaylistItem(
+                            playlist = playlist,
+                            thumbnailUrl = thumbnailUrl,
+                            videoCount = videoCount,
+                            isSelected = selectedItems.contains(playlist.id),
+                            onToggleSelection = {
+                                onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
+                            },
+                            onClick = {
+                                if (selectedItems.isEmpty()) {
+                                    onItemClick(playlist.id)
+                                } else {
+                                    onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
+                                }
+                            },
+                            onMenuClick = {
+                                // 個別メニューアクション（今後実装）
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // ソートルール選択ダイアログ
+    if (showSortDialog) {
+        val sortOptions = stringArrayResource(R.array.dialog_playlist_order)
+        AlertDialog(
+            onDismissRequest = { showSortDialog = false },
+            title = { Text(stringResource(R.string.menu_playlist_option_sortrule)) },
+            text = {
+                androidx.compose.foundation.layout.Column {
+                    sortOptions.forEachIndexed { index, option ->
+                        androidx.compose.material3.RadioButton(
+                            selected = orderRule.ordinal == index,
+                            onClick = {
+                                onSortRuleChange(PlaylistOrder.values()[index])
+                                showSortDialog = false
+                            }
+                        )
+                        androidx.compose.foundation.layout.Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = option,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSortDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
+
+    // 削除確認ダイアログ
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text(stringResource(R.string.dialog_remove_video_title)) },
+            text = { Text(stringResource(R.string.dialog_remove_video_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onDeletePlaylists()
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text(stringResource(R.string.dialog_remove_video_positive))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(stringResource(R.string.dialog_remove_video_negative))
+                }
+            }
+        )
+    }
+}
+
+/**
  * プレイリスト一覧画面（Compose版）
  *
  * 機能:
@@ -96,8 +288,6 @@ fun PlaylistScreen(
 
     val playlists by playlistViewModel.allPlaylists.observeAsState(emptyList())
     val selectedItems = remember { mutableStateListOf<Long>() }
-    var showSortDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -140,217 +330,115 @@ fun PlaylistScreen(
         mutableList
     }
 
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.nav_playlist)) },
-                navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
-                    }
-                },
-                actions = {
-                    // 選択時の削除ボタン
-                    if (selectedItems.isNotEmpty()) {
-                        IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete")
-                        }
-                    }
-                    // 並び替えボタン
-                    IconButton(onClick = {
-                        preferences.playlistOrderUp = !orderUp
-                    }) {
-                        Icon(
-                            imageVector = if (orderUp) {
-                                Icons.Default.KeyboardArrowUp
-                            } else {
-                                Icons.Default.KeyboardArrowDown
-                            },
-                            contentDescription = if (orderUp) "Sort ascending" else "Sort descending"
-                        )
-                    }
-                    // ソートルール選択ボタン
-                    IconButton(onClick = { showSortDialog = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Sort rule")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = androidx.compose.material3.MaterialTheme.colorScheme.primary,
-                    titleContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = androidx.compose.material3.MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onNavigateToVideoList(0L) }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add playlist")
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            if (sortedPlaylists.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.playlist_empty_message),
-                    modifier = Modifier.align(Alignment.Center)
-                )
+    // PlaylistScreenContentを呼び出す
+    PlaylistScreenContent(
+        playlists = sortedPlaylists,
+        orderRule = orderRule,
+        orderUp = orderUp,
+        selectedItems = selectedItems.toList(),
+        onItemSelect = { id, isSelected ->
+            if (isSelected) {
+                selectedItems.add(id)
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(
-                        items = sortedPlaylists,
-                        key = { it.id }
-                    ) { playlist ->
-                        val thumbnailUrl = playlist.thumbnail?.let { thumbnail ->
-                            when (thumbnail) {
-                                is Playlist.Thumbnail.Video -> {
-                                    // TODO: Load video thumbnail by ID
-                                    null
-                                }
-                                is Playlist.Thumbnail.Drawable -> {
-                                    thumbnail.id
-                                }
-                            }
-                        }
-                        val videoCount = playlist.videos.size
+                selectedItems.remove(id)
+            }
+        },
+        onItemClick = onNavigateToVideoList,
+        onOpenDrawer = onOpenDrawer,
+        onDeletePlaylists = {
+            scope.launch(Dispatchers.IO) {
+                val alarmsAsync = alarmViewModel.getAllAlarmsAsync()
+                val playlistsAsync = playlistViewModel.getFromIdsAsync(selectedItems.toList())
 
-                        PlaylistItem(
-                            playlist = playlist,
-                            thumbnailUrl = thumbnailUrl,
-                            videoCount = videoCount,
-                            isSelected = selectedItems.contains(playlist.id),
-                            onToggleSelection = {
-                                if (selectedItems.contains(playlist.id)) {
-                                    selectedItems.remove(playlist.id)
-                                } else {
-                                    selectedItems.add(playlist.id)
-                                }
-                            },
-                            onClick = {
-                                if (selectedItems.isEmpty()) {
-                                    onNavigateToVideoList(playlist.id)
-                                } else {
-                                    if (selectedItems.contains(playlist.id)) {
-                                        selectedItems.remove(playlist.id)
-                                    } else {
-                                        selectedItems.add(playlist.id)
-                                    }
-                                }
-                            },
-                            onMenuClick = {
-                                // 個別メニューアクション（今後実装）
-                            }
+                val usingList = alarmsAsync.await().flatMap { it.playListId }.distinct()
+                val deletable = arrayListOf<Playlist>()
+                var detectUsage = false
+
+                playlistsAsync.await().forEach { playlist ->
+                    if (!usingList.contains(playlist.id)) {
+                        deletable += playlist
+                    } else {
+                        detectUsage = true
+                    }
+                }
+
+                if (deletable.isNotEmpty()) {
+                    playlistViewModel.delete(deletable)
+                }
+
+                if (detectUsage) {
+                    withContext(Dispatchers.Main) {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.snackbar_detect_playlist_usage)
                         )
                     }
                 }
-            }
-        }
-    }
 
-    // ソートルール選択ダイアログ
-    if (showSortDialog) {
-        val sortOptions = stringArrayResource(R.array.dialog_playlist_order)
-        AlertDialog(
-            onDismissRequest = { showSortDialog = false },
-            title = { Text(stringResource(R.string.menu_playlist_option_sortrule)) },
-            text = {
-                androidx.compose.foundation.layout.Column {
-                    sortOptions.forEachIndexed { index, option ->
-                        androidx.compose.material3.RadioButton(
-                            selected = orderRule.ordinal == index,
-                            onClick = {
-                                preferences.playlistOrderRule = PlaylistOrder.values()[index]
-                                showSortDialog = false
-                            }
-                        )
-                        androidx.compose.foundation.layout.Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = option,
-                                modifier = Modifier.padding(start = 8.dp)
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showSortDialog = false }) {
-                    Text(stringResource(android.R.string.cancel))
+                withContext(Dispatchers.Main) {
+                    selectedItems.clear()
                 }
             }
-        )
-    }
-
-    // 削除確認ダイアログ
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text(stringResource(R.string.dialog_remove_video_title)) },
-            text = { Text(stringResource(R.string.dialog_remove_video_message)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            val alarmsAsync = alarmViewModel.getAllAlarmsAsync()
-                            val playlistsAsync = playlistViewModel.getFromIdsAsync(selectedItems.toList())
-
-                            val usingList = alarmsAsync.await().flatMap { it.playListId }.distinct()
-                            val deletable = arrayListOf<Playlist>()
-                            var detectUsage = false
-
-                            playlistsAsync.await().forEach { playlist ->
-                                if (!usingList.contains(playlist.id)) {
-                                    deletable += playlist
-                                } else {
-                                    detectUsage = true
-                                }
-                            }
-
-                            if (deletable.isNotEmpty()) {
-                                playlistViewModel.delete(deletable)
-                            }
-
-                            if (detectUsage) {
-                                withContext(Dispatchers.Main) {
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(R.string.snackbar_detect_playlist_usage)
-                                    )
-                                }
-                            }
-
-                            withContext(Dispatchers.Main) {
-                                selectedItems.clear()
-                                showDeleteDialog = false
-                            }
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.dialog_remove_video_positive))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text(stringResource(R.string.dialog_remove_video_negative))
-                }
-            }
-        )
-    }
+        },
+        onSortRuleChange = { rule ->
+            preferences.playlistOrderRule = rule
+        },
+        onOrderUpToggle = {
+            preferences.playlistOrderUp = !orderUp
+        },
+        onCreatePlaylist = {
+            onNavigateToVideoList(0L)
+        },
+        modifier = modifier
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun PlaylistScreenPreview() {
     AppTheme {
-        // Preview用のダミーデータは省略
+        // ダミーデータを作成
+        val dummyPlaylists = listOf(
+            Playlist(
+                id = 1L,
+                title = "Morning Playlist",
+                videos = listOf(1L, 2L, 3L),
+                thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_no_image),
+                type = Playlist.Type.Original,
+                creationDate = java.util.Calendar.getInstance(),
+                lastUpdated = java.util.Calendar.getInstance()
+            ),
+            Playlist(
+                id = 2L,
+                title = "Workout Music",
+                videos = listOf(4L, 5L),
+                thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_no_image),
+                type = Playlist.Type.Original,
+                creationDate = java.util.Calendar.getInstance(),
+                lastUpdated = java.util.Calendar.getInstance()
+            ),
+            Playlist(
+                id = 3L,
+                title = "Relaxing Sounds",
+                videos = listOf(6L, 7L, 8L, 9L),
+                thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_no_image),
+                type = Playlist.Type.Original,
+                creationDate = java.util.Calendar.getInstance(),
+                lastUpdated = java.util.Calendar.getInstance()
+            )
+        )
+
+        PlaylistScreenContent(
+            playlists = dummyPlaylists,
+            orderRule = PlaylistOrder.TITLE,
+            orderUp = true,
+            selectedItems = emptyList(),
+            onItemSelect = { _, _ -> },
+            onItemClick = { },
+            onOpenDrawer = { },
+            onDeletePlaylists = { },
+            onSortRuleChange = { },
+            onOrderUpToggle = { },
+            onCreatePlaylist = { }
+        )
     }
 }

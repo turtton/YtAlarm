@@ -63,6 +63,170 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 
 /**
+ * アラーム一覧画面のコンテンツ（プレビュー可能）
+ *
+ * ViewModelに依存せず、すべてのデータと関数を引数として受け取る純粋なComposable。
+ * これにより、@Previewアノテーションでプレビュー可能になる。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AlarmListScreenContent(
+    alarms: List<Alarm>,
+    orderRule: AlarmOrder,
+    orderUp: Boolean,
+    onAlarmToggle: (Alarm, Boolean) -> Unit,
+    onAlarmClick: (Long) -> Unit,
+    onOpenDrawer: () -> Unit,
+    onSortRuleChange: (AlarmOrder) -> Unit,
+    onOrderUpToggle: () -> Unit,
+    onCreateAlarm: () -> Unit,
+    modifier: Modifier = Modifier,
+    playlistViewModel: PlaylistViewModel? = null,
+    videoViewModel: VideoViewModel? = null
+) {
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showSortDialog by remember { mutableStateOf(false) }
+
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.nav_alarm_list)) },
+                navigationIcon = {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                },
+                actions = {
+                    // 並び替えボタン
+                    IconButton(onClick = onOrderUpToggle) {
+                        Icon(
+                            imageVector = if (orderUp) {
+                                Icons.Default.KeyboardArrowUp
+                            } else {
+                                Icons.Default.KeyboardArrowDown
+                            },
+                            contentDescription = if (orderUp) "Sort ascending" else "Sort descending"
+                        )
+                    }
+                    // ソートルール選択ボタン
+                    IconButton(onClick = { showSortDialog = true }) {
+                        Icon(Icons.Default.Sort, contentDescription = "Sort rule")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = onCreateAlarm
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add alarm")
+            }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            if (alarms.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.alarm_list_empty_message),
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(
+                        items = alarms,
+                        key = { it.id }
+                    ) { alarm ->
+                        // プレイリスト名とサムネイルを非同期で取得
+                        val playlists by (playlistViewModel?.getFromIdsAsync(alarm.playListId)
+                            ?.let { deferred ->
+                                val list = remember(alarm.playListId) {
+                                    mutableStateOf<List<net.turtton.ytalarm.database.structure.Playlist>>(
+                                        emptyList()
+                                    )
+                                }
+                                scope.launch(Dispatchers.IO) {
+                                    list.value = deferred.await()
+                                }
+                                list
+                            } ?: remember { mutableStateOf(emptyList()) })
+
+                        val playlistTitle = playlists.firstOrNull()?.title ?: ""
+                        val thumbnailUrl = playlists.firstOrNull()?.thumbnail?.let { thumbnail ->
+                            when (thumbnail) {
+                                is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Video -> {
+                                    // TODO: Load video thumbnail by ID
+                                    null
+                                }
+                                is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Drawable -> {
+                                    thumbnail.id
+                                }
+                            }
+                        }
+
+                        AlarmItem(
+                            alarm = alarm,
+                            playlistTitle = playlistTitle,
+                            thumbnailUrl = thumbnailUrl,
+                            onToggle = { isEnabled ->
+                                onAlarmToggle(alarm, isEnabled)
+                            },
+                            onClick = {
+                                onAlarmClick(alarm.id)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // ソートルール選択ダイアログ
+    if (showSortDialog) {
+        val sortOptions = stringArrayResource(R.array.dialog_alarm_order)
+        AlertDialog(
+            onDismissRequest = { showSortDialog = false },
+            title = { Text(stringResource(R.string.menu_alarm_option_sortrule)) },
+            text = {
+                Column {
+                    sortOptions.forEachIndexed { index, option ->
+                        RadioButton(
+                            selected = orderRule.ordinal == index,
+                            onClick = {
+                                onSortRuleChange(AlarmOrder.values()[index])
+                                showSortDialog = false
+                            }
+                        )
+                        Text(
+                            text = option,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showSortDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            }
+        )
+    }
+}
+
+/**
  * アラーム一覧画面（Compose版）
  *
  * 機能:
@@ -91,10 +255,8 @@ fun AlarmListScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     val allAlarms by alarmViewModel.allAlarms.observeAsState(emptyList())
-    var showSortDialog by remember { mutableStateOf(false) }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -116,152 +278,89 @@ fun AlarmListScreen(
         mutableList
     }
 
-    Scaffold(
+    // AlarmListScreenContentを呼び出す
+    AlarmListScreenContent(
+        alarms = sortedAlarms,
+        orderRule = orderRule,
+        orderUp = orderUp,
+        onAlarmToggle = { alarm, isEnabled ->
+            scope.launch(Dispatchers.IO) {
+                alarmViewModel.update(alarm.copy(isEnable = isEnabled))
+            }
+        },
+        onAlarmClick = onNavigateToAlarmSettings,
+        onOpenDrawer = onOpenDrawer,
+        onSortRuleChange = { rule ->
+            preferences.alarmOrderRule = rule
+        },
+        onOrderUpToggle = {
+            preferences.alarmOrderUp = !orderUp
+        },
+        onCreateAlarm = {
+            onNavigateToAlarmSettings(-1)
+        },
         modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.nav_alarm_list)) },
-                navigationIcon = {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(Icons.Default.Menu, contentDescription = "Menu")
-                    }
-                },
-                actions = {
-                    // 並び替えボタン
-                    IconButton(onClick = {
-                        preferences.alarmOrderUp = !orderUp
-                    }) {
-                        Icon(
-                            imageVector = if (orderUp) {
-                                Icons.Default.KeyboardArrowUp
-                            } else {
-                                Icons.Default.KeyboardArrowDown
-                            },
-                            contentDescription = if (orderUp) "Sort ascending" else "Sort descending"
-                        )
-                    }
-                    // ソートルール選択ボタン
-                    IconButton(onClick = { showSortDialog = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Sort rule")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
-                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { onNavigateToAlarmSettings(-1) }
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add alarm")
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            if (sortedAlarms.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.alarm_list_empty_message),
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(
-                        items = sortedAlarms,
-                        key = { it.id }
-                    ) { alarm ->
-                        // プレイリスト名とサムネイルを非同期で取得
-                        val playlists by playlistViewModel.getFromIdsAsync(alarm.playListId)
-                            .let { deferred ->
-                                val list = remember(alarm.playListId) {
-                                    mutableStateOf<List<net.turtton.ytalarm.database.structure.Playlist>>(
-                                        emptyList()
-                                    )
-                                }
-                                scope.launch(Dispatchers.IO) {
-                                    list.value = deferred.await()
-                                }
-                                list
-                            }
-
-                        val playlistTitle = playlists.firstOrNull()?.title ?: ""
-                        val thumbnailUrl = playlists.firstOrNull()?.thumbnail?.let { thumbnail ->
-                            when (thumbnail) {
-                                is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Video -> {
-                                    // TODO: Load video thumbnail by ID
-                                    null
-                                }
-                                is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Drawable -> {
-                                    thumbnail.id
-                                }
-                            }
-                        }
-
-                        AlarmItem(
-                            alarm = alarm,
-                            playlistTitle = playlistTitle,
-                            thumbnailUrl = thumbnailUrl,
-                            onToggle = { isEnabled ->
-                                scope.launch(Dispatchers.IO) {
-                                    alarmViewModel.update(alarm.copy(isEnable = isEnabled))
-                                }
-                            },
-                            onClick = {
-                                onNavigateToAlarmSettings(alarm.id)
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    // ソートルール選択ダイアログ
-    if (showSortDialog) {
-        val sortOptions = stringArrayResource(R.array.dialog_alarm_order)
-        AlertDialog(
-            onDismissRequest = { showSortDialog = false },
-            title = { Text(stringResource(R.string.menu_alarm_option_sortrule)) },
-            text = {
-                Column {
-                    sortOptions.forEachIndexed { index, option ->
-                        RadioButton(
-                            selected = orderRule.ordinal == index,
-                            onClick = {
-                                preferences.alarmOrderRule = AlarmOrder.values()[index]
-                                showSortDialog = false
-                            }
-                        )
-                        Text(
-                            text = option,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showSortDialog = false }) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            }
-        )
-    }
+        playlistViewModel = playlistViewModel,
+        videoViewModel = videoViewModel
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun AlarmListScreenPreview() {
     AppTheme {
-        // Preview用のダミーデータは省略
+        // ダミーデータを作成
+        val dummyAlarms = listOf(
+            Alarm(
+                id = 1L,
+                hour = 7,
+                minute = 30,
+                repeatType = Alarm.RepeatType.Days(
+                    listOf(
+                        net.turtton.ytalarm.util.DayOfWeekCompat.MONDAY,
+                        net.turtton.ytalarm.util.DayOfWeekCompat.TUESDAY,
+                        net.turtton.ytalarm.util.DayOfWeekCompat.WEDNESDAY,
+                        net.turtton.ytalarm.util.DayOfWeekCompat.THURSDAY,
+                        net.turtton.ytalarm.util.DayOfWeekCompat.FRIDAY
+                    )
+                ),
+                playListId = listOf(1L),
+                isEnable = true,
+                creationDate = java.util.Calendar.getInstance(),
+                lastUpdated = java.util.Calendar.getInstance()
+            ),
+            Alarm(
+                id = 2L,
+                hour = 9,
+                minute = 0,
+                repeatType = Alarm.RepeatType.Everyday,
+                playListId = listOf(2L),
+                isEnable = false,
+                creationDate = java.util.Calendar.getInstance(),
+                lastUpdated = java.util.Calendar.getInstance()
+            ),
+            Alarm(
+                id = 3L,
+                hour = 18,
+                minute = 45,
+                repeatType = Alarm.RepeatType.Once,
+                playListId = listOf(3L),
+                isEnable = true,
+                creationDate = java.util.Calendar.getInstance(),
+                lastUpdated = java.util.Calendar.getInstance()
+            )
+        )
+
+        AlarmListScreenContent(
+            alarms = dummyAlarms,
+            orderRule = AlarmOrder.TIME,
+            orderUp = true,
+            onAlarmToggle = { _, _ -> },
+            onAlarmClick = { },
+            onOpenDrawer = { },
+            onSortRuleChange = { },
+            onOrderUpToggle = { },
+            onCreateAlarm = { }
+        )
     }
 }
