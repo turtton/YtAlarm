@@ -190,10 +190,42 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
   - String-based routesを採用（Navigation 2.7.7との互換性）
   - 将来的にNavigation 2.8.0+へ移行時、型安全なkotlinx.serialization版に更新予定
 
+- ✅ **Phase 6 Stage 2+3: MainActivity統合 & DrawerLayout移行** (完了 - 2025-11-01)
+  - ✅ CompositionLocals.kt: ViewModel/ResourceContainerの提供
+  - ✅ MainScreen.kt: ModalNavigationDrawer実装
+  - ✅ MainActivity.kt: setContentでCompose化
+  - ✅ VideoListScreen.kt: playlistId=0の クラッシュ修正
+  - ✅ **ビルド成功** - コンパイルエラーなし
+  - ✅ **コードレビュー完了** - Critical Issues全修正
+  - ✅ **エミュレータ動作確認完了** - クラッシュなし、全機能正常動作
+
+  **実装完了した機能:**
+  - MainActivity Compose化（setContentでMainScreen呼び出し）
+  - ModalNavigationDrawer（Material3対応）
+  - Drawerメニュー項目（Alarms, Playlists, Videos, About）
+  - Navigation統合（Drawer→画面遷移）
+  - 既存初期化処理維持（initYtDL, createNotificationChannel, requestPermission, checkUrlShare）
+  - CompositionLocalでViewModel提供（compositionLocalOf使用）
+  - VideoListScreen playlistId=0対応（全動画モード）
+
+  **修正完了した問題（コードレビュー対応）:**
+  1. ✅ compositionLocalOf使用（staticCompositionLocalOf→compositionLocalOf）
+  2. ✅ AlertDialog context修正（applicationContext→this@MainActivity）
+  3. ✅ initYtDL coroutine改善（不要なlaunch削除）
+  4. ✅ VideoListScreen null安全性向上（playlistId=0時の処理）
+  5. ✅ Material Icons AutoMirrored対応（PlaylistPlayアイコン）
+
+  **エミュレータテスト結果:**
+  - アプリ起動: 正常、クラッシュなし
+  - Drawer開閉: スムーズ、アニメーション正常
+  - 画面遷移: Alarms↔Playlists↔Videos↔About すべて正常
+  - VideoList（playlistId=0）: クラッシュ修正完了、正常動作
+  - UI/UX: タップ反応適切、レイアウト崩れなし
+
   **残タスク:**
-  - MainActivity統合（Stage 2で実施）
-  - DrawerLayout移行（Stage 3で実施）
-  - エミュレータ動作確認（Stage 2完了後に実施）
+  - Fragment完全削除（binding/drawerLayoutの削除）
+  - XML layout削除（activity_main.xml, content_main.xml, drawer_header.xml）
+  - 統合テスト・最終動作確認（Phase 6 Stage 4で実施）
 
 ### 次のステップ
 - [x] **Phase 2**: ダイアログのCompose移行 ✅
@@ -203,9 +235,8 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
 - [x] **Phase 4.5**: Screen設計の改善（プレビュー対応） ✅
 - [x] **Phase 5**: 複雑な画面の移行（AlarmSettings） ✅
 - [x] **Phase 6 Stage 1**: Navigation基盤構築 ✅
-- [ ] **Phase 6 Stage 2**: MainActivity統合 ← 次回作業
-- [ ] **Phase 6 Stage 3**: DrawerLayout移行
-- [ ] **Phase 6 Stage 4**: 統合テスト・動作確認
+- [x] **Phase 6 Stage 2+3**: MainActivity統合 & DrawerLayout移行 ✅
+- [ ] **Phase 6 Stage 4**: 統合テスト・Fragment/XML削除 ← 次回作業
 
 ### 技術スタック（移行後）
 - ✅ Compose BOM 2024.10.00
