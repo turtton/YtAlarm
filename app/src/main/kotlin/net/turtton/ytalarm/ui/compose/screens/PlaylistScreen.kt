@@ -83,8 +83,10 @@ fun PlaylistScreenContent(
     onSortRuleChange: (PlaylistOrder) -> Unit,
     onOrderUpToggle: () -> Unit,
     onCreatePlaylist: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    videoViewModel: VideoViewModel? = null
 ) {
+    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -157,17 +159,27 @@ fun PlaylistScreenContent(
                         items = playlists,
                         key = { it.id }
                     ) { playlist ->
-                        val thumbnailUrl = playlist.thumbnail?.let { thumbnail ->
+                        // サムネイル取得
+                        val thumbnailUrl by (playlist.thumbnail?.let { thumbnail ->
                             when (thumbnail) {
                                 is Playlist.Thumbnail.Video -> {
-                                    // TODO: Load video thumbnail by ID
-                                    null
+                                    // Video thumbnailの場合、VideoからURLを取得
+                                    videoViewModel?.getFromIdAsync(thumbnail.id)?.let { deferred ->
+                                        val url = remember(thumbnail.id) {
+                                            mutableStateOf<Any?>(null)
+                                        }
+                                        scope.launch(Dispatchers.IO) {
+                                            val video = deferred.await()
+                                            url.value = video?.thumbnailUrl
+                                        }
+                                        url
+                                    } ?: remember { mutableStateOf<Any?>(null) }
                                 }
                                 is Playlist.Thumbnail.Drawable -> {
-                                    thumbnail.id
+                                    remember { mutableStateOf<Any?>(thumbnail.id) }
                                 }
                             }
-                        }
+                        } ?: remember { mutableStateOf<Any?>(null) })
                         val videoCount = playlist.videos.size
 
                         PlaylistItem(
@@ -388,7 +400,8 @@ fun PlaylistScreen(
         onCreatePlaylist = {
             onNavigateToVideoList(0L)
         },
-        modifier = modifier
+        modifier = modifier,
+        videoViewModel = videoViewModel
     )
 }
 

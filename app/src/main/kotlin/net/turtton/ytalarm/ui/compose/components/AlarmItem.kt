@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
@@ -49,7 +50,10 @@ fun AlarmItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = thumbnailUrl ?: R.drawable.ic_no_image,
+                model = ImageRequest.Builder(context)
+                    .data(thumbnailUrl ?: R.drawable.ic_no_image)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "Alarm thumbnail",
                 modifier = Modifier.size(64.dp),
                 contentScale = ContentScale.Crop

@@ -24,12 +24,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
@@ -109,6 +111,7 @@ private fun <T> MultiChoiceVideoItem(
     isChecked: Boolean,
     onCheckedChange: (Boolean) -> Unit
 ) {
+    val context = LocalContext.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -123,32 +126,21 @@ private fun <T> MultiChoiceVideoItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // サムネイル
-            when (val thumbnail = data.thumbnailUrl) {
-                is DisplayDataThumbnail.Url -> {
-                    AsyncImage(
-                        model = thumbnail.url ?: R.drawable.ic_no_image,
-                        contentDescription = "Item thumbnail",
-                        modifier = Modifier.size(48.dp),
-                        contentScale = ContentScale.Crop
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(
+                        when (val thumbnail = data.thumbnailUrl) {
+                            is DisplayDataThumbnail.Url -> thumbnail.url ?: R.drawable.ic_no_image
+                            is DisplayDataThumbnail.Drawable -> thumbnail.id
+                            null -> R.drawable.ic_no_image
+                        }
                     )
-                }
-                is DisplayDataThumbnail.Drawable -> {
-                    AsyncImage(
-                        model = thumbnail.id,
-                        contentDescription = "Item thumbnail",
-                        modifier = Modifier.size(48.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                null -> {
-                    AsyncImage(
-                        model = R.drawable.ic_no_image,
-                        contentDescription = "No thumbnail",
-                        modifier = Modifier.size(48.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
+                    .crossfade(true)
+                    .build(),
+                contentDescription = "Item thumbnail",
+                modifier = Modifier.size(48.dp),
+                contentScale = ContentScale.Crop
+            )
 
             // タイトル
             Text(

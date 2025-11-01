@@ -17,11 +17,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
@@ -37,6 +39,7 @@ fun PlaylistItem(
     onClick: () -> Unit,
     onMenuClick: () -> Unit
 ) {
+    val context = LocalContext.current
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -51,7 +54,10 @@ fun PlaylistItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = thumbnailUrl ?: R.drawable.ic_no_image,
+                model = ImageRequest.Builder(context)
+                    .data(thumbnailUrl ?: R.drawable.ic_no_image)
+                    .crossfade(true)
+                    .build(),
                 contentDescription = "Playlist thumbnail",
                 modifier = Modifier.size(64.dp),
                 contentScale = ContentScale.Crop

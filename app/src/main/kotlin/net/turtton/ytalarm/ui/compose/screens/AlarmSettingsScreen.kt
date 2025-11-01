@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -458,39 +459,72 @@ fun AlarmSettingsScreen(
         }
     }
 
-    // プレイリスト選択ダイアログ
-    if (showPlaylistDialog) {
-        var allPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
-
-        LaunchedEffect(Unit) {
-            withContext(Dispatchers.IO) {
-                try {
-                    allPlaylists = playlistViewModel.allPlaylistsAsync.await()
-                } catch (e: Exception) {
-                    allPlaylists = emptyList()
-                }
-            }
+    // UI表示
+    Box(modifier = modifier) {
+        // AlarmSettingsScreenContent呼び出し
+        editingAlarm?.let { currentAlarm ->
+            AlarmSettingsScreenContent(
+                alarm = currentAlarm,
+                playlistTitle = playlistTitle,
+                snackbarHostState = snackbarHostState,
+                onAlarmChange = { updatedAlarm -> editingAlarm = updatedAlarm },
+                onSave = ::saveAlarm,
+                onNavigateBack = onNavigateBack,
+                onPlaylistSelect = { showPlaylistDialog = true }
+            )
         }
 
-        // TODO: MultiChoiceVideoDialogの統合
-        // 現時点ではプレイリスト選択ダイアログは実装を保留
-        // 既存のMultiChoiceVideoDialogを使用する必要があるが、
-        // DisplayDataの変換ロジックが必要
-        showPlaylistDialog = false
-    }
+        // プレイリスト選択ダイアログ
+        if (showPlaylistDialog) {
+            var allPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
 
-    // AlarmSettingsScreenContent呼び出し
-    editingAlarm?.let { currentAlarm ->
-        AlarmSettingsScreenContent(
-            alarm = currentAlarm,
-            playlistTitle = playlistTitle,
-            snackbarHostState = snackbarHostState,
-            onAlarmChange = { updatedAlarm -> editingAlarm = updatedAlarm },
-            onSave = ::saveAlarm,
-            onNavigateBack = onNavigateBack,
-            onPlaylistSelect = { showPlaylistDialog = true },
-            modifier = modifier
-        )
+            LaunchedEffect(Unit) {
+                withContext(Dispatchers.IO) {
+                    try {
+                        allPlaylists = playlistViewModel.allPlaylistsAsync.await()
+                    } catch (e: Exception) {
+                        allPlaylists = emptyList()
+                    }
+                }
+            }
+
+            if (allPlaylists.isNotEmpty()) {
+                // PlaylistをDisplayDataに変換
+                val displayDataList = allPlaylists.map { playlist ->
+                    net.turtton.ytalarm.ui.compose.dialogs.DisplayData(
+                        id = playlist.id,
+                        title = playlist.title,
+                        thumbnailUrl = when (val thumbnail = playlist.thumbnail) {
+                            is Playlist.Thumbnail.Video -> {
+                                // Video thumbnailの場合、URL取得は非同期なので簡略化
+                                net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                            }
+                            is Playlist.Thumbnail.Drawable -> {
+                                net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(thumbnail.id)
+                            }
+                        }
+                    )
+                }
+
+                net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog(
+                    displayDataList = displayDataList,
+                    initialSelectedIds = editingAlarm?.playListId?.toSet() ?: emptySet(),
+                    onConfirm = { selectedIds ->
+                        val newAlarm = editingAlarm?.copy(playListId = selectedIds.toList())
+                        newAlarm?.let {
+                            alarmViewModel.update(it)
+                        }
+                        showPlaylistDialog = false
+                    },
+                    onDismiss = {
+                        showPlaylistDialog = false
+                    }
+                )
+            } else {
+                // プレイリストが空の場合はダイアログを閉じる
+                showPlaylistDialog = false
+            }
+        }
     }
 }
 

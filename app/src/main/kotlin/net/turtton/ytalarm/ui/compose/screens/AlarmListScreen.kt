@@ -165,17 +165,28 @@ fun AlarmListScreenContent(
                             } ?: remember { mutableStateOf(emptyList()) })
 
                         val playlistTitle = playlists.firstOrNull()?.title ?: ""
-                        val thumbnailUrl = playlists.firstOrNull()?.thumbnail?.let { thumbnail ->
+
+                        // サムネイル取得
+                        val thumbnailUrl by (playlists.firstOrNull()?.thumbnail?.let { thumbnail ->
                             when (thumbnail) {
                                 is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Video -> {
-                                    // TODO: Load video thumbnail by ID
-                                    null
+                                    // Video thumbnailの場合、VideoからURLを取得
+                                    videoViewModel?.getFromIdAsync(thumbnail.id)?.let { deferred ->
+                                        val url = remember(thumbnail.id) {
+                                            mutableStateOf<Any?>(null)
+                                        }
+                                        scope.launch(Dispatchers.IO) {
+                                            val video = deferred.await()
+                                            url.value = video?.thumbnailUrl
+                                        }
+                                        url
+                                    } ?: remember { mutableStateOf<Any?>(null) }
                                 }
                                 is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Drawable -> {
-                                    thumbnail.id
+                                    remember { mutableStateOf<Any?>(thumbnail.id) }
                                 }
                             }
-                        }
+                        } ?: remember { mutableStateOf<Any?>(null) })
 
                         AlarmItem(
                             alarm = alarm,
