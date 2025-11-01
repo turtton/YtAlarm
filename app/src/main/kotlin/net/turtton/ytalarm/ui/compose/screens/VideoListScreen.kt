@@ -372,7 +372,12 @@ fun VideoListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val currentId = remember { MutableStateFlow(playlistId) }
-    val playlist by playlistViewModel.getFromId(currentId.value).observeAsState()
+    // playlistId == 0の場合は全動画モード（新規プレイリスト作成時）
+    val playlist by if (currentId.value == 0L) {
+        remember { mutableStateOf<Playlist?>(null) }
+    } else {
+        playlistViewModel.getFromId(currentId.value).observeAsState()
+    }
     val selectedItems = remember { mutableStateListOf<Long>() }
     var isFabExpanded by remember { mutableStateOf(false) }
 
