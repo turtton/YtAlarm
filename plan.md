@@ -222,28 +222,32 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
   - VideoList（playlistId=0）: クラッシュ修正完了、正常動作
   - UI/UX: タップ反応適切、レイアウト崩れなし
 
-  **発見された問題（2025-11-01 動作確認時）:**
-  1. 🐛 **サムネイル画像が表示されない** (Critical)
-     - 原因: AlarmItem/PlaylistItemでAsyncImageがDrawableリソースID（Int値）を処理できない
-     - 影響: Alarm一覧、Playlist一覧でサムネイルがic_no_imageアイコンになる
-     - 対象ファイル:
-       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/components/AlarmItem.kt (51-56行目)
-       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/components/PlaylistItem.kt (同様の問題)
-       - app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/AlarmListComposeAdapter.kt (53-67行目)
-     - 修正方針: AsyncImageのmodelでInt/String両対応、またはpainterResourceを使用
-     - 優先度: 高（ユーザー体験に直接影響）
+  **発見・修正された問題（2025-11-01）:**
+  1. ✅ **サムネイル画像が表示されない** (Critical) - **修正完了**
+     - 原因1: AlarmItem/PlaylistItemでAsyncImageがDrawableリソースIDを処理できない
+     - 原因2: Video型サムネイル(Playlist.Thumbnail.Video)でVideoテーブルからURL取得未実装
+     - 修正内容:
+       - ImageRequest.Builder(context)を使用してDrawable/URL両対応
+       - AlarmListScreen/PlaylistScreenでVideoViewModel経由でサムネイルURL非同期取得
+     - 修正ファイル:
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/components/AlarmItem.kt
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/components/PlaylistItem.kt
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/dialogs/MultiChoiceVideoDialog.kt
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/AlarmListScreen.kt
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/PlaylistScreen.kt
+     - コミット: d8aad45
 
-  2. 🔧 **Playlist選択ダイアログ未実装** (Known Issue)
-     - 原因: YtAlarmNavGraph.ktでonShowUrlInputDialog/onShowMultiChoiceDialogがTODO
-     - 影響: AlarmSettings画面でPlaylist選択をタップしても何も起こらない
-     - 対象ファイル:
-       - app/src/main/kotlin/net/turtton/ytalarm/navigation/YtAlarmNavGraph.kt (127-132行目)
-     - 修正方針: DialogMultiChoiceVideoのCompose版を作成し統合
-     - 優先度: 高（コア機能の一部が動作しない）
+  2. ✅ **Playlist選択ダイアログ未実装** (Critical) - **修正完了**
+     - 原因: AlarmSettingsScreenでダイアログとコンテンツが親コンテナなしで並列配置
+     - 修正内容:
+       - BoxコンテナでAlarmSettingsScreenContentとMultiChoiceVideoDialogをラップ
+       - MultiChoiceVideoDialogをAlarmSettingsScreenに統合
+       - PlaylistViewModel経由でプレイリスト一覧を非同期取得
+     - 修正ファイル:
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/AlarmSettingsScreen.kt
+     - コミット: d8aad45
 
   **残タスク:**
-  - 🔴 サムネイル表示問題の修正（即時対応）
-  - 🔴 Playlist選択ダイアログの統合（即時対応）
   - Fragment完全削除（binding/drawerLayoutの削除）
   - XML layout削除（activity_main.xml, content_main.xml, drawer_header.xml）
   - 統合テスト・最終動作確認（Phase 6 Stage 4で実施）
