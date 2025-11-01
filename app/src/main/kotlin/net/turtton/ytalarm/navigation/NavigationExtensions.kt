@@ -1,7 +1,6 @@
 package net.turtton.ytalarm.navigation
 
 import androidx.navigation.NavHostController
-import androidx.navigation.NavOptions
 
 /**
  * Navigation用の拡張関数群

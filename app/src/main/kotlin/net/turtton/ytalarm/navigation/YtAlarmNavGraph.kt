@@ -1,3 +1,5 @@
+@file:Suppress("FunctionNaming")  // Composable functions use PascalCase
+
 package net.turtton.ytalarm.navigation
 
 import androidx.compose.runtime.Composable
