@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
 
       - name: Lint check
-        uses: musichin/ktlint-check@687a1d5d326566030e61fb1a1fce0af556a73162 # v3.1.0
+        uses: musichin/ktlint-check@af1ba3927d63a6321fcabec5f7d84a1d872d2e20 # v3.3.1
         with:
           ktlint-version: 1.0.0
 
@@ -64,7 +64,7 @@ jobs:
           path: build/reports
 
       - name: Upload Report
-        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 # v5.4.3
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: "build/reports/jacoco.xml"
