@@ -7,8 +7,6 @@ import android.content.Intent
 import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -164,7 +162,10 @@ fun AboutPageScreen(
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE)
                                 as? ClipboardManager
                             if (clipboard != null) {
-                                val clipData = ClipData.newPlainText("YtAlarmClipData", item.clipData)
+                                val clipData = ClipData.newPlainText(
+                                    "YtAlarmClipData",
+                                    item.clipData
+                                )
                                 clipboard.setPrimaryClip(clipData)
                                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
                                     scope.launch {
@@ -176,7 +177,9 @@ fun AboutPageScreen(
                             } else {
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
-                                        context.getString(R.string.snackbar_error_failed_to_access_clipboard)
+                                        context.getString(
+                                            R.string.snackbar_error_failed_to_access_clipboard
+                                        )
                                     )
                                 }
                             }
@@ -193,7 +196,9 @@ fun AboutPageScreen(
  */
 private sealed interface AboutPageData {
     val thumbnail: AboutPageThumbnail
+
     @get:StringRes val title: Int
+
     @get:StringRes val details: Int?
 
     /**

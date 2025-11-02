@@ -13,10 +13,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
 @Composable
-fun VibrationWarningDialog(
-    onOpenIssue: () -> Unit,
-    onDismiss: () -> Unit
-) {
+fun VibrationWarningDialog(onOpenIssue: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {

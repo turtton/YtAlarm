@@ -152,7 +152,11 @@ fun AlarmSettingsScreenContent(
             item {
                 ClickableSettingItem(
                     title = stringResource(R.string.setting_playlist),
-                    description = playlistTitle.ifEmpty { stringResource(R.string.setting_playlist_empty) },
+                    description = playlistTitle.ifEmpty {
+                        stringResource(
+                            R.string.setting_playlist_empty
+                        )
+                    },
                     onClick = onPlaylistSelect
                 )
             }
@@ -349,13 +353,19 @@ fun AlarmSettingsScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     alarmViewModel: AlarmViewModel = viewModel(
-        factory = AlarmViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+        factory = AlarmViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).repository
+        )
     ),
     playlistViewModel: PlaylistViewModel = viewModel(
-        factory = PlaylistViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+        factory = PlaylistViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).repository
+        )
     ),
     videoViewModel: VideoViewModel = viewModel(
-        factory = VideoViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+        factory = VideoViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).repository
+        )
     )
 ) {
     val context = LocalContext.current
@@ -497,7 +507,11 @@ fun AlarmSettingsScreen(
         // プレイリスト選択ダイアログ
         if (showPlaylistDialog && allPlaylists.isNotEmpty()) {
             // PlaylistをDisplayDataに変換（非同期でサムネイル取得）
-            var displayDataList by remember { mutableStateOf<List<net.turtton.ytalarm.ui.compose.dialogs.DisplayData<Long>>>(emptyList()) }
+            var displayDataList by remember {
+                mutableStateOf<List<net.turtton.ytalarm.ui.compose.dialogs.DisplayData<Long>>>(
+                    emptyList()
+                )
+            }
 
             LaunchedEffect(allPlaylists) {
                 displayDataList = withContext(Dispatchers.IO) {
@@ -508,14 +522,22 @@ fun AlarmSettingsScreen(
                                 try {
                                     val video = videoViewModel.getFromIdAsync(thumbnail.id).await()
                                     video?.thumbnailUrl?.let {
-                                        net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Url(it)
-                                    } ?: net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                                        net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Url(
+                                            it
+                                        )
+                                    } ?: net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(
+                                        R.drawable.ic_no_image
+                                    )
                                 } catch (e: Exception) {
-                                    net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                                    net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(
+                                        R.drawable.ic_no_image
+                                    )
                                 }
                             }
                             is Playlist.Thumbnail.Drawable -> {
-                                net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(thumbnail.id)
+                                net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(
+                                    thumbnail.id
+                                )
                             }
                         }
                         net.turtton.ytalarm.ui.compose.dialogs.DisplayData(

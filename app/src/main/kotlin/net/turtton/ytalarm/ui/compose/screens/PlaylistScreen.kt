@@ -160,26 +160,30 @@ fun PlaylistScreenContent(
                         key = { it.id }
                     ) { playlist ->
                         // サムネイル取得
-                        val thumbnailUrl by (playlist.thumbnail?.let { thumbnail ->
-                            when (thumbnail) {
-                                is Playlist.Thumbnail.Video -> {
-                                    // Video thumbnailの場合、VideoからURLを取得
-                                    videoViewModel?.getFromIdAsync(thumbnail.id)?.let { deferred ->
-                                        val url = remember(thumbnail.id) {
-                                            mutableStateOf<Any?>(null)
-                                        }
-                                        scope.launch(Dispatchers.IO) {
-                                            val video = deferred.await()
-                                            url.value = video?.thumbnailUrl
-                                        }
-                                        url
-                                    } ?: remember { mutableStateOf<Any?>(null) }
+                        val thumbnailUrl by (
+                            playlist.thumbnail?.let { thumbnail ->
+                                when (thumbnail) {
+                                    is Playlist.Thumbnail.Video -> {
+                                        // Video thumbnailの場合、VideoからURLを取得
+                                        videoViewModel?.getFromIdAsync(
+                                            thumbnail.id
+                                        )?.let { deferred ->
+                                            val url = remember(thumbnail.id) {
+                                                mutableStateOf<Any?>(null)
+                                            }
+                                            scope.launch(Dispatchers.IO) {
+                                                val video = deferred.await()
+                                                url.value = video?.thumbnailUrl
+                                            }
+                                            url
+                                        } ?: remember { mutableStateOf<Any?>(null) }
+                                    }
+                                    is Playlist.Thumbnail.Drawable -> {
+                                        remember { mutableStateOf<Any?>(thumbnail.id) }
+                                    }
                                 }
-                                is Playlist.Thumbnail.Drawable -> {
-                                    remember { mutableStateOf<Any?>(thumbnail.id) }
-                                }
-                            }
-                        } ?: remember { mutableStateOf<Any?>(null) })
+                            } ?: remember { mutableStateOf<Any?>(null) }
+                            )
                         val videoCount = playlist.videos.size
 
                         PlaylistItem(
@@ -285,13 +289,19 @@ fun PlaylistScreen(
     onOpenDrawer: () -> Unit,
     modifier: Modifier = Modifier,
     playlistViewModel: PlaylistViewModel = viewModel(
-        factory = PlaylistViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+        factory = PlaylistViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).repository
+        )
     ),
     videoViewModel: VideoViewModel = viewModel(
-        factory = VideoViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+        factory = VideoViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).repository
+        )
     ),
     alarmViewModel: AlarmViewModel = viewModel(
-        factory = AlarmViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+        factory = AlarmViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).repository
+        )
     )
 ) {
     val context = LocalContext.current

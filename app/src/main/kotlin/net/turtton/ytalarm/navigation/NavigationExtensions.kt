@@ -16,10 +16,7 @@ import androidx.navigation.NavHostController
  * @param route ナビゲート先のルート
  * @param popUpToRoute ポップする画面のルート
  */
-fun NavHostController.navigateAndPopUp(
-    route: String,
-    popUpToRoute: String
-) {
+fun NavHostController.navigateAndPopUp(route: String, popUpToRoute: String) {
     navigate(route) {
         popUpTo(popUpToRoute) {
             inclusive = true
@@ -34,9 +31,7 @@ fun NavHostController.navigateAndPopUp(
  *
  * @param route ナビゲート先のルート
  */
-fun NavHostController.navigateAndClearBackStack(
-    route: String
-) {
+fun NavHostController.navigateAndClearBackStack(route: String) {
     navigate(route) {
         popUpTo(0) {
             inclusive = true
@@ -51,9 +46,7 @@ fun NavHostController.navigateAndClearBackStack(
  *
  * @param route ナビゲート先のルート
  */
-fun NavHostController.navigateSingleTop(
-    route: String
-) {
+fun NavHostController.navigateSingleTop(route: String) {
     navigate(route) {
         launchSingleTop = true
     }

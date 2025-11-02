@@ -16,10 +16,7 @@ import net.turtton.ytalarm.ui.compose.theme.AppTheme
  * @param onDismiss キャンセルまたはダイアログが閉じられた時の処理
  */
 @Composable
-fun RemoveVideoDialog(
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
+fun RemoveVideoDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {

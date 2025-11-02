@@ -20,7 +20,10 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
 enum class RepeatTypeSelection {
-    ONCE, EVERYDAY, DAYS, DATE
+    ONCE,
+    EVERYDAY,
+    DAYS,
+    DATE
 }
 
 @Composable

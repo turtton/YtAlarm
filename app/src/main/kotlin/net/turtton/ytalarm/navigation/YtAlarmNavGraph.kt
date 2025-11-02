@@ -1,4 +1,4 @@
-@file:Suppress("FunctionNaming")  // Composable functions use PascalCase
+@file:Suppress("FunctionNaming") // Composable functions use PascalCase
 
 package net.turtton.ytalarm.navigation
 

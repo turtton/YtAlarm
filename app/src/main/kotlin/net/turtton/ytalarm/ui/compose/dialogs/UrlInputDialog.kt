@@ -2,7 +2,6 @@ package net.turtton.ytalarm.ui.compose.dialogs
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
@@ -22,7 +21,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
@@ -34,11 +32,7 @@ import net.turtton.ytalarm.ui.compose.theme.AppTheme
  * @param onDismiss キャンセルまたはダイアログが閉じられた時の処理
  */
 @Composable
-fun UrlInputDialog(
-    initialUrl: String = "",
-    onConfirm: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
+fun UrlInputDialog(initialUrl: String = "", onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
     var url by remember { mutableStateOf(initialUrl) }
     val focusRequester = remember { FocusRequester() }
 
