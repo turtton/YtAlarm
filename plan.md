@@ -37,73 +37,35 @@
 
 ---
 
-## 🚨 未修正の問題（Critical）
+## ✅ 修正完了（2025-11-02）
 
-### 5. AlarmSettings画面から戻って1秒以内にDrawer操作すると白画面
+### ~~5. AlarmSettings画面から戻って1秒以内にDrawer操作すると白画面~~ ✅
 
-**問題詳細**:
-- AlarmSettingsから戻るボタンで戻った直後（1秒以内）にDrawerを開いて別画面に遷移すると白画面
-- 通常速度の操作では再現しない（タイミング依存）
-- 関連ログ: "OnBackInvokedCallback is not enabled for the application"
-
-**原因特定**:
-1. **MainScreen.kt:76-88**: Drawer操作時のナビゲーション処理に問題
-   ```kotlin
-   scope.launch {
-       drawerState.close()  // ← 非同期だが完了を待たない
-       if (currentRoute != route) {
-           navController.navigate(route) {
-               popUpTo(route) { inclusive = true }  // ← 不適切なpopUp設定
-               launchSingleTop = true
-           }
-       }
-   }
-   ```
-2. **AndroidManifest.xml**: `android:enableOnBackInvokedCallback="true"` が未設定
-3. **Navigation状態の不安定性**: popBackStack()直後のNavigation状態が安定していない
-
-**修正方針**:
-1. AndroidManifest.xmlに `android:enableOnBackInvokedCallback="true"` を追加
-2. MainScreen.ktのナビゲーションロジックを修正:
+**修正内容** (commit: b086a98):
+1. `AndroidManifest.xml`に `android:enableOnBackInvokedCallback="true"` を追加
+2. `MainScreen.kt` のDrawerナビゲーションロジックを修正:
    ```kotlin
    navController.navigate(route) {
-       popUpTo(navController.graph.findStartDestination().id) {
+       popUpTo(YtAlarmDestination.ALARM_LIST) {
            saveState = true
        }
        launchSingleTop = true
        restoreState = true
    }
    ```
-3. popBackStack()完了後に安定化待機処理を追加（必要に応じて）
-
-**影響ファイル**:
-- `app/src/main/AndroidManifest.xml`
-- `app/src/main/kotlin/net/turtton/ytalarm/ui/MainScreen.kt:76-88`
+3. モバイルデバッグテストで修正を確認：白画面は発生しなくなった
 
 ---
 
-### 6. VideoList（全動画モード）で新規プレイリスト作成画面が表示
+### ~~6. VideoList（全動画モード）で新規プレイリスト作成画面が表示~~ ✅
 
-**問題詳細**:
-- Drawerの"VideoList"をタップすると動画一覧ではなく"New Playlist"作成画面が表示
-- 期待: 全動画一覧画面（playlistId=0）
-- 実際: "Add videos to create a new playlist."メッセージが表示
-
-**原因特定**:
-- **MainScreen.kt:178-179**: VideoListのルートが正しく設定されている
-  ```kotlin
-  selected = currentRoute == YtAlarmDestination.videoList(0L),  // "video_list/0"
-  onClick = { onNavigate(YtAlarmDestination.videoList(0L)) },   // "video_list/0"
-  ```
-- **YtAlarmNavGraph.kt:110-134**: VideoListScreenのルート定義も正しい
-- **VideoListScreen.kt**: playlistId=0で全動画モードのはずが、新規プレイリスト作成UIを表示
-
-**修正方針**:
-- VideoListScreen.ktのplaylistId=0処理ロジックを確認
-- 全動画モードと新規プレイリストモードの条件分岐を修正
-
-**影響ファイル**:
-- `app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/VideoListScreen.kt`
+**修正内容** (commit: b086a98):
+1. `VideoListScreen.kt` に全動画モード処理を追加:
+   - `isAllVideosMode` フラグで明示的にモード判定
+   - 全動画取得ロジック実装 (`videoViewModel.allVideos`)
+   - UI制御：FAB非表示、削除ボタン非表示、適切なタイトル表示
+2. ktlint違反も同時に修正（max-line-length）
+3. モバイルデバッグテストで修正を確認：全動画一覧が正しく表示される
 
 ---
 
@@ -111,11 +73,11 @@
 
 ### Phase 6 Stage 4: 統合テスト・Fragment/XML削除
 
-1. **Critical bugの修正** ⬅️ **最優先**
-   - [ ] 白画面バグの修正（AlarmSettings戻り→Drawer操作）
-   - [ ] VideoList全動画モードの修正
+1. **Critical bugの修正** ✅ **完了 (2025-11-02)**
+   - [x] 白画面バグの修正（AlarmSettings戻り→Drawer操作）
+   - [x] VideoList全動画モードの修正
 
-2. **Fragment完全削除**
+2. **Fragment完全削除** ⬅️ **次のタスク**
    - [ ] FragmentAlarmList削除
    - [ ] FragmentAlarmSettings削除
    - [ ] FragmentPlaylist削除
