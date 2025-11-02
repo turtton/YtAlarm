@@ -2,6 +2,7 @@ package net.turtton.ytalarm.ui.compose.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,7 +39,10 @@ fun VideoItem(
     showCheckbox: Boolean = false,
     onToggleSelection: () -> Unit = {},
     onClick: () -> Unit,
-    onMenuClick: () -> Unit
+    menuExpanded: Boolean = false,
+    onMenuClick: () -> Unit = {},
+    onMenuDismiss: () -> Unit = {},
+    menuContent: (@Composable () -> Unit)? = null
 ) {
     Row(
         modifier = modifier
@@ -90,12 +94,16 @@ fun VideoItem(
                 )
             }
 
-            IconButton(onClick = onMenuClick) {
-                Icon(
-                    imageVector = Icons.Default.MoreVert,
-                    contentDescription = "Menu",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Box {
+                IconButton(onClick = onMenuClick) {
+                    Icon(
+                        imageVector = Icons.Default.MoreVert,
+                        contentDescription = "Menu",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                menuContent?.invoke()
             }
         }
     }

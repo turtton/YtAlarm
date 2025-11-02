@@ -50,13 +50,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
+import com.yausername.youtubedl_android.YoutubeDL
+import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.util.VideoInformation
 import net.turtton.ytalarm.ui.compose.components.VideoItem
 import net.turtton.ytalarm.ui.compose.components.VideoItemDropdownMenu
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
@@ -247,39 +253,40 @@ fun VideoListScreenContent(
                         items = videos,
                         key = { it.id }
                     ) { video ->
-                        Box {
-                            VideoItem(
-                                video = video,
-                                domainOrSize = video.domain,
-                                isSelected = selectedItems.contains(video.id),
-                                showCheckbox = selectedItems.isNotEmpty(),
-                                onToggleSelection = {
+                        VideoItem(
+                            video = video,
+                            domainOrSize = video.domain,
+                            isSelected = selectedItems.contains(video.id),
+                            showCheckbox = selectedItems.isNotEmpty(),
+                            onToggleSelection = {
+                                onItemSelect(video.id, !selectedItems.contains(video.id))
+                            },
+                            onClick = {
+                                if (selectedItems.isEmpty()) {
+                                    // Navigate to player using external video ID (String)
+                                    onItemClick(video.videoId)
+                                } else {
+                                    // Toggle selection using internal DB ID (Long)
                                     onItemSelect(video.id, !selectedItems.contains(video.id))
-                                },
-                                onClick = {
-                                    if (selectedItems.isEmpty()) {
-                                        // Navigate to player using external video ID (String)
-                                        onItemClick(video.videoId)
-                                    } else {
-                                        // Toggle selection using internal DB ID (Long)
-                                        onItemSelect(video.id, !selectedItems.contains(video.id))
-                                    }
-                                },
-                                onMenuClick = {
-                                    onMenuClick(video)
                                 }
-                            )
-
-                            VideoItemDropdownMenu(
-                                video = video,
-                                expanded = expandedMenus[video.id] ?: false,
-                                onDismiss = { onMenuDismiss(video.id) },
-                                onSetThumbnail = onSetThumbnail,
-                                onDownload = onDownload,
-                                onReimport = onReimport,
-                                onDelete = onDeleteSingleVideo
-                            )
-                        }
+                            },
+                            menuExpanded = expandedMenus[video.id] ?: false,
+                            onMenuClick = {
+                                onMenuClick(video)
+                            },
+                            onMenuDismiss = { onMenuDismiss(video.id) },
+                            menuContent = {
+                                VideoItemDropdownMenu(
+                                    video = video,
+                                    expanded = expandedMenus[video.id] ?: false,
+                                    onDismiss = { onMenuDismiss(video.id) },
+                                    onSetThumbnail = onSetThumbnail,
+                                    onDownload = onDownload,
+                                    onReimport = onReimport,
+                                    onDelete = onDeleteSingleVideo
+                                )
+                            }
+                        )
                     }
                 }
             }
@@ -513,6 +520,38 @@ fun VideoListScreen(
         },
         onReimport = { video ->
             videoToReimport = video
+            scope.launch(Dispatchers.IO) {
+                try {
+                    // YoutubeDLで動画情報を再取得
+                    val request = YoutubeDLRequest(video.videoUrl)
+                        .addOption("--dump-single-json")
+                        .addOption("-f", "b")
+                    val result = YoutubeDL.getInstance().execute(request) { _, _, _ -> }
+
+                    // JSONをパースして動画情報を取得
+                    val json = Json { ignoreUnknownKeys = true }
+                    val videoInfo = json.decodeFromString<VideoInformation>(result.out)
+                    val newVideo = videoInfo.toVideo()
+
+                    // 既存のVideoのIDを維持したまま情報を更新
+                    val updatedVideo = newVideo.copy(id = video.id)
+                    videoViewModel.update(updatedVideo)
+
+                    withContext(Dispatchers.Main) {
+                        videoToReimport = null
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.message_reimport_success)
+                        )
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        videoToReimport = null
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.message_reimport_failed)
+                        )
+                    }
+                }
+            }
         },
         onDeleteSingleVideo = { video ->
             videoToDelete = video

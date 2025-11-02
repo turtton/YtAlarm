@@ -147,6 +147,8 @@
     <string name="message_download_not_implemented">ダウンロード機能は開発中です</string>
     <string name="message_video_deleted">動画を削除しました</string>
     <string name="message_reimport_started">動画情報を更新中...</string>
+    <string name="message_reimport_success">動画情報を更新しました</string>
+    <string name="message_reimport_failed">動画情報の更新に失敗しました</string>
     <string name="message_playlist_renamed">プレイリスト名を変更しました</string>
 
 </resources>

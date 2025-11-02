@@ -230,5 +230,7 @@
     <string name="message_download_not_implemented">Download feature is under development</string>
     <string name="message_video_deleted">Video deleted</string>
     <string name="message_reimport_started">Updating video information…</string>
+    <string name="message_reimport_success">Video information updated successfully</string>
+    <string name="message_reimport_failed">Failed to update video information</string>
     <string name="message_playlist_renamed">Playlist renamed</string>
 </resources>

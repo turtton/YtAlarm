@@ -1,6 +1,5 @@
 package net.turtton.ytalarm.ui.compose.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
@@ -18,19 +17,18 @@ fun PlaylistItemDropdownMenu(
     onRename: (Playlist) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(modifier = modifier) {
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = onDismiss
-        ) {
-            // 名称変更
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.menu_playlist_option_rename)) },
-                onClick = {
-                    onRename(playlist)
-                    onDismiss()
-                }
-            )
-        }
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismiss,
+        modifier = modifier
+    ) {
+        // 名称変更
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.menu_playlist_option_rename)) },
+            onClick = {
+                onRename(playlist)
+                onDismiss()
+            }
+        )
     }
 }

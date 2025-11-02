@@ -193,34 +193,35 @@ fun PlaylistScreenContent(
                             )
                         val videoCount = playlist.videos.size
 
-                        Box {
-                            PlaylistItem(
-                                playlist = playlist,
-                                thumbnailUrl = thumbnailUrl,
-                                videoCount = videoCount,
-                                isSelected = selectedItems.contains(playlist.id),
-                                onToggleSelection = {
+                        PlaylistItem(
+                            playlist = playlist,
+                            thumbnailUrl = thumbnailUrl,
+                            videoCount = videoCount,
+                            isSelected = selectedItems.contains(playlist.id),
+                            onToggleSelection = {
+                                onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
+                            },
+                            onClick = {
+                                if (selectedItems.isEmpty()) {
+                                    onItemClick(playlist.id)
+                                } else {
                                     onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
-                                },
-                                onClick = {
-                                    if (selectedItems.isEmpty()) {
-                                        onItemClick(playlist.id)
-                                    } else {
-                                        onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
-                                    }
-                                },
-                                onMenuClick = {
-                                    onMenuClick(playlist)
                                 }
-                            )
-
-                            PlaylistItemDropdownMenu(
-                                playlist = playlist,
-                                expanded = expandedMenus[playlist.id] ?: false,
-                                onDismiss = { onMenuDismiss(playlist.id) },
-                                onRename = onRename
-                            )
-                        }
+                            },
+                            menuExpanded = expandedMenus[playlist.id] ?: false,
+                            onMenuClick = {
+                                onMenuClick(playlist)
+                            },
+                            onMenuDismiss = { onMenuDismiss(playlist.id) },
+                            menuContent = {
+                                PlaylistItemDropdownMenu(
+                                    playlist = playlist,
+                                    expanded = expandedMenus[playlist.id] ?: false,
+                                    onDismiss = { onMenuDismiss(playlist.id) },
+                                    onRename = onRename
+                                )
+                            }
+                        )
                     }
                 }
             }
