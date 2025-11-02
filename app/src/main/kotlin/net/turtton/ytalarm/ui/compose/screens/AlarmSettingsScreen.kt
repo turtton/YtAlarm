@@ -59,6 +59,8 @@ import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import java.util.Calendar
 import java.util.Date
 
@@ -351,6 +353,9 @@ fun AlarmSettingsScreen(
     ),
     playlistViewModel: PlaylistViewModel = viewModel(
         factory = PlaylistViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+    ),
+    videoViewModel: VideoViewModel = viewModel(
+        factory = VideoViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
     )
 ) {
     val context = LocalContext.current
@@ -459,6 +464,21 @@ fun AlarmSettingsScreen(
         }
     }
 
+    // プレイリストリストの取得（showPlaylistDialogの状態に依存）
+    var allPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+
+    LaunchedEffect(showPlaylistDialog) {
+        if (showPlaylistDialog) {
+            withContext(Dispatchers.IO) {
+                try {
+                    allPlaylists = playlistViewModel.allPlaylistsAsync.await()
+                } catch (e: Exception) {
+                    allPlaylists = emptyList()
+                }
+            }
+        }
+    }
+
     // UI表示
     Box(modifier = modifier) {
         // AlarmSettingsScreenContent呼び出し
@@ -475,43 +495,45 @@ fun AlarmSettingsScreen(
         }
 
         // プレイリスト選択ダイアログ
-        if (showPlaylistDialog) {
-            var allPlaylists by remember { mutableStateOf<List<Playlist>>(emptyList()) }
+        if (showPlaylistDialog && allPlaylists.isNotEmpty()) {
+            // PlaylistをDisplayDataに変換（非同期でサムネイル取得）
+            var displayDataList by remember { mutableStateOf<List<net.turtton.ytalarm.ui.compose.dialogs.DisplayData<Long>>>(emptyList()) }
 
-            LaunchedEffect(Unit) {
-                withContext(Dispatchers.IO) {
-                    try {
-                        allPlaylists = playlistViewModel.allPlaylistsAsync.await()
-                    } catch (e: Exception) {
-                        allPlaylists = emptyList()
-                    }
-                }
-            }
-
-            if (allPlaylists.isNotEmpty()) {
-                // PlaylistをDisplayDataに変換
-                val displayDataList = allPlaylists.map { playlist ->
-                    net.turtton.ytalarm.ui.compose.dialogs.DisplayData(
-                        id = playlist.id,
-                        title = playlist.title,
-                        thumbnailUrl = when (val thumbnail = playlist.thumbnail) {
+            LaunchedEffect(allPlaylists) {
+                displayDataList = withContext(Dispatchers.IO) {
+                    allPlaylists.map { playlist ->
+                        val thumbnailUrl = when (val thumbnail = playlist.thumbnail) {
                             is Playlist.Thumbnail.Video -> {
-                                // Video thumbnailの場合、URL取得は非同期なので簡略化
-                                net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                                // Video thumbnailの場合、VideoからURLを取得
+                                try {
+                                    val video = videoViewModel.getFromIdAsync(thumbnail.id).await()
+                                    video?.thumbnailUrl?.let {
+                                        net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Url(it)
+                                    } ?: net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                                } catch (e: Exception) {
+                                    net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                                }
                             }
                             is Playlist.Thumbnail.Drawable -> {
                                 net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(thumbnail.id)
                             }
                         }
-                    )
+                        net.turtton.ytalarm.ui.compose.dialogs.DisplayData(
+                            id = playlist.id,
+                            title = playlist.title,
+                            thumbnailUrl = thumbnailUrl
+                        )
+                    }
                 }
+            }
 
+            if (displayDataList.isNotEmpty()) {
                 net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog(
                     displayDataList = displayDataList,
                     initialSelectedIds = editingAlarm?.playListId?.toSet() ?: emptySet(),
                     onConfirm = { selectedIds ->
-                        val newAlarm = editingAlarm?.copy(playListId = selectedIds.toList())
-                        newAlarm?.let {
+                        editingAlarm = editingAlarm?.copy(playListId = selectedIds.toList())
+                        editingAlarm?.let {
                             alarmViewModel.update(it)
                         }
                         showPlaylistDialog = false
@@ -520,9 +542,6 @@ fun AlarmSettingsScreen(
                         showPlaylistDialog = false
                     }
                 )
-            } else {
-                // プレイリストが空の場合はダイアログを閉じる
-                showPlaylistDialog = false
             }
         }
     }

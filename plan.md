@@ -2,7 +2,7 @@
 
 ## 📊 進捗サマリー
 
-**最終更新**: 2025-10-31
+**最終更新**: 2025-11-02
 
 ### 完了済みフェーズ
 - ✅ **Phase 0: 準備** (完了)
@@ -247,7 +247,104 @@ app/src/main/kotlin/net/turtton/ytalarm/ui/adapter/
        - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/AlarmSettingsScreen.kt
      - コミット: d8aad45
 
+  **発見・修正された問題（2025-11-02）:**
+  3. ✅ **Playlist選択内容がUIに反映されない** (Critical) - **修正完了**
+     - 原因: AlarmSettingsScreen.kt:515でeditingAlarmローカルステートが更新されていない
+     - 問題詳細:
+       - MultiChoiceVideoDialogのonConfirmで新しいアラームをDBに保存
+       - しかしeditingAlarmローカルステートは更新されない
+       - LaunchedEffect(editingAlarm?.playListId)が再実行されない
+       - 結果としてplaylistTitleが更新されず、UIに選択内容が反映されない
+     - 修正内容:
+       - onConfirmコールバック内でeditingAlarmステートを直接更新
+       - 変更前: `val newAlarm = editingAlarm?.copy(...)`
+       - 変更後: `editingAlarm = editingAlarm?.copy(...)`
+     - 修正ファイル:
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/AlarmSettingsScreen.kt:515
+     - 検証結果:
+       - ダイアログでプレイリスト選択後、Playlistフィールドに「ExamplePlaylist」が正しく表示されることを確認
+       - エミュレータテスト成功
+
+  4. ✅ **MultiChoiceVideoDialog内のサムネイル画像が表示されない** (Critical) - **修正完了**
+     - 原因: AlarmSettingsScreen.kt:500-502でVideo型サムネイルが常にic_no_imageプレースホルダーになっていた
+     - 問題詳細:
+       - Playlist選択ダイアログ内のプレイリストアイテムでサムネイル画像が表示されない
+       - Video型サムネイルの場合、VideoViewModelを使った非同期取得が未実装
+       - AlarmListScreen/PlaylistScreenでは修正済みだが、AlarmSettingsScreenでは未対応
+     - 修正内容:
+       - displayDataListをremember + LaunchedEffectで非同期構築
+       - Video型の場合、videoViewModel.getFromIdAsync()でvideoを取得
+       - video.thumbnailUrlをDisplayDataThumbnail.Url()として設定
+       - VideoViewModelをAlarmSettingsScreen引数に追加
+     - 修正ファイル:
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/AlarmSettingsScreen.kt:355-357 (VideoViewModel追加)
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/AlarmSettingsScreen.kt:500-528 (displayDataList非同期構築)
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/AlarmSettingsScreen.kt:62-63 (import追加)
+     - 検証結果:
+       - ダイアログ内のExamplePlaylistに実際のサムネイル画像（黄色と黒の幾何学模様）が正常に表示されることを確認
+       - 非同期処理が正常に動作し、Video.thumbnailUrlから画像が読み込まれている
+       - エミュレータテスト成功
+
+  **発見された問題（2025-11-02）:**
+  5. ❌ **AlarmSettings画面から戻って1秒以内にDrawer操作すると白画面** (Critical) - **未修正**
+     - 問題詳細:
+       - AlarmSettingsから戻るボタンで戻った直後（1秒以内）にDrawerを開いて別画面に遷移すると白画面
+       - 通常速度の操作では再現しない（タイミング依存）
+       - 関連ログ: "OnBackInvokedCallback is not enabled for the application"
+     - 原因特定:
+       - **MainScreen.kt:76-88**: Drawer操作時のナビゲーション処理に問題
+         ```kotlin
+         scope.launch {
+             drawerState.close()  // ← 非同期だが完了を待たない
+             if (currentRoute != route) {
+                 navController.navigate(route) {
+                     popUpTo(route) { inclusive = true }  // ← 不適切なpopUp設定
+                     launchSingleTop = true
+                 }
+             }
+         }
+         ```
+       - **AndroidManifest.xml**: `android:enableOnBackInvokedCallback="true"` が未設定
+       - **Navigation状態の不安定性**: popBackStack()直後のNavigation状態が安定していない
+     - 修正方針:
+       - AndroidManifest.xmlに `android:enableOnBackInvokedCallback="true"` を追加
+       - MainScreen.ktのナビゲーションロジックを修正:
+         ```kotlin
+         navController.navigate(route) {
+             popUpTo(navController.graph.findStartDestination().id) {
+                 saveState = true
+             }
+             launchSingleTop = true
+             restoreState = true
+         }
+         ```
+       - popBackStack()完了後に安定化待機処理を追加（必要に応じて）
+     - 影響ファイル:
+       - app/src/main/AndroidManifest.xml
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/MainScreen.kt:76-88
+
+  6. ❌ **VideoList（全動画モード）で新規プレイリスト作成画面が表示** (Critical) - **未修正**
+     - 問題詳細:
+       - Drawerの"VideoList"をタップすると動画一覧ではなく"New Playlist"作成画面が表示
+       - 期待: 全動画一覧画面（playlistId=0）
+       - 実際: "Add videos to create a new playlist."メッセージが表示
+     - 原因特定:
+       - **MainScreen.kt:178-179**: VideoListのルートが正しく設定されている
+         ```kotlin
+         selected = currentRoute == YtAlarmDestination.videoList(0L),  // "video_list/0"
+         onClick = { onNavigate(YtAlarmDestination.videoList(0L)) },   // "video_list/0"
+         ```
+       - **YtAlarmNavGraph.kt:110-134**: VideoListScreenのルート定義も正しい
+       - **VideoListScreen.kt**: playlistId=0で全動画モードのはずが、新規プレイリスト作成UIを表示
+     - 修正方針:
+       - VideoListScreen.ktのplaylistId=0処理ロジックを確認
+       - 全動画モードと新規プレイリストモードの条件分岐を修正
+     - 影響ファイル:
+       - app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/VideoListScreen.kt
+
   **残タスク:**
+  - ❌ 白画面バグの修正（AlarmSettings戻り→Drawer操作）
+  - ❌ VideoList全動画モードの修正
   - Fragment完全削除（binding/drawerLayoutの削除）
   - XML layout削除（activity_main.xml, content_main.xml, drawer_header.xml）
   - 統合テスト・最終動作確認（Phase 6 Stage 4で実施）
