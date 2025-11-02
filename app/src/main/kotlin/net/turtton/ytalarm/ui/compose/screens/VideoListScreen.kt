@@ -36,6 +36,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -57,6 +58,8 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.components.VideoItem
+import net.turtton.ytalarm.ui.compose.components.VideoItemDropdownMenu
+import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
@@ -86,8 +89,15 @@ fun VideoListScreenContent(
     orderUp: Boolean,
     selectedItems: List<Long>,
     isFabExpanded: Boolean,
+    expandedMenus: Map<Long, Boolean>,
     onItemSelect: (Long, Boolean) -> Unit,
     onItemClick: (String) -> Unit,
+    onMenuClick: (net.turtton.ytalarm.database.structure.Video) -> Unit,
+    onMenuDismiss: (Long) -> Unit,
+    onSetThumbnail: (net.turtton.ytalarm.database.structure.Video) -> Unit,
+    onDownload: (net.turtton.ytalarm.database.structure.Video) -> Unit,
+    onReimport: (net.turtton.ytalarm.database.structure.Video) -> Unit,
+    onDeleteSingleVideo: (net.turtton.ytalarm.database.structure.Video) -> Unit,
     onNavigateBack: () -> Unit,
     onDeleteVideos: () -> Unit,
     onSortRuleChange: (VideoOrder) -> Unit,
@@ -237,27 +247,39 @@ fun VideoListScreenContent(
                         items = videos,
                         key = { it.id }
                     ) { video ->
-                        VideoItem(
-                            video = video,
-                            domainOrSize = video.domain,
-                            isSelected = selectedItems.contains(video.id),
-                            showCheckbox = selectedItems.isNotEmpty(),
-                            onToggleSelection = {
-                                onItemSelect(video.id, !selectedItems.contains(video.id))
-                            },
-                            onClick = {
-                                if (selectedItems.isEmpty()) {
-                                    // Navigate to player using external video ID (String)
-                                    onItemClick(video.videoId)
-                                } else {
-                                    // Toggle selection using internal DB ID (Long)
+                        Box {
+                            VideoItem(
+                                video = video,
+                                domainOrSize = video.domain,
+                                isSelected = selectedItems.contains(video.id),
+                                showCheckbox = selectedItems.isNotEmpty(),
+                                onToggleSelection = {
                                     onItemSelect(video.id, !selectedItems.contains(video.id))
+                                },
+                                onClick = {
+                                    if (selectedItems.isEmpty()) {
+                                        // Navigate to player using external video ID (String)
+                                        onItemClick(video.videoId)
+                                    } else {
+                                        // Toggle selection using internal DB ID (Long)
+                                        onItemSelect(video.id, !selectedItems.contains(video.id))
+                                    }
+                                },
+                                onMenuClick = {
+                                    onMenuClick(video)
                                 }
-                            },
-                            onMenuClick = {
-                                // 個別メニューアクション（今後実装）
-                            }
-                        )
+                            )
+
+                            VideoItemDropdownMenu(
+                                video = video,
+                                expanded = expandedMenus[video.id] ?: false,
+                                onDismiss = { onMenuDismiss(video.id) },
+                                onSetThumbnail = onSetThumbnail,
+                                onDownload = onDownload,
+                                onReimport = onReimport,
+                                onDelete = onDeleteSingleVideo
+                            )
+                        }
                     }
                 }
             }
@@ -399,6 +421,12 @@ fun VideoListScreen(
     val selectedItems = remember { mutableStateListOf<Long>() }
     var isFabExpanded by remember { mutableStateOf(false) }
 
+    // メニュー展開状態の管理
+    val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
+    var videoToDelete by remember { mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null) }
+    var videoToReimport by remember { mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null) }
+    var videoForThumbnail by remember { mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null) }
+
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
     val orderRule = preferences.videoOrderRule
@@ -446,6 +474,7 @@ fun VideoListScreen(
         orderUp = orderUp,
         selectedItems = selectedItems.toList(),
         isFabExpanded = isFabExpanded,
+        expandedMenus = expandedMenus,
         onItemSelect = { id, isSelected ->
             if (isSelected) {
                 selectedItems.add(id)
@@ -455,6 +484,38 @@ fun VideoListScreen(
         },
         onItemClick = { videoId ->
             onNavigateToVideoPlayer(videoId)
+        },
+        onMenuClick = { video ->
+            expandedMenus[video.id] = true
+        },
+        onMenuDismiss = { videoId ->
+            expandedMenus.remove(videoId)
+        },
+        onSetThumbnail = { video ->
+            videoForThumbnail = video
+            playlist?.let { pl ->
+                playlistViewModel.update(
+                    pl.copy(thumbnail = Playlist.Thumbnail.Video(video.id))
+                )
+            }
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    context.getString(R.string.message_thumbnail_set)
+                )
+            }
+        },
+        onDownload = { video ->
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    context.getString(R.string.message_download_not_implemented)
+                )
+            }
+        },
+        onReimport = { video ->
+            videoToReimport = video
+        },
+        onDeleteSingleVideo = { video ->
+            videoToDelete = video
         },
         onNavigateBack = onNavigateBack,
         onDeleteVideos = {
@@ -509,6 +570,51 @@ fun VideoListScreen(
         },
         modifier = modifier
     )
+
+    // 削除確認ダイアログ
+    videoToDelete?.let { video ->
+        AlertDialog(
+            onDismissRequest = { videoToDelete = null },
+            title = { Text(stringResource(R.string.dialog_delete_video_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_video_message, video.title)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        videoViewModel.delete(video)
+                        videoToDelete = null
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.message_video_deleted)
+                            )
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.dialog_remove_video_positive))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { videoToDelete = null }) {
+                    Text(stringResource(R.string.dialog_remove_video_negative))
+                }
+            }
+        )
+    }
+
+    // 再インポートダイアログ
+    videoToReimport?.let { video ->
+        VideoReimportDialog(
+            video = video,
+            onConfirm = {
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        context.getString(R.string.message_reimport_started)
+                    )
+                }
+                videoToReimport = null
+            },
+            onDismiss = { videoToReimport = null }
+        )
+    }
 }
 
 @Preview(showBackground = true)
@@ -559,8 +665,15 @@ fun VideoListScreenPreview() {
             orderUp = true,
             selectedItems = emptyList(),
             isFabExpanded = false,
+            expandedMenus = emptyMap(),
             onItemSelect = { _, _ -> },
             onItemClick = { },
+            onMenuClick = { },
+            onMenuDismiss = { },
+            onSetThumbnail = { },
+            onDownload = { },
+            onReimport = { },
+            onDeleteSingleVideo = { },
             onNavigateBack = { },
             onDeleteVideos = { },
             onSortRuleChange = { },

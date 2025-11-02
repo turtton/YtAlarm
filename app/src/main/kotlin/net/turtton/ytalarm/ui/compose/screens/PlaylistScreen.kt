@@ -29,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +51,8 @@ import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.compose.components.PlaylistItem
+import net.turtton.ytalarm.ui.compose.components.PlaylistItemDropdownMenu
+import net.turtton.ytalarm.ui.compose.dialogs.RenamePlaylistDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.playlistOrderRule
@@ -76,8 +79,12 @@ fun PlaylistScreenContent(
     orderRule: PlaylistOrder,
     orderUp: Boolean,
     selectedItems: List<Long>,
+    expandedMenus: Map<Long, Boolean>,
     onItemSelect: (Long, Boolean) -> Unit,
     onItemClick: (Long) -> Unit,
+    onMenuClick: (Playlist) -> Unit,
+    onMenuDismiss: (Long) -> Unit,
+    onRename: (Playlist) -> Unit,
     onOpenDrawer: () -> Unit,
     onDeletePlaylists: () -> Unit,
     onSortRuleChange: (PlaylistOrder) -> Unit,
@@ -186,25 +193,34 @@ fun PlaylistScreenContent(
                             )
                         val videoCount = playlist.videos.size
 
-                        PlaylistItem(
-                            playlist = playlist,
-                            thumbnailUrl = thumbnailUrl,
-                            videoCount = videoCount,
-                            isSelected = selectedItems.contains(playlist.id),
-                            onToggleSelection = {
-                                onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
-                            },
-                            onClick = {
-                                if (selectedItems.isEmpty()) {
-                                    onItemClick(playlist.id)
-                                } else {
+                        Box {
+                            PlaylistItem(
+                                playlist = playlist,
+                                thumbnailUrl = thumbnailUrl,
+                                videoCount = videoCount,
+                                isSelected = selectedItems.contains(playlist.id),
+                                onToggleSelection = {
                                     onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
+                                },
+                                onClick = {
+                                    if (selectedItems.isEmpty()) {
+                                        onItemClick(playlist.id)
+                                    } else {
+                                        onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
+                                    }
+                                },
+                                onMenuClick = {
+                                    onMenuClick(playlist)
                                 }
-                            },
-                            onMenuClick = {
-                                // 個別メニューアクション（今後実装）
-                            }
-                        )
+                            )
+
+                            PlaylistItemDropdownMenu(
+                                playlist = playlist,
+                                expanded = expandedMenus[playlist.id] ?: false,
+                                onDismiss = { onMenuDismiss(playlist.id) },
+                                onRename = onRename
+                            )
+                        }
                     }
                 }
             }
@@ -311,6 +327,10 @@ fun PlaylistScreen(
     val playlists by playlistViewModel.allPlaylists.observeAsState(emptyList())
     val selectedItems = remember { mutableStateListOf<Long>() }
 
+    // メニュー展開状態の管理
+    val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
+    var playlistToRename by remember { mutableStateOf<Playlist?>(null) }
+
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
     val orderRule = preferences.playlistOrderRule
@@ -358,6 +378,7 @@ fun PlaylistScreen(
         orderRule = orderRule,
         orderUp = orderUp,
         selectedItems = selectedItems.toList(),
+        expandedMenus = expandedMenus,
         onItemSelect = { id, isSelected ->
             if (isSelected) {
                 selectedItems.add(id)
@@ -366,6 +387,15 @@ fun PlaylistScreen(
             }
         },
         onItemClick = onNavigateToVideoList,
+        onMenuClick = { playlist ->
+            expandedMenus[playlist.id] = true
+        },
+        onMenuDismiss = { playlistId ->
+            expandedMenus.remove(playlistId)
+        },
+        onRename = { playlist ->
+            playlistToRename = playlist
+        },
         onOpenDrawer = onOpenDrawer,
         onDeletePlaylists = {
             scope.launch(Dispatchers.IO) {
@@ -413,6 +443,23 @@ fun PlaylistScreen(
         modifier = modifier,
         videoViewModel = videoViewModel
     )
+
+    // リネームダイアログ
+    playlistToRename?.let { playlist ->
+        RenamePlaylistDialog(
+            playlist = playlist,
+            onConfirm = { newName ->
+                playlistViewModel.update(playlist.copy(title = newName))
+                playlistToRename = null
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        context.getString(R.string.message_playlist_renamed)
+                    )
+                }
+            },
+            onDismiss = { playlistToRename = null }
+        )
+    }
 }
 
 @Preview(showBackground = true)
@@ -455,8 +502,12 @@ fun PlaylistScreenPreview() {
             orderRule = PlaylistOrder.TITLE,
             orderUp = true,
             selectedItems = emptyList(),
+            expandedMenus = emptyMap(),
             onItemSelect = { _, _ -> },
             onItemClick = { },
+            onMenuClick = { },
+            onMenuDismiss = { },
+            onRename = { },
             onOpenDrawer = { },
             onDeletePlaylists = { },
             onSortRuleChange = { },

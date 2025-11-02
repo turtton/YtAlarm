@@ -213,4 +213,22 @@
     <string name="item_aboutpage_liberapay_details">Click to open</string>
     <string name="item_aboutpage_bitcoin_title" translatable="false">Bitcoin</string>
     <string name="item_aboutpage_bitcoin_address" translatable="false">3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t</string>
+
+    <!-- Dialog strings for menu actions -->
+    <string name="dialog_reimport_title">Reimport Video</string>
+    <string name="dialog_reimport_message">Update information for \"%1$s\"?</string>
+    <string name="dialog_reimport_confirm">Update</string>
+    <string name="dialog_delete_video_title">Delete Video</string>
+    <string name="dialog_delete_video_message">Delete \"%1$s\"?</string>
+
+    <!-- Form labels -->
+    <string name="playlist_name_label">Playlist Name</string>
+    <string name="error_empty_name">Please enter a name</string>
+
+    <!-- Snackbar messages -->
+    <string name="message_thumbnail_set">Thumbnail has been set</string>
+    <string name="message_download_not_implemented">Download feature is under development</string>
+    <string name="message_video_deleted">Video deleted</string>
+    <string name="message_reimport_started">Updating video information…</string>
+    <string name="message_playlist_renamed">Playlist renamed</string>
 </resources>

@@ -131,4 +131,22 @@
     <string name="dialog_remove_ok">確定</string>
     <string name="dialog_multichoice_ok">決定</string>
 
+    <!-- Dialog strings for menu actions -->
+    <string name="dialog_reimport_title">動画を再インポート</string>
+    <string name="dialog_reimport_message">「%1$s」の情報を更新しますか？</string>
+    <string name="dialog_reimport_confirm">更新</string>
+    <string name="dialog_delete_video_title">動画を削除</string>
+    <string name="dialog_delete_video_message">「%1$s」を削除しますか？</string>
+
+    <!-- Form labels -->
+    <string name="playlist_name_label">プレイリスト名</string>
+    <string name="error_empty_name">名前を入力してください</string>
+
+    <!-- Snackbar messages -->
+    <string name="message_thumbnail_set">サムネイルを設定しました</string>
+    <string name="message_download_not_implemented">ダウンロード機能は開発中です</string>
+    <string name="message_video_deleted">動画を削除しました</string>
+    <string name="message_reimport_started">動画情報を更新中...</string>
+    <string name="message_playlist_renamed">プレイリスト名を変更しました</string>
+
 </resources>
