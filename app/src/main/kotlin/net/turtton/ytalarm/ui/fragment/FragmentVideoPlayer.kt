@@ -104,9 +104,7 @@ class FragmentVideoPlayer : Fragment() {
         enableFullScreenMode(view)
 
         val activity = requireActivity()
-        if (activity is MainActivity) {
-            hideFab(activity)
-        }
+        // MainActivity関連のコードは削除（FragmentVideoPlayerはAlarmActivityでのみ使用）
         if (activity is VideoPlayerLoadingResourceContainer) {
             activity.videoPlayerLoadingResourceController
                 .videoPlayerLoadingResource
@@ -176,10 +174,7 @@ class FragmentVideoPlayer : Fragment() {
         _binding = null
         val activity = requireActivity()
 
-        if (activity is MainActivity) {
-            activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
-            activity.binding.toolbar.visibility = View.VISIBLE
-        }
+        // MainActivity関連のコードは削除（FragmentVideoPlayerはAlarmActivityでのみ使用）
 
         currentVolume?.let {
             audioManager.setStreamVolume(musicStream, it, AudioManager.FLAG_PLAY_SOUND)
@@ -279,14 +274,7 @@ class FragmentVideoPlayer : Fragment() {
         }
     }
 
-    private fun hideFab(activity: MainActivity) {
-        val fab = activity.binding.fab
-        fab.clearAnimation()
-        fab.visibility = View.GONE
-
-        activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-        activity.binding.toolbar.visibility = View.GONE
-    }
+    // hideFabメソッドは削除（FragmentVideoPlayerはAlarmActivityでのみ使用）
 
     private fun updateAlarm(alarm: Alarm) {
         var repeatType = alarm.repeatType

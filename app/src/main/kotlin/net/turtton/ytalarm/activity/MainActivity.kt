@@ -45,13 +45,6 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
 
     override val videoPlayerLoadingResourceController = VideoPlayerLoadingResourceController()
 
-    // 既存のFragmentとの互換性のため一時的に残す（Compose完全移行後に削除予定）
-    @Suppress("DEPRECATION")
-    lateinit var binding: net.turtton.ytalarm.databinding.ActivityMainBinding
-
-    @Suppress("DEPRECATION")
-    lateinit var drawerLayout: androidx.drawerlayout.widget.DrawerLayout
-
     val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(application.repository)
     }
@@ -62,12 +55,6 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 既存Fragmentとの互換性のためbindingを初期化（FragmentVideoPlayer用）
-        @Suppress("DEPRECATION")
-        binding = net.turtton.ytalarm.databinding.ActivityMainBinding.inflate(layoutInflater)
-        @Suppress("DEPRECATION")
-        drawerLayout = androidx.drawerlayout.widget.DrawerLayout(this)
 
         // Composeで画面を設定
         setContent {
