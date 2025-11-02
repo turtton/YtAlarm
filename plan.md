@@ -75,39 +75,53 @@
 
 ---
 
+### ~~7. Drawerナビゲーションで画面遷移しない~~ ✅
+
+**修正内容** (commit: 89c0b24):
+1. `MainScreen.kt` の`onNavigate`ラムダ内で`currentRoute`の最新値を取得するように修正:
+   ```kotlin
+   onNavigate = { route ->
+       scope.launch {
+           drawerState.close()
+           // 現在のルートを再取得（最新の値を使用）
+           val current = navController.currentBackStackEntry?.destination?.route
+           if (current != route) {
+               navController.navigate(route) { ... }
+           }
+       }
+   }
+   ```
+2. 問題の原因：Compose recompositionのタイミングで古い`currentRoute`値を参照していた
+3. Phase 7 Priority 1のテスト中に発見・修正
+
+---
+
 ## 🚨 未実装機能（Phase 6で保留）
 
 Phase 6完了後のテストで、以下の未実装機能が発見されました（2025-11-02）。
 これらはCompose移行時にTODOコメントとして残されており、次のフェーズで実装が必要です。
 
-### 1. 動画クリック→VideoPlayer遷移が未実装 ⚠️ **Critical**
+### ~~1. 動画クリック→VideoPlayer遷移が未実装~~ ✅ **実装完了 (2025-11-02)**
 
-**問題詳細**:
-- VideoList画面で動画をクリックしても何も起こらない
-- VideoPlayer画面に遷移しない
-- 動画再生のコア機能が利用できない
+**実装内容** (commit: 89c0b24):
+1. **VideoListScreen.kt**:
+   - `onItemClick`パラメータの型を`(Long) -> Unit`から`(String) -> Unit`に変更
+   - `onClick`ハンドラー内で`onItemClick(video.videoId)`を呼び出すように実装
+   - ID型の明確化コメントを追加（Long: DB ID, String: Navigation ID）
 
-**原因特定**:
-- **VideoListScreen.kt:248-254**: `onClick`ハンドラー内の処理が未実装
-  ```kotlin
-  onClick = {
-      if (selectedItems.isEmpty()) {
-          // TODO: 動画プレーヤーへ遷移
-      } else {
-          onItemSelect(video.id, !selectedItems.contains(video.id))
-      }
-  },
-  ```
+2. **YtAlarmNavGraph.kt**:
+   - `VideoListScreen`に`onNavigateToVideoPlayer`コールバックを追加
+   - VideoPlayerへのナビゲーション処理を実装
+   - videoIdのnullチェックを追加（不正な値の場合は自動的にpopBackStack）
 
-**修正方針**:
-1. VideoPlayer画面へのナビゲーション処理を実装
-2. `onNavigateToVideoPlayer`コールバックを追加
-3. 動画IDとプレイリスト情報を渡す
-4. YtAlarmNavGraphにVideoPlayer画面のルートを追加
+3. **VideoPlayerScreen.kt**:
+   - 非アラームモードのエラーハンドリング強化
+   - `hasError`状態の設定とログ出力を追加
 
-**影響範囲**:
-- VideoList画面（全動画モード）
-- VideoList画面（プレイリスト内）
+**テスト状況**:
+- コードレビュー完了（Critical/Warning issues修正）
+- ビルド成功
+- Drawerナビゲーションバグを発見・修正
 
 ---
 
@@ -148,15 +162,18 @@ Phase 6完了後のテストで、以下の未実装機能が発見されまし�
 
 ## 📋 次のステップ
 
-### Phase 7: 未実装機能の実装 ⬅️ **次のフェーズ**
+### Phase 7: 未実装機能の実装 ⬅️ **進行中**
 
-1. **動画クリック→VideoPlayer遷移の実装** (Priority 1 - Critical)
-   - [ ] VideoListScreen.ktのonClick処理実装
-   - [ ] YtAlarmNavGraphにVideoPlayerルート追加
-   - [ ] ナビゲーション処理の実装
-   - [ ] 動作確認テスト
+1. **動画クリック→VideoPlayer遷移の実装** (Priority 1 - Critical) ✅ **完了 (2025-11-02)**
+   - [x] VideoListScreen.ktのonClick処理実装
+   - [x] YtAlarmNavGraphにVideoPlayerルート追加
+   - [x] ナビゲーション処理の実装
+   - [x] エラーハンドリングの改善
+   - [x] Drawerナビゲーションバグ修正（currentRoute取得タイミング）
+   - [x] コードレビュー完了（Critical/Warning issues修正）
+   - [x] コミット完了 (commit: 89c0b24)
 
-2. **縦3点メニューの実装** (Priority 2 - High)
+2. **縦3点メニューの実装** (Priority 2 - High) ⬅️ **次のタスク**
    - [ ] VideoList画面のメニュー実装
    - [ ] Playlist画面のメニュー実装
    - [ ] 削除・編集ダイアログ連携
