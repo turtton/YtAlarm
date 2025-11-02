@@ -75,7 +75,94 @@
 
 ---
 
+## 🚨 未実装機能（Phase 6で保留）
+
+Phase 6完了後のテストで、以下の未実装機能が発見されました（2025-11-02）。
+これらはCompose移行時にTODOコメントとして残されており、次のフェーズで実装が必要です。
+
+### 1. 動画クリック→VideoPlayer遷移が未実装 ⚠️ **Critical**
+
+**問題詳細**:
+- VideoList画面で動画をクリックしても何も起こらない
+- VideoPlayer画面に遷移しない
+- 動画再生のコア機能が利用できない
+
+**原因特定**:
+- **VideoListScreen.kt:248-254**: `onClick`ハンドラー内の処理が未実装
+  ```kotlin
+  onClick = {
+      if (selectedItems.isEmpty()) {
+          // TODO: 動画プレーヤーへ遷移
+      } else {
+          onItemSelect(video.id, !selectedItems.contains(video.id))
+      }
+  },
+  ```
+
+**修正方針**:
+1. VideoPlayer画面へのナビゲーション処理を実装
+2. `onNavigateToVideoPlayer`コールバックを追加
+3. 動画IDとプレイリスト情報を渡す
+4. YtAlarmNavGraphにVideoPlayer画面のルートを追加
+
+**影響範囲**:
+- VideoList画面（全動画モード）
+- VideoList画面（プレイリスト内）
+
+---
+
+### 2. 縦3点ボタンのメニューが未実装 ⚠️ **High**
+
+**問題詳細**:
+- VideoList画面の動画アイテム縦3点ボタン（⋮）をクリックしても何も起こらない
+- Playlist画面のプレイリスト縦3点ボタンをクリックしても何も起こらない
+- 削除・編集などの重要機能が利用できない
+
+**原因特定**:
+- **VideoListScreen.kt:255-257**: `onMenuClick`ハンドラーが空実装
+  ```kotlin
+  onMenuClick = {
+      // 個別メニューアクション（今後実装）
+  }
+  ```
+- **PlaylistScreen.kt:204-206**: 同様に空実装
+
+**修正方針**:
+1. DropdownMenuまたはBottomSheetを実装
+2. メニューアイテム（削除、編集、情報表示など）を追加
+3. 各メニューアクションの処理を実装
+4. ダイアログとの連携を実装
+
+**影響範囲**:
+- VideoList画面の個別動画メニュー
+- Playlist画面の個別プレイリストメニュー
+
+---
+
+**優先度**:
+1. **Priority 1 (Critical)**: 動画クリック→VideoPlayer遷移の実装
+2. **Priority 2 (High)**: 縦3点メニューの実装（Video、Playlist）
+3. **Priority 3 (Medium)**: メニュー内の各機能の詳細実装
+
+---
+
 ## 📋 次のステップ
+
+### Phase 7: 未実装機能の実装 ⬅️ **次のフェーズ**
+
+1. **動画クリック→VideoPlayer遷移の実装** (Priority 1 - Critical)
+   - [ ] VideoListScreen.ktのonClick処理実装
+   - [ ] YtAlarmNavGraphにVideoPlayerルート追加
+   - [ ] ナビゲーション処理の実装
+   - [ ] 動作確認テスト
+
+2. **縦3点メニューの実装** (Priority 2 - High)
+   - [ ] VideoList画面のメニュー実装
+   - [ ] Playlist画面のメニュー実装
+   - [ ] 削除・編集ダイアログ連携
+   - [ ] 動作確認テスト
+
+---
 
 ### Phase 6 Stage 4: 統合テスト・Fragment/XML削除 ✅ **完了 (2025-11-02)**
 
