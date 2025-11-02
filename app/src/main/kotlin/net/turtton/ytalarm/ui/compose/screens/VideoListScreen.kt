@@ -50,11 +50,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -522,19 +522,28 @@ fun VideoListScreen(
             videoToReimport = video
             scope.launch(Dispatchers.IO) {
                 try {
+                    // キャンセルチェック
+                    ensureActive()
+
                     // YoutubeDLで動画情報を再取得
                     val request = YoutubeDLRequest(video.videoUrl)
                         .addOption("--dump-single-json")
                         .addOption("-f", "b")
                     val result = YoutubeDL.getInstance().execute(request) { _, _, _ -> }
 
+                    // 再度キャンセルチェック
+                    ensureActive()
+
                     // JSONをパースして動画情報を取得
                     val json = Json { ignoreUnknownKeys = true }
                     val videoInfo = json.decodeFromString<VideoInformation>(result.out)
                     val newVideo = videoInfo.toVideo()
 
-                    // 既存のVideoのIDを維持したまま情報を更新
-                    val updatedVideo = newVideo.copy(id = video.id)
+                    // 既存のVideoのIDと作成日時を維持したまま情報を更新
+                    val updatedVideo = newVideo.copy(
+                        id = video.id,
+                        creationDate = video.creationDate
+                    )
                     videoViewModel.update(updatedVideo)
 
                     withContext(Dispatchers.Main) {
@@ -543,7 +552,28 @@ fun VideoListScreen(
                             context.getString(R.string.message_reimport_success)
                         )
                     }
+                } catch (e: CancellationException) {
+                    // キャンセル例外はログに記録して再スロー
+                    android.util.Log.d("VideoListScreen", "Reimport cancelled for video: ${video.videoId}")
+                    throw e
+                } catch (e: kotlinx.serialization.SerializationException) {
+                    android.util.Log.e("VideoListScreen", "JSON parse error during reimport: ${video.videoId}", e)
+                    withContext(Dispatchers.Main) {
+                        videoToReimport = null
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.message_reimport_failed) + ": Parse error"
+                        )
+                    }
+                } catch (e: java.net.UnknownHostException) {
+                    android.util.Log.e("VideoListScreen", "Network error during reimport: ${video.videoId}", e)
+                    withContext(Dispatchers.Main) {
+                        videoToReimport = null
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.message_reimport_failed) + ": Network error"
+                        )
+                    }
                 } catch (e: Exception) {
+                    android.util.Log.e("VideoListScreen", "Reimport failed for video: ${video.videoId}", e)
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
                         snackbarHostState.showSnackbar(

@@ -340,21 +340,34 @@ fun PlaylistScreen(
     // ガベージコレクション（Importing状態で終了したプレイリストを削除）
     LaunchedEffect(playlists) {
         scope.launch(Dispatchers.IO) {
-            val garbage = playlists.filter { playlist ->
-                if (playlist.type !is Playlist.Type.Importing) return@filter false
-                val videoId = playlist.videos.firstOrNull() ?: return@filter false
-                val video = videoViewModel.getFromIdAsync(videoId).await() ?: return@filter false
-                val state = when (val stateData = video.stateData) {
-                    is Video.State.Importing -> stateData.state as? Video.WorkerState.Working
-                    is Video.State.Downloading -> stateData.state as? Video.WorkerState.Working
-                    else -> return@filter false
-                } ?: return@filter false
-                val workManager = WorkManager.getInstance(context)
-                val workerState = workManager.getWorkInfoById(state.workerId).get()?.state
-                workerState == null || workerState.isFinished
-            }
-            if (garbage.isNotEmpty()) {
-                playlistViewModel.delete(garbage)
+            try {
+                val garbage = playlists.filter { playlist ->
+                    if (playlist.type !is Playlist.Type.Importing) return@filter false
+                    val videoId = playlist.videos.firstOrNull() ?: return@filter false
+                    val video = videoViewModel.getFromIdAsync(videoId).await() ?: return@filter false
+                    val state = when (val stateData = video.stateData) {
+                        is Video.State.Importing -> stateData.state as? Video.WorkerState.Working
+                        is Video.State.Downloading -> stateData.state as? Video.WorkerState.Working
+                        else -> return@filter false
+                    } ?: return@filter false
+
+                    val workManager = WorkManager.getInstance(context)
+                    try {
+                        val workerState = workManager.getWorkInfoById(state.workerId).get()?.state
+                        workerState == null || workerState.isFinished
+                    } catch (e: Exception) {
+                        android.util.Log.e("PlaylistScreen", "Failed to check worker state: ${state.workerId}", e)
+                        true // ワーカー情報取得失敗時はガベージコレクション対象とする
+                    }
+                }
+                if (garbage.isNotEmpty()) {
+                    playlistViewModel.delete(garbage)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // キャンセル例外は再スロー
+                throw e
+            } catch (e: Exception) {
+                android.util.Log.e("PlaylistScreen", "Garbage collection failed", e)
             }
         }
     }
