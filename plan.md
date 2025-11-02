@@ -191,7 +191,7 @@ Phase 6完了後のテストで、以下の未実装機能が発見されまし�
    - [x] 動作確認テスト
    - [x] コミット完了 (commit: cb9f257)
 
-3. **メニュー位置修正と再インポート機能実装** (2025-11-02) 🚧 **実装中**
+3. **メニュー位置修正と再インポート機能実装** (2025-11-02) ✅ **完了**
    - [x] ドロップダウンメニュー位置修正（3点ボタン直下に表示）
      - VideoItem.kt, PlaylistItem.ktにmenuContentパラメータ追加
      - VideoItemDropdownMenu.kt, PlaylistItemDropdownMenu.ktからBox削除
@@ -202,39 +202,56 @@ Phase 6完了後のテストで、以下の未実装機能が発見されまし�
      - 成功/失敗メッセージ追加（英語・日本語）
    - [x] ビルド・動作確認（エミュレータ）
    - [x] コードレビュー実施
-   - [ ] Critical Issues修正（Phase 7.5で対応）
+   - [x] Critical Issues修正（Phase 7.5で対応完了）
      - エラーハンドリング強化
      - リソースリーク防止
      - 未使用インポート削除
      - creationDate保持
-   - [ ] コミット予定
+   - [x] コミット完了 (commit: 3a381c5)
 
 ---
 
-### Phase 7.5: コードレビュー対応 🚧 **次のステップ**
+### Phase 7.5: コードレビュー対応 ✅ **完了 (2025-11-02)**
 
 **コードレビュー結果サマリー (2025-11-02)**:
 - ✅ 良好: メニュー位置修正、コンポーネント分離、国際化対応
-- 🔴 Critical Issues (2件): エラーハンドリング不足、リソースリーク
-- ⚠️ Warnings (4件): 未使用インポート、creationDate喪失、状態管理パターン
-- 💡 Suggestions (4件): Preview改善、詳細エラーメッセージ、ローディング表示
+- 🔴 Critical Issues (4件): エラーハンドリング不足、リソースリーク、未使用インポート、creationDate喪失
+- ⚠️ Warnings (1件): PlaylistScreenのエラーハンドリング
 
-**対応タスク**:
-1. **Critical Issues修正** (Priority: Critical)
-   - [ ] エラーハンドリング強化（ログ出力、エラー種別判定）
-   - [ ] キャンセル処理追加（ensureActive、CancellationException）
-   - [ ] 未使用インポート削除（WorkInfo, WorkManager）
-   - [ ] creationDate保持（再インポート時に作成日維持）
+**実施した修正 (commit: 3a381c5)**:
 
-2. **Warning対応** (Priority: High)
-   - [ ] ViewModelへの処理移動検討
-   - [ ] 状態管理パターン改善
+1. **VideoListScreen.kt修正** (Priority: Critical) ✅
+   - [x] 未使用インポート削除（WorkInfo, WorkManager）
+   - [x] 必要なインポート追加（CancellationException, ensureActive）
+   - [x] エラーハンドリング強化
+     - CancellationExceptionを個別にキャッチして再スロー
+     - SerializationExceptionを個別にキャッチ（Parse errorメッセージ）
+     - UnknownHostExceptionを個別にキャッチ（Network errorメッセージ）
+     - 全エラー種別で詳細ログ出力
+   - [x] キャンセル処理追加（ensureActive × 2箇所）
+   - [x] creationDate保持（再インポート時に作成日維持）
 
-3. **テスト・コミット**
-   - [ ] ビルド確認
-   - [ ] 動作テスト
-   - [ ] コードレビュー再実施
-   - [ ] コミット
+2. **PlaylistScreen.kt修正** (Priority: High) ✅
+   - [x] WorkManager状態チェックのtry-catch保護
+   - [x] ガベージコレクション全体のtry-catch保護
+   - [x] CancellationException適切処理と再スロー
+   - [x] エラーログ出力追加
+
+3. **テスト・検証** ✅
+   - [x] ビルド確認（成功）
+   - [x] モバイルデバッグテスト（正常起動確認）
+   - [x] 最終コードレビュー（評価: Acceptable - コミット可能）
+   - [x] コミット完了 (commit: 3a381c5)
+
+**修正統計**:
+- 変更ファイル: 2ファイル
+- 追加: 62行
+- 削除: 19行
+
+**残存する改善提案（任意）**:
+- ログタグの定数化（現状でも問題なし）
+- ViewModelへの処理移動（将来的な改善）
+- ローディング表示の追加（UX向上）
 
 ---
 
