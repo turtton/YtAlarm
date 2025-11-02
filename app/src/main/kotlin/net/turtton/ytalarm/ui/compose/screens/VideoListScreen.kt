@@ -33,7 +33,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
@@ -50,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.work.WorkManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -81,6 +79,7 @@ import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 fun VideoListScreenContent(
     playlistTitle: String,
     isNewPlaylist: Boolean,
+    isAllVideosMode: Boolean,
     videos: List<net.turtton.ytalarm.database.structure.Video>,
     playlistType: Playlist.Type?,
     orderRule: VideoOrder,
@@ -120,8 +119,8 @@ fun VideoListScreenContent(
                     }
                 },
                 actions = {
-                    // 選択時の削除ボタン
-                    if (selectedItems.isNotEmpty() && !isSyncMode) {
+                    // 選択時の削除ボタン（全動画モードとSyncモードでは非表示）
+                    if (selectedItems.isNotEmpty() && !isSyncMode && !isAllVideosMode) {
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(Icons.Default.Delete, contentDescription = "Delete")
                         }
@@ -141,7 +140,11 @@ fun VideoListScreenContent(
                                 } else {
                                     Icons.Default.KeyboardArrowDown
                                 },
-                                contentDescription = if (orderUp) "Sort ascending" else "Sort descending"
+                                contentDescription = if (orderUp) {
+                                    "Sort ascending"
+                                } else {
+                                    "Sort descending"
+                                }
                             )
                         }
                         // ソートルール選択ボタン
@@ -159,7 +162,8 @@ fun VideoListScreenContent(
             )
         },
         floatingActionButton = {
-            if (!isImportingMode) {
+            // 全動画モードとImportingモードではFABを非表示
+            if (!isImportingMode && !isAllVideosMode) {
                 Column(horizontalAlignment = Alignment.End) {
                     // Expanded状態のサブFAB
                     AnimatedVisibility(visible = isFabExpanded && isOriginalMode) {
@@ -176,7 +180,10 @@ fun VideoListScreenContent(
                                 onClick = onFabMultiChoiceClick,
                                 modifier = Modifier.padding(bottom = 16.dp)
                             ) {
-                                Icon(Icons.Default.PlayArrow, contentDescription = "Add from videos")
+                                Icon(
+                                    Icons.Default.PlayArrow,
+                                    contentDescription = "Add from videos"
+                                )
                             }
                         }
                     }
@@ -214,8 +221,11 @@ fun VideoListScreenContent(
             if (videos.isEmpty()) {
                 Text(
                     text = stringResource(
-                        if (isNewPlaylist) R.string.video_list_empty_new_message
-                        else R.string.video_list_empty_message
+                        if (isNewPlaylist) {
+                            R.string.video_list_empty_new_message
+                        } else {
+                            R.string.video_list_empty_message
+                        }
                     ),
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -361,10 +371,14 @@ fun VideoListScreen(
     onShowMultiChoiceDialog: (Long) -> Unit,
     modifier: Modifier = Modifier,
     videoViewModel: VideoViewModel = viewModel(
-        factory = VideoViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+        factory = VideoViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).repository
+        )
     ),
     playlistViewModel: PlaylistViewModel = viewModel(
-        factory = PlaylistViewModelFactory((LocalContext.current.applicationContext as YtApplication).repository)
+        factory = PlaylistViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).repository
+        )
     )
 ) {
     val context = LocalContext.current
@@ -372,8 +386,9 @@ fun VideoListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val currentId = remember { MutableStateFlow(playlistId) }
-    // playlistId == 0の場合は全動画モード（新規プレイリスト作成時）
-    val playlist by if (currentId.value == 0L) {
+    // playlistId == 0の場合は全動画モード
+    val isAllVideosMode = currentId.value == 0L
+    val playlist by if (isAllVideosMode) {
         remember { mutableStateOf<Playlist?>(null) }
     } else {
         playlistViewModel.getFromId(currentId.value).observeAsState()
@@ -392,12 +407,17 @@ fun VideoListScreen(
     val isSyncMode = playlistType is Playlist.Type.CloudPlaylist
 
     // 動画リストを取得
-    val videoIds = playlist?.videos ?: emptyList()
-    val videos by videoViewModel.getFromIds(videoIds).observeAsState(emptyList())
+    // 全動画モード(playlistId=0)の場合は全動画を取得、それ以外はプレイリストの動画を取得
+    val videos by if (isAllVideosMode) {
+        videoViewModel.allVideos.observeAsState(emptyList())
+    } else {
+        val videoIds = playlist?.videos ?: emptyList()
+        videoViewModel.getFromIds(videoIds).observeAsState(emptyList())
+    }
 
     // ソート処理
     val sortedVideos = remember(videos, orderRule, orderUp) {
-        val mutableList: MutableList<net.turtton.ytalarm.database.structure.Video> = videos.toMutableList()
+        val mutableList = videos.toMutableList()
         when (orderRule) {
             VideoOrder.TITLE -> mutableList.sortBy { it.title }
             VideoOrder.CREATION_DATE -> mutableList.sortBy { it.creationDate.timeInMillis }
@@ -408,16 +428,15 @@ fun VideoListScreen(
         mutableList
     }
 
-    val playlistTitle = playlist?.title ?: stringResource(
-        if (currentId.value == 0L) R.string.playlist_new_title
-        else R.string.nav_video_list
-    )
-    val isNewPlaylist = currentId.value == 0L
+    val playlistTitle = playlist?.title ?: stringResource(R.string.nav_video_list)
+    // 全動画モードでは「新規プレイリスト」ではないので、常にfalse
+    val isNewPlaylist = false
 
     // VideoListScreenContentを呼び出す
     VideoListScreenContent(
         playlistTitle = playlistTitle,
         isNewPlaylist = isNewPlaylist,
+        isAllVideosMode = isAllVideosMode,
         videos = sortedVideos,
         playlistType = playlistType,
         orderRule = orderRule,
@@ -500,7 +519,9 @@ fun VideoListScreenPreview() {
                 videoId = "video1",
                 title = "Morning Meditation",
                 domain = "youtube.com",
-                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(isStreamable = true),
+                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(
+                    isStreamable = true
+                ),
                 creationDate = java.util.Calendar.getInstance()
             ),
             net.turtton.ytalarm.database.structure.Video(
@@ -508,7 +529,9 @@ fun VideoListScreenPreview() {
                 videoId = "video2",
                 title = "Workout Music Mix",
                 domain = "youtube.com",
-                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(isStreamable = true),
+                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(
+                    isStreamable = true
+                ),
                 creationDate = java.util.Calendar.getInstance()
             ),
             net.turtton.ytalarm.database.structure.Video(
@@ -516,7 +539,9 @@ fun VideoListScreenPreview() {
                 videoId = "video3",
                 title = "Relaxing Sounds",
                 domain = "soundcloud.com",
-                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(isStreamable = true),
+                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(
+                    isStreamable = true
+                ),
                 creationDate = java.util.Calendar.getInstance()
             )
         )
@@ -524,6 +549,7 @@ fun VideoListScreenPreview() {
         VideoListScreenContent(
             playlistTitle = "My Playlist",
             isNewPlaylist = false,
+            isAllVideosMode = false,
             videos = dummyVideos,
             playlistType = Playlist.Type.Original,
             orderRule = VideoOrder.TITLE,

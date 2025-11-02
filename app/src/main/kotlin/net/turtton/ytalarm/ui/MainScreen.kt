@@ -79,9 +79,12 @@ fun MainScreen(
                                 // ルートが異なる場合のみナビゲート
                                 if (currentRoute != route) {
                                     navController.navigate(route) {
-                                        // 既存の画面に戻る場合、バックスタックから削除
-                                        popUpTo(route) { inclusive = true }
+                                        // スタート画面まで戻り、状態を保存/復元してナビゲート
+                                        popUpTo(YtAlarmDestination.ALARM_LIST) {
+                                            saveState = true
+                                        }
                                         launchSingleTop = true
+                                        restoreState = true
                                     }
                                 }
                             }
@@ -129,10 +132,7 @@ private fun DrawerHeader() {
  * @param onNavigate ナビゲーションコールバック
  */
 @Composable
-private fun DrawerContent(
-    currentRoute: String?,
-    onNavigate: (String) -> Unit
-) {
+private fun DrawerContent(currentRoute: String?, onNavigate: (String) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()

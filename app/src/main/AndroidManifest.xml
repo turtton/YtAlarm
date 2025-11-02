@@ -22,6 +22,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.YtAlarm"
         android:extractNativeLibs="true"
+        android:enableOnBackInvokedCallback="true"
         tools:targetApi="35">
         <provider
             android:name="androidx.startup.InitializationProvider"
