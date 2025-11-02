@@ -87,7 +87,7 @@ fun VideoListScreenContent(
     selectedItems: List<Long>,
     isFabExpanded: Boolean,
     onItemSelect: (Long, Boolean) -> Unit,
-    onItemClick: (Long) -> Unit,
+    onItemClick: (String) -> Unit,
     onNavigateBack: () -> Unit,
     onDeleteVideos: () -> Unit,
     onSortRuleChange: (VideoOrder) -> Unit,
@@ -247,8 +247,10 @@ fun VideoListScreenContent(
                             },
                             onClick = {
                                 if (selectedItems.isEmpty()) {
-                                    // TODO: 動画プレーヤーへ遷移
+                                    // Navigate to player using external video ID (String)
+                                    onItemClick(video.videoId)
                                 } else {
+                                    // Toggle selection using internal DB ID (Long)
                                     onItemSelect(video.id, !selectedItems.contains(video.id))
                                 }
                             },
@@ -367,6 +369,7 @@ fun VideoListScreenContent(
 fun VideoListScreen(
     playlistId: Long,
     onNavigateBack: () -> Unit,
+    onNavigateToVideoPlayer: (String) -> Unit,
     onShowUrlInputDialog: (Long) -> Unit,
     onShowMultiChoiceDialog: (Long) -> Unit,
     modifier: Modifier = Modifier,
@@ -450,8 +453,8 @@ fun VideoListScreen(
                 selectedItems.remove(id)
             }
         },
-        onItemClick = { _ ->
-            // TODO: 動画プレーヤーへ遷移
+        onItemClick = { videoId ->
+            onNavigateToVideoPlayer(videoId)
         },
         onNavigateBack = onNavigateBack,
         onDeleteVideos = {

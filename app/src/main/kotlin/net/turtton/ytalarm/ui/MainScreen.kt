@@ -76,8 +76,10 @@ fun MainScreen(
                             scope.launch {
                                 // Drawer閉じるアニメーション完了を待つ
                                 drawerState.close()
+                                // 現在のルートを再取得（最新の値を使用）
+                                val current = navController.currentBackStackEntry?.destination?.route
                                 // ルートが異なる場合のみナビゲート
-                                if (currentRoute != route) {
+                                if (current != route) {
                                     navController.navigate(route) {
                                         // スタート画面まで戻り、状態を保存/復元してナビゲート
                                         popUpTo(YtAlarmDestination.ALARM_LIST) {

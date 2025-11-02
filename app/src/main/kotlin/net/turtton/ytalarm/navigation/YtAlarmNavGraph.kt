@@ -124,6 +124,9 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
             onNavigateBack = {
                 navController.popBackStack()
             },
+            onNavigateToVideoPlayer = { videoId ->
+                navController.navigate(YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false))
+            },
             onShowUrlInputDialog = { playlistId ->
                 // TODO: UrlInputDialogの統合（Stage 2で実装）
             },
@@ -150,8 +153,16 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
             }
         )
     ) { backStackEntry ->
-        val videoId = backStackEntry.arguments?.getString("videoId") ?: ""
+        val videoId = backStackEntry.arguments?.getString("videoId")
         val isAlarmMode = backStackEntry.arguments?.getBoolean("isAlarmMode") ?: false
+
+        // videoIdが不正な場合は前の画面に戻る
+        if (videoId.isNullOrEmpty()) {
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                navController.popBackStack()
+            }
+            return@composable
+        }
 
         VideoPlayerScreen(
             videoId = videoId,

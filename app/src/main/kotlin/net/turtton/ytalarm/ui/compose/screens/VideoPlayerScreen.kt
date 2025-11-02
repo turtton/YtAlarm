@@ -372,6 +372,8 @@ fun VideoPlayerScreen(
             // 非アラームモード
             val video = videoViewModel.getFromVideoIdAsync(videoId).await()
             if (video == null) {
+                Log.e(LOG_TAG, "Failed to get video. VideoId: $videoId")
+                hasError = true
                 snackbarHostState.showSnackbar(
                     context.getString(R.string.snackbar_error_failed_to_get_video)
                 )
