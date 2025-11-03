@@ -307,7 +307,7 @@ Phase 6完了後のテストで、以下の未実装機能が発見されまし�
 
 ### Phase 8: ダイアログ統合の実装 ✅ **完了 (2025-11-03)**
 
-**発見された問題 (2025-11-03)**:
+**Stage 1: 初期実装 (2025-11-03 午前)**
 
 mobile-debugger-mcpエージェントによる調査で、以下の未実装機能が発見されました：
 
@@ -321,76 +321,76 @@ mobile-debugger-mcpエージェントによる調査で、以下の未実装機�
    }
    ```
 
-2. **影響範囲**:
-   - PlaylistScreen: FABボタン → 新規プレイリスト作成（VideoListScreen遷移）は動作
-   - VideoListScreen: FABボタン（URLから追加）→ **UrlInputDialogが表示されない** ❌
-   - PlaylistScreen: ビデオ追加ボタン → **MultiChoiceVideoDialogが表示されない** ❌
+2. **初期実装内容**:
+   - ダイアログ状態管理の追加
+   - UrlInputDialog統合（直接YoutubeDL API呼び出し）
+   - MultiChoiceVideoDialog統合
+   - ヘルパー関数実装（handlePlaylistImport, handleVideoImport）
+   - 文字列リソース追加
 
-3. **実装状況**:
-   - ✅ UrlInputDialog.kt - ダイアログUI実装済み
-   - ✅ MultiChoiceVideoDialog.kt - ダイアログUI実装済み
-   - ✅ PlaylistScreen/VideoListScreen - FABボタン表示済み
-   - ❌ NavGraph統合 - コールバック未実装（TODO状態）
+3. **初期実装の問題点**:
+   - ❌ VideoInfoDownloadWorkerを使用していない
+   - ❌ 直接YoutubeDL.getInfo()を呼び出し
+   - ❌ バックグラウンド処理されない
+   - ❌ "Importing"状態が表示されない
+   - ❌ 重複チェックがない
+   - ❌ 通知が表示されない
+   - ❌ JSONパースエラーが発生（SoundCloudなど）
 
-**実装内容** (commit: TBD):
+**Stage 2: VideoInfoDownloadWorker修正 (2025-11-03 午後)** ✅
 
-1. **YtAlarmNavGraph.kt修正** ✅
-   - [x] ダイアログ状態管理の追加
-     - `showUrlInputDialog: Boolean`
-     - `showMultiChoiceDialog: Boolean`
-     - `currentPlaylistIdForDialog: Long`
-   - [x] `onShowUrlInputDialog`コールバック実装
-     - 状態更新処理
-     - UrlInputDialog表示制御
-   - [x] `onShowMultiChoiceDialog`コールバック実装
-     - 状態更新処理
-     - MultiChoiceVideoDialog表示制御
+**発見された問題**:
+- Stage 1の実装が、MainActivityの正しい実装（VideoInfoDownloadWorker使用）と異なっていた
+- mobile-debugger-mcpによるテストで、JSONパースエラーと処理の不完全さが確認された
 
-2. **ダイアログ統合とヘルパー関数実装** ✅
-   - [x] UrlInputDialog統合
-     - PlaylistViewModel/VideoViewModelとの連携
-     - URL入力後のデータ処理（YoutubeDL API使用）
-     - プレイリスト/ビデオ判定処理
-     - エラーハンドリング
-   - [x] MultiChoiceVideoDialog統合
-     - VideoViewModel.allVideosとの連携
-     - ビデオ選択後のプレイリスト追加処理
-     - エラーハンドリング
-   - [x] ヘルパー関数実装
-     - `handlePlaylistImport`: プレイリストインポート処理
-     - `handleVideoImport`: 単一ビデオインポート処理
+**修正内容** (commit: 65b6c0e):
 
-3. **文字列リソース追加** ✅
-   - [x] エラーメッセージの追加（英語・日本語）
-     - `message_import_failed`
-     - `message_playlist_imported`
-     - `message_video_imported`
-     - `message_videos_added`
-     - `message_operation_failed`
+1. **YtAlarmNavGraph.kt の大幅な簡略化** ✅
+   - [x] UrlInputDialog.onConfirmを**VideoInfoDownloadWorker.registerWorker()**使用に変更
+   - [x] 直接YoutubeDL API呼び出しを削除
+   - [x] handlePlaylistImport()関数を削除（約60行）
+   - [x] handleVideoImport()関数を削除（約30行）
+   - [x] 未使用インポートを削除（YoutubeDL, Json, VideoInformation等）
+   - [x] **コード削減: 142行削除、13行追加**
 
-4. **テスト・検証** ✅
+2. **VideoInfoDownloadWorkerによる自動処理** ✅
+   - ✅ バックグラウンド処理（WorkManager）
+   - ✅ 重複チェック（既存動画の再利用）
+   - ✅ "Importing"状態の仮動画表示
+   - ✅ システム通知表示
+   - ✅ 堅牢なエラーハンドリング
+   - ✅ CloudPlaylistタイプサポート
+   - ✅ プログレストラッキング
+
+3. **テスト・検証** ✅
    - [x] ビルド確認（成功）
-   - [x] lint/ktlintチェック（通過）
-   - [x] モバイルデバッグテスト（エミュレータ起動確認）
-   - [x] logcat確認（エラーなし）
+   - [x] APKインストール（成功）
+   - [x] 手動テスト（成功）
+     - 既存プレイリストからURL追加
+     - SoundCloud URLでテスト成功
+     - "Importing"状態確認
+     - 最終的な動画情報表示確認
+   - [x] コミット完了 (commit: 65b6c0e)
 
 **修正ファイル**:
-- `app/src/main/kotlin/net/turtton/ytalarm/navigation/YtAlarmNavGraph.kt` (+232行)
-  - インポート追加、ダイアログ統合、ヘルパー関数実装
-- `app/src/main/res/values/strings.xml` (+5行)
-- `app/src/main/res/values-ja/strings.xml` (+5行)
+- `app/src/main/kotlin/net/turtton/ytalarm/navigation/YtAlarmNavGraph.kt` (-142行 +13行)
+  - VideoInfoDownloadWorker使用に変更、大幅なコード削減
 
 **達成された成果**:
 - ✅ FABボタンからUrlInputDialogが正常に表示される
-- ✅ URL入力後に動画/プレイリストがインポート処理される
+- ✅ URL入力後にVideoInfoDownloadWorkerでバックグラウンド処理
+- ✅ "Importing"状態の仮動画が表示される
+- ✅ システム通知が表示される
+- ✅ 重複チェックが実行される
 - ✅ MultiChoiceVideoDialogが正常に表示される
 - ✅ ビデオ選択後にプレイリストに追加される
-- ✅ エラー処理が実装されている
-- ✅ ビルド・デプロイ成功
+- ✅ **SoundCloud URLでも正常に動作**
+- ✅ ビルド・デプロイ・実機テスト成功
 
-**発見された問題**:
+**発見された問題（Phase 9で修正予定）**:
 - ⚠️ PlaylistScreenのFAB → `onNavigateToVideoList(0L)` が全動画モードとして扱われる
   - 本来は新規プレイリスト作成モードとして動作すべき
+  - 手動テストで確認: 新規追加ボタン→ビデオ一覧に遷移→FABボタンなし
   - Phase 9で修正予定
 
 ---
@@ -402,6 +402,12 @@ mobile-debugger-mcpエージェントによる調査で、以下の未実装機�
 現在、VideoListScreenの`playlistId`パラメータの扱いが混乱しています：
 - `playlistId=0`: 現在は「全動画モード」として扱われている
 - 新規プレイリスト作成モードが存在しない
+
+**Phase 8の手動テストで問題を確認** (2025-11-03):
+- PlaylistScreenの「新規追加」ボタン（FAB）をタップ
+- → VideoListScreenに遷移（playlistId=0）
+- → 全動画モードと認識され、FABボタンが表示されない
+- → 新規プレイリスト作成ができない状態
 
 **問題の詳細**:
 
