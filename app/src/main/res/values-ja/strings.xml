@@ -150,5 +150,10 @@
     <string name="message_reimport_success">動画情報を更新しました</string>
     <string name="message_reimport_failed">動画情報の更新に失敗しました</string>
     <string name="message_playlist_renamed">プレイリスト名を変更しました</string>
+    <string name="message_import_failed">インポートに失敗しました</string>
+    <string name="message_playlist_imported">プレイリストをインポートしました</string>
+    <string name="message_video_imported">動画をインポートしました</string>
+    <string name="message_videos_added">動画をプレイリストに追加しました</string>
+    <string name="message_operation_failed">操作に失敗しました</string>
 
 </resources>

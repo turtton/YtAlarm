@@ -233,4 +233,9 @@
     <string name="message_reimport_success">Video information updated successfully</string>
     <string name="message_reimport_failed">Failed to update video information</string>
     <string name="message_playlist_renamed">Playlist renamed</string>
+    <string name="message_import_failed">Failed to import</string>
+    <string name="message_playlist_imported">Playlist imported successfully</string>
+    <string name="message_video_imported">Video imported successfully</string>
+    <string name="message_videos_added">Videos added to playlist</string>
+    <string name="message_operation_failed">Operation failed</string>
 </resources>

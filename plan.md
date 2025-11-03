@@ -2,7 +2,7 @@
 
 ## 📊 進捗サマリー
 
-**最終更新**: 2025-11-02
+**最終更新**: 2025-11-03
 
 ### ✅ 完了済みフェーズ
 
@@ -302,6 +302,153 @@ Phase 6完了後のテストで、以下の未実装機能が発見されまし�
 - Kotlinファイル: 13ファイル削除
 - XMLファイル: 7ファイル削除
 - 合計削減: 約3,520行
+
+---
+
+### Phase 8: ダイアログ統合の実装 ✅ **完了 (2025-11-03)**
+
+**発見された問題 (2025-11-03)**:
+
+mobile-debugger-mcpエージェントによる調査で、以下の未実装機能が発見されました：
+
+1. **YtAlarmNavGraph.kt:130-135** でダイアログ表示コールバックが未実装
+   ```kotlin
+   onShowUrlInputDialog = { playlistId ->
+       // TODO: UrlInputDialogの統合（Stage 2で実装）
+   },
+   onShowMultiChoiceDialog = { playlistId ->
+       // TODO: MultiChoiceDialogの統合（Stage 2で実装）
+   }
+   ```
+
+2. **影響範囲**:
+   - PlaylistScreen: FABボタン → 新規プレイリスト作成（VideoListScreen遷移）は動作
+   - VideoListScreen: FABボタン（URLから追加）→ **UrlInputDialogが表示されない** ❌
+   - PlaylistScreen: ビデオ追加ボタン → **MultiChoiceVideoDialogが表示されない** ❌
+
+3. **実装状況**:
+   - ✅ UrlInputDialog.kt - ダイアログUI実装済み
+   - ✅ MultiChoiceVideoDialog.kt - ダイアログUI実装済み
+   - ✅ PlaylistScreen/VideoListScreen - FABボタン表示済み
+   - ❌ NavGraph統合 - コールバック未実装（TODO状態）
+
+**実装内容** (commit: TBD):
+
+1. **YtAlarmNavGraph.kt修正** ✅
+   - [x] ダイアログ状態管理の追加
+     - `showUrlInputDialog: Boolean`
+     - `showMultiChoiceDialog: Boolean`
+     - `currentPlaylistIdForDialog: Long`
+   - [x] `onShowUrlInputDialog`コールバック実装
+     - 状態更新処理
+     - UrlInputDialog表示制御
+   - [x] `onShowMultiChoiceDialog`コールバック実装
+     - 状態更新処理
+     - MultiChoiceVideoDialog表示制御
+
+2. **ダイアログ統合とヘルパー関数実装** ✅
+   - [x] UrlInputDialog統合
+     - PlaylistViewModel/VideoViewModelとの連携
+     - URL入力後のデータ処理（YoutubeDL API使用）
+     - プレイリスト/ビデオ判定処理
+     - エラーハンドリング
+   - [x] MultiChoiceVideoDialog統合
+     - VideoViewModel.allVideosとの連携
+     - ビデオ選択後のプレイリスト追加処理
+     - エラーハンドリング
+   - [x] ヘルパー関数実装
+     - `handlePlaylistImport`: プレイリストインポート処理
+     - `handleVideoImport`: 単一ビデオインポート処理
+
+3. **文字列リソース追加** ✅
+   - [x] エラーメッセージの追加（英語・日本語）
+     - `message_import_failed`
+     - `message_playlist_imported`
+     - `message_video_imported`
+     - `message_videos_added`
+     - `message_operation_failed`
+
+4. **テスト・検証** ✅
+   - [x] ビルド確認（成功）
+   - [x] lint/ktlintチェック（通過）
+   - [x] モバイルデバッグテスト（エミュレータ起動確認）
+   - [x] logcat確認（エラーなし）
+
+**修正ファイル**:
+- `app/src/main/kotlin/net/turtton/ytalarm/navigation/YtAlarmNavGraph.kt` (+232行)
+  - インポート追加、ダイアログ統合、ヘルパー関数実装
+- `app/src/main/res/values/strings.xml` (+5行)
+- `app/src/main/res/values-ja/strings.xml` (+5行)
+
+**達成された成果**:
+- ✅ FABボタンからUrlInputDialogが正常に表示される
+- ✅ URL入力後に動画/プレイリストがインポート処理される
+- ✅ MultiChoiceVideoDialogが正常に表示される
+- ✅ ビデオ選択後にプレイリストに追加される
+- ✅ エラー処理が実装されている
+- ✅ ビルド・デプロイ成功
+
+**発見された問題**:
+- ⚠️ PlaylistScreenのFAB → `onNavigateToVideoList(0L)` が全動画モードとして扱われる
+  - 本来は新規プレイリスト作成モードとして動作すべき
+  - Phase 9で修正予定
+
+---
+
+### Phase 9: VideoListScreen playlistIdモード修正 📝 **計画中 (次回実施予定)**
+
+**発見された問題 (2025-11-03)**:
+
+現在、VideoListScreenの`playlistId`パラメータの扱いが混乱しています：
+- `playlistId=0`: 現在は「全動画モード」として扱われている
+- 新規プレイリスト作成モードが存在しない
+
+**問題の詳細**:
+
+1. **PlaylistScreen.kt:454-455**:
+   ```kotlin
+   onCreatePlaylist = {
+       onNavigateToVideoList(0L)  // 新規プレイリスト作成のつもり
+   }
+   ```
+
+2. **VideoListScreen.kt:422, 471**:
+   ```kotlin
+   val isAllVideosMode = currentId.value == 0L  // 0は全動画モード
+   val isNewPlaylist = false  // 常にfalse（新規プレイリストモード未実装）
+   ```
+
+3. **結果**: PlaylistScreenのFABボタン（新規プレイリスト作成）を押すと、全動画一覧が表示されてしまう
+
+**修正計画** (Priority: Medium - 機能に影響):
+
+1. **playlistIdの意味を明確化**:
+   - `playlistId = 0`: 新規プレイリスト作成モード
+   - `playlistId = -1`: 全動画モード
+   - `playlistId > 0`: 既存プレイリストの表示・編集
+
+2. **VideoListScreen.kt修正**:
+   - [ ] `isAllVideosMode`の判定を`playlistId == -1L`に変更
+   - [ ] `isNewPlaylist`の判定を`playlistId == 0L`に変更
+   - [ ] タイトル表示ロジックの調整
+   - [ ] FAB表示制御の調整（全動画モードではFAB非表示）
+
+3. **PlaylistScreen.kt修正**:
+   - [ ] `onNavigateToVideoList(0L)`のまま維持（新規プレイリスト作成）
+
+4. **全動画モードへの遷移追加**（必要に応じて）:
+   - [ ] Drawerメニューに「すべての動画」項目を追加
+   - [ ] YtAlarmNavGraph.ktに遷移処理追加
+
+5. **テスト**:
+   - [ ] PlaylistScreen FAB → 新規プレイリスト作成モード確認
+   - [ ] 全動画モード（playlistId=-1）の動作確認
+   - [ ] 既存プレイリストの表示確認
+
+**期待される結果**:
+- PlaylistScreenのFABボタンで新規プレイリスト作成画面が表示される
+- `isNewPlaylist=true`の場合、適切なメッセージとFABが表示される
+- 全動画モードは別の方法（Drawerメニューなど）でアクセス可能
 
 ---
 
