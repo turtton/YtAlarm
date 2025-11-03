@@ -19,16 +19,11 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.yausername.youtubedl_android.YoutubeDL
-import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
-import net.turtton.ytalarm.database.structure.Playlist
-import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
 import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
@@ -39,12 +34,11 @@ import net.turtton.ytalarm.ui.compose.screens.AlarmSettingsScreen
 import net.turtton.ytalarm.ui.compose.screens.PlaylistScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoListScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoPlayerScreen
-import net.turtton.ytalarm.util.VideoInformation
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
-import java.util.Calendar
+import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
 /**
  * YtAlarmアプリのNavigation Graph
@@ -190,44 +184,19 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         if (showUrlInputDialog) {
             UrlInputDialog(
                 onConfirm = { url ->
-                    scope.launch(Dispatchers.IO) {
-                        try {
-                            val request = YoutubeDLRequest(url)
-                            val result = YoutubeDL.getInstance().getInfo(request)
-                            val videoInfo = Json.decodeFromString<VideoInformation>(
-                                result.toString()
-                            )
-
-                            // プレイリストかビデオか判定
-                            if (videoInfo.typeData is VideoInformation.Type.Playlist) {
-                                // プレイリストのインポート処理
-                                handlePlaylistImport(
-                                    videoInfo = videoInfo,
-                                    playlistViewModel = playlistViewModel,
-                                    videoViewModel = videoViewModel,
-                                    context = context,
-                                    snackbarHostState = snackbarHostState
-                                )
-                            } else {
-                                // 単一ビデオの追加処理
-                                handleVideoImport(
-                                    videoInfo = videoInfo,
-                                    playlistId = currentPlaylistIdForDialog,
-                                    playlistViewModel = playlistViewModel,
-                                    videoViewModel = videoViewModel,
-                                    context = context,
-                                    snackbarHostState = snackbarHostState
-                                )
-                            }
-                        } catch (e: Exception) {
-                            Log.e("YtAlarmNavGraph", "URL import failed: $url", e)
-                            withContext(Dispatchers.Main) {
-                                snackbarHostState.showSnackbar(
-                                    context.getString(R.string.message_import_failed)
-                                )
-                            }
-                        }
+                    // VideoInfoDownloadWorkerを使用してバックグラウンドでインポート
+                    // Workerが重複チェック、プレイリスト追加、通知などを処理
+                    val targetPlaylists = if (currentPlaylistIdForDialog != 0L) {
+                        longArrayOf(currentPlaylistIdForDialog)
+                    } else {
+                        longArrayOf()
                     }
+                    VideoInfoDownloadWorker.registerWorker(
+                        context,
+                        url,
+                        targetPlaylists
+                    )
+                    showUrlInputDialog = false
                 },
                 onDismiss = { showUrlInputDialog = false }
             )
@@ -320,103 +289,5 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
 private fun NavGraphBuilder.aboutScreen() {
     composable(route = YtAlarmDestination.ABOUT) {
         AboutPageScreen()
-    }
-}
-
-/**
- * プレイリストをインポートする処理
- */
-@Suppress("LongParameterList")
-private suspend fun handlePlaylistImport(
-    videoInfo: VideoInformation,
-    playlistViewModel: PlaylistViewModel,
-    videoViewModel: VideoViewModel,
-    context: android.content.Context,
-    snackbarHostState: SnackbarHostState
-) {
-    try {
-        val playlistType = videoInfo.typeData as? VideoInformation.Type.Playlist
-            ?: throw IllegalArgumentException("Not a playlist")
-
-        // プレイリストを作成
-        val newPlaylist = Playlist(
-            id = 0,
-            title = videoInfo.title ?: "Untitled Playlist",
-            videos = emptyList(),
-            type = Playlist.Type.Original,
-            creationDate = Calendar.getInstance()
-        )
-
-        val playlistId = playlistViewModel.insertAsync(newPlaylist).await()
-
-        // プレイリスト内の動画をインポート
-        val videoIds = mutableListOf<Long>()
-        for (entry in playlistType.entries) {
-            if (entry.typeData is VideoInformation.Type.Video) {
-                val video = entry.toVideo()
-                val videoId = videoViewModel.insertAsync(video).await()
-                videoIds.add(videoId)
-            }
-        }
-
-        // プレイリストに動画IDを追加
-        val playlist = playlistViewModel.getFromIdAsync(playlistId).await()
-        if (playlist != null) {
-            playlistViewModel.update(playlist.copy(videos = videoIds))
-        }
-
-        withContext(Dispatchers.Main) {
-            snackbarHostState.showSnackbar(
-                context.getString(R.string.message_playlist_imported)
-            )
-        }
-    } catch (e: Exception) {
-        Log.e("YtAlarmNavGraph", "Playlist import failed", e)
-        withContext(Dispatchers.Main) {
-            snackbarHostState.showSnackbar(
-                context.getString(R.string.message_import_failed)
-            )
-        }
-    }
-}
-
-/**
- * 単一ビデオをインポートしてプレイリストに追加する処理
- */
-@Suppress("LongParameterList")
-private suspend fun handleVideoImport(
-    videoInfo: VideoInformation,
-    playlistId: Long,
-    playlistViewModel: PlaylistViewModel,
-    videoViewModel: VideoViewModel,
-    context: android.content.Context,
-    snackbarHostState: SnackbarHostState
-) {
-    try {
-        // ビデオを作成
-        val video = videoInfo.toVideo()
-        val videoId = videoViewModel.insertAsync(video).await()
-
-        // プレイリストに追加（playlistId == 0の場合は全動画モードなので追加しない）
-        if (playlistId != 0L) {
-            val playlist = playlistViewModel.getFromIdAsync(playlistId).await()
-            if (playlist != null) {
-                val updatedVideos = (playlist.videos + videoId).distinct()
-                playlistViewModel.update(playlist.copy(videos = updatedVideos))
-            }
-        }
-
-        withContext(Dispatchers.Main) {
-            snackbarHostState.showSnackbar(
-                context.getString(R.string.message_video_imported)
-            )
-        }
-    } catch (e: Exception) {
-        Log.e("YtAlarmNavGraph", "Video import failed", e)
-        withContext(Dispatchers.Main) {
-            snackbarHostState.showSnackbar(
-                context.getString(R.string.message_import_failed)
-            )
-        }
     }
 }
