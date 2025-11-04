@@ -178,8 +178,9 @@ fun VideoListScreenContent(
             )
         },
         floatingActionButton = {
-            // 全動画モードとImportingモードではFABを非表示
-            if (!isImportingMode && !isAllVideosMode) {
+            // 全動画モード（-1）とImportingモードではFABを非表示
+            // ただし、新規プレイリストモード（playlistId=0）ではFABを表示
+            if (!isImportingMode && (!isAllVideosMode || isNewPlaylist)) {
                 Column(horizontalAlignment = Alignment.End) {
                     // Expanded状態のサブFAB
                     AnimatedVisibility(visible = isFabExpanded && isOriginalMode) {
@@ -418,8 +419,9 @@ fun VideoListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     val currentId = remember { MutableStateFlow(playlistId) }
-    // playlistId == 0の場合は全動画モード
-    val isAllVideosMode = currentId.value == 0L
+    // playlistId == 0の場合は全動画モード（新規プレイリスト作成）
+    // playlistId == -1の場合は全動画表示モード（今後のため予約）
+    val isAllVideosMode = currentId.value == 0L || currentId.value == -1L
     val playlist by if (isAllVideosMode) {
         remember { mutableStateOf<Playlist?>(null) }
     } else {
@@ -445,7 +447,7 @@ fun VideoListScreen(
     val isSyncMode = playlistType is Playlist.Type.CloudPlaylist
 
     // 動画リストを取得
-    // 全動画モード(playlistId=0)の場合は全動画を取得、それ以外はプレイリストの動画を取得
+    // 全動画モード(playlistId=0 or -1)の場合は全動画を取得、それ以外はプレイリストの動画を取得
     val videos by if (isAllVideosMode) {
         videoViewModel.allVideos.observeAsState(emptyList())
     } else {
@@ -466,9 +468,14 @@ fun VideoListScreen(
         mutableList
     }
 
-    val playlistTitle = playlist?.title ?: stringResource(R.string.nav_video_list)
-    // 全動画モードでは「新規プレイリスト」ではないので、常にfalse
-    val isNewPlaylist = false
+    // タイトルの決定: 全動画モード、新規プレイリストモード、既存プレイリストモード
+    val playlistTitle = when {
+        currentId.value == -1L -> stringResource(R.string.nav_video_list_all)
+        currentId.value == 0L -> stringResource(R.string.nav_video_list_new)
+        else -> playlist?.title ?: stringResource(R.string.nav_video_list)
+    }
+    // 新規プレイリストモード判定（playlistId == 0）
+    val isNewPlaylist = currentId.value == 0L
 
     // VideoListScreenContentを呼び出す
     VideoListScreenContent(

@@ -33,6 +33,8 @@
     <string name="nav_edit_alarm">アラーム編集</string>
     <string name="nav_playlist">プレイリスト一覧</string>
     <string name="nav_video_list">動画一覧</string>
+    <string name="nav_video_list_all">すべての動画</string>
+    <string name="nav_video_list_new">新しいプレイリスト</string>
     <string name="playlist_new_title">新しいプレイリスト</string>
 
     <!-- Empty state messages -->

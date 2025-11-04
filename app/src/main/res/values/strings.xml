@@ -61,6 +61,8 @@
     <string name="nav_edit_alarm">Edit Alarm</string>
     <string name="nav_playlist">Playlists</string>
     <string name="nav_video_list">Videos</string>
+    <string name="nav_video_list_all">All Videos</string>
+    <string name="nav_video_list_new">New Playlist</string>
     <string name="playlist_new_title">New Playlist</string>
 
     <!-- Empty state messages -->
