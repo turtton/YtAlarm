@@ -179,12 +179,12 @@ fun VideoListScreenContent(
             )
         },
         floatingActionButton = {
-            // 全動画モード（-1）とImportingモードではFABを非表示
-            // ただし、新規プレイリストモード（playlistId=0）ではFABを表示
-            if (!isImportingMode && (!isAllVideosMode || isNewPlaylist)) {
+            // ImportingモードのみFABを非表示
+            // 全動画モード、新規プレイリストモード、既存プレイリストモードでは表示
+            if (!isImportingMode) {
                 Column(horizontalAlignment = Alignment.End) {
-                    // Expanded状態のサブFAB
-                    AnimatedVisibility(visible = isFabExpanded && isOriginalMode) {
+                    // Expanded状態のサブFAB（全動画モードでは非表示）
+                    AnimatedVisibility(visible = isFabExpanded && isOriginalMode && !isAllVideosMode) {
                         Column {
                             // URLから追加
                             SmallFloatingActionButton(
@@ -209,15 +209,18 @@ fun VideoListScreenContent(
                     // メインFAB
                     FloatingActionButton(
                         onClick = {
-                            if (isOriginalMode) {
-                                onFabExpandToggle()
-                            } else {
-                                onFabMainClick()
+                            when {
+                                // 全動画モード: 直接URL入力ダイアログを表示
+                                isAllVideosMode -> onFabUrlClick()
+                                // Originalモード（新規/既存プレイリスト）: 展開/折りたたみ
+                                isOriginalMode -> onFabExpandToggle()
+                                // Syncモード: 同期実行
+                                else -> onFabMainClick()
                             }
                         }
                     ) {
                         val rotation by animateFloatAsState(
-                            targetValue = if (isFabExpanded) 45f else 0f,
+                            targetValue = if (isFabExpanded && !isAllVideosMode) 45f else 0f,
                             label = "fab_rotation"
                         )
                         Icon(
