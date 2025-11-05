@@ -33,6 +33,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateListOf
@@ -418,14 +419,15 @@ fun VideoListScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val currentId = remember { MutableStateFlow(playlistId) }
-    // playlistId == 0の場合は全動画モード（新規プレイリスト作成）
+    val currentId by remember { MutableStateFlow(playlistId) }.collectAsState()
+    // playlistId == 0の場合は新規プレイリスト作成モード（空のリスト）
     // playlistId == -1の場合は全動画表示モード（今後のため予約）
-    val isAllVideosMode = currentId.value == 0L || currentId.value == -1L
-    val playlist by if (isAllVideosMode) {
+    val isAllVideosMode = currentId == -1L
+    val isNewPlaylistMode = currentId == 0L
+    val playlist by if (isAllVideosMode || isNewPlaylistMode) {
         remember { mutableStateOf<Playlist?>(null) }
     } else {
-        playlistViewModel.getFromId(currentId.value).observeAsState()
+        playlistViewModel.getFromId(currentId).observeAsState()
     }
     val selectedItems = remember { mutableStateListOf<Long>() }
     var isFabExpanded by remember { mutableStateOf(false) }
@@ -447,12 +449,23 @@ fun VideoListScreen(
     val isSyncMode = playlistType is Playlist.Type.CloudPlaylist
 
     // 動画リストを取得
-    // 全動画モード(playlistId=0 or -1)の場合は全動画を取得、それ以外はプレイリストの動画を取得
-    val videos by if (isAllVideosMode) {
-        videoViewModel.allVideos.observeAsState(emptyList())
-    } else {
-        val videoIds = playlist?.videos ?: emptyList()
-        videoViewModel.getFromIds(videoIds).observeAsState(emptyList())
+    // - playlistId=0 (新規プレイリスト): 空のリスト
+    // - playlistId=-1 (全動画モード): 全動画を取得
+    // - playlistId>0 (既存プレイリスト): プレイリストの動画を取得
+    val videos by when {
+        isNewPlaylistMode -> {
+            // 新規プレイリスト作成モード: 空のリスト
+            remember { mutableStateOf(emptyList<net.turtton.ytalarm.database.structure.Video>()) }
+        }
+        isAllVideosMode -> {
+            // 全動画表示モード
+            videoViewModel.allVideos.observeAsState(emptyList())
+        }
+        else -> {
+            // 既存プレイリストの動画を取得
+            val videoIds = playlist?.videos ?: emptyList()
+            videoViewModel.getFromIds(videoIds).observeAsState(emptyList())
+        }
     }
 
     // ソート処理
@@ -469,18 +482,16 @@ fun VideoListScreen(
     }
 
     // タイトルの決定: 全動画モード、新規プレイリストモード、既存プレイリストモード
-    val playlistTitle = when {
-        currentId.value == -1L -> stringResource(R.string.nav_video_list_all)
-        currentId.value == 0L -> stringResource(R.string.nav_video_list_new)
+    val playlistTitle = when (currentId) {
+        -1L -> stringResource(R.string.nav_video_list_all)
+        0L -> stringResource(R.string.nav_video_list_new)
         else -> playlist?.title ?: stringResource(R.string.nav_video_list)
     }
-    // 新規プレイリストモード判定（playlistId == 0）
-    val isNewPlaylist = currentId.value == 0L
 
     // VideoListScreenContentを呼び出す
     VideoListScreenContent(
         playlistTitle = playlistTitle,
-        isNewPlaylist = isNewPlaylist,
+        isNewPlaylist = isNewPlaylistMode,
         isAllVideosMode = isAllVideosMode,
         videos = sortedVideos,
         playlistType = playlistType,
@@ -597,7 +608,7 @@ fun VideoListScreen(
         onDeleteVideos = {
             scope.launch(Dispatchers.IO) {
                 // 選択された動画をプレイリストから削除
-                val currentPlaylist = playlistViewModel.getFromIdAsync(currentId.value).await()
+                val currentPlaylist = playlistViewModel.getFromIdAsync(currentId).await()
                 currentPlaylist?.let { pl ->
                     val updatedVideos = pl.videos.filter { !selectedItems.contains(it) }
                     playlistViewModel.update(pl.copy(videos = updatedVideos))
@@ -616,7 +627,7 @@ fun VideoListScreen(
         },
         onSyncRuleChange = { rule ->
             scope.launch(Dispatchers.IO) {
-                val pl = playlistViewModel.getFromIdAsync(currentId.value).await()
+                val pl = playlistViewModel.getFromIdAsync(currentId).await()
                 val type = pl?.type as? Playlist.Type.CloudPlaylist
                 if (pl != null && type != null) {
                     val updatedType = type.copy(syncRule = rule)
@@ -638,11 +649,11 @@ fun VideoListScreen(
         },
         onFabUrlClick = {
             isFabExpanded = false
-            onShowUrlInputDialog(currentId.value)
+            onShowUrlInputDialog(currentId)
         },
         onFabMultiChoiceClick = {
             isFabExpanded = false
-            onShowMultiChoiceDialog(currentId.value)
+            onShowMultiChoiceDialog(currentId)
         },
         modifier = modifier
     )
