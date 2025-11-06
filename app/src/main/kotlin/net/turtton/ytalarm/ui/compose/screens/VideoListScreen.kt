@@ -9,14 +9,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -132,7 +132,7 @@ fun VideoListScreenContent(
                 title = { Text(playlistTitle) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -166,7 +166,7 @@ fun VideoListScreenContent(
                         }
                         // ソートルール選択ボタン
                         IconButton(onClick = { showSortDialog = true }) {
-                            Icon(Icons.Default.Sort, contentDescription = "Sort rule")
+                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort rule")
                         }
                     }
                 },
@@ -224,8 +224,16 @@ fun VideoListScreenContent(
                             label = "fab_rotation"
                         )
                         Icon(
-                            imageVector = if (isSyncMode) Icons.Default.Sync else Icons.Default.Add,
-                            contentDescription = if (isSyncMode) "Sync" else "Add video",
+                            imageVector = when {
+                                isSyncMode -> Icons.Default.Sync
+                                isAllVideosMode -> Icons.Default.Link
+                                else -> Icons.Default.Add
+                            },
+                            contentDescription = when {
+                                isSyncMode -> "Sync"
+                                isAllVideosMode -> "Add from URL"
+                                else -> "Add video"
+                            },
                             modifier = Modifier.rotate(rotation)
                         )
                     }
