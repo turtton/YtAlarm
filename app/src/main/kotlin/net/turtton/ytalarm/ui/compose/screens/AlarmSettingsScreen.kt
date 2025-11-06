@@ -555,9 +555,6 @@ fun AlarmSettingsScreen(
                     initialSelectedIds = editingAlarm?.playListId?.toSet() ?: emptySet(),
                     onConfirm = { selectedIds ->
                         editingAlarm = editingAlarm?.copy(playListId = selectedIds.toList())
-                        editingAlarm?.let {
-                            alarmViewModel.update(it)
-                        }
                         showPlaylistDialog = false
                     },
                     onDismiss = {

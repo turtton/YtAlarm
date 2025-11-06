@@ -27,6 +27,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.database.structure.Alarm
@@ -149,53 +151,52 @@ fun AlarmListScreenContent(
                         key = { it.id }
                     ) { alarm ->
                         // プレイリスト名とサムネイルを非同期で取得
-                        val playlists by (
-                            playlistViewModel?.getFromIdsAsync(alarm.playListId)
-                                ?.let { deferred ->
-                                    val list = remember(alarm.playListId) {
-                                        mutableStateOf<List<net.turtton.ytalarm.database.structure.Playlist>>(
-                                            emptyList()
-                                        )
-                                    }
-                                    scope.launch(Dispatchers.IO) {
-                                        list.value = deferred.await()
-                                    }
-                                    list
-                                } ?: remember { mutableStateOf(emptyList()) }
+                        val playlists = remember(alarm.playListId) {
+                            mutableStateOf<List<net.turtton.ytalarm.database.structure.Playlist>>(
+                                emptyList()
                             )
+                        }
 
-                        val playlistTitle = playlists.firstOrNull()?.title ?: ""
+                        LaunchedEffect(alarm.playListId) {
+                            playlistViewModel?.getFromIdsAsync(alarm.playListId)?.let { deferred ->
+                                playlists.value = withContext(Dispatchers.IO) {
+                                    deferred.await()
+                                }
+                            }
+                        }
+
+                        val playlistTitle = playlists.value.firstOrNull()?.title ?: ""
 
                         // サムネイル取得
-                        val thumbnailUrl by (
-                            playlists.firstOrNull()?.thumbnail?.let { thumbnail ->
-                                when (thumbnail) {
-                                    is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Video -> {
-                                        // Video thumbnailの場合、VideoからURLを取得
+                        val thumbnailUrl = remember(playlists.value.firstOrNull()?.thumbnail) {
+                            mutableStateOf<Any?>(null)
+                        }
+
+                        playlists.value.firstOrNull()?.thumbnail?.let { thumbnail ->
+                            when (thumbnail) {
+                                is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Video -> {
+                                    // Video thumbnailの場合、VideoからURLを取得
+                                    LaunchedEffect(thumbnail.id) {
                                         videoViewModel?.getFromIdAsync(
                                             thumbnail.id
                                         )?.let { deferred ->
-                                            val url = remember(thumbnail.id) {
-                                                mutableStateOf<Any?>(null)
+                                            val video = withContext(Dispatchers.IO) {
+                                                deferred.await()
                                             }
-                                            scope.launch(Dispatchers.IO) {
-                                                val video = deferred.await()
-                                                url.value = video?.thumbnailUrl
-                                            }
-                                            url
-                                        } ?: remember { mutableStateOf<Any?>(null) }
-                                    }
-                                    is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Drawable -> {
-                                        remember { mutableStateOf<Any?>(thumbnail.id) }
+                                            thumbnailUrl.value = video?.thumbnailUrl
+                                        }
                                     }
                                 }
-                            } ?: remember { mutableStateOf<Any?>(null) }
-                            )
+                                is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Drawable -> {
+                                    thumbnailUrl.value = thumbnail.id
+                                }
+                            }
+                        }
 
                         AlarmItem(
                             alarm = alarm,
                             playlistTitle = playlistTitle,
-                            thumbnailUrl = thumbnailUrl,
+                            thumbnailUrl = thumbnailUrl.value,
                             onToggle = { isEnabled ->
                                 onAlarmToggle(alarm, isEnabled)
                             },

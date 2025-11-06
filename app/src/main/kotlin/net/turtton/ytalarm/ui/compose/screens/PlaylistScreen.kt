@@ -167,35 +167,35 @@ fun PlaylistScreenContent(
                         key = { it.id }
                     ) { playlist ->
                         // サムネイル取得
-                        val thumbnailUrl by (
-                            playlist.thumbnail?.let { thumbnail ->
-                                when (thumbnail) {
-                                    is Playlist.Thumbnail.Video -> {
-                                        // Video thumbnailの場合、VideoからURLを取得
+                        val thumbnailUrl = remember(playlist.thumbnail) {
+                            mutableStateOf<Any?>(null)
+                        }
+
+                        playlist.thumbnail?.let { thumbnail ->
+                            when (thumbnail) {
+                                is Playlist.Thumbnail.Video -> {
+                                    // Video thumbnailの場合、VideoからURLを取得
+                                    LaunchedEffect(thumbnail.id) {
                                         videoViewModel?.getFromIdAsync(
                                             thumbnail.id
                                         )?.let { deferred ->
-                                            val url = remember(thumbnail.id) {
-                                                mutableStateOf<Any?>(null)
+                                            val video = withContext(Dispatchers.IO) {
+                                                deferred.await()
                                             }
-                                            scope.launch(Dispatchers.IO) {
-                                                val video = deferred.await()
-                                                url.value = video?.thumbnailUrl
-                                            }
-                                            url
-                                        } ?: remember { mutableStateOf<Any?>(null) }
-                                    }
-                                    is Playlist.Thumbnail.Drawable -> {
-                                        remember { mutableStateOf<Any?>(thumbnail.id) }
+                                            thumbnailUrl.value = video?.thumbnailUrl
+                                        }
                                     }
                                 }
-                            } ?: remember { mutableStateOf<Any?>(null) }
-                            )
+                                is Playlist.Thumbnail.Drawable -> {
+                                    thumbnailUrl.value = thumbnail.id
+                                }
+                            }
+                        }
                         val videoCount = playlist.videos.size
 
                         PlaylistItem(
                             playlist = playlist,
-                            thumbnailUrl = thumbnailUrl,
+                            thumbnailUrl = thumbnailUrl.value,
                             videoCount = videoCount,
                             isSelected = selectedItems.contains(playlist.id),
                             onToggleSelection = {
@@ -344,7 +344,9 @@ fun PlaylistScreen(
                 val garbage = playlists.filter { playlist ->
                     if (playlist.type !is Playlist.Type.Importing) return@filter false
                     val videoId = playlist.videos.firstOrNull() ?: return@filter false
-                    val video = videoViewModel.getFromIdAsync(videoId).await() ?: return@filter false
+                    val video = videoViewModel.getFromIdAsync(
+                        videoId
+                    ).await() ?: return@filter false
                     val state = when (val stateData = video.stateData) {
                         is Video.State.Importing -> stateData.state as? Video.WorkerState.Working
                         is Video.State.Downloading -> stateData.state as? Video.WorkerState.Working
@@ -356,7 +358,11 @@ fun PlaylistScreen(
                         val workerState = workManager.getWorkInfoById(state.workerId).get()?.state
                         workerState == null || workerState.isFinished
                     } catch (e: Exception) {
-                        android.util.Log.e("PlaylistScreen", "Failed to check worker state: ${state.workerId}", e)
+                        android.util.Log.e(
+                            "PlaylistScreen",
+                            "Failed to check worker state: ${state.workerId}",
+                            e
+                        )
                         true // ワーカー情報取得失敗時はガベージコレクション対象とする
                     }
                 }

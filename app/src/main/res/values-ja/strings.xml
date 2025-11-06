@@ -158,4 +158,8 @@
     <string name="message_videos_added">動画をプレイリストに追加しました</string>
     <string name="message_operation_failed">操作に失敗しました</string>
 
+    <!-- Error messages for AboutPage -->
+    <string name="error_no_browser">ブラウザアプリが見つかりません</string>
+    <string name="error_open_link">リンクを開けませんでした</string>
+
 </resources>

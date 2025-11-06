@@ -154,8 +154,22 @@ fun AboutPageScreen(
                     when (item) {
                         is AboutPageData.LinkData -> {
                             // リンクを開く
-                            val intent = Intent(Intent.ACTION_VIEW, item.url.toUri())
-                            context.startActivity(intent)
+                            try {
+                                val intent = Intent(Intent.ACTION_VIEW, item.url.toUri())
+                                context.startActivity(intent)
+                            } catch (e: android.content.ActivityNotFoundException) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        context.getString(R.string.error_no_browser)
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        context.getString(R.string.error_open_link)
+                                    )
+                                }
+                            }
                         }
                         is AboutPageData.CopyableData -> {
                             // クリップボードにコピー

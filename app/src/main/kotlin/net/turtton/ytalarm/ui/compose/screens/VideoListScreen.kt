@@ -63,11 +63,11 @@ import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.database.structure.Playlist
-import net.turtton.ytalarm.util.VideoInformation
 import net.turtton.ytalarm.ui.compose.components.VideoItem
 import net.turtton.ytalarm.ui.compose.components.VideoItemDropdownMenu
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.VideoInformation
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
 import net.turtton.ytalarm.util.extensions.videoOrderRule
@@ -184,7 +184,9 @@ fun VideoListScreenContent(
             if (!isImportingMode) {
                 Column(horizontalAlignment = Alignment.End) {
                     // Expanded状態のサブFAB（全動画モードでは非表示）
-                    AnimatedVisibility(visible = isFabExpanded && isOriginalMode && !isAllVideosMode) {
+                    AnimatedVisibility(
+                        visible = isFabExpanded && isOriginalMode && !isAllVideosMode
+                    ) {
                         Column {
                             // URLから追加
                             SmallFloatingActionButton(
@@ -318,7 +320,7 @@ fun VideoListScreenContent(
                         androidx.compose.material3.RadioButton(
                             selected = orderRule.ordinal == index,
                             onClick = {
-                                onSortRuleChange(VideoOrder.values()[index])
+                                onSortRuleChange(VideoOrder.entries[index])
                                 showSortDialog = false
                             }
                         )
@@ -374,7 +376,7 @@ fun VideoListScreenContent(
                         androidx.compose.material3.RadioButton(
                             selected = currentRule?.ordinal == index,
                             onClick = {
-                                onSyncRuleChange(Playlist.SyncRule.values()[index])
+                                onSyncRuleChange(Playlist.SyncRule.entries[index])
                                 showSyncRuleDialog = false
                             }
                         )
@@ -445,9 +447,15 @@ fun VideoListScreen(
 
     // メニュー展開状態の管理
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
-    var videoToDelete by remember { mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null) }
-    var videoToReimport by remember { mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null) }
-    var videoForThumbnail by remember { mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null) }
+    var videoToDelete by remember {
+        mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null)
+    }
+    var videoToReimport by remember {
+        mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null)
+    }
+    var videoForThumbnail by remember {
+        mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null)
+    }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -583,10 +591,17 @@ fun VideoListScreen(
                     }
                 } catch (e: CancellationException) {
                     // キャンセル例外はログに記録して再スロー
-                    android.util.Log.d("VideoListScreen", "Reimport cancelled for video: ${video.videoId}")
+                    android.util.Log.d(
+                        "VideoListScreen",
+                        "Reimport cancelled for video: ${video.videoId}"
+                    )
                     throw e
                 } catch (e: kotlinx.serialization.SerializationException) {
-                    android.util.Log.e("VideoListScreen", "JSON parse error during reimport: ${video.videoId}", e)
+                    android.util.Log.e(
+                        "VideoListScreen",
+                        "JSON parse error during reimport: ${video.videoId}",
+                        e
+                    )
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
                         snackbarHostState.showSnackbar(
@@ -594,7 +609,11 @@ fun VideoListScreen(
                         )
                     }
                 } catch (e: java.net.UnknownHostException) {
-                    android.util.Log.e("VideoListScreen", "Network error during reimport: ${video.videoId}", e)
+                    android.util.Log.e(
+                        "VideoListScreen",
+                        "Network error during reimport: ${video.videoId}",
+                        e
+                    )
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
                         snackbarHostState.showSnackbar(
@@ -602,7 +621,11 @@ fun VideoListScreen(
                         )
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("VideoListScreen", "Reimport failed for video: ${video.videoId}", e)
+                    android.util.Log.e(
+                        "VideoListScreen",
+                        "Reimport failed for video: ${video.videoId}",
+                        e
+                    )
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
                         snackbarHostState.showSnackbar(
