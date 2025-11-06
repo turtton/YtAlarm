@@ -462,6 +462,99 @@ mobile-debugger-mcpエージェントによる調査で、以下の未実装機�
 
 ---
 
+### Phase 10: VideoListScreen FAB表示バグ修正 ✅ **完了 (2025-11-06)**
+
+**発見された問題 (2025-11-06)**:
+
+1. **全動画モードでFABボタンが表示されない**
+   - Drawerの「Video List」メニューから遷移した全動画モード（playlistId=-1L）でFABが非表示
+   - Fragment版（FragmentAllVideoList）では表示されていた機能
+   - ユーザー報告: 「Compose移行前は存在していた」
+
+2. **MultiChoiceDialogで既存動画が表示されない**
+   - 新規プレイリスト作成時に「既存動画から追加」ダイアログが空
+   - 原因: `videoViewModel.allVideos.value`を直接取得（Composeに通知されない）
+
+**根本原因分析**:
+
+1. **FAB表示条件の問題**:
+   - VideoListScreen.kt:184の条件式: `!isImportingMode && (!isAllVideosMode || isNewPlaylist)`
+   - 全動画モード（isAllVideosMode=true）で条件が`false`になりFABが非表示
+
+2. **Fragment版の動作**:
+   - FragmentAllVideoList: FABをクリック → 直接URL入力ダイアログ
+   - FragmentVideoList: FABをクリック → 展開して2つのサブFAB
+   - 2つの異なるFragmentで実装されていた
+
+**修正内容** (commits: 385e67d, 3f6154f):
+
+1. **Drawerナビゲーション修正** (MainScreen.kt): ✅
+   - [x] 「Video List」メニューを`playlistId=0L` → `-1L`に変更
+   - 全動画モードに正しく遷移するように修正
+
+2. **MultiChoiceDialog修正** (YtAlarmNavGraph.kt): ✅
+   - [x] `videoViewModel.allVideos.value` → `observeAsState(emptyList())`に変更
+   - LiveDataの変更をComposeに通知
+
+3. **FAB表示・動作修正** (VideoListScreen.kt): ✅
+   - [x] 全動画モードでFABを表示
+   - [x] FABの動作をモード別に分岐:
+     ```kotlin
+     when {
+         isAllVideosMode -> onFabUrlClick()  // 直接URL入力
+         isOriginalMode -> onFabExpandToggle()  // 展開
+         else -> onFabMainClick()  // Sync実行
+     }
+     ```
+   - [x] サブFABを全動画モードでは非表示: `!isAllVideosMode`条件追加
+   - [x] 回転アニメーションも全動画モードでは無効化
+
+**修正ファイル**:
+- `app/src/main/kotlin/net/turtton/ytalarm/ui/MainScreen.kt` (commit: 385e67d)
+  - Drawer「Video List」のnavigation先を`-1L`に変更
+- `app/src/main/kotlin/net/turtton/ytalarm/navigation/YtAlarmNavGraph.kt` (commit: 385e67d)
+  - MultiChoiceDialogのLiveData監視を`observeAsState()`に変更
+- `app/src/main/kotlin/net/turtton/ytalarm/ui/compose/screens/VideoListScreen.kt` (commits: 385e67d, 3f6154f)
+  - FAB表示条件の簡略化
+  - モード別のFAB動作実装
+  - サブFAB表示条件に`!isAllVideosMode`追加
+
+**テスト結果** (mobile-debugger-mcp):
+
+| モード | FAB表示 | 動作 | サブFAB | 結果 |
+|--------|---------|------|---------|------|
+| 全動画（-1L） | ✅ | 直接URL入力 | ❌ | ✅ PASSED |
+| 新規PL（0L） | ✅ | 展開 | ✅ | ✅ PASSED |
+| 既存PL（>0L） | ✅ | 展開/Sync | ✅/❌ | ✅ PASSED |
+| Importing | ❌ | - | - | ✅ PASSED |
+
+**達成された成果**:
+- ✅ 全動画モードでFABが表示され、URL入力ダイアログが開く
+- ✅ Fragment版の動作を正確に再現（全動画=直接URL入力、プレイリスト=展開）
+- ✅ MultiChoiceDialogに既存動画が正しく表示される
+- ✅ サブFABが全動画モードでは非表示（論理的に一貫）
+- ✅ すべてのテストシナリオが成功
+- ✅ 品質スコア: 9/10
+
+**発見された軽微な問題（次回対応）**:
+
+⚠️ **非推奨アイコンの使用**（機能に影響なし）:
+- VideoListScreen.kt:135: `Icons.Default.ArrowBack` → `Icons.AutoMirrored.Filled.ArrowBack`を推奨
+- VideoListScreen.kt:169: `Icons.Default.Sort` → `Icons.AutoMirrored.Filled.Sort`を推奨
+
+---
+
+## 🔧 今後の改善項目
+
+### 優先度: 低（コード品質向上）
+
+1. **非推奨Material Iconの更新**
+   - VideoListScreenのArrowBack, Sortアイコンを`AutoMirrored`版に更新
+   - 影響: なし（警告のみ）
+   - 作業時間: 5分
+
+---
+
 ## 🛠️ 技術スタック（移行後）
 
 - ✅ Compose BOM 2024.10.00
