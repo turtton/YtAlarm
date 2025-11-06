@@ -2,7 +2,7 @@
 
 ## 📊 進捗サマリー
 
-**最終更新**: 2025-11-03
+**最終更新**: 2025-11-06
 
 ### ✅ 完了済みフェーズ
 
@@ -40,6 +40,35 @@
   - Fragment/Adapter完全削除（13 Kotlinファイル、3,262行削除）
   - MainActivity XML/binding削除（7 XMLファイル、258行削除）
   - 全機能テスト合格（起動、画面遷移、バグ非再発）
+
+- **Phase 7: 未実装機能の実装** (2025-11-02)
+  - 動画クリック→VideoPlayer遷移実装
+  - 縦3点メニュー実装
+  - メニュー位置修正と再インポート機能実装
+
+- **Phase 7.5: コードレビュー対応** (2025-11-02)
+  - エラーハンドリング強化
+  - リソースリーク防止
+  - creationDate保持
+
+- **Phase 8: ダイアログ統合の実装** (2025-11-03)
+  - UrlInputDialog/MultiChoiceVideoDialog統合
+  - VideoInfoDownloadWorker使用に変更
+  - コード削減142行
+
+- **Phase 9: VideoListScreen playlistIdモード修正** (2025-11-03)
+  - 3つのモード（全動画、新規、既存）の明確化
+  - FAB表示条件の調整
+
+- **Phase 10: VideoListScreen FAB表示バグ修正** (2025-11-06)
+  - 全動画モードでFAB表示修正
+  - MultiChoiceDialogの既存動画表示修正
+  - Fragment版の動作を正確に再現
+
+- **Phase 11: 移植画面の包括的コードレビュー** (2025-11-06)
+  - 6画面のコードレビュー実施
+  - Critical Issues 18件、Warning Issues 29件発見
+  - Phase 12-14の修正計画策定
 
 ---
 
@@ -544,7 +573,387 @@ mobile-debugger-mcpエージェントによる調査で、以下の未実装機�
 
 ---
 
+### Phase 11: 移植画面の包括的コードレビュー ✅ **完了 (2025-11-06)**
+
+**背景**:
+Phase 0～10でCompose移行が完了し、すべての画面が動作可能な状態になったため、code-reviewerエージェントを使用して6つの移植画面の品質を包括的にレビューしました。
+
+**レビュー対象**:
+1. AboutPageScreen.kt
+2. VideoPlayerScreen.kt
+3. PlaylistScreen.kt
+4. VideoListScreen.kt
+5. AlarmListScreen.kt
+6. AlarmSettingsScreen.kt
+
+---
+
+#### 📊 レビュー結果サマリー
+
+| 画面 | 総合評価 | Critical | Warning | 主な問題 |
+|------|----------|----------|---------|----------|
+| AboutPageScreen.kt | ⚠️ 改善必要 | 3件 | 4件 | Intent例外処理不足、テスト欠如 |
+| VideoPlayerScreen.kt | ⚠️ 改善必要 | 3件 | 9件 | 循環的複雑度25、State管理問題 |
+| PlaylistScreen.kt | ⚠️ 改善必要 | 2件 | 6件 | サムネイル取得パフォーマンス問題 |
+| VideoListScreen.kt | ⚠️ 改善必要 | 4件 | 5件 | 非推奨API、ビジネスロジック混在 |
+| AlarmListScreen.kt | ⚠️ 改善必要 | 3件 | 4件 | コルーチンメモリリーク |
+| AlarmSettingsScreen.kt | ⚠️ 改善必要 | 3件 | 3件 | 即時DB更新、ローディング状態欠如 |
+
+**結論**: すべての画面で改善が必要ですが、機能自体は実装されており動作している状態です。
+
+---
+
+#### 🔴 発見された Critical Issues（最優先修正）
+
+##### 1. **VideoPlayerScreen.kt - 循環的複雑度25** (深刻度: 高)
+**場所**: Line 91-397
+**問題**:
+- 1つのComposable関数に300行以上のロジックが詰め込まれている
+- アラームモードと非アラームモードの処理が単一関数内に混在
+- LaunchedEffect内に200行以上のロジック
+
+**影響**:
+- 保守性の著しい低下
+- テストが困難
+- バグ混入リスク増大
+
+**推奨修正**:
+- AlarmVideoPlayerScreenとSimpleVideoPlayerScreenに分離
+- State Holderパターンの導入
+- ビジネスロジックのViewModel移行
+
+**工数見積もり**: 2-3日
+
+---
+
+##### 2. **PlaylistScreen.kt - サムネイル取得の重大なパフォーマンス問題** (深刻度: 高)
+**場所**: Line 170-193
+**問題**:
+```kotlin
+// LazyColumn内でコルーチンが無制限に起動
+scope.launch(Dispatchers.IO) {
+    val video = deferred.await()
+    url.value = video?.thumbnailUrl
+}
+```
+- リスト項目が再Compositionされるたびに新しいコルーチンが起動
+- スクロール時に大量のコルーチンが起動され、メモリリーク発生
+
+**影響**:
+- アプリの動作が重くなる
+- メモリリークによるクラッシュリスク
+
+**推奨修正**:
+- ViewModelにサムネイルURL取得ロジックを移動
+- LaunchedEffectを使用してライフサイクルに従った管理
+- produceStateまたはrememberを適切に使用
+
+**工数見積もり**: 1日
+
+---
+
+##### 3. **AlarmListScreen.kt - 同様のコルーチンメモリリーク** (深刻度: 高)
+**場所**: Line 151-193
+**問題**: PlaylistScreen.ktと同じパターンでメモリリーク発生
+
+**工数見積もり**: 1日
+
+---
+
+##### 4. **AlarmSettingsScreen.kt - プレイリスト選択時の即時DB更新** (深刻度: 中)
+**場所**: Line 558-560
+**問題**:
+```kotlin
+onConfirm = { selectedIds ->
+    editingAlarm = editingAlarm?.copy(playListId = selectedIds)
+    alarmViewModel.update(it)  // ← 保存ボタン押下前に更新！
+}
+```
+- 他の編集内容が破棄される
+- UI一貫性の欠如（他の設定は保存ボタン押下時に反映されるのに、プレイリストだけ即座に保存）
+
+**推奨修正**: `alarmViewModel.update(it)`の呼び出しを削除
+
+**工数見積もり**: 30分
+
+---
+
+##### 5. **AboutPageScreen.kt - Intent起動時の例外処理不足** (深刻度: 中)
+**場所**: Line 157-158
+**問題**:
+```kotlin
+val intent = Intent(Intent.ACTION_VIEW, item.url.toUri())
+context.startActivity(intent)  // ActivityNotFoundException未処理
+```
+- ブラウザ未インストール時にクラッシュ
+
+**推奨修正**:
+```kotlin
+try {
+    val intent = Intent(Intent.ACTION_VIEW, item.url.toUri())
+    if (intent.resolveActivity(context.packageManager) != null) {
+        context.startActivity(intent)
+    } else {
+        snackbarHostState.showSnackbar(...)
+    }
+} catch (e: Exception) {
+    snackbarHostState.showSnackbar(...)
+}
+```
+
+**工数見積もり**: 30分
+
+---
+
+##### 6. **VideoListScreen.kt - 非推奨API使用** (深刻度: 低)
+**場所**: Line 321, 377
+**問題**:
+```kotlin
+VideoOrder.values()[index]  // Kotlin 1.9+で非推奨
+```
+
+**推奨修正**:
+```kotlin
+VideoOrder.entries[index]
+```
+
+**工数見積もり**: 15分
+
+---
+
+#### ⚠️ 共通の構造的問題（Warning Issues）
+
+##### 1. **ビジネスロジックのUI層への混在**
+**該当**: PlaylistScreen、VideoListScreen、AlarmListScreen
+**問題**: ViewModelの責任がUI層に漏れ出している
+**推奨**: ViewModelへのロジック移動、Repository層の活用
+
+##### 2. **State管理の非効率性**
+**該当**: 全画面
+**問題**:
+- SharedPreferencesへの直接アクセス
+- ViewModelのState/Flowを活用していない
+- 不要な再Composition発生
+
+**推奨**: StateFlow/LiveDataの活用、remember/derivedStateOfの適切な使用
+
+##### 3. **ダイアログUIの実装不備**
+**該当**: PlaylistScreen、VideoListScreen、AlarmListScreen
+**問題**:
+```kotlin
+RadioButton(selected = ..., onClick = ...)
+Text(text = option)  // テキストがクリックできない
+```
+
+**推奨**: RadioButtonとTextをRowでラップし全体をclickableに
+
+##### 4. **テストの完全欠如**
+**該当**: 全画面
+**問題**: Composeテストファイルが1つも存在しない
+**影響**: リグレッションバグのリスク
+
+##### 5. **contentDescriptionの国際化不足**
+**該当**: 全画面
+**問題**: ハードコードされた英語文字列、多言語対応なし
+**推奨**: stringResourceの使用
+
+---
+
+#### ✅ 良好な点
+
+1. **画面とコンテンツの分離**: すべての画面でScreen/ScreenContent分離が実装
+2. **Material3準拠**: 概ねMaterial3のガイドラインに従っている
+3. **プレビュー提供**: すべての画面でPreview関数が用意
+4. **KDocドキュメント**: 適切なコメントが記載
+
+---
+
+#### 📋 次のフェーズへの引き継ぎ
+
+**Phase 12-14で以下を実施予定**:
+1. **Phase 12**: Critical Issues修正（必須、約1週間）
+2. **Phase 13**: Warning Issues修正（推奨、約1週間）
+3. **Phase 14**: Composeテスト追加（重要、約2週間）
+
+---
+
 ## 🔧 今後の改善項目
+
+### Phase 12: Critical Issues修正 🔴 **必須** (予定: 1週間)
+
+**目的**: アプリの安定性、パフォーマンス、データ整合性に影響する問題を修正
+
+#### タスクリスト:
+
+1. **AlarmSettingsScreen.kt - 即時DB更新削除** (30分) 🔴
+   - [ ] Line 558-560の`alarmViewModel.update(it)`削除
+   - [ ] 動作確認（保存ボタン押下時のみ保存されることを確認）
+   - [ ] コミット
+
+2. **AboutPageScreen.kt - Intent例外処理追加** (30分) 🔴
+   - [ ] Line 157-158にtry-catch追加
+   - [ ] `resolveActivity`による事前チェック実装
+   - [ ] エラー時のSnackbar表示実装
+   - [ ] 必要な文字列リソース追加
+   - [ ] テスト（ブラウザなし環境をシミュレート）
+   - [ ] コミット
+
+3. **VideoListScreen.kt - 非推奨API修正** (15分) 🟡
+   - [ ] Line 321, 377の`values()`を`entries`に変更
+   - [ ] ビルド確認
+   - [ ] コミット
+
+4. **PlaylistScreen.kt - サムネイル取得リファクタリング** (1日) 🔴
+   - [ ] ViewModelに`getPlaylistThumbnails(): Flow<Map<Long, String?>>`追加
+   - [ ] LazyColumn内のコルーチン処理削除
+   - [ ] `LaunchedEffect`または`produceState`を使用した実装に変更
+   - [ ] メモリリークテスト（スクロール繰り返し）
+   - [ ] パフォーマンステスト
+   - [ ] コミット
+
+5. **AlarmListScreen.kt - コルーチン処理修正** (1日) 🔴
+   - [ ] PlaylistScreen.ktと同じパターンで修正
+   - [ ] ViewModelにロジック移動
+   - [ ] メモリリークテスト
+   - [ ] コミット
+
+6. **VideoPlayerScreen.kt - 複雑度削減** (2-3日) 🔴
+   - [ ] `AlarmVideoPlayerScreen`と`SimpleVideoPlayerScreen`に分離
+   - [ ] `VideoPlayerState`クラス作成（State Holder）
+   - [ ] `rememberVideoPlayerState`関数実装
+   - [ ] LaunchedEffect内のロジックを複数の関数に分割
+   - [ ] テスト（アラームモード、非アラームモード両方）
+   - [ ] コードレビュー実施
+   - [ ] コミット
+
+**成果物**:
+- 修正コミット6件
+- パフォーマンス改善レポート
+- メモリリークテスト結果
+
+**完了条件**:
+- すべてのCritical Issuesが解決
+- ビルド成功、全機能動作確認
+- code-reviewerによる再レビューでCritical問題なし
+
+---
+
+### Phase 13: Warning Issues修正 ⚠️ **推奨** (予定: 1週間)
+
+**目的**: コード品質、保守性、UXの向上
+
+#### タスクリスト:
+
+1. **ダイアログUIの改善** (1日)
+   - [ ] PlaylistScreen.kt - ソートダイアログのRadioButton+Text統合
+   - [ ] VideoListScreen.kt - ソートダイアログ、SyncRuleダイアログ修正
+   - [ ] AlarmListScreen.kt - ソートダイアログ修正
+   - [ ] Material3タッチターゲットサイズ遵守確認
+   - [ ] 動作確認
+   - [ ] コミット
+
+2. **State管理のViewModel移行** (2日)
+   - [ ] PreferencesStateクラス作成（SharedPreferences wrapper）
+   - [ ] PlaylistViewModel/VideoViewModel/AlarmViewModelに統合
+   - [ ] 各画面からSharedPreferences直接アクセス削除
+   - [ ] StateFlow/LiveDataに置き換え
+   - [ ] 動作確認
+   - [ ] コミット
+
+3. **エラーハンドリング統一** (1日)
+   - [ ] 共通のErrorHandlerクラス作成
+   - [ ] 各画面のエラーハンドリングを統一
+   - [ ] ログ出力の統一（LOG_TAGの定数化）
+   - [ ] ユーザーフィードバックの統一
+   - [ ] コミット
+
+4. **contentDescription国際化** (1日)
+   - [ ] 全画面のcontentDescriptionを洗い出し
+   - [ ] 文字列リソース作成（英語・日本語）
+   - [ ] ハードコード文字列を置き換え
+   - [ ] アクセシビリティテスト
+   - [ ] コミット
+
+**成果物**:
+- 修正コミット4件
+- State管理設計ドキュメント
+- エラーハンドリングガイドライン
+
+**完了条件**:
+- すべてのWarning Issuesが解決
+- code-reviewerによる再レビューでWarning削減
+
+---
+
+### Phase 14: Composeテスト追加 🧪 **重要** (予定: 2週間)
+
+**目的**: リグレッションバグの防止、品質保証
+
+#### タスクリスト:
+
+1. **テストインフラ整備** (1日)
+   - [ ] Compose Testing依存関係の確認・追加
+   - [ ] テストヘルパー関数作成
+   - [ ] テストフィクスチャ作成（ダミーデータ）
+   - [ ] CI/CD統合準備
+
+2. **AboutPageScreenテスト** (1日)
+   - [ ] リンククリックテスト
+   - [ ] クリップボードコピーテスト
+   - [ ] API レベル別挙動テスト
+   - [ ] スナップショットテスト
+   - [ ] カバレッジ目標: 70%以上
+
+3. **VideoPlayerScreenテスト** (2日)
+   - [ ] アラームモード初期化テスト
+   - [ ] 非アラームモード初期化テスト
+   - [ ] ボタンクリックテスト
+   - [ ] エラー状態テスト
+   - [ ] カバレッジ目標: 60%以上
+
+4. **PlaylistScreenテスト** (2日)
+   - [ ] リスト表示テスト
+   - [ ] ソート機能テスト
+   - [ ] 削除機能テスト
+   - [ ] リネーム機能テスト
+   - [ ] カバレッジ目標: 70%以上
+
+5. **VideoListScreenテスト** (2日)
+   - [ ] 3つのモード（全動画、新規、既存）テスト
+   - [ ] FAB動作テスト
+   - [ ] メニュー機能テスト
+   - [ ] ソート機能テスト
+   - [ ] カバレッジ目標: 70%以上
+
+6. **AlarmListScreenテスト** (1日)
+   - [ ] リスト表示テスト
+   - [ ] ソート機能テスト
+   - [ ] 新規作成遷移テスト
+   - [ ] カバレッジ目標: 70%以上
+
+7. **AlarmSettingsScreenテスト** (2日)
+   - [ ] 新規作成テスト
+   - [ ] 編集テスト
+   - [ ] 保存・キャンセルテスト
+   - [ ] ダイアログ表示テスト
+   - [ ] カバレッジ目標: 65%以上
+
+8. **統合テスト** (1日)
+   - [ ] 画面遷移テスト
+   - [ ] Drawer操作テスト
+   - [ ] End-to-Endシナリオテスト
+
+**成果物**:
+- テストコード約2000-3000行
+- テストカバレッジレポート
+- テスト実行ガイド
+
+**完了条件**:
+- 全画面でテストカバレッジ60%以上
+- CI/CDでテスト自動実行
+- リグレッションテストの確立
+
+---
 
 ### 優先度: 低（コード品質向上）
 
@@ -552,6 +961,16 @@ mobile-debugger-mcpエージェントによる調査で、以下の未実装機�
    - VideoListScreenのArrowBack, Sortアイコンを`AutoMirrored`版に更新
    - 影響: なし（警告のみ）
    - 作業時間: 5分
+
+2. **マジックナンバーの定数化**
+   - playlistId=-1, 0の定数化
+   - alarmId=-1の定数化
+   - 作業時間: 30分
+
+3. **Previewの拡充**
+   - 各画面で複数の状態のPreview作成
+   - Dark Themeプレビュー追加
+   - 作業時間: 1日
 
 ---
 
