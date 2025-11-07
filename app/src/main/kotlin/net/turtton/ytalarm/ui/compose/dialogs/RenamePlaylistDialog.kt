@@ -17,11 +17,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
 
 @Composable
-fun RenamePlaylistDialog(
-    playlist: Playlist,
-    onConfirm: (String) -> Unit,
-    onDismiss: () -> Unit
-) {
+fun RenamePlaylistDialog(playlist: Playlist, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
     var newName by remember { mutableStateOf(playlist.title) }
     var isError by remember { mutableStateOf(false) }
 

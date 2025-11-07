@@ -9,11 +9,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Video
 
 @Composable
-fun VideoReimportDialog(
-    video: Video,
-    onConfirm: () -> Unit,
-    onDismiss: () -> Unit
-) {
+fun VideoReimportDialog(video: Video, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.dialog_reimport_title)) },
