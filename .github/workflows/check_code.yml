@@ -35,7 +35,7 @@ jobs:
           persist-credentials: false
 
       - name: Lint check
-        uses: musichin/ktlint-check@687a1d5d326566030e61fb1a1fce0af556a73162 # v3.1.0
+        uses: musichin/ktlint-check@3306a8200993ad301ff57d53d1f3fd6d57742cec # v4.0.1
         with:
           ktlint-version: 1.0.0
 
