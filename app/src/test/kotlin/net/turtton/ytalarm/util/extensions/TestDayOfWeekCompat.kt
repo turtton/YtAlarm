@@ -6,30 +6,31 @@ import net.turtton.ytalarm.util.DayOfWeekCompat
 import java.util.Calendar
 
 @Suppress("UNUSED")
-class TestDayOfWeekCompat : FunSpec({
-    context("getNearestWeekOrNull") {
-        test("contains same day") {
-            listOf(
-                DayOfWeekCompat.SUNDAY,
-                DayOfWeekCompat.WEDNESDAY,
-                DayOfWeekCompat.FRIDAY
-            ).getNearestWeekOrNull(Calendar.WEDNESDAY) shouldBe DayOfWeekCompat.WEDNESDAY
-        }
+class TestDayOfWeekCompat :
+    FunSpec({
+        context("getNearestWeekOrNull") {
+            test("contains same day") {
+                listOf(
+                    DayOfWeekCompat.SUNDAY,
+                    DayOfWeekCompat.WEDNESDAY,
+                    DayOfWeekCompat.FRIDAY
+                ).getNearestWeekOrNull(Calendar.WEDNESDAY) shouldBe DayOfWeekCompat.WEDNESDAY
+            }
 
-        test("same week") {
-            listOf(
-                DayOfWeekCompat.WEDNESDAY,
-                DayOfWeekCompat.FRIDAY,
-                DayOfWeekCompat.SATURDAY
-            ).getNearestWeekOrNull(Calendar.SUNDAY) shouldBe DayOfWeekCompat.WEDNESDAY
-        }
+            test("same week") {
+                listOf(
+                    DayOfWeekCompat.WEDNESDAY,
+                    DayOfWeekCompat.FRIDAY,
+                    DayOfWeekCompat.SATURDAY
+                ).getNearestWeekOrNull(Calendar.SUNDAY) shouldBe DayOfWeekCompat.WEDNESDAY
+            }
 
-        test("next week") {
-            listOf(
-                DayOfWeekCompat.SUNDAY,
-                DayOfWeekCompat.WEDNESDAY,
-                DayOfWeekCompat.THURSDAY
-            ).getNearestWeekOrNull(Calendar.SATURDAY) shouldBe DayOfWeekCompat.SUNDAY
+            test("next week") {
+                listOf(
+                    DayOfWeekCompat.SUNDAY,
+                    DayOfWeekCompat.WEDNESDAY,
+                    DayOfWeekCompat.THURSDAY
+                ).getNearestWeekOrNull(Calendar.SATURDAY) shouldBe DayOfWeekCompat.SUNDAY
+            }
         }
-    }
-})
+    })

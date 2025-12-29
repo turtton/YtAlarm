@@ -201,3 +201,7 @@ ij_yaml_sequence_on_new_line = false
 ij_yaml_space_before_colon = false
 ij_yaml_spaces_within_braces = true
 ij_yaml_spaces_within_brackets = true
+
+# Exclude generated/build files from ktlint
+[{**/build/**,**/generated/**}]
+ktlint = disabled

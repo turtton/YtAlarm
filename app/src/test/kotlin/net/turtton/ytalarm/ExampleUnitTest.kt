@@ -9,10 +9,11 @@ import io.kotest.matchers.ints.shouldBeExactly
  * See [testing documentation](http://d.android.com/tools/testing).
  */
 @Suppress("UNUSED")
-class ExampleUnitTest : FunSpec({
-    context("the base test code") {
-        test("addition is correct") {
-            2 + 2 shouldBeExactly 4
+class ExampleUnitTest :
+    FunSpec({
+        context("the base test code") {
+            test("addition is correct") {
+                2 + 2 shouldBeExactly 4
+            }
         }
-    }
-})
+    })
