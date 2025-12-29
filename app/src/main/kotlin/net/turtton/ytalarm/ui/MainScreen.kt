@@ -168,7 +168,7 @@ private fun DrawerContent(currentRoute: String?, onNavigate: (String) -> Unit) {
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
 
-        // ビデオリスト（全動画一覧: playlistId=-1）
+        // ビデオリスト（全動画一覧）
         NavigationDrawerItem(
             icon = {
                 Icon(
@@ -177,8 +177,8 @@ private fun DrawerContent(currentRoute: String?, onNavigate: (String) -> Unit) {
                 )
             },
             label = { Text(stringResource(id = R.string.menu_title_video_list)) },
-            selected = currentRoute == YtAlarmDestination.videoList(-1L),
-            onClick = { onNavigate(YtAlarmDestination.videoList(-1L)) },
+            selected = currentRoute == YtAlarmDestination.ALL_VIDEOS,
+            onClick = { onNavigate(YtAlarmDestination.ALL_VIDEOS) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
         )
 

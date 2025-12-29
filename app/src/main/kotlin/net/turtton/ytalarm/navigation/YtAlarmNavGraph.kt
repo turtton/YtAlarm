@@ -32,6 +32,7 @@ import net.turtton.ytalarm.ui.compose.dialogs.UrlInputDialog
 import net.turtton.ytalarm.ui.compose.screens.AboutPageScreen
 import net.turtton.ytalarm.ui.compose.screens.AlarmListScreen
 import net.turtton.ytalarm.ui.compose.screens.AlarmSettingsScreen
+import net.turtton.ytalarm.ui.compose.screens.AllVideosScreen
 import net.turtton.ytalarm.ui.compose.screens.PlaylistScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoListScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoPlayerScreen
@@ -65,6 +66,7 @@ fun YtAlarmNavGraph(
         alarmSettingsScreen(navController)
         playlistScreen(navController, onOpenDrawer)
         videoListScreen(navController)
+        allVideosScreen(navController, onOpenDrawer)
         videoPlayerScreen(navController)
         aboutScreen()
     }
@@ -242,6 +244,47 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                     }
                 },
                 onDismiss = { showMultiChoiceDialog = false }
+            )
+        }
+    }
+}
+
+/**
+ * 全動画一覧画面のルート定義
+ */
+private fun NavGraphBuilder.allVideosScreen(
+    navController: NavHostController,
+    onOpenDrawer: () -> Unit
+) {
+    composable(route = YtAlarmDestination.ALL_VIDEOS) {
+        val context = LocalContext.current
+        var showUrlInputDialog by remember { mutableStateOf(false) }
+
+        AllVideosScreen(
+            onNavigateBack = {
+                navController.popBackStack()
+            },
+            onNavigateToVideoPlayer = { videoId ->
+                navController.navigate(YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false))
+            },
+            onShowUrlInputDialog = {
+                showUrlInputDialog = true
+            }
+        )
+
+        // UrlInputDialog: URLから動画を追加
+        if (showUrlInputDialog) {
+            UrlInputDialog(
+                onConfirm = { url ->
+                    // 全動画モードでは特定のプレイリストに追加しない
+                    VideoInfoDownloadWorker.registerWorker(
+                        context,
+                        url,
+                        longArrayOf()
+                    )
+                    showUrlInputDialog = false
+                },
+                onDismiss = { showUrlInputDialog = false }
             )
         }
     }

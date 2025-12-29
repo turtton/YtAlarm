@@ -434,10 +434,9 @@ fun VideoListScreen(
 
     val currentId by remember { MutableStateFlow(playlistId) }.collectAsState()
     // playlistId == 0の場合は新規プレイリスト作成モード（空のリスト）
-    // playlistId == -1の場合は全動画表示モード（今後のため予約）
-    val isAllVideosMode = currentId == -1L
+    // 全動画表示は AllVideosScreen で処理するため、ここでは扱わない
     val isNewPlaylistMode = currentId == 0L
-    val playlist by if (isAllVideosMode || isNewPlaylistMode) {
+    val playlist by if (isNewPlaylistMode) {
         remember { mutableStateOf<Playlist?>(null) }
     } else {
         playlistViewModel.getFromId(currentId).observeAsState()
@@ -469,22 +468,15 @@ fun VideoListScreen(
 
     // 動画リストを取得
     // - playlistId=0 (新規プレイリスト): 空のリスト
-    // - playlistId=-1 (全動画モード): 全動画を取得
     // - playlistId>0 (既存プレイリスト): プレイリストの動画を取得
-    val videos by when {
-        isNewPlaylistMode -> {
-            // 新規プレイリスト作成モード: 空のリスト
-            remember { mutableStateOf(emptyList<net.turtton.ytalarm.database.structure.Video>()) }
-        }
-        isAllVideosMode -> {
-            // 全動画表示モード
-            videoViewModel.allVideos.observeAsState(emptyList())
-        }
-        else -> {
-            // 既存プレイリストの動画を取得
-            val videoIds = playlist?.videos ?: emptyList()
-            videoViewModel.getFromIds(videoIds).observeAsState(emptyList())
-        }
+    // 全動画表示は AllVideosScreen で処理
+    val videos by if (isNewPlaylistMode) {
+        // 新規プレイリスト作成モード: 空のリスト
+        remember { mutableStateOf(emptyList<net.turtton.ytalarm.database.structure.Video>()) }
+    } else {
+        // 既存プレイリストの動画を取得
+        val videoIds = playlist?.videos ?: emptyList()
+        videoViewModel.getFromIds(videoIds).observeAsState(emptyList())
     }
 
     // ソート処理
@@ -500,18 +492,20 @@ fun VideoListScreen(
         mutableList
     }
 
-    // タイトルの決定: 全動画モード、新規プレイリストモード、既存プレイリストモード
-    val playlistTitle = when (currentId) {
-        -1L -> stringResource(R.string.nav_video_list_all)
-        0L -> stringResource(R.string.nav_video_list_new)
-        else -> playlist?.title ?: stringResource(R.string.nav_video_list)
+    // タイトルの決定: 新規プレイリストモード、既存プレイリストモード
+    // 全動画モードは AllVideosScreen で処理
+    val playlistTitle = if (isNewPlaylistMode) {
+        stringResource(R.string.nav_video_list_new)
+    } else {
+        playlist?.title ?: stringResource(R.string.nav_video_list)
     }
 
     // VideoListScreenContentを呼び出す
+    // isAllVideosMode = false: 全動画モードは AllVideosScreen で処理
     VideoListScreenContent(
         playlistTitle = playlistTitle,
         isNewPlaylist = isNewPlaylistMode,
-        isAllVideosMode = isAllVideosMode,
+        isAllVideosMode = false,
         videos = sortedVideos,
         playlistType = playlistType,
         orderRule = orderRule,

@@ -11,6 +11,7 @@ object YtAlarmDestination {
     const val ALARM_SETTINGS = "alarm_settings/{alarmId}"
     const val PLAYLIST = "playlist"
     const val VIDEO_LIST = "video_list/{playlistId}"
+    const val ALL_VIDEOS = "all_videos"
     const val VIDEO_PLAYER = "video_player/{videoId}/{isAlarmMode}"
     const val ABOUT = "about"
 
