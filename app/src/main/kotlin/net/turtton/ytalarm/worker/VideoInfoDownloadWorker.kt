@@ -13,7 +13,7 @@ import androidx.work.Operation
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import androidx.work.await
+import kotlinx.coroutines.guava.await
 import arrow.core.flatMap
 import arrow.core.fold
 import arrow.core.raise.catch

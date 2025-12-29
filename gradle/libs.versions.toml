@@ -1,9 +1,9 @@
 [versions]
 # Android
 agp = "8.13.2"
-compileSdk = "35"
+compileSdk = "36"
 minSdk = "24"
-targetSdk = "35"
+targetSdk = "36"
 
 # Kotlin
 kotlin = "2.3.0"
@@ -115,6 +115,7 @@ android-support-annotations = { group = "com.android.support", name = "support-a
 
 # Kotlinx
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-guava = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-guava", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-cbor", version.ref = "kotlinx-serialization" }
 
