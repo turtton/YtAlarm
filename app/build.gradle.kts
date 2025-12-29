@@ -120,9 +120,15 @@ android {
     lint {
         warningsAsErrors = true
 
-        // Aligned16KB: youtubedl-android library's native libs are not 16KB aligned (external dependency)
+        // Aligned16KB: youtubedl-android library's native libs are not 16KB aligned
         // AndroidGradlePluginVersion: Gradle version recommendation, not a critical error
-        disable += listOf("GradleDependency", "OldTargetApi", "Aligned16KB", "AndroidGradlePluginVersion")
+        disable +=
+            listOf(
+                "GradleDependency",
+                "OldTargetApi",
+                "Aligned16KB",
+                "AndroidGradlePluginVersion",
+            )
     }
 }
 
