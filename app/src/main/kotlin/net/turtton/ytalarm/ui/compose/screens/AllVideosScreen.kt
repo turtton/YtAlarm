@@ -35,7 +35,7 @@ import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllVideosScreen(
-    onNavigateBack: () -> Unit,
+    onOpenDrawer: () -> Unit,
     onNavigateToVideoPlayer: (String) -> Unit,
     onShowUrlInputDialog: () -> Unit,
     modifier: Modifier = Modifier,
@@ -109,7 +109,8 @@ fun AllVideosScreen(
         onDeleteSingleVideo = { video ->
             videoToDelete = video
         },
-        onNavigateBack = onNavigateBack,
+        onNavigateBack = { /* Not used in all videos mode */ },
+        onOpenDrawer = onOpenDrawer,
         onDeleteVideos = { /* Not applicable for all videos mode */ },
         onSortRuleChange = { rule ->
             preferences.videoOrderRule = rule
@@ -129,7 +130,11 @@ fun AllVideosScreen(
     videoToDelete?.let { video ->
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { videoToDelete = null },
-            title = { androidx.compose.material3.Text(stringResource(R.string.dialog_delete_video_title)) },
+            title = {
+                androidx.compose.material3.Text(
+                    stringResource(R.string.dialog_delete_video_title)
+                )
+            },
             text = {
                 androidx.compose.material3.Text(
                     stringResource(R.string.dialog_delete_video_message, video.title)
@@ -142,12 +147,16 @@ fun AllVideosScreen(
                         videoToDelete = null
                     }
                 ) {
-                    androidx.compose.material3.Text(stringResource(R.string.dialog_remove_video_positive))
+                    androidx.compose.material3.Text(
+                        stringResource(R.string.dialog_remove_video_positive)
+                    )
                 }
             },
             dismissButton = {
                 androidx.compose.material3.TextButton(onClick = { videoToDelete = null }) {
-                    androidx.compose.material3.Text(stringResource(R.string.dialog_remove_video_negative))
+                    androidx.compose.material3.Text(
+                        stringResource(R.string.dialog_remove_video_negative)
+                    )
                 }
             }
         )

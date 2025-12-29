@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
@@ -106,6 +107,7 @@ fun VideoListScreenContent(
     onReimport: (net.turtton.ytalarm.database.structure.Video) -> Unit,
     onDeleteSingleVideo: (net.turtton.ytalarm.database.structure.Video) -> Unit,
     onNavigateBack: () -> Unit,
+    onOpenDrawer: () -> Unit = {},
     onDeleteVideos: () -> Unit,
     onSortRuleChange: (VideoOrder) -> Unit,
     onOrderUpToggle: () -> Unit,
@@ -131,8 +133,14 @@ fun VideoListScreenContent(
             TopAppBar(
                 title = { Text(playlistTitle) },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (isAllVideosMode) {
+                        IconButton(onClick = onOpenDrawer) {
+                            Icon(Icons.Default.Menu, contentDescription = "Menu")
+                        }
+                    } else {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
                 actions = {

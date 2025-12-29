@@ -261,9 +261,7 @@ private fun NavGraphBuilder.allVideosScreen(
         var showUrlInputDialog by remember { mutableStateOf(false) }
 
         AllVideosScreen(
-            onNavigateBack = {
-                navController.popBackStack()
-            },
+            onOpenDrawer = onOpenDrawer,
             onNavigateToVideoPlayer = { videoId ->
                 navController.navigate(YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false))
             },
