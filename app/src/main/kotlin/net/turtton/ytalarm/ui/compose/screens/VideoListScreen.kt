@@ -682,7 +682,7 @@ fun VideoListScreen(
                 snackbarHostState.showSnackbar(
                     context.getString(R.string.snackbar_sync_started)
                 )
-                // TODO: 同期処理の実装
+                // Sync processing not implemented yet
             }
         },
         onFabUrlClick = {

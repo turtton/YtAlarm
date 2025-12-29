@@ -29,6 +29,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
+@Suppress("UnusedParameter")
 @Composable
 fun PlaylistItem(
     modifier: Modifier = Modifier,

@@ -30,6 +30,7 @@ import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import java.util.Calendar
 
+@Suppress("UnusedParameter")
 @Composable
 fun VideoItem(
     video: Video,

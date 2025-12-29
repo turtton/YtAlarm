@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package net.turtton.ytalarm.ui.compose.dialogs
 
 import androidx.compose.foundation.clickable

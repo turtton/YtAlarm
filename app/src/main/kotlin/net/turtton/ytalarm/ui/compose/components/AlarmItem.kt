@@ -63,7 +63,7 @@ fun AlarmItem(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = String.format("%02d:%02d", alarm.hour, alarm.minute),
+                    text = String.format(java.util.Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute),
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
