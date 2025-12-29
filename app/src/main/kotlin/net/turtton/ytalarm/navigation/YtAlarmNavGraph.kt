@@ -107,7 +107,7 @@ private fun NavGraphBuilder.alarmSettingsScreen(navController: NavHostController
         AlarmSettingsScreen(
             alarmId = alarmId,
             onNavigateBack = {
-                navController.popBackStack()
+                navController.popBackStackSafely()
             }
         )
     }
@@ -168,7 +168,7 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         VideoListScreen(
             playlistId = playlistId,
             onNavigateBack = {
-                navController.popBackStack()
+                navController.popBackStackSafely()
             },
             onNavigateToVideoPlayer = { videoId ->
                 navController.navigate(YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false))
@@ -310,7 +310,7 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
         // videoIdが不正な場合は前の画面に戻る
         if (videoId.isNullOrEmpty()) {
             androidx.compose.runtime.LaunchedEffect(Unit) {
-                navController.popBackStack()
+                navController.popBackStackSafely()
             }
             return@composable
         }
@@ -319,7 +319,7 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
             videoId = videoId,
             isAlarmMode = isAlarmMode,
             onDismiss = {
-                navController.popBackStack()
+                navController.popBackStackSafely()
             }
         )
     }

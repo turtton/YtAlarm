@@ -48,6 +48,7 @@ import net.turtton.ytalarm.ui.compose.components.SliderSettingItem
 import net.turtton.ytalarm.ui.compose.components.SwitchSettingItem
 import net.turtton.ytalarm.ui.compose.dialogs.AlarmDatePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.DayOfWeekPickerDialog
+import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
 import net.turtton.ytalarm.ui.compose.dialogs.RepeatTypeDialog
 import net.turtton.ytalarm.ui.compose.dialogs.RepeatTypeSelection
 import net.turtton.ytalarm.ui.compose.dialogs.SnoozeMinutePickerDialog
@@ -522,20 +523,20 @@ fun AlarmSettingsScreen(
                                 try {
                                     val video = videoViewModel.getFromIdAsync(thumbnail.id).await()
                                     video?.thumbnailUrl?.let {
-                                        net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Url(
+                                        DisplayDataThumbnail.Url(
                                             it
                                         )
-                                    } ?: net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(
+                                    } ?: DisplayDataThumbnail.Drawable(
                                         R.drawable.ic_no_image
                                     )
                                 } catch (e: Exception) {
-                                    net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(
+                                    DisplayDataThumbnail.Drawable(
                                         R.drawable.ic_no_image
                                     )
                                 }
                             }
                             is Playlist.Thumbnail.Drawable -> {
-                                net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail.Drawable(
+                                DisplayDataThumbnail.Drawable(
                                     thumbnail.id
                                 )
                             }

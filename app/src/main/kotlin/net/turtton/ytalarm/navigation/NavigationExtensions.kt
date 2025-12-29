@@ -51,3 +51,19 @@ fun NavHostController.navigateSingleTop(route: String) {
         launchSingleTop = true
     }
 }
+
+/**
+ * 安全にバックスタックをポップする
+ *
+ * バックスタックに戻る先がある場合のみpopBackStack()を実行する。
+ * 戻る連打による白画面バグを防止する。
+ *
+ * @return popBackStackが実行された場合はtrue、バックスタックが空で実行されなかった場合はfalse
+ */
+fun NavHostController.popBackStackSafely(): Boolean {
+    return if (previousBackStackEntry != null) {
+        popBackStack()
+    } else {
+        false
+    }
+}

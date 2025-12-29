@@ -73,21 +73,27 @@ fun MainScreen(
                     DrawerContent(
                         currentRoute = currentRoute,
                         onNavigate = { route ->
-                            scope.launch {
-                                // Drawer閉じるアニメーション完了を待つ
-                                drawerState.close()
-                                // 現在のルートを再取得（最新の値を使用）
-                                val current = navController.currentBackStackEntry?.destination?.route
-                                // ルートが異なる場合のみナビゲート
-                                if (current != route) {
-                                    navController.navigate(route) {
-                                        // スタート画面まで戻り、状態を保存/復元してナビゲート
-                                        popUpTo(YtAlarmDestination.ALARM_LIST) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
+                            // 現在のルートを取得
+                            val current = navController.currentBackStackEntry?.destination?.route
+                            // ルートが異なる場合のみナビゲート
+                            if (current != route) {
+                                // Drawerを非同期で閉じる（完了を待たない）
+                                scope.launch {
+                                    drawerState.close()
+                                }
+                                // 即座にナビゲーションを実行（タイムラグ解消）
+                                navController.navigate(route) {
+                                    // スタート画面まで戻り、状態を保存/復元してナビゲート
+                                    popUpTo(YtAlarmDestination.ALARM_LIST) {
+                                        saveState = true
                                     }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            } else {
+                                // 同じルートの場合はDrawerを閉じるのみ
+                                scope.launch {
+                                    drawerState.close()
                                 }
                             }
                         }

@@ -37,6 +37,48 @@ import net.turtton.ytalarm.ui.compose.components.AboutPageItem
 import net.turtton.ytalarm.ui.compose.components.AboutPageThumbnail
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
+// About情報のデータセット
+private val AboutItems: List<AboutPageData> = listOf(
+    AboutPageData.LinkData(
+        thumbnail = AboutPageThumbnail.Url(
+            "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+        ),
+        title = R.string.item_aboutpage_title_github,
+        details = R.string.item_aboutpage_details_github,
+        url = "https://github.com/turtton/YtAlarm"
+    ),
+    AboutPageData.LinkData(
+        thumbnail = AboutPageThumbnail.Url(
+            "https://www.gnu.org/graphics/gplv3-with-text-136x68.png"
+        ),
+        title = R.string.item_aboutpage_title_license,
+        details = R.string.item_aboutpage_details_license,
+        url = "https://github.com/turtton/YtAlarm/blob/HEAD/LICENSE"
+    ),
+    AboutPageData.LinkData(
+        thumbnail = AboutPageThumbnail.Drawable(R.drawable.ic_menu_book),
+        title = R.string.item_aboutpage_title_tirdpartylicenses,
+        details = null,
+        url = "https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm"
+    ),
+    AboutPageData.LinkData(
+        thumbnail = AboutPageThumbnail.Url(
+            "https://en.liberapay.com/assets/liberapay/icon-v2_white-on-yellow.200.png?save_as=liberapay_logo_white-on-yellow_200px.png"
+        ),
+        title = R.string.item_aboutpage_liberapay_title,
+        details = R.string.item_aboutpage_liberapay_details,
+        url = "https://liberapay.com/turtton/donate"
+    ),
+    AboutPageData.CopyableData(
+        thumbnail = AboutPageThumbnail.Url(
+            "https://camo.githubusercontent.com/d8f6d0e0aeafda23077ad6fdccd927fff87e1fff516534465269ebd9cffdaf4b/68747470733a2f2f656e2e626974636f696e2e69742f772f696d616765732f656e2f322f32392f42435f4c6f676f5f2e706e67"
+        ),
+        title = R.string.item_aboutpage_bitcoin_title,
+        details = R.string.item_aboutpage_bitcoin_address,
+        clipData = "3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t"
+    )
+)
+
 /**
  * About画面
  *
@@ -46,55 +88,11 @@ import net.turtton.ytalarm.ui.compose.theme.AppTheme
  */
 @Composable
 fun AboutPageScreen(
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    // About情報のデータセット
-    val aboutItems = remember {
-        listOf(
-            AboutPageData.LinkData(
-                thumbnail = AboutPageThumbnail.Url(
-                    "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
-                ),
-                title = R.string.item_aboutpage_title_github,
-                details = R.string.item_aboutpage_details_github,
-                url = "https://github.com/turtton/YtAlarm"
-            ),
-            AboutPageData.LinkData(
-                thumbnail = AboutPageThumbnail.Url(
-                    "https://www.gnu.org/graphics/gplv3-with-text-136x68.png"
-                ),
-                title = R.string.item_aboutpage_title_license,
-                details = R.string.item_aboutpage_details_license,
-                url = "https://github.com/turtton/YtAlarm/blob/HEAD/LICENSE"
-            ),
-            AboutPageData.LinkData(
-                thumbnail = AboutPageThumbnail.Drawable(R.drawable.ic_menu_book),
-                title = R.string.item_aboutpage_title_tirdpartylicenses,
-                details = null,
-                url = "https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm"
-            ),
-            AboutPageData.LinkData(
-                thumbnail = AboutPageThumbnail.Url(
-                    "https://en.liberapay.com/assets/liberapay/icon-v2_white-on-yellow.200.png?save_as=liberapay_logo_white-on-yellow_200px.png"
-                ),
-                title = R.string.item_aboutpage_liberapay_title,
-                details = R.string.item_aboutpage_liberapay_details,
-                url = "https://liberapay.com/turtton/donate"
-            ),
-            AboutPageData.CopyableData(
-                thumbnail = AboutPageThumbnail.Url(
-                    "https://camo.githubusercontent.com/d8f6d0e0aeafda23077ad6fdccd927fff87e1fff516534465269ebd9cffdaf4b/68747470733a2f2f656e2e626974636f696e2e69742f772f696d616765732f656e2f322f32392f42435f4c6f676f5f2e706e67"
-                ),
-                title = R.string.item_aboutpage_bitcoin_title,
-                details = R.string.item_aboutpage_bitcoin_address,
-                clipData = "3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t"
-            )
-        )
-    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -143,7 +141,7 @@ fun AboutPageScreen(
 
         // About情報リスト
         items(
-            items = aboutItems,
+            items = AboutItems,
             key = { it.title }
         ) { item ->
             AboutPageItem(

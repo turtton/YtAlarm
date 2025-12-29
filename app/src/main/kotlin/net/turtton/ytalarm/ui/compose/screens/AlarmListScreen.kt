@@ -48,6 +48,7 @@ import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.components.AlarmItem
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.extensions.alarmOrderRule
@@ -107,7 +108,11 @@ fun AlarmListScreenContent(
                             } else {
                                 Icons.Default.KeyboardArrowDown
                             },
-                            contentDescription = if (orderUp) "Sort ascending" else "Sort descending"
+                            contentDescription = if (orderUp) {
+                                "Sort ascending"
+                            } else {
+                                "Sort descending"
+                            }
                         )
                     }
                     // ソートルール選択ボタン
@@ -152,7 +157,7 @@ fun AlarmListScreenContent(
                     ) { alarm ->
                         // プレイリスト名とサムネイルを非同期で取得
                         val playlists = remember(alarm.playListId) {
-                            mutableStateOf<List<net.turtton.ytalarm.database.structure.Playlist>>(
+                            mutableStateOf<List<Playlist>>(
                                 emptyList()
                             )
                         }
@@ -174,7 +179,7 @@ fun AlarmListScreenContent(
 
                         playlists.value.firstOrNull()?.thumbnail?.let { thumbnail ->
                             when (thumbnail) {
-                                is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Video -> {
+                                is Playlist.Thumbnail.Video -> {
                                     // Video thumbnailの場合、VideoからURLを取得
                                     LaunchedEffect(thumbnail.id) {
                                         videoViewModel?.getFromIdAsync(
@@ -187,7 +192,7 @@ fun AlarmListScreenContent(
                                         }
                                     }
                                 }
-                                is net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Drawable -> {
+                                is Playlist.Thumbnail.Drawable -> {
                                     thumbnailUrl.value = thumbnail.id
                                 }
                             }
