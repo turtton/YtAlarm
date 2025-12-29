@@ -30,12 +30,12 @@ jobs:
     if: ${{ github.repository_owner == 'turtton' }}
 
     steps:
-      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           persist-credentials: false
 
       - name: Lint check
-        uses: musichin/ktlint-check@10f1c66877199ff197a87aa8263038f8c767aaab # v4.0.0
+        uses: musichin/ktlint-check@3306a8200993ad301ff57d53d1f3fd6d57742cec # v4.0.1
         with:
           ktlint-version: 1.8.0
 
@@ -52,13 +52,13 @@ jobs:
         run: ./gradlew check :rootCoverageReport --stacktrace
 
       - name: Generate report
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: report
           path: build/reports
 
       - name: Download report
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: report
           path: build/reports
