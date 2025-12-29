@@ -34,9 +34,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -57,7 +57,6 @@ import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -107,7 +106,6 @@ fun VideoListScreenContent(
     onReimport: (net.turtton.ytalarm.database.structure.Video) -> Unit,
     onDeleteSingleVideo: (net.turtton.ytalarm.database.structure.Video) -> Unit,
     onNavigateBack: () -> Unit,
-    onOpenDrawer: () -> Unit = {},
     onDeleteVideos: () -> Unit,
     onSortRuleChange: (VideoOrder) -> Unit,
     onOrderUpToggle: () -> Unit,
@@ -116,7 +114,8 @@ fun VideoListScreenContent(
     onFabMainClick: () -> Unit,
     onFabUrlClick: () -> Unit,
     onFabMultiChoiceClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenDrawer: () -> Unit = {}
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
@@ -442,7 +441,7 @@ fun VideoListScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val currentId by remember { MutableStateFlow(playlistId) }.collectAsState()
+    val currentId by remember { mutableLongStateOf(playlistId) }
     // playlistId == 0の場合は新規プレイリスト作成モード（空のリスト）
     // 全動画表示は AllVideosScreen で処理するため、ここでは扱わない
     val isNewPlaylistMode = currentId == 0L
@@ -624,7 +623,19 @@ fun VideoListScreen(
                             context.getString(R.string.message_reimport_failed) + ": Network error"
                         )
                     }
-                } catch (e: Exception) {
+                } catch (e: java.io.IOException) {
+                    android.util.Log.e(
+                        "VideoListScreen",
+                        "IO error during reimport: ${video.videoId}",
+                        e
+                    )
+                    withContext(Dispatchers.Main) {
+                        videoToReimport = null
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.message_reimport_failed) + ": IO error"
+                        )
+                    }
+                } catch (e: IllegalStateException) {
                     android.util.Log.e(
                         "VideoListScreen",
                         "Reimport failed for video: ${video.videoId}",

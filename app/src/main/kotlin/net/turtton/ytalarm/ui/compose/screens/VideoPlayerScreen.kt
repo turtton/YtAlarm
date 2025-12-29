@@ -92,8 +92,8 @@ fun VideoPlayerScreen(
     videoId: String,
     isAlarmMode: Boolean,
     onDismiss: () -> Unit,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
     val context = LocalContext.current
     val view = LocalView.current

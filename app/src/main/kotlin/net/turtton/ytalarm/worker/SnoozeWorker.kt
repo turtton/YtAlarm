@@ -91,8 +91,14 @@ class UpdateSnoozeNotifyWorker(appContext: Context, workerParams: WorkerParamete
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .addAction(R.drawable.ic_trash, cancelText, removeIntent)
 
-        notificationManager
-            .notify(NOTIFICATION_ID, builder.build())
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU ||
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                applicationContext,
+                android.Manifest.permission.POST_NOTIFICATIONS
+            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationManager.notify(NOTIFICATION_ID, builder.build())
+        }
 
         return Result.success()
     }

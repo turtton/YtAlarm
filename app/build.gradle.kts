@@ -59,6 +59,9 @@ android {
 
     packaging {
         resources.excludes += "META-INF/atomicfu.kotlin_module"
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     buildTypes {
@@ -82,6 +85,7 @@ android {
     buildFeatures {
         viewBinding = true
         compose = true
+        buildConfig = true
     }
 
     val roomSchemaDir = "$projectDir/schemas"
@@ -116,7 +120,9 @@ android {
     lint {
         warningsAsErrors = true
 
-        disable += listOf("GradleDependency", "OldTargetApi")
+        // Aligned16KB: youtubedl-android library's native libs are not 16KB aligned (external dependency)
+        // AndroidGradlePluginVersion: Gradle version recommendation, not a critical error
+        disable += listOf("GradleDependency", "OldTargetApi", "Aligned16KB", "AndroidGradlePluginVersion")
     }
 }
 

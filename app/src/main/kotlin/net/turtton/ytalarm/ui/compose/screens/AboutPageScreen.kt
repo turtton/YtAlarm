@@ -156,12 +156,25 @@ fun AboutPageScreen(
                                 val intent = Intent(Intent.ACTION_VIEW, item.url.toUri())
                                 context.startActivity(intent)
                             } catch (e: android.content.ActivityNotFoundException) {
+                                android.util.Log.w("AboutPageScreen", "No browser found", e)
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
                                         context.getString(R.string.error_no_browser)
                                     )
                                 }
-                            } catch (e: Exception) {
+                            } catch (e: SecurityException) {
+                                android.util.Log.e(
+                                    "AboutPageScreen",
+                                    "Security error opening link",
+                                    e
+                                )
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        context.getString(R.string.error_open_link)
+                                    )
+                                }
+                            } catch (e: IllegalArgumentException) {
+                                android.util.Log.e("AboutPageScreen", "Invalid URL", e)
                                 scope.launch {
                                     snackbarHostState.showSnackbar(
                                         context.getString(R.string.error_open_link)

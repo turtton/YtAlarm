@@ -1,7 +1,6 @@
 package net.turtton.ytalarm.ui.compose.screens
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +34,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -340,7 +340,7 @@ fun AlarmSettingsScreenContent(
         VibrationWarningDialog(
             onOpenIssue = {
                 val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse("https://github.com/turtton/YtAlarm/issues/117")
+                    data = "https://github.com/turtton/YtAlarm/issues/117".toUri()
                 }
                 context.startActivity(intent)
             },
@@ -355,6 +355,7 @@ fun AlarmSettingsScreenContent(
  * ViewModel連携版のAlarm設定画面。
  * alarmIdを受け取り、新規作成(-1)または既存編集を行う。
  */
+@Suppress("ThrowsCount") // CancellationException rethrows for proper coroutine handling
 @Composable
 fun AlarmSettingsScreen(
     alarmId: Long,
@@ -397,7 +398,13 @@ fun AlarmSettingsScreen(
             withContext(Dispatchers.IO) {
                 try {
                     alarmViewModel.getFromIdAsync(alarmId).await()
-                } catch (e: Exception) {
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: IllegalStateException) {
+                    android.util.Log.e("AlarmSettingsScreen", "Failed to get alarm: $alarmId", e)
+                    null
+                } catch (e: IllegalArgumentException) {
+                    android.util.Log.e("AlarmSettingsScreen", "Invalid alarm id: $alarmId", e)
                     null
                 }
             }
@@ -425,7 +432,10 @@ fun AlarmSettingsScreen(
                     try {
                         val playlists = playlistViewModel.getFromIdsAsync(ids).await()
                         playlistTitle = playlists.joinToString(", ") { it.title }
-                    } catch (e: Exception) {
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: IllegalStateException) {
+                        android.util.Log.e("AlarmSettingsScreen", "Failed to get playlists", e)
                         playlistTitle = ""
                     }
                 }
@@ -472,7 +482,17 @@ fun AlarmSettingsScreen(
                 withContext(Dispatchers.Main) {
                     onNavigateBack()
                 }
-            } catch (e: Exception) {
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: android.database.sqlite.SQLiteException) {
+                android.util.Log.e("AlarmSettingsScreen", "Database error saving alarm", e)
+                withContext(Dispatchers.Main) {
+                    snackbarHostState.showSnackbar(
+                        context.getString(R.string.snackbar_error_failed_to_save_alarm)
+                    )
+                }
+            } catch (e: IllegalStateException) {
+                android.util.Log.e("AlarmSettingsScreen", "Failed to save alarm", e)
                 withContext(Dispatchers.Main) {
                     snackbarHostState.showSnackbar(
                         context.getString(R.string.snackbar_error_failed_to_save_alarm)
@@ -490,7 +510,10 @@ fun AlarmSettingsScreen(
             withContext(Dispatchers.IO) {
                 try {
                     allPlaylists = playlistViewModel.allPlaylistsAsync.await()
-                } catch (e: Exception) {
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (e: IllegalStateException) {
+                    android.util.Log.e("AlarmSettingsScreen", "Failed to get all playlists", e)
                     allPlaylists = emptyList()
                 }
             }
@@ -536,7 +559,14 @@ fun AlarmSettingsScreen(
                                     } ?: DisplayDataThumbnail.Drawable(
                                         R.drawable.ic_no_image
                                     )
-                                } catch (e: Exception) {
+                                } catch (e: kotlinx.coroutines.CancellationException) {
+                                    throw e
+                                } catch (e: IllegalStateException) {
+                                    android.util.Log.w(
+                                        "AlarmSettingsScreen",
+                                        "Failed to get video thumbnail: ${thumbnail.id}",
+                                        e
+                                    )
                                     DisplayDataThumbnail.Drawable(
                                         R.drawable.ic_no_image
                                     )

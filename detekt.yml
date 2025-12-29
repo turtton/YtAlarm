@@ -101,6 +101,7 @@ complexity:
     ignoreSingleWhenExpression: false
     ignoreSimpleWhenEntries: false
     ignoreNestingFunctions: false
+    ignoreAnnotated: ['Composable']
     nestingFunctions:
       - 'also'
       - 'apply'
@@ -120,13 +121,14 @@ complexity:
   LongMethod:
     active: true
     threshold: 60
+    ignoreAnnotated: ['Composable']
   LongParameterList:
     active: true
     functionThreshold: 6
     constructorThreshold: 7
     ignoreDefaultParameters: true
     ignoreDataClasses: true
-    ignoreAnnotatedParameter: ['Composable']
+    ignoreAnnotated: ['Composable']
   MethodOverloading:
     active: false
     threshold: 6

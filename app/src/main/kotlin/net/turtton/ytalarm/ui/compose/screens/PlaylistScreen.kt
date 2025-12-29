@@ -365,10 +365,17 @@ fun PlaylistScreen(
                     try {
                         val workerState = workManager.getWorkInfoById(state.workerId).get()?.state
                         workerState == null || workerState.isFinished
-                    } catch (e: Exception) {
+                    } catch (e: java.util.concurrent.ExecutionException) {
                         android.util.Log.e(
                             "PlaylistScreen",
                             "Failed to check worker state: ${state.workerId}",
+                            e
+                        )
+                        true // ワーカー情報取得失敗時はガベージコレクション対象とする
+                    } catch (e: InterruptedException) {
+                        android.util.Log.e(
+                            "PlaylistScreen",
+                            "Interrupted while checking worker state: ${state.workerId}",
                             e
                         )
                         true // ワーカー情報取得失敗時はガベージコレクション対象とする
@@ -380,7 +387,9 @@ fun PlaylistScreen(
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // キャンセル例外は再スロー
                 throw e
-            } catch (e: Exception) {
+            } catch (e: android.database.sqlite.SQLiteException) {
+                android.util.Log.e("PlaylistScreen", "Database error during garbage collection", e)
+            } catch (e: IllegalStateException) {
                 android.util.Log.e("PlaylistScreen", "Garbage collection failed", e)
             }
         }

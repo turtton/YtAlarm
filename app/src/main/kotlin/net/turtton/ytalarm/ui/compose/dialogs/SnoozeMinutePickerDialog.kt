@@ -10,7 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -28,7 +28,7 @@ fun SnoozeMinutePickerDialog(
     onConfirm: (minute: Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    var selectedMinute by remember { mutableStateOf(initialMinute.toFloat()) }
+    var selectedMinute by remember { mutableFloatStateOf(initialMinute.toFloat()) }
 
     AlertDialog(
         onDismissRequest = onDismiss,

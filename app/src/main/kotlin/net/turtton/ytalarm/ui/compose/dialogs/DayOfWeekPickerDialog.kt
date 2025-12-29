@@ -28,12 +28,12 @@ fun DayOfWeekPickerDialog(
     onConfirm: (List<DayOfWeekCompat>) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val selectedDays = remember {
-        mutableStateMapOf<DayOfWeekCompat, Boolean>().apply {
-            DayOfWeekCompat.entries.forEach { day ->
-                this[day] = initialSelectedDays.contains(day)
-            }
+    val selectedDays = remember(initialSelectedDays) {
+        val map = mutableStateMapOf<DayOfWeekCompat, Boolean>()
+        DayOfWeekCompat.entries.forEach { day ->
+            map[day] = initialSelectedDays.contains(day)
         }
+        map
     }
 
     val context = LocalContext.current

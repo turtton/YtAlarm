@@ -49,12 +49,12 @@ fun <T> MultiChoiceVideoDialog(
     onConfirm: (Set<T>) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val selectedIds = remember {
-        mutableStateMapOf<T, Boolean>().apply {
-            displayDataList.forEach { data ->
-                this[data.id] = initialSelectedIds.contains(data.id)
-            }
+    val selectedIds = remember(displayDataList, initialSelectedIds) {
+        val map = mutableStateMapOf<T, Boolean>()
+        displayDataList.forEach { data ->
+            map[data.id] = initialSelectedIds.contains(data.id)
         }
+        map
     }
 
     AlertDialog(

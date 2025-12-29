@@ -7,6 +7,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -133,6 +134,7 @@ private fun NavGraphBuilder.playlistScreen(
 /**
  * 動画一覧画面のルート定義
  */
+@Suppress("LongMethod")
 private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
     composable(
         route = YtAlarmDestination.VIDEO_LIST,
@@ -163,7 +165,7 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         // ダイアログ状態管理
         var showUrlInputDialog by remember { mutableStateOf(false) }
         var showMultiChoiceDialog by remember { mutableStateOf(false) }
-        var currentPlaylistIdForDialog by remember { mutableStateOf(playlistId) }
+        var currentPlaylistIdForDialog by remember { mutableLongStateOf(playlistId) }
 
         VideoListScreen(
             playlistId = playlistId,
@@ -233,7 +235,16 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                                     )
                                 }
                             }
-                        } catch (e: Exception) {
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (e: android.database.sqlite.SQLiteException) {
+                            Log.e("YtAlarmNavGraph", "Database error adding videos to playlist", e)
+                            withContext(Dispatchers.Main) {
+                                snackbarHostState.showSnackbar(
+                                    context.getString(R.string.message_operation_failed)
+                                )
+                            }
+                        } catch (e: IllegalStateException) {
                             Log.e("YtAlarmNavGraph", "Failed to add videos to playlist", e)
                             withContext(Dispatchers.Main) {
                                 snackbarHostState.showSnackbar(

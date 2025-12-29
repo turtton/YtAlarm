@@ -26,11 +26,11 @@ import net.turtton.ytalarm.ui.compose.theme.AppTheme
 @Composable
 fun SettingItem(
     title: String,
+    modifier: Modifier = Modifier,
     description: String? = null,
     onClick: (() -> Unit)? = null,
     trailingContent: @Composable (() -> Unit)? = null,
-    bottomContent: @Composable (() -> Unit)? = null,
-    modifier: Modifier = Modifier
+    bottomContent: @Composable (() -> Unit)? = null
 ) {
     val clickableModifier = if (onClick != null) {
         modifier.clickable(onClick = onClick)
@@ -84,10 +84,10 @@ fun SettingItem(
 @Composable
 fun SwitchSettingItem(
     title: String,
-    description: String? = null,
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    description: String? = null
 ) {
     SettingItem(
         title = title,
@@ -108,12 +108,12 @@ fun SwitchSettingItem(
 @Composable
 fun SliderSettingItem(
     title: String,
-    description: String? = null,
     value: Float,
-    valueRange: ClosedFloatingPointRange<Float> = 0f..100f,
-    steps: Int = 0,
     onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    description: String? = null,
+    valueRange: ClosedFloatingPointRange<Float> = 0f..100f,
+    steps: Int = 0
 ) {
     SettingItem(
         title = title,
