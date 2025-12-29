@@ -37,7 +37,7 @@ jobs:
       - name: Lint check
         uses: musichin/ktlint-check@687a1d5d326566030e61fb1a1fce0af556a73162 # v3.1.0
         with:
-          ktlint-version: 1.0.0
+          ktlint-version: 1.5.0
 
       - name: set up JDK 17
         uses: actions/setup-java@dded0888837ed1f317902acf8a20df0ad188d165 # v5.0.0

@@ -18,21 +18,16 @@ object YtAlarmDestination {
     /**
      * アラーム設定画面のルートを生成
      */
-    fun alarmSettings(alarmId: Long): String {
-        return "alarm_settings/$alarmId"
-    }
+    fun alarmSettings(alarmId: Long): String = "alarm_settings/$alarmId"
 
     /**
      * 動画一覧画面のルートを生成
      */
-    fun videoList(playlistId: Long): String {
-        return "video_list/$playlistId"
-    }
+    fun videoList(playlistId: Long): String = "video_list/$playlistId"
 
     /**
      * 動画プレーヤー画面のルートを生成
      */
-    fun videoPlayer(videoId: String, isAlarmMode: Boolean = false): String {
-        return "video_player/$videoId/$isAlarmMode"
-    }
+    fun videoPlayer(videoId: String, isAlarmMode: Boolean = false): String =
+        "video_player/$videoId/$isAlarmMode"
 }

@@ -3,12 +3,6 @@ package net.turtton.ytalarm.navigation
 import androidx.navigation.NavHostController
 
 /**
- * Navigation用の拡張関数群
- *
- * 頻繁に使われるナビゲーションパターンを簡潔に記述するためのヘルパー。
- */
-
-/**
  * 指定したrouteへナビゲートし、backStackから前の画面をポップする
  *
  * 例: ログイン後にログイン画面を履歴から削除する場合
@@ -60,10 +54,8 @@ fun NavHostController.navigateSingleTop(route: String) {
  *
  * @return popBackStackが実行された場合はtrue、バックスタックが空で実行されなかった場合はfalse
  */
-fun NavHostController.popBackStackSafely(): Boolean {
-    return if (previousBackStackEntry != null) {
-        popBackStack()
-    } else {
-        false
-    }
+fun NavHostController.popBackStackSafely(): Boolean = if (previousBackStackEntry != null) {
+    popBackStack()
+} else {
+    false
 }

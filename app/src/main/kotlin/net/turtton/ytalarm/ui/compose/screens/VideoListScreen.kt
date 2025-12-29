@@ -222,8 +222,10 @@ fun VideoListScreenContent(
                             when {
                                 // 全動画モード: 直接URL入力ダイアログを表示
                                 isAllVideosMode -> onFabUrlClick()
+
                                 // Originalモード（新規/既存プレイリスト）: 展開/折りたたみ
                                 isOriginalMode -> onFabExpandToggle()
+
                                 // Syncモード: 同期実行
                                 else -> onFabMainClick()
                             }

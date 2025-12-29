@@ -166,11 +166,7 @@ private fun <T> MultiChoiceVideoItem(
  * @param title 表示タイトル
  * @param thumbnailUrl サムネイル画像のURL or Drawable ID
  */
-data class DisplayData<T>(
-    val id: T,
-    val title: String,
-    val thumbnailUrl: DisplayDataThumbnail?
-)
+data class DisplayData<T>(val id: T, val title: String, val thumbnailUrl: DisplayDataThumbnail?)
 
 /**
  * サムネイル画像の種類

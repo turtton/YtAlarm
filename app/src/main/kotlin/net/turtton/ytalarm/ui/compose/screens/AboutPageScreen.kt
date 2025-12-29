@@ -169,6 +169,7 @@ fun AboutPageScreen(
                                 }
                             }
                         }
+
                         is AboutPageData.CopyableData -> {
                             // クリップボードにコピー
                             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE)

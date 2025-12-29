@@ -54,6 +54,7 @@ fun AboutPageItem(
                     modifier = Modifier.size(50.dp)
                 )
             }
+
             is AboutPageThumbnail.Drawable -> {
                 androidx.compose.foundation.Image(
                     painter = painterResource(id = thumbnail.id),

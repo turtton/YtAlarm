@@ -244,9 +244,13 @@ fun AlarmSettingsScreenContent(
     if (showRepeatTypeDialog) {
         val currentType = when (alarm.repeatType) {
             is Alarm.RepeatType.Once -> RepeatTypeSelection.ONCE
+
             is Alarm.RepeatType.Everyday -> RepeatTypeSelection.EVERYDAY
+
             is Alarm.RepeatType.Days -> RepeatTypeSelection.DAYS
+
             is Alarm.RepeatType.Date -> RepeatTypeSelection.DATE
+
             is Alarm.RepeatType.Snooze -> {
                 // Snoozeは設定画面では扱わない
                 RepeatTypeSelection.ONCE
@@ -261,12 +265,15 @@ fun AlarmSettingsScreenContent(
                     RepeatTypeSelection.ONCE -> {
                         onAlarmChange(alarm.copy(repeatType = Alarm.RepeatType.Once))
                     }
+
                     RepeatTypeSelection.EVERYDAY -> {
                         onAlarmChange(alarm.copy(repeatType = Alarm.RepeatType.Everyday))
                     }
+
                     RepeatTypeSelection.DAYS -> {
                         showDayOfWeekDialog = true
                     }
+
                     RepeatTypeSelection.DATE -> {
                         showDatePickerDialog = true
                     }
@@ -535,6 +542,7 @@ fun AlarmSettingsScreen(
                                     )
                                 }
                             }
+
                             is Playlist.Thumbnail.Drawable -> {
                                 DisplayDataThumbnail.Drawable(
                                     thumbnail.id

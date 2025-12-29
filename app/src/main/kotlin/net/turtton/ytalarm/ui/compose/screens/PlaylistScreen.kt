@@ -191,6 +191,7 @@ fun PlaylistScreenContent(
                                         }
                                     }
                                 }
+
                                 is Playlist.Thumbnail.Drawable -> {
                                     thumbnailUrl.value = thumbnail.id
                                 }

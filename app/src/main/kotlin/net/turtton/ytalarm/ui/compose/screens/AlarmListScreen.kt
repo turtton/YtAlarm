@@ -192,6 +192,7 @@ fun AlarmListScreenContent(
                                         }
                                     }
                                 }
+
                                 is Playlist.Thumbnail.Drawable -> {
                                     thumbnailUrl.value = thumbnail.id
                                 }
