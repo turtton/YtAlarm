@@ -4,30 +4,13 @@
 
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
-    <string name="remove">Remove</string>
-
-    <!-- Strings used for fragments for navigation -->
-    <string name="first_fragment_label">Alarms</string>
-    <string name="second_fragment_label">Alarm Settings</string>
-
-    <string name="alarm_time" translatable="false">00:00</string>
-    <string name="alarm_type" translatable="false">aram_type</string>
-    <string name="playlist_name_importing">Importing</string>
-    <string name="playlist_name" translatable="false">PlaylistName</string>
     <string name="thumbnail_description" translatable="false">PlaylistThumbnail</string>
-    <string name="setting_name" translatable="false">SettingName</string>
-    <string name="setting_description" translatable="false">SettingDescription</string>
-    <string name="fab_save">Save</string>
-    <plurals name="playlist_item_video_count">
-        <item quantity="one">%d video</item>
-        <item quantity="other">%d videos</item>
-    </plurals>
-    <string name="playlist_item_video_count_none">no video</string>
     <string name="playlist_item_title" translatable="false">PlaylistTitle</string>
 
     <string name="setting_time">Time</string>
     <string name="setting_repeat">Repeat</string>
     <string name="setting_playlist">Playlist</string>
+    <string name="setting_playlist_empty">Select playlist</string>
     <string name="setting_loop">Loop</string>
     <string name="setting_shuffle">Shuffle</string>
     <string name="setting_volume">Volume</string>
@@ -37,9 +20,6 @@
         <item quantity="other">%d minutes</item>
     </plurals>
     <string name="setting_vibration">Vibration</string>
-    <string name="item_video_list_data_size" translatable="false">%02.1fMB</string>
-    <string name="item_video_list_click_to_retry">Click to retry</string>
-    <string name="item_video_list_import_failed">Import failed</string>
     <string name="item_video_list_state_importing">Importing</string>
     <string name="fragment_video_player_button_dismiss">Dismiss</string>
     <string name="fragment_video_player_button_snooze">Snooze</string>
@@ -54,19 +34,38 @@
     <string name="menu_title_video_list">VideoList</string>
     <string name="menu_title_aboutpage">About</string>
 
+    <!-- Navigation titles for Compose screens -->
+    <string name="nav_alarm_list">Alarms</string>
+    <string name="nav_new_alarm">New Alarm</string>
+    <string name="nav_edit_alarm">Edit Alarm</string>
+    <string name="nav_playlist">Playlists</string>
+    <string name="nav_video_list">Videos</string>
+    <string name="nav_video_list_all">All Videos</string>
+    <string name="nav_video_list_new">New Playlist</string>
+
+    <!-- Empty state messages -->
+    <string name="alarm_list_empty_message">No alarms. Tap + to create one.</string>
+    <string name="playlist_empty_message">No playlists. Tap + to create one.</string>
+    <string name="video_list_empty_message">No videos. Tap + to add one.</string>
+    <string name="video_list_empty_new_message">Add videos to create a new playlist.</string>
+
     <string name="dialog_video_input_url_hint" translatable="false">https://…</string>
     <string name="dialog_video_input_ok">Import</string>
 
     <string name="dialog_execute_progress_title">Importing…</string>
     <string name="dialog_execute_progress_title_loading">Loading…</string>
     <string name="dialog_execute_progress_eta_init">calculating…</string>
-    <string name="fab_add_video_description" translatable="false">Add video Button</string>
 
     <string name="dialog_multichoice_ok">Confirm</string>
-    <string name="menu_video_list_add_to">AddTo</string>
 
     <string name="dialog_remove_title">Delete</string>
     <string name="dialog_remove_ok">Confirm</string>
+
+    <!-- Remove video dialog -->
+    <string name="dialog_remove_video_title">Delete Videos</string>
+    <string name="dialog_remove_video_message">Are you sure you want to delete the selected videos?</string>
+    <string name="dialog_remove_video_positive">Delete</string>
+    <string name="dialog_remove_video_negative">Cancel</string>
 
     <string name="dialog_repeat_choice_title">Repeat</string>
     <string-array name="dialog_repeat_type_choice">
@@ -77,15 +76,6 @@
     </string-array>
     <string name="dialog_repeat_days_title">Days</string>
     <string name="dialog_repeat_days_ok">Confirm</string>
-    <string-array name="dialog_repeat_days_choice">
-        <item name="dialog_repeat_days_choice_mon">Mon</item>
-        <item name="dialog_repeat_days_choice_tue">Tue</item>
-        <item name="dialog_repeat_days_choice_wed">Wed</item>
-        <item name="dialog_repeat_days_choice_thu">Thu</item>
-        <item name="dialog_repeat_days_choice_fri">Fri</item>
-        <item name="dialog_repeat_days_choice_sat">Sat</item>
-        <item name="dialog_repeat_days_choice_sun">Sun</item>
-    </string-array>
     <string name="dialog_require_permission">Permission Required</string>
     <string name="dialog_require_overlay_perm">This application requires \"Display over other apps\" permission to display alarm.</string>
     <string name="dialog_require_overlay_perm_ok">Settings</string>
@@ -94,12 +84,6 @@
     <string name="dialog_require_disable_restrictions_ok">Settings</string>
     <string name="dialog_shared_text_should_be_url_title">Error</string>
     <string name="dialog_shared_text_should_be_url_description">The shared text should start \"http..\"</string>
-
-    <string name="dialog_playlist_name_input_ok">Rename</string>
-
-    <string name="dialog_video_import_failed_title">Failed Url</string>
-    <string name="dialog_video_import_failed_retry">Retry</string>
-    <string name="dialog_video_import_failed_clear">Clear</string>
 
     <string name="dialog_vibration_waring_title">Attention</string>
     <string name="dialog_vibration_waring_message">Vibration system may not work in Android12.</string>
@@ -122,26 +106,21 @@
         <item>Imported date</item>
     </string-array>
 
-    <string name="snackbar_error_unexpected_playlist_state">Please reenter playlist.</string>
     <string name="snackbar_error_playlistid_is_null">Please select playlist</string>
     <string name="snackbar_error_target_is_the_past_date">Target is the past date</string>
     <string name="snackbar_error_failed_to_get_alarm">Failed to get alarm data</string>
+    <string name="snackbar_error_failed_to_save_alarm">Failed to save alarm</string>
     <string name="snackbar_error_failed_to_get_video">Failed to get video data</string>
-    <string name="snackbar_error_failed_to_get_playlist">Failed to get playlist data</string>
     <string name="snackbar_error_failed_to_import_video">Failed to import video</string>
     <string name="snackbar_error_failed_to_prepare_vibration">Failed to prepare vibration system.</string>
     <string name="snackbar_error_failed_to_access_clipboard">Failed to access clipboard system.</string>
     <string name="snackbar_error_failed_to_access_settings_data">Failed to access settings data.</string>
     <string name="snackbar_error_empty_video">Video is Empty</string>
-    <string name="snackbar_error_unknown">Unknown Error.</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
-    <string name="snackbar_sync_is_running">Download worker is already working. Please wait.</string>
+    <string name="snackbar_sync_started">Sync started</string>
     <string name="snackbar_detect_playlist_usage">Some playlists are used by alarms.</string>
     <string name="snackbar_failed_to_check_restriction">Failed to check app restriction status.</string>
-    <string name="snackbar_thumbnail_updated">Thumbnail Updated</string>
-    <string name="snackbar_not_implemented">This feature coming soon</string>
     <string name="snackbar_copied">Copied</string>
-    <string name="snackbar_only_supports_downloadmode">This video only supports download mode</string>
 
     <string name="notification_channel_name" translatable="false">YtAlarm</string>
     <string name="notification_snooze_channel_description" translatable="false">Snooze notification channel</string>
@@ -152,23 +131,17 @@
     </plurals>
     <string name="notification_download_video_info_channel_description" translatable="false">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
-    <string name="playlist_fragment_label">Playlists</string>
-    <string name="videolist_fragment_label">Videos</string>
     <string name="videoplayer_fragment_label">Playing</string>
-    <string name="allvideolist_fragment_label">All Videos</string>
     <string name="menu_playlist_option_rename">Rename</string>
-    <string name="item_playlist_more_button_description" translatable="false">Option Button</string>
-    <string name="item_video_download_description" translatable="false">Download Button</string>
 
-    <string name="menu_option_sortrule">SortRule</string>
-    <string name="menu_option_order">Order</string>
+    <string name="menu_alarm_option_sortrule">Sort Alarms</string>
+    <string name="menu_playlist_option_sortrule">Sort Playlists</string>
+    <string name="menu_video_list_option_sortrule">Sort Videos</string>
 
     <string name="menu_video_list_item_option_set_thumbnail">Set as playlist thumbnail</string>
     <string name="menu_video_list_item_option_download">Download</string>
     <string name="menu_video_list_item_option_reimport">Reimport</string>
     <string name="menu_video_list_item_option_delete">Delete</string>
-
-    <string name="menu_all_video_list_item_option_add_to_playlist">Add to Playlist</string>
 
     <string name="menu_video_list_option_sync_rule">Sync Rule</string>
     <string-array name="dialog_video_list_syncrule">
@@ -176,8 +149,6 @@
         <item>Delete if not exist</item>
     </string-array>
 
-    <string name="item_aboutpage_title" translatable="false">Title</string>
-    <string name="item_aboutpage_details" translatable="false">Details</string>
     <string name="item_aboutpage_title_github" translatable="false">GitHub</string>
     <string name="item_aboutpage_details_github">Open and get the YtAlarm source code.</string>
     <string name="item_aboutpage_title_license">License</string>
@@ -187,4 +158,30 @@
     <string name="item_aboutpage_liberapay_details">Click to open</string>
     <string name="item_aboutpage_bitcoin_title" translatable="false">Bitcoin</string>
     <string name="item_aboutpage_bitcoin_address" translatable="false">3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t</string>
+
+    <!-- Dialog strings for menu actions -->
+    <string name="dialog_reimport_title">Reimport Video</string>
+    <string name="dialog_reimport_message">Update information for \"%1$s\"?</string>
+    <string name="dialog_reimport_confirm">Update</string>
+    <string name="dialog_delete_video_title">Delete Video</string>
+    <string name="dialog_delete_video_message">Delete \"%1$s\"?</string>
+
+    <!-- Form labels -->
+    <string name="playlist_name_label">Playlist Name</string>
+    <string name="error_empty_name">Please enter a name</string>
+
+    <!-- Snackbar messages -->
+    <string name="message_thumbnail_set">Thumbnail has been set</string>
+    <string name="message_download_not_implemented">Download feature is under development</string>
+    <string name="message_video_deleted">Video deleted</string>
+    <string name="message_reimport_started">Updating video information…</string>
+    <string name="message_reimport_success">Video information updated successfully</string>
+    <string name="message_reimport_failed">Failed to update video information</string>
+    <string name="message_playlist_renamed">Playlist renamed</string>
+    <string name="message_videos_added">Videos added to playlist</string>
+    <string name="message_operation_failed">Operation failed</string>
+
+    <!-- Error messages for AboutPage -->
+    <string name="error_no_browser">No browser app found</string>
+    <string name="error_open_link">Failed to open link</string>
 </resources>

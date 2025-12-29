@@ -7,6 +7,9 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -15,28 +18,21 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.core.content.PackageManagerCompat
 import androidx.core.content.UnusedAppRestrictionsConstants
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.navigation.NavigationView
-import com.google.android.material.snackbar.Snackbar
+import com.yausername.youtubedl_android.YoutubeDL
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.database.structure.Playlist
-import net.turtton.ytalarm.databinding.ActivityMainBinding
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
+import net.turtton.ytalarm.ui.MainScreen
 import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.addNewPlaylist
 import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
 import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
-import net.turtton.ytalarm.util.initYtDL
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
@@ -45,12 +41,9 @@ import net.turtton.ytalarm.worker.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
 import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
-class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
-
-    private lateinit var navController: NavController
-    private lateinit var appBarConfiguration: AppBarConfiguration
-    lateinit var binding: ActivityMainBinding
-    lateinit var drawerLayout: DrawerLayout
+class MainActivity :
+    AppCompatActivity(),
+    VideoPlayerLoadingResourceContainer {
 
     override val videoPlayerLoadingResourceController = VideoPlayerLoadingResourceController()
 
@@ -64,34 +57,42 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        initYtDL(binding.root.rootView)
 
-        setContentView(binding.root)
+        // Composeで画面を設定
+        setContent {
+            MainScreen(
+                playlistViewModel = playlistViewModel,
+                videoViewModel = videoViewModel,
+                videoPlayerResourceContainer = this
+            )
+        }
 
-        setSupportActionBar(binding.toolbar)
-
-        val mainNav = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main)
-        navController = mainNav!!.findNavController()
-        findViewById<NavigationView>(R.id.nav_view).setupWithNavController(navController)
-        drawerLayout = findViewById(R.id.drawer_layout)
-        val topLevelFragments = setOf(
-            R.id.aram_list_fragment,
-            R.id.playlist_fragment,
-            R.id.all_video_list_fragment,
-            R.id.aboutpage_fragment
-        )
-        appBarConfiguration = AppBarConfiguration(
-            topLevelFragments,
-            drawerLayout
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-
-        binding.fab.shrink()
-
+        // 既存の初期化処理
+        initYtDL()
         createNotificationChannel()
         requestPermission()
         checkUrlShare(intent)
+    }
+
+    /**
+     * YoutubeDLライブラリの初期化
+     *
+     * YT-DL初期化をバックグラウンドで実行し、エラー時にToastを表示する。
+     */
+    private fun initYtDL() = lifecycleScope.launch {
+        runCatching {
+            withContext(Dispatchers.IO) {
+                YoutubeDL.getInstance().init(applicationContext)
+            }
+        }.onFailure {
+            // lifecycleScope内なので追加のlaunchは不要
+            Toast.makeText(
+                this@MainActivity,
+                "Internal error occurred.",
+                Toast.LENGTH_LONG
+            ).show()
+            Log.e(APP_TAG, "YtDL initialization failed", it)
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -136,11 +137,12 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
                                     activity.launch(intent)
                                 }.show()
                         }
+
                         UnusedAppRestrictionsConstants.ERROR -> {
-                            Snackbar.make(
-                                binding.root.rootView,
+                            Toast.makeText(
+                                this,
                                 R.string.snackbar_failed_to_check_restriction,
-                                Snackbar.LENGTH_LONG
+                                Toast.LENGTH_LONG
                             ).show()
                         }
                     }
@@ -154,7 +156,7 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
             intent.getStringExtra(Intent.EXTRA_TEXT)?.let { url ->
                 lifecycleScope.launch {
                     if (!url.startsWith("http")) {
-                        AlertDialog.Builder(applicationContext)
+                        AlertDialog.Builder(this@MainActivity)
                             .setTitle(R.string.dialog_shared_text_should_be_url_title)
                             .setMessage(R.string.dialog_shared_text_should_be_url_description)
                             .setPositiveButton(R.string.ok, null)
@@ -200,10 +202,6 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
             videoInfoChannel.description = videoInfoDescription
             notificationManager.createNotificationChannel(videoInfoChannel)
         }
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
     companion object {

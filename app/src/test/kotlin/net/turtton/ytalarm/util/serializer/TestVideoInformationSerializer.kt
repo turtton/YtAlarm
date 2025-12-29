@@ -7,21 +7,22 @@ import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.util.VideoInformation
 
 @Suppress("UNUSED")
-class TestVideoInformationSerializer : FunSpec({
-    val json = Json { ignoreUnknownKeys = true }
-    context("decode") {
-        val videoData = VideoInformation(
-            "abc",
-            "title",
-            "example.com/abc",
-            "example.com",
-            VideoInformation.Type.Video(
-                "fullTitle",
-                "thumbnail.example.com/abc",
-                "video.example.com/abc"
+class TestVideoInformationSerializer :
+    FunSpec({
+        val json = Json { ignoreUnknownKeys = true }
+        context("decode") {
+            val videoData = VideoInformation(
+                "abc",
+                "title",
+                "example.com/abc",
+                "example.com",
+                VideoInformation.Type.Video(
+                    "fullTitle",
+                    "thumbnail.example.com/abc",
+                    "video.example.com/abc"
+                )
             )
-        )
-        val rowVideoData = """
+            val rowVideoData = """
             {
                 "id": "abc",
                 "title": "title",
@@ -32,13 +33,13 @@ class TestVideoInformationSerializer : FunSpec({
                 "thumbnail": "thumbnail.example.com/abc",
                 "url": "video.example.com/abc"
             }
-        """.trimIndent()
-        test("video") {
-            val decoded = json.decodeFromString<VideoInformation>(rowVideoData)
-            decoded shouldBe videoData
-        }
-        test("playlist") {
-            val exampleData = """
+            """.trimIndent()
+            test("video") {
+                val decoded = json.decodeFromString<VideoInformation>(rowVideoData)
+                decoded shouldBe videoData
+            }
+            test("playlist") {
+                val exampleData = """
                 {
                     "id": "abc",
                     "title": "title",
@@ -47,17 +48,17 @@ class TestVideoInformationSerializer : FunSpec({
                     "_type": "playlist",
                     "entries": [$rowVideoData]
                 }
-            """.trimIndent()
-            val expected = VideoInformation(
-                "abc",
-                "title",
-                "example.com/abc",
-                "example.com",
-                VideoInformation.Type.Playlist(listOf(videoData))
-            )
+                """.trimIndent()
+                val expected = VideoInformation(
+                    "abc",
+                    "title",
+                    "example.com/abc",
+                    "example.com",
+                    VideoInformation.Type.Playlist(listOf(videoData))
+                )
 
-            val decoded = json.decodeFromString<VideoInformation>(exampleData)
-            decoded shouldBe expected
+                val decoded = json.decodeFromString<VideoInformation>(exampleData)
+                decoded shouldBe expected
+            }
         }
-    }
-})
+    })

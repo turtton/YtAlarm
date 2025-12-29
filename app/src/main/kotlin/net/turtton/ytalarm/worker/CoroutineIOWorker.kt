@@ -7,10 +7,8 @@ import kotlinx.coroutines.CoroutineScope
 import net.turtton.ytalarm.DataRepository
 import net.turtton.ytalarm.database.AppDatabase
 
-abstract class CoroutineIOWorker(
-    appContext: Context,
-    workerParams: WorkerParameters
-) : CoroutineWorker(appContext, workerParams) {
+abstract class CoroutineIOWorker(appContext: Context, workerParams: WorkerParameters) :
+    CoroutineWorker(appContext, workerParams) {
     @Suppress("DEPRECATION")
     private val database by lazy {
         AppDatabase.getDataBase(appContext, CoroutineScope(coroutineContext))

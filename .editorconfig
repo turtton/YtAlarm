@@ -133,6 +133,7 @@ ij_kotlin_wrap_elvis_expressions = 1
 ij_kotlin_wrap_expression_body_functions = 1
 ij_kotlin_wrap_first_method_in_call_chain = false
 ktlint_code_style = android_studio
+ktlint_function_naming_ignore_when_annotated_with = Composable
 ktlint_ignore_back_ticked_identifier = false
 
 [{*.har,*.json}]
@@ -200,3 +201,7 @@ ij_yaml_sequence_on_new_line = false
 ij_yaml_space_before_colon = false
 ij_yaml_spaces_within_braces = true
 ij_yaml_spaces_within_brackets = true
+
+# Exclude generated/build files from ktlint
+[{**/build/**,**/generated/**}]
+ktlint = disabled

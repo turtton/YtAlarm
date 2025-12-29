@@ -12,12 +12,9 @@ class PlaylistTypeConverter {
     private val cbor = Cbor
 
     @TypeConverter
-    fun fromByteArray(value: ByteArray?): Playlist.Type? {
-        return value?.let { cbor.decodeFromByteArray(it) }
-    }
+    fun fromByteArray(value: ByteArray?): Playlist.Type? =
+        value?.let { cbor.decodeFromByteArray(it) }
 
     @TypeConverter
-    fun toByteArray(type: Playlist.Type?): ByteArray? {
-        return type?.let { cbor.encodeToByteArray(it) }
-    }
+    fun toByteArray(type: Playlist.Type?): ByteArray? = type?.let { cbor.encodeToByteArray(it) }
 }

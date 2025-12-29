@@ -51,16 +51,14 @@ data class Alarm(
 
         @Serializable
         object Once : RepeatType {
-            override fun getDisplay(context: Context): String {
-                return context.getString(R.string.repeat_type_once)
-            }
+            override fun getDisplay(context: Context): String =
+                context.getString(R.string.repeat_type_once)
         }
 
         @Serializable
         object Everyday : RepeatType {
-            override fun getDisplay(context: Context): String {
-                return context.getString(R.string.repeat_type_everyday)
-            }
+            override fun getDisplay(context: Context): String =
+                context.getString(R.string.repeat_type_everyday)
         }
 
         @Serializable
@@ -70,11 +68,9 @@ data class Alarm(
 
         @Serializable
         data class Days(val days: List<DayOfWeekCompat>) : RepeatType {
-            override fun getDisplay(context: Context): String {
-                return days.mapNotNull {
-                    it.getDisplay(context)
-                }.joinToString(separator = ", ") { it }
-            }
+            override fun getDisplay(context: Context): String = days.mapNotNull {
+                it.getDisplay(context)
+            }.joinToString(separator = ", ") { it }
         }
 
         @Serializable
@@ -83,9 +79,8 @@ data class Alarm(
             @SerialName("target_date")
             val targetDate: java.util.Date
         ) : RepeatType {
-            override fun getDisplay(context: Context): String {
-                return DateFormat.getDateInstance().format(targetDate)
-            }
+            override fun getDisplay(context: Context): String =
+                DateFormat.getDateInstance().format(targetDate)
         }
     }
 }

@@ -22,7 +22,6 @@ import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
@@ -40,7 +39,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
-import net.turtton.ytalarm.activity.MainActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.databinding.FragmentVideoPlayerBinding
@@ -104,9 +102,7 @@ class FragmentVideoPlayer : Fragment() {
         enableFullScreenMode(view)
 
         val activity = requireActivity()
-        if (activity is MainActivity) {
-            hideFab(activity)
-        }
+        // MainActivity関連のコードは削除（FragmentVideoPlayerはAlarmActivityでのみ使用）
         if (activity is VideoPlayerLoadingResourceContainer) {
             activity.videoPlayerLoadingResourceController
                 .videoPlayerLoadingResource
@@ -166,6 +162,7 @@ class FragmentVideoPlayer : Fragment() {
                         }
                         true
                     }
+
                     else -> false
                 }
             }
@@ -176,10 +173,7 @@ class FragmentVideoPlayer : Fragment() {
         _binding = null
         val activity = requireActivity()
 
-        if (activity is MainActivity) {
-            activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED)
-            activity.binding.toolbar.visibility = View.VISIBLE
-        }
+        // MainActivity関連のコードは削除（FragmentVideoPlayerはAlarmActivityでのみ使用）
 
         currentVolume?.let {
             audioManager.setStreamVolume(musicStream, it, AudioManager.FLAG_PLAY_SOUND)
@@ -279,14 +273,7 @@ class FragmentVideoPlayer : Fragment() {
         }
     }
 
-    private fun hideFab(activity: MainActivity) {
-        val fab = activity.binding.fab
-        fab.clearAnimation()
-        fab.visibility = View.GONE
-
-        activity.drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED)
-        activity.binding.toolbar.visibility = View.GONE
-    }
+    // hideFabメソッドは削除（FragmentVideoPlayerはAlarmActivityでのみ使用）
 
     private fun updateAlarm(alarm: Alarm) {
         var repeatType = alarm.repeatType
@@ -297,12 +284,15 @@ class FragmentVideoPlayer : Fragment() {
             is Alarm.RepeatType.Once -> {
                 alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
             }
+
             is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
                 alarmViewModel.update(alarm)
             }
+
             is Alarm.RepeatType.Snooze -> {
                 alarmViewModel.delete(alarm)
             }
+
             else -> {}
         }
     }

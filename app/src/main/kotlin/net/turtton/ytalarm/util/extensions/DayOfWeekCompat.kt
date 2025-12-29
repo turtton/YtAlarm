@@ -28,6 +28,5 @@ fun List<DayOfWeekCompat>.getNearestWeekOrNull(calendarDayOfWeek: Int): DayOfWee
     return nearestWeek ?: nextWeek
 }
 
-fun List<DayOfWeekCompat>.getNearestWeek(calendarDayOfWeek: Int): DayOfWeekCompat {
-    return getNearestWeekOrNull(calendarDayOfWeek) ?: error("Empty list")
-}
+fun List<DayOfWeekCompat>.getNearestWeek(calendarDayOfWeek: Int): DayOfWeekCompat =
+    getNearestWeekOrNull(calendarDayOfWeek) ?: error("Empty list")

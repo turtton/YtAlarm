@@ -12,7 +12,9 @@ import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
 import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
 import net.turtton.ytalarm.util.initYtDL
 
-class AlarmActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
+class AlarmActivity :
+    AppCompatActivity(),
+    VideoPlayerLoadingResourceContainer {
     private lateinit var navController: NavController
     lateinit var binding: ActivityAlarmBinding
 
@@ -36,9 +38,8 @@ class AlarmActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
         navController.setGraph(R.navigation.video_player, args.toBundle())
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        return navController.navigateUp() || super.onSupportNavigateUp()
-    }
+    override fun onSupportNavigateUp(): Boolean =
+        navController.navigateUp() || super.onSupportNavigateUp()
 
     companion object {
         const val EXTRA_ALARM_ID = "ALARM_ID"

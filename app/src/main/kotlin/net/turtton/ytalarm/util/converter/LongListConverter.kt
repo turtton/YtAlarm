@@ -11,12 +11,9 @@ class LongListConverter {
     private val cbor = Cbor
 
     @TypeConverter
-    fun fromByteArray(value: ByteArray?): List<Long> {
-        return value?.let { cbor.decodeFromByteArray(it) } ?: emptyList()
-    }
+    fun fromByteArray(value: ByteArray?): List<Long> =
+        value?.let { cbor.decodeFromByteArray(it) } ?: emptyList()
 
     @TypeConverter
-    fun toByteArray(list: List<Long>?): ByteArray? {
-        return list?.let { cbor.encodeToByteArray(it) }
-    }
+    fun toByteArray(list: List<Long>?): ByteArray? = list?.let { cbor.encodeToByteArray(it) }
 }

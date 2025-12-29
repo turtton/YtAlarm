@@ -11,12 +11,9 @@ class StringListConverter {
     private val cbor = Cbor
 
     @TypeConverter
-    fun fromByteArray(value: ByteArray?): List<String> {
-        return value?.let { cbor.decodeFromByteArray(it) } ?: emptyList()
-    }
+    fun fromByteArray(value: ByteArray?): List<String> =
+        value?.let { cbor.decodeFromByteArray(it) } ?: emptyList()
 
     @TypeConverter
-    fun toByteArray(list: List<String>?): ByteArray? {
-        return list?.let { cbor.encodeToByteArray(it) }
-    }
+    fun toByteArray(list: List<String>?): ByteArray? = list?.let { cbor.encodeToByteArray(it) }
 }

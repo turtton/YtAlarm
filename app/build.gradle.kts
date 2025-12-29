@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     id("androidx.navigation.safeargs.kotlin")
     alias(libs.plugins.kotlin.serialization)
@@ -58,6 +59,9 @@ android {
 
     packaging {
         resources.excludes += "META-INF/atomicfu.kotlin_module"
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     buildTypes {
@@ -80,6 +84,8 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        compose = true
+        buildConfig = true
     }
 
     val roomSchemaDir = "$projectDir/schemas"
@@ -114,7 +120,15 @@ android {
     lint {
         warningsAsErrors = true
 
-        disable += listOf("GradleDependency", "OldTargetApi")
+        // Aligned16KB: youtubedl-android library's native libs are not 16KB aligned
+        // AndroidGradlePluginVersion: Gradle version recommendation, not a critical error
+        disable +=
+            listOf(
+                "GradleDependency",
+                "OldTargetApi",
+                "Aligned16KB",
+                "AndroidGradlePluginVersion"
+            )
     }
 }
 
@@ -135,6 +149,19 @@ dependencies {
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.androidx.work.runtime.ktx)
     androidTestImplementation(libs.androidx.work.testing)
+
+    // Compose
+    val composeBom = platform(libs.androidx.compose.bom)
+    implementation(composeBom)
+    androidTestImplementation(composeBom)
+    implementation(libs.bundles.androidx.compose)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.coil.compose)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.bundles.kotlinx.serialization)

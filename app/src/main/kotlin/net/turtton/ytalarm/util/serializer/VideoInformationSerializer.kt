@@ -41,9 +41,11 @@ object VideoInformationSerializer : KSerializer<VideoInformation> {
                 surrogate.thumbnailUrl!!,
                 surrogate.videoUrl!!
             )
+
             "playlist" -> VideoInformation.Type.Playlist(
                 surrogate.entries!!
             )
+
             else -> error("Unknown type name ${surrogate.type}")
         }
         return VideoInformation(

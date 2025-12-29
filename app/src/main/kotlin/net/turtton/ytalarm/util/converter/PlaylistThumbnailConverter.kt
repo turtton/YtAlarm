@@ -12,12 +12,10 @@ class PlaylistThumbnailConverter {
     private val cbor = Cbor
 
     @TypeConverter
-    fun fromByteArray(value: ByteArray?): Playlist.Thumbnail? {
-        return value?.let { cbor.decodeFromByteArray(it) }
-    }
+    fun fromByteArray(value: ByteArray?): Playlist.Thumbnail? =
+        value?.let { cbor.decodeFromByteArray(it) }
 
     @TypeConverter
-    fun toByteArray(type: Playlist.Thumbnail?): ByteArray? {
-        return type?.let { cbor.encodeToByteArray(it) }
-    }
+    fun toByteArray(type: Playlist.Thumbnail?): ByteArray? =
+        type?.let { cbor.encodeToByteArray(it) }
 }

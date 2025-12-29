@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="remove">削除</string>
     <string name="setting_time">時刻</string>
     <string name="setting_repeat">繰り返し</string>
     <string name="setting_playlist">プレイリスト</string>
+    <string name="setting_playlist_empty">プレイリストを選択</string>
     <string name="setting_loop">ループ</string>
     <string name="setting_shuffle">シャッフル</string>
     <string name="setting_volume">音量</string>
@@ -12,8 +12,6 @@
     </plurals>
     <string name="setting_snooze">スヌーズ</string>
     <string name="setting_vibration">バイブレーション</string>
-    <string name="item_video_list_click_to_retry">タップして再試行</string>
-    <string name="item_video_list_import_failed">情報の取得に失敗しました</string>
     <string name="item_video_list_state_importing">取得中</string>
     <string name="fragment_video_player_button_dismiss">停止</string>
     <string name="fragment_video_player_button_snooze">スヌーズ</string>
@@ -25,19 +23,37 @@
     <string name="menu_title_playlist">プレイリスト</string>
     <string name="menu_title_video_list">ビデオ</string>
     <string name="menu_title_aboutpage">概要</string>
+
+    <!-- Navigation titles for Compose screens -->
+    <string name="nav_alarm_list">アラーム一覧</string>
+    <string name="nav_new_alarm">新規アラーム</string>
+    <string name="nav_edit_alarm">アラーム編集</string>
+    <string name="nav_playlist">プレイリスト一覧</string>
+    <string name="nav_video_list">動画一覧</string>
+    <string name="nav_video_list_all">すべての動画</string>
+    <string name="nav_video_list_new">新しいプレイリスト</string>
+
+    <!-- Empty state messages -->
+    <string name="alarm_list_empty_message">アラームがありません。+をタップして作成してください。</string>
+    <string name="playlist_empty_message">プレイリストがありません。+をタップして作成してください。</string>
+    <string name="video_list_empty_message">動画がありません。+をタップして追加してください。</string>
+    <string name="video_list_empty_new_message">動画を追加して新しいプレイリストを作成してください。</string>
     <string name="dialog_video_input_ok">インポート</string>
-    <string name="fab_save">保存</string>
-    <plurals name="playlist_item_video_count">
-        <item quantity="other">%d個のビデオ</item>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <plurals name="notification_snooze_remain">
+        <item quantity="other">%d分後</item>
     </plurals>
-    <string name="playlist_name_importing">取得中</string>
-    <string name="second_fragment_label">アラーム設定</string>
-    <string name="first_fragment_label">アラーム一覧</string>
     <string name="dialog_execute_progress_title">インポート中</string>
     <string name="dialog_execute_progress_title_loading">読み込み中</string>
     <string name="dialog_execute_progress_eta_init">計測中</string>
-    <string name="menu_video_list_add_to">プレイリストに追加</string>
     <string name="dialog_remove_title">削除</string>
+
+    <!-- Remove video dialog -->
+    <string name="dialog_remove_video_title">動画を削除</string>
+    <string name="dialog_remove_video_message">選択した動画を削除しますか？</string>
+    <string name="dialog_remove_video_positive">削除</string>
+    <string name="dialog_remove_video_negative">キャンセル</string>
     <string name="dialog_repeat_choice_title">繰り返し</string>
     <string name="dialog_repeat_days_title">曜日</string>
     <string name="dialog_require_permission">権限が必要です</string>
@@ -48,61 +64,69 @@
     <string name="dialog_require_disable_restrictions">\"アプリが未使用の場合に権限を削除\"を無効化してください  アラームが正しく機能しない場合があります。</string>
     <string name="dialog_shared_text_should_be_url_title">エラー</string>
     <string name="dialog_shared_text_should_be_url_description">入力する文字は\"http\"から初まる必要があります</string>
-    <string name="dialog_playlist_name_input_ok">名称変更</string>
-    <string name="dialog_video_import_failed_title">URL</string>
-    <string name="dialog_video_import_failed_retry">再取得</string>
-    <string name="dialog_video_import_failed_clear">削除</string>
     <string name="dialog_vibration_waring_title">注意</string>
     <string name="dialog_vibration_waring_message">バイブレーションはAndroid12では正常に動作しない場合があります</string>
     <string name="dialog_vibration_warning_show_issue">Issueを開く</string>
-    <string name="snackbar_error_unexpected_playlist_state">プレイリストを開き直してください</string>
     <string name="snackbar_error_playlistid_is_null">プレイリストを選択してください</string>
     <string name="snackbar_error_target_is_the_past_date">過去の日付です</string>
     <string name="snackbar_error_failed_to_get_alarm">アラームの取得に失敗しました</string>
+    <string name="snackbar_error_failed_to_save_alarm">アラームの保存に失敗しました</string>
     <string name="snackbar_error_failed_to_get_video">ビデオの取得に失敗しました</string>
-    <string name="snackbar_error_failed_to_get_playlist">プレイリストの取得に失敗しました</string>
     <string name="snackbar_error_failed_to_import_video">ビデオのインポートに失敗しました</string>
     <string name="snackbar_error_failed_to_prepare_vibration">バイブレーションシステムの初期化に失敗しました</string>
     <string name="snackbar_error_failed_to_access_clipboard">クリップボード機能の取得に失敗しました</string>
     <string name="snackbar_error_failed_to_access_settings_data">設定の取得に失敗しました</string>
     <string name="snackbar_error_empty_video">ビデオが存在しません</string>
-    <string name="snackbar_error_unknown">原因不明のエラーが発生しました</string>
     <string name="snackbar_start_download">ダウンロード中</string>
-    <string name="snackbar_sync_is_running">他のダウンロードが進行中です。しばらくお待ちください</string>
+    <string name="snackbar_sync_started">同期を開始しました</string>
     <string name="snackbar_detect_playlist_usage">プレイリストは既にアラームで使用されています</string>
     <string name="snackbar_failed_to_check_restriction">権限の制限機能の確認に失敗しました</string>
-    <string name="snackbar_thumbnail_updated">サムネイルを更新しました</string>
-    <string name="snackbar_not_implemented">この機能は近日実装予定です</string>
     <string name="snackbar_copied">コピーしました</string>
-    <string name="snackbar_only_supports_downloadmode">このビデオはダウンロードモードのみ対応しています</string>
     <string name="notification_snooze_title">スヌーズが有効です</string>
-    <plurals name="notification_snooze_remain">
-        <item quantity="other">%d分後</item>
-    </plurals>
     <string name="notification_download_video_info_title">ビデオ情報を取得しています</string>
-    <string name="playlist_fragment_label">プレイリスト</string>
-    <string name="videolist_fragment_label">ビデオ</string>
     <string name="videoplayer_fragment_label">プレイヤー</string>
-    <string name="allvideolist_fragment_label">全ビデオ</string>
     <string name="menu_playlist_option_rename">名称変更</string>
-    <string name="menu_option_sortrule">並び替え</string>
-    <string name="menu_option_order">順序</string>
+    <string name="menu_alarm_option_sortrule">アラームを並び替え</string>
+    <string name="menu_playlist_option_sortrule">プレイリストを並び替え</string>
+    <string name="menu_video_list_option_sortrule">動画を並び替え</string>
     <string name="menu_video_list_item_option_set_thumbnail">プレイリストのサムネイルに設定</string>
     <string name="menu_video_list_item_option_download">ダウンロード</string>
     <string name="menu_video_list_item_option_reimport">再インポート</string>
     <string name="menu_video_list_item_option_delete">削除</string>
-    <string name="menu_all_video_list_item_option_add_to_playlist">プレイリストに追加</string>
     <string name="menu_video_list_option_sync_rule">同期ルール</string>
     <string name="item_aboutpage_details_github">YtAlarmのソースコードを見る</string>
     <string name="item_aboutpage_title_license">ライセンス</string>
     <string name="item_aboutpage_details_license">YtAlarmはGNU General Public License v3.0.下で公開されています</string>
     <string name="item_aboutpage_title_tirdpartylicenses">外部ライブラリ</string>
     <string name="item_aboutpage_liberapay_details">タップして開く</string>
-    <string name="playlist_item_video_count_none">0個のビデオ</string>
-    <string name="ok">OK</string>
-    <string name="cancel">Cancel</string>
     <string name="dialog_repeat_days_ok">決定</string>
     <string name="dialog_remove_ok">確定</string>
     <string name="dialog_multichoice_ok">決定</string>
+
+    <!-- Dialog strings for menu actions -->
+    <string name="dialog_reimport_title">動画を再インポート</string>
+    <string name="dialog_reimport_message">「%1$s」の情報を更新しますか？</string>
+    <string name="dialog_reimport_confirm">更新</string>
+    <string name="dialog_delete_video_title">動画を削除</string>
+    <string name="dialog_delete_video_message">「%1$s」を削除しますか？</string>
+
+    <!-- Form labels -->
+    <string name="playlist_name_label">プレイリスト名</string>
+    <string name="error_empty_name">名前を入力してください</string>
+
+    <!-- Snackbar messages -->
+    <string name="message_thumbnail_set">サムネイルを設定しました</string>
+    <string name="message_download_not_implemented">ダウンロード機能は開発中です</string>
+    <string name="message_video_deleted">動画を削除しました</string>
+    <string name="message_reimport_started">動画情報を更新中…</string>
+    <string name="message_reimport_success">動画情報を更新しました</string>
+    <string name="message_reimport_failed">動画情報の更新に失敗しました</string>
+    <string name="message_playlist_renamed">プレイリスト名を変更しました</string>
+    <string name="message_videos_added">動画をプレイリストに追加しました</string>
+    <string name="message_operation_failed">操作に失敗しました</string>
+
+    <!-- Error messages for AboutPage -->
+    <string name="error_no_browser">ブラウザアプリが見つかりません</string>
+    <string name="error_open_link">リンクを開けませんでした</string>
 
 </resources>

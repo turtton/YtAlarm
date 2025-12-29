@@ -12,12 +12,10 @@ class RepeatTypeConverter {
     private val cbor = Cbor
 
     @TypeConverter
-    fun fromByteArray(value: ByteArray?): Alarm.RepeatType? {
-        return value?.let { cbor.decodeFromByteArray(it) }
-    }
+    fun fromByteArray(value: ByteArray?): Alarm.RepeatType? =
+        value?.let { cbor.decodeFromByteArray(it) }
 
     @TypeConverter
-    fun toByteArray(repeatType: Alarm.RepeatType?): ByteArray? {
-        return repeatType?.let { cbor.encodeToByteArray(it) }
-    }
+    fun toByteArray(repeatType: Alarm.RepeatType?): ByteArray? =
+        repeatType?.let { cbor.encodeToByteArray(it) }
 }

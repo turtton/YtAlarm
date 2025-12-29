@@ -49,8 +49,8 @@ abstract class AppDatabase : RoomDatabase() {
         @Volatile
         private var instance: AppDatabase? = null
 
-        fun getDataBase(context: Context, scope: CoroutineScope): AppDatabase {
-            return instance ?: synchronized(this) {
+        fun getDataBase(context: Context, scope: CoroutineScope): AppDatabase =
+            instance ?: synchronized(this) {
                 Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
@@ -62,7 +62,6 @@ abstract class AppDatabase : RoomDatabase() {
                         instance = it
                     }
             }
-        }
     }
 
     private class AppDatabaseCallback(private val scope: CoroutineScope) : Callback() {

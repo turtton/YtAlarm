@@ -19,9 +19,7 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getAllPlaylistsSync()
     }
 
-    fun getFromId(id: Long): LiveData<Playlist> {
-        return repository.getPlaylistFromId(id).asLiveData()
-    }
+    fun getFromId(id: Long): LiveData<Playlist> = repository.getPlaylistFromId(id).asLiveData()
 
     fun getFromIdAsync(id: Long): Deferred<Playlist?> = viewModelScope.async {
         repository.getPlaylistFromIdSync(id)

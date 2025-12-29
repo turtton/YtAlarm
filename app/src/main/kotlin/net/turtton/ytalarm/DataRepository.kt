@@ -13,19 +13,14 @@ class DataRepository(private val database: AppDatabase) {
     val allAlarms: Flow<List<Alarm>> = database.alarmDao().getAll()
 
     @WorkerThread
-    suspend fun getAllAlarmsSync(): List<Alarm> {
-        return database.alarmDao().getAllSync()
-    }
+    suspend fun getAllAlarmsSync(): List<Alarm> = database.alarmDao().getAllSync()
 
     @WorkerThread
-    suspend fun getAlarmFromIdSync(id: Long): Alarm? {
-        return database.alarmDao().getFromIdSync(id)
-    }
+    suspend fun getAlarmFromIdSync(id: Long): Alarm? = database.alarmDao().getFromIdSync(id)
 
     @WorkerThread
-    suspend fun getMatchedAlarmSync(repeatType: Alarm.RepeatType): List<Alarm> {
-        return database.alarmDao().getMatchedSync(repeatType)
-    }
+    suspend fun getMatchedAlarmSync(repeatType: Alarm.RepeatType): List<Alarm> =
+        database.alarmDao().getMatchedSync(repeatType)
 
     @WorkerThread
     suspend fun update(alarm: Alarm) {
@@ -48,19 +43,15 @@ class DataRepository(private val database: AppDatabase) {
     @WorkerThread
     suspend fun getAllPlaylistsSync(): List<Playlist> = database.playlistDao().getAllSync()
 
-    fun getPlaylistFromId(id: Long): Flow<Playlist> {
-        return database.playlistDao().getFromId(id)
-    }
+    fun getPlaylistFromId(id: Long): Flow<Playlist> = database.playlistDao().getFromId(id)
 
     @WorkerThread
-    suspend fun getPlaylistFromIdSync(id: Long): Playlist? {
-        return database.playlistDao().getFromIdSync(id)
-    }
+    suspend fun getPlaylistFromIdSync(id: Long): Playlist? =
+        database.playlistDao().getFromIdSync(id)
 
     @WorkerThread
-    suspend fun getPlaylistFromIdsSync(ids: List<Long>): List<Playlist> {
-        return database.playlistDao().getFromIdsSync(ids)
-    }
+    suspend fun getPlaylistFromIdsSync(ids: List<Long>): List<Playlist> =
+        database.playlistDao().getFromIdsSync(ids)
 
     @WorkerThread
     suspend fun update(playlist: Playlist) {
@@ -73,9 +64,7 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun insert(playlist: Playlist): Long {
-        return database.playlistDao().insert(playlist)
-    }
+    suspend fun insert(playlist: Playlist): Long = database.playlistDao().insert(playlist)
 
     @WorkerThread
     suspend fun delete(playlist: Playlist) {
@@ -91,57 +80,41 @@ class DataRepository(private val database: AppDatabase) {
     val allVideos: Flow<List<Video>> = database.videoDao().getAll()
 
     @WorkerThread
-    suspend fun getVideoFromIdSync(id: Long): Video? {
-        return database.videoDao().getFromIdSync(id)
-    }
+    suspend fun getVideoFromIdSync(id: Long): Video? = database.videoDao().getFromIdSync(id)
 
     @WorkerThread
-    suspend fun getVideoFromIdsSync(ids: List<Long>): List<Video> {
-        return database.videoDao().getFromIdsSync(ids)
-    }
+    suspend fun getVideoFromIdsSync(ids: List<Long>): List<Video> =
+        database.videoDao().getFromIdsSync(ids)
 
-    fun getVideoFromIds(ids: List<Long>): Flow<List<Video>> {
-        return database.videoDao().getFromIds(ids)
-    }
+    fun getVideoFromIds(ids: List<Long>): Flow<List<Video>> = database.videoDao().getFromIds(ids)
 
     @WorkerThread
-    suspend fun getVideoExceptIdsSync(ids: List<Long>): List<Video> {
-        return database.videoDao().getExceptIdsSync(ids)
-    }
+    suspend fun getVideoExceptIdsSync(ids: List<Long>): List<Video> =
+        database.videoDao().getExceptIdsSync(ids)
 
-    fun getVideoFromVideoIds(ids: List<String>): Flow<List<Video>> {
-        return database.videoDao().getFromVideoIds(ids)
-    }
+    fun getVideoFromVideoIds(ids: List<String>): Flow<List<Video>> =
+        database.videoDao().getFromVideoIds(ids)
 
     @WorkerThread
-    suspend fun getVideoFromVideoIdSync(id: String): Video? {
-        return database.videoDao().getFromVideoIdSync(id)
-    }
+    suspend fun getVideoFromVideoIdSync(id: String): Video? =
+        database.videoDao().getFromVideoIdSync(id)
 
     @WorkerThread
-    suspend fun getVideoFromVideoIdsSync(ids: List<String>): List<Video> {
-        return database.videoDao().getFromVideoIdsSync(ids)
-    }
+    suspend fun getVideoFromVideoIdsSync(ids: List<String>): List<Video> =
+        database.videoDao().getFromVideoIdsSync(ids)
 
     @WorkerThread
-    suspend fun getVideoExceptVideoIdsSync(ids: List<String>): List<Video> {
-        return database.videoDao().getExceptVideoIdsSync(ids)
-    }
+    suspend fun getVideoExceptVideoIdsSync(ids: List<String>): List<Video> =
+        database.videoDao().getExceptVideoIdsSync(ids)
 
     @WorkerThread
-    suspend fun update(video: Video) {
-        return database.videoDao().update(video)
-    }
+    suspend fun update(video: Video) = database.videoDao().update(video)
 
     @WorkerThread
-    suspend fun insert(video: Video): Long {
-        return database.videoDao().insert(video)
-    }
+    suspend fun insert(video: Video): Long = database.videoDao().insert(video)
 
     @WorkerThread
-    suspend fun insert(videos: List<Video>): List<Long> {
-        return database.videoDao().insert(videos)
-    }
+    suspend fun insert(videos: List<Video>): List<Long> = database.videoDao().insert(videos)
 
     @WorkerThread
     suspend fun delete(video: Video) {

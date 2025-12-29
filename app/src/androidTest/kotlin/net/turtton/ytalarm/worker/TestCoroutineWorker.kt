@@ -15,10 +15,8 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 class TestCoroutineWorker {
 
-    class Impl(
-        appContext: Context,
-        workerParams: WorkerParameters
-    ) : CoroutineIOWorker(appContext, workerParams) {
+    class Impl(appContext: Context, workerParams: WorkerParameters) :
+        CoroutineIOWorker(appContext, workerParams) {
         override suspend fun doWork(): Result {
             val playlists = repository.getAllPlaylistsSync().map { it.id }.toTypedArray()
             return Result.success(workDataOf("playlist" to playlists))
