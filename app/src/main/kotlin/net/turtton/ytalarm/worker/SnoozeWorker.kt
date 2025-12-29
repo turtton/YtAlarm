@@ -23,10 +23,8 @@ import java.util.*
 
 const val SNOOZE_NOTIFICATION = "net.turtton.ytalarm.SnoozeNotification"
 
-class SnoozeRemoveWorker(
-    appContext: Context,
-    workerParams: WorkerParameters
-) : CoroutineIOWorker(appContext, workerParams) {
+class SnoozeRemoveWorker(appContext: Context, workerParams: WorkerParameters) :
+    CoroutineIOWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
         val targetId = inputData.getLong(KEY_TARGET, -1)
         if (targetId == -1L) {
@@ -60,10 +58,8 @@ class SnoozeRemoveWorker(
     }
 }
 
-class UpdateSnoozeNotifyWorker(
-    appContext: Context,
-    workerParams: WorkerParameters
-) : CoroutineIOWorker(appContext, workerParams) {
+class UpdateSnoozeNotifyWorker(appContext: Context, workerParams: WorkerParameters) :
+    CoroutineIOWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
         val snoozeAlarms = withContext(Dispatchers.IO) {
             repository.getMatchedAlarmSync(Alarm.RepeatType.Snooze)

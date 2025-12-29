@@ -5,9 +5,7 @@ import android.view.View
 import androidx.recyclerview.selection.ItemKeyProvider
 import androidx.recyclerview.widget.RecyclerView
 
-class TagKeyProvider<T>(
-    private val recyclerView: RecyclerView
-) : ItemKeyProvider<T>(SCOPE_CACHED) {
+class TagKeyProvider<T>(private val recyclerView: RecyclerView) : ItemKeyProvider<T>(SCOPE_CACHED) {
     private val keyArray = SparseArray<T>()
 
     init {

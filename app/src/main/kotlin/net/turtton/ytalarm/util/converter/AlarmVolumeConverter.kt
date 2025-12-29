@@ -5,12 +5,8 @@ import net.turtton.ytalarm.database.structure.Alarm
 
 class AlarmVolumeConverter {
     @TypeConverter
-    fun fromInt(value: Int?): Alarm.Volume? {
-        return value?.let { Alarm.Volume(it) }
-    }
+    fun fromInt(value: Int?): Alarm.Volume? = value?.let { Alarm.Volume(it) }
 
     @TypeConverter
-    fun toInt(value: Alarm.Volume?): Int? {
-        return value?.volume
-    }
+    fun toInt(value: Alarm.Volume?): Int? = value?.volume
 }

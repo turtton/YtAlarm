@@ -34,10 +34,8 @@ import net.turtton.ytalarm.util.extensions.updateThumbnail
 
 const val VIDEO_DOWNLOAD_NOTIFICATION = "net.turtton.ytalarm.VideoDLNotification"
 
-class VideoInfoDownloadWorker(
-    appContext: Context,
-    workerParams: WorkerParameters
-) : CoroutineIOWorker(appContext, workerParams) {
+class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameters) :
+    CoroutineIOWorker(appContext, workerParams) {
     private val json = Json { ignoreUnknownKeys = true }
 
     @SuppressLint("RestrictedApi")
@@ -73,6 +71,7 @@ class VideoInfoDownloadWorker(
                 val video = videos.first()
                 insertVideo(playlistArray, video, targetVideo)
             }
+
             is Type.Playlist -> {
                 repository.delete(targetVideo)
                 insertCloudPlaylist(playlistArray, videos, targetVideoId, type)
@@ -125,6 +124,7 @@ class VideoInfoDownloadWorker(
                 is VideoInformation.Type.Video -> {
                     listOf(videoInfo.toVideo()) to Type.Video
                 }
+
                 is VideoInformation.Type.Playlist -> {
                     videoInfo.typeData
                         .entries

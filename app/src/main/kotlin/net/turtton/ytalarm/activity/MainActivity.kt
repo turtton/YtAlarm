@@ -41,7 +41,9 @@ import net.turtton.ytalarm.worker.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
 import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
-class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
+class MainActivity :
+    AppCompatActivity(),
+    VideoPlayerLoadingResourceContainer {
 
     override val videoPlayerLoadingResourceController = VideoPlayerLoadingResourceController()
 
@@ -135,6 +137,7 @@ class MainActivity : AppCompatActivity(), VideoPlayerLoadingResourceContainer {
                                     activity.launch(intent)
                                 }.show()
                         }
+
                         UnusedAppRestrictionsConstants.ERROR -> {
                             Toast.makeText(
                                 this,

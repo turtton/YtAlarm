@@ -17,8 +17,10 @@ suspend fun List<Video>.collectGarbage(workManager: WorkManager): List<Video> = 
         when (state) {
             is Video.State.Importing ->
                 state.state as? Video.WorkerState.Working
+
             is Video.State.Downloading ->
                 state.state as? Video.WorkerState.Working
+
             else -> null
         }?.workerId
     }?.let { uuid ->

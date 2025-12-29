@@ -11,9 +11,8 @@ import androidx.fragment.app.DialogFragment
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.databinding.DialogExecuteProgressBinding
 
-class DialogExecuteProgress(
-    @StringRes val titleId: Int = R.string.dialog_execute_progress_title
-) : DialogFragment() {
+class DialogExecuteProgress(@StringRes val titleId: Int = R.string.dialog_execute_progress_title) :
+    DialogFragment() {
     private var _binding: DialogExecuteProgressBinding? = null
     val binding get() = _binding!!
 
@@ -31,10 +30,9 @@ class DialogExecuteProgress(
         _binding = null
     }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        return AlertDialog.Builder(requireParentFragment().context)
+    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
+        AlertDialog.Builder(requireParentFragment().context)
             .setTitle(titleId)
             .setView(R.layout.dialog_execute_progress)
             .create()
-    }
 }

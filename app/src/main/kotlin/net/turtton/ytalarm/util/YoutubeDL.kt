@@ -53,14 +53,9 @@ data class VideoInformation(
     }
 
     sealed interface Type {
-        data class Video(
-            val fullTitle: String,
-            val thumbnailUrl: String,
-            val videoUrl: String
-        ) : Type
+        data class Video(val fullTitle: String, val thumbnailUrl: String, val videoUrl: String) :
+            Type
 
-        data class Playlist(
-            val entries: List<VideoInformation>
-        ) : Type
+        data class Playlist(val entries: List<VideoInformation>) : Type
     }
 }

@@ -33,7 +33,9 @@ class MultiChoiceVideoListAdapter<T>(
             is DisplayData.Thumbnail.Url -> Glide.with(holder.itemView)
                 .load(thumbnail.url)
                 .into(holder.thumbnail)
+
             is DisplayData.Thumbnail.Drawable -> holder.thumbnail.setImageResource(thumbnail.id)
+
             null -> holder.thumbnail.setImageResource(R.drawable.ic_no_image)
         }
         chosenTargets[position].also {
@@ -72,6 +74,7 @@ class MultiChoiceVideoListAdapter<T>(
                     videoViewModel.getFromIdAsync(thumbnail.id).await()?.thumbnailUrl.let {
                         Thumbnail.Url(it)
                     }
+
                 is Playlist.Thumbnail.Drawable -> Thumbnail.Drawable(thumbnail.id)
             }.let {
                 DisplayData(id, title, it)

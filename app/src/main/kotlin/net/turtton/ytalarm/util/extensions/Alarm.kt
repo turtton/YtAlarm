@@ -19,6 +19,7 @@ fun Alarm.toCalendar(now: Calendar): Calendar {
                 calendar.add(Calendar.DATE, 1)
             }
         }
+
         is Alarm.RepeatType.Days -> {
             val targetDays = repeatType.days
             var week = targetDays.getNearestWeek(nowDayOfWeek).convertCalenderCode()
@@ -35,6 +36,7 @@ fun Alarm.toCalendar(now: Calendar): Calendar {
             }
             calendar.set(flagDayOfWeek, week)
         }
+
         is Alarm.RepeatType.Date -> {
             calendar.timeInMillis = repeatType.targetDate.time
         }
@@ -51,8 +53,8 @@ fun Alarm.getDisplayTime(): String = "%02d:%02d".format(hour, minute)
 
 fun Alarm.updateDate(): Alarm = copy(lastUpdated = Calendar.getInstance())
 
-fun List<Alarm>.pickNearestTime(nowTime: Calendar): Pair<Alarm, Calendar>? {
-    return associateWith { it.toCalendar(nowTime) }
-        .minByOrNull { (_, calendar) -> calendar.timeInMillis }
-        ?.toPair()
+fun List<Alarm>.pickNearestTime(nowTime: Calendar): Pair<Alarm, Calendar>? = associateWith {
+    it.toCalendar(nowTime)
 }
+    .minByOrNull { (_, calendar) -> calendar.timeInMillis }
+    ?.toPair()

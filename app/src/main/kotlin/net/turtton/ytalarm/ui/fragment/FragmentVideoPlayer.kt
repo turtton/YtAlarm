@@ -162,6 +162,7 @@ class FragmentVideoPlayer : Fragment() {
                         }
                         true
                     }
+
                     else -> false
                 }
             }
@@ -283,12 +284,15 @@ class FragmentVideoPlayer : Fragment() {
             is Alarm.RepeatType.Once -> {
                 alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
             }
+
             is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
                 alarmViewModel.update(alarm)
             }
+
             is Alarm.RepeatType.Snooze -> {
                 alarmViewModel.delete(alarm)
             }
+
             else -> {}
         }
     }
