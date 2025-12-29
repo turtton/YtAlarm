@@ -127,7 +127,7 @@ android {
                 "GradleDependency",
                 "OldTargetApi",
                 "Aligned16KB",
-                "AndroidGradlePluginVersion",
+                "AndroidGradlePluginVersion"
             )
     }
 }
