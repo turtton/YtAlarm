@@ -2,7 +2,7 @@ package net.turtton.ytalarm.util.extensions
 
 import android.annotation.SuppressLint
 import androidx.work.WorkManager
-import androidx.work.await
+import kotlinx.coroutines.guava.await
 import net.turtton.ytalarm.database.structure.Video
 
 fun Video.copyAsFailed(url: String) =

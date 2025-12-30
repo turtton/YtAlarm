@@ -10,6 +10,12 @@ plugins {
     alias(libs.plugins.androidx.room)
 }
 
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
 // This versioning probably follows semver.org
 val major = 0
 val minor = 1
@@ -78,9 +84,6 @@ android {
     compileOptions {
         sourceCompatibility(JavaVersion.VERSION_17)
         targetCompatibility(JavaVersion.VERSION_17)
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
     buildFeatures {
         viewBinding = true
@@ -164,6 +167,7 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.bundles.kotlinx.serialization)
 
     implementation(libs.bundles.youtubedl)
