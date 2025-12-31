@@ -59,19 +59,10 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Cache ktlint
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
-        with:
-          path: ~/ktlint
-          key: ktlint-${{ needs.get-version.outputs.version }}
-
       - name: Install ktlint
         run: |
-          if [ ! -f ~/ktlint/ktlint ]; then
-            mkdir -p ~/ktlint
-            curl -sSL https://github.com/pinterest/ktlint/releases/download/${{ needs.get-version.outputs.version }}/ktlint -o ~/ktlint/ktlint
-            chmod +x ~/ktlint/ktlint
-          fi
+          curl -sSL https://github.com/pinterest/ktlint/releases/download/${{ needs.get-version.outputs.version }}/ktlint -o ktlint
+          chmod +x ktlint
 
       - name: Setup reviewdog
         uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
@@ -84,7 +75,7 @@ jobs:
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             REPORTER="github-pr-review"
           fi
-          ~/ktlint/ktlint --reporter=checkstyle | reviewdog -f=checkstyle -reporter=$REPORTER -filter-mode=added -fail-level=any
+          ./ktlint --reporter=checkstyle | reviewdog -f=checkstyle -reporter=$REPORTER -filter-mode=added -fail-level=any
 
   build-check:
     needs: [ ktlint ]
