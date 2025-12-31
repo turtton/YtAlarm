@@ -60,7 +60,7 @@ jobs:
           java-version: '21'
 
       - name: Cache ktlint
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v5.0.1
         with:
           path: ~/ktlint
           key: ktlint-${{ needs.get-version.outputs.version }}
@@ -74,7 +74,7 @@ jobs:
           fi
 
       - name: Setup reviewdog
-        uses: reviewdog/action-setup@fab6de28ae8bc2a032c9e655d990afa450edb995 # v1.3.2
+        uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
 
       - name: Lint check with reviewdog
         env:
