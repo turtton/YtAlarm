@@ -3,7 +3,6 @@ package net.turtton.ytalarm.ui.fragment
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
@@ -16,7 +15,7 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.widget.Button
-import android.widget.VideoView
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.net.toUri
 import androidx.core.view.WindowCompat
@@ -25,6 +24,12 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
@@ -66,6 +71,7 @@ class FragmentVideoPlayer : Fragment() {
 
     @Suppress("ktlint:standard:property-naming")
     private var _binding: FragmentVideoPlayerBinding? = null
+    private var exoPlayer: ExoPlayer? = null
     private val videoViewModel: VideoViewModel by viewModels {
         VideoViewModelFactory(requireActivity().application.repository)
     }
@@ -109,8 +115,8 @@ class FragmentVideoPlayer : Fragment() {
                 ?.isIdleNow = false
         }
 
-        val videoView = binding.videoView
-        prepareVideoView(videoView)
+        val playerView = binding.playerView
+        preparePlayerView(playerView)
 
         val dismissButton = binding.fragmentVideoPlayerButtonDismiss
 
@@ -145,12 +151,19 @@ class FragmentVideoPlayer : Fragment() {
         }
     }
 
-    private fun prepareVideoView(videoView: VideoView) {
-        videoView.setOnPreparedListener {
-            it.setOnInfoListener { _, what, _ ->
-                when (what) {
-                    MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START -> {
-                        videoView.background = null
+    @OptIn(UnstableApi::class)
+    private fun preparePlayerView(playerView: PlayerView) {
+        exoPlayer = ExoPlayer.Builder(requireContext()).build().apply {
+            addListener(
+                object : Player.Listener {
+                    override fun onRenderedFirstFrame() {
+                        // Only clear background if there's a video track
+                        val hasVideoTrack = currentTracks.groups.any { group ->
+                            group.type == C.TRACK_TYPE_VIDEO && group.isSelected
+                        }
+                        if (hasVideoTrack) {
+                            playerView.background = null
+                        }
                         lifecycleScope.launch {
                             delay(3.seconds)
                             val activity = activity
@@ -160,16 +173,16 @@ class FragmentVideoPlayer : Fragment() {
                                     ?.isIdleNow = true
                             }
                         }
-                        true
                     }
-
-                    else -> false
                 }
-            }
+            )
         }
+        playerView.player = exoPlayer
     }
 
     override fun onDestroyView() {
+        exoPlayer?.release()
+        exoPlayer = null
         _binding = null
         val activity = requireActivity()
 
@@ -192,7 +205,7 @@ class FragmentVideoPlayer : Fragment() {
     private fun startAsAlarmMode(view: View, alarmId: Long) {
         val activity = requireActivity()
         val snoozeButton = binding.fragmentVideoPlayerButtonSnooze
-        val videoView = binding.videoView
+        val playerView = binding.playerView
 
         lifecycleScope.launch {
             val alarmList = alarmViewModel.getAllAlarmsAsync().await().filter { it.isEnable }
@@ -237,16 +250,23 @@ class FragmentVideoPlayer : Fragment() {
                 videos.listIterator()
             }
             playVideo(view, queue.next())
-            videoView.setOnCompletionListener {
-                if (!queue.hasNext()) {
-                    if (alarm.shouldLoop) {
-                        queue = videos.iterator()
-                    } else {
-                        activity.finish()
+            exoPlayer?.addListener(
+                object : Player.Listener {
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_ENDED) {
+                            if (!queue.hasNext()) {
+                                if (alarm.shouldLoop) {
+                                    queue = videos.iterator()
+                                } else {
+                                    activity.finish()
+                                    return
+                                }
+                            }
+                            playVideo(view, queue.next())
+                        }
                     }
                 }
-                playVideo(view, queue.next())
-            }
+            )
         }
     }
 
@@ -325,18 +345,21 @@ class FragmentVideoPlayer : Fragment() {
             binding.progressBar.visibility = View.VISIBLE
         }
 
-        val videoView = binding.videoView
+        val playerView = binding.playerView
         val url = video.videoUrl
         Glide.with(view).load(video.thumbnailUrl.toUri())
-            .into(object : CustomViewTarget<View, Drawable>(view) {
+            .into(object : CustomViewTarget<View, Drawable>(playerView) {
                 override fun onResourceReady(
                     resource: Drawable,
                     transition: Transition<in Drawable>?
                 ) {
-                    videoView.background = resource
+                    Log.d(LOG_TAG, "Thumbnail loaded successfully: ${video.thumbnailUrl}")
+                    playerView.background = resource
                 }
 
-                override fun onLoadFailed(errorDrawable: Drawable?) {}
+                override fun onLoadFailed(errorDrawable: Drawable?) {
+                    Log.e(LOG_TAG, "Failed to load thumbnail: ${video.thumbnailUrl}")
+                }
                 override fun onResourceCleared(placeholder: Drawable?) {}
             })
         val infoResult = withContext(Dispatchers.IO) {
@@ -356,8 +379,12 @@ class FragmentVideoPlayer : Fragment() {
                     return@launch
                 } else {
                     binding.progressBar.visibility = View.GONE
-                    videoView.setVideoURI(videoUrl.toUri())
-                    videoView.start()
+                    val mediaItem = MediaItem.fromUri(videoUrl.toUri())
+                    exoPlayer?.apply {
+                        setMediaItem(mediaItem)
+                        prepare()
+                        play()
+                    }
                 }
             }.onFailure {
                 val message = R.string.snackbar_error_failed_to_import_video

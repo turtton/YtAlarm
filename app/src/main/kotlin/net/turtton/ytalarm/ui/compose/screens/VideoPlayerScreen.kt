@@ -1,17 +1,18 @@
 package net.turtton.ytalarm.ui.compose.screens
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.DigitalClock
-import android.widget.VideoView
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +33,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,15 +49,25 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.database.structure.Alarm
@@ -87,6 +99,7 @@ import kotlin.time.DurationUnit
  * @param snackbarHostState Snackbar表示用のホスト状態
  */
 @Suppress("LongMethod", "LongParameterList")
+@OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerScreen(
     videoId: String,
@@ -118,12 +131,72 @@ fun VideoPlayerScreen(
 
     var isLoading by remember { mutableStateOf(false) }
     var hasError by remember { mutableStateOf(false) }
-    var videoViewState by remember { mutableStateOf<VideoView?>(null) }
+    var playerView by remember { mutableStateOf<PlayerView?>(null) }
 
-    // フルスクリーンモードを有効化
+    // ExoPlayerの作成（AudioAttributes設定込み）
+    val exoPlayer = remember {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(if (isAlarmMode) C.USAGE_ALARM else C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
+
+        ExoPlayer.Builder(context)
+            .setAudioAttributes(audioAttributes, true)
+            .setWakeMode(C.WAKE_MODE_NETWORK)
+            .build()
+    }
+
+    // Player.Listenerの状態管理用（State型で競合状態を回避）
+    val onPlaybackEndedState = remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    // 統合されたPlayer.Listener
+    val playerListener = remember(exoPlayer) {
+        object : Player.Listener {
+            override fun onRenderedFirstFrame() {
+                // ビデオトラックがある場合のみ背景をクリア
+                val hasVideoTrack = exoPlayer.currentTracks.groups.any { group ->
+                    group.type == C.TRACK_TYPE_VIDEO && group.isSelected
+                }
+                if (hasVideoTrack) {
+                    playerView?.background = null
+                }
+                isLoading = false
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED) {
+                    onPlaybackEndedState.value?.invoke()
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                Log.e(LOG_TAG, "ExoPlayer error: ${error.message}", error)
+                isLoading = false
+                hasError = true
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        context.getString(R.string.snackbar_error_failed_to_import_video)
+                    )
+                }
+            }
+        }
+    }
+
+    // ExoPlayerのライフサイクル管理
+    DisposableEffect(exoPlayer, playerListener) {
+        exoPlayer.addListener(playerListener)
+        onDispose {
+            exoPlayer.removeListener(playerListener)
+        }
+    }
+
+    // フルスクリーンモードとリソースのクリーンアップ
     DisposableEffect(Unit) {
         enableFullScreenMode(view)
         onDispose {
+            // ExoPlayerを解放
+            exoPlayer.release()
+
             // 音量を復元
             currentVolume?.let {
                 audioManager.setStreamVolume(
@@ -146,27 +219,23 @@ fun VideoPlayerScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // VideoView
+        // PlayerView
         AndroidView(
             factory = { ctx ->
-                VideoView(ctx).apply {
-                    videoViewState = this
-                    setOnPreparedListener { mediaPlayer ->
-                        mediaPlayer.setOnInfoListener { _, what, _ ->
-                            when (what) {
-                                MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START -> {
-                                    background = null
-                                    scope.launch {
-                                        delay(3.seconds)
-                                        isLoading = false
-                                    }
-                                    true
-                                }
-
-                                else -> false
-                            }
-                        }
-                    }
+                // XMLからインフレートしてTextureViewとtransparent shutterを適用
+                @SuppressLint("InflateParams")
+                (
+                    LayoutInflater.from(ctx)
+                        .inflate(R.layout.player_view, null) as PlayerView
+                    ).also { pv ->
+                    playerView = pv
+                    pv.player = exoPlayer
+                }
+            },
+            update = { pv ->
+                // ExoPlayerの参照が変わった場合に再バインド
+                if (pv.player != exoPlayer) {
+                    pv.player = exoPlayer
                 }
             },
             modifier = Modifier.fillMaxSize()
@@ -268,8 +337,13 @@ fun VideoPlayerScreen(
         }
     }
 
-    // アラームモード時の初期化処理
+    // 動画再生の初期化処理
     LaunchedEffect(videoId, isAlarmMode) {
+        // playerViewの初期化を待機
+        val currentPlayerView = snapshotFlow { playerView }
+            .filterNotNull()
+            .first()
+
         if (isAlarmMode) {
             val alarmId = videoId.toLongOrNull() ?: -1L
             if (alarmId == -1L) {
@@ -326,35 +400,20 @@ fun VideoPlayerScreen(
                 videos.iterator()
             }
 
-            // 最初の動画を再生
-            playVideo(
-                context = context,
-                videoView = videoViewState,
-                video = queue.next(),
-                onLoading = { isLoading = it },
-                onError = {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.snackbar_error_failed_to_import_video)
-                        )
-                    }
-                }
-            )
-
-            // 完了時の処理
-            videoViewState?.setOnCompletionListener {
+            // 再生完了時のコールバックを設定
+            onPlaybackEndedState.value = playbackEnded@{
                 if (!queue.hasNext()) {
                     if (alarm.shouldLoop) {
                         queue = videos.iterator()
                     } else {
                         onDismiss()
-                        return@setOnCompletionListener
+                        return@playbackEnded
                     }
                 }
                 scope.launch {
                     playVideo(
-                        context = context,
-                        videoView = videoViewState,
+                        exoPlayer = exoPlayer,
+                        playerView = currentPlayerView,
                         video = queue.next(),
                         onLoading = { isLoading = it },
                         onError = {
@@ -369,6 +428,21 @@ fun VideoPlayerScreen(
                     )
                 }
             }
+
+            // 最初の動画を再生
+            playVideo(
+                exoPlayer = exoPlayer,
+                playerView = currentPlayerView,
+                video = queue.next(),
+                onLoading = { isLoading = it },
+                onError = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.snackbar_error_failed_to_import_video)
+                        )
+                    }
+                }
+            )
         } else {
             // 非アラームモード
             val video = videoViewModel.getFromVideoIdAsync(videoId).await()
@@ -381,8 +455,8 @@ fun VideoPlayerScreen(
                 return@LaunchedEffect
             }
             playVideo(
-                context = context,
-                videoView = videoViewState,
+                exoPlayer = exoPlayer,
+                playerView = currentPlayerView,
                 video = video,
                 onLoading = { isLoading = it },
                 onError = {
@@ -490,8 +564,8 @@ private fun startVibration(context: Context): Vibrator? {
  * 動画を再生
  */
 private suspend fun playVideo(
-    context: Context,
-    videoView: VideoView?,
+    exoPlayer: ExoPlayer,
+    playerView: PlayerView,
     video: Video,
     onLoading: (Boolean) -> Unit,
     onError: () -> Unit
@@ -502,20 +576,29 @@ private suspend fun playVideo(
 
     // サムネイルを背景に設定
     val url = video.videoUrl
-    videoView?.let { view ->
-        Glide.with(context).load(video.thumbnailUrl.toUri())
-            .into(object : CustomViewTarget<View, Drawable>(view) {
-                override fun onResourceReady(
-                    resource: Drawable,
-                    transition: Transition<in Drawable>?
-                ) {
-                    view.background = resource
-                }
-
-                override fun onLoadFailed(errorDrawable: Drawable?) {}
-                override fun onResourceCleared(placeholder: Drawable?) {}
-            })
+    if (BuildConfig.DEBUG) {
+        Log.d(LOG_TAG, "Loading thumbnail: ${video.thumbnailUrl}")
     }
+
+    // 前のGlideリクエストをキャンセル（viewにバインドしてライフサイクル管理）
+    withContext(Dispatchers.Main) {
+        Glide.with(playerView).clear(playerView)
+    }
+
+    Glide.with(playerView).load(video.thumbnailUrl.toUri())
+        .into(object : CustomViewTarget<View, Drawable>(playerView) {
+            override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(LOG_TAG, "Thumbnail loaded successfully")
+                }
+                playerView.background = resource
+            }
+
+            override fun onLoadFailed(errorDrawable: Drawable?) {
+                Log.e(LOG_TAG, "Failed to load thumbnail: ${video.thumbnailUrl}")
+            }
+            override fun onResourceCleared(placeholder: Drawable?) {}
+        })
 
     // 動画情報を取得
     val infoResult = withContext(Dispatchers.IO) {
@@ -534,8 +617,13 @@ private suspend fun playVideo(
                 onError()
             } else {
                 onLoading(false)
-                videoView?.setVideoURI(videoUrl.toUri())
-                videoView?.start()
+                val mediaItem = MediaItem.fromUri(videoUrl.toUri())
+                // 前の動画をクリアしてから新しい動画を設定
+                exoPlayer.stop()
+                exoPlayer.clearMediaItems()
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.prepare()
+                exoPlayer.play()
             }
         }.onFailure { error ->
             Log.e(LOG_TAG, "failed to get stream info", error)

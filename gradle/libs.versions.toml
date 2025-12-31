@@ -41,6 +41,7 @@ kotlinx-serialization = "1.9.0"
 
 # Third party
 youtubedl-android = "0.15.0"
+media3 = "1.5.1"
 glide = "5.0.5"
 coil = "2.7.0"
 arrow = "2.2.1"
@@ -123,6 +124,11 @@ kotlinx-serialization-cbor = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 youtubedl-android-library = { group = "com.github.yausername.youtubedl-android", name = "library", version.ref = "youtubedl-android" }
 youtubedl-android-common = { group = "com.github.yausername.youtubedl-android", name = "common", version.ref = "youtubedl-android" }
 
+# Media3 (ExoPlayer)
+androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
+androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3" }
+androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
+
 # Glide
 glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
 glide-compiler = { group = "com.github.bumptech.glide", name = "compiler", version.ref = "glide" }
@@ -181,6 +187,7 @@ androidx-lifecycle = ["androidx-lifecycle-viewmodel-ktx", "androidx-lifecycle-li
 androidx-room = ["androidx-room-runtime", "androidx-room-ktx"]
 arrow = ["arrow-core", "arrow-fx-coroutines"]
 youtubedl = ["youtubedl-android-library", "youtubedl-android-common"]
+androidx-media3 = ["androidx-media3-exoplayer", "androidx-media3-exoplayer-hls", "androidx-media3-ui"]
 kotlinx-serialization = ["kotlinx-serialization-json", "kotlinx-serialization-cbor"]
 kotest = ["kotest-runner-junit5", "kotest-assertions-core", "kotest-property"]
 androidx-test-espresso = ["androidx-test-espresso-core", "androidx-test-espresso-contrib"]
