@@ -2,7 +2,6 @@ package net.turtton.ytalarm.ui.compose.screens
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.media.Ringtone
 import android.media.RingtoneManager
@@ -35,10 +34,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -59,14 +58,10 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.transition.Transition
+import coil.compose.AsyncImage
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.BuildConfig
@@ -137,7 +132,8 @@ fun VideoPlayerScreen(
 
     var isLoading by remember { mutableStateOf(false) }
     var hasError by remember { mutableStateOf(false) }
-    var playerView by remember { mutableStateOf<PlayerView?>(null) }
+    var thumbnailUrl by remember { mutableStateOf<String?>(null) }
+    var showThumbnail by remember { mutableStateOf(true) }
 
     // ExoPlayerの作成（AudioAttributes設定込み）
     val exoPlayer = remember {
@@ -165,12 +161,12 @@ fun VideoPlayerScreen(
     val playerListener = remember(exoPlayer, resourceContainer) {
         object : Player.Listener {
             override fun onRenderedFirstFrame() {
-                // ビデオトラックがある場合のみ背景をクリア
+                // ビデオトラックがある場合のみサムネイルを非表示
                 val hasVideoTrack = exoPlayer.currentTracks.groups.any { group ->
                     group.type == C.TRACK_TYPE_VIDEO && group.isSelected
                 }
                 if (hasVideoTrack) {
-                    playerView?.background = null
+                    showThumbnail = false
                 }
                 isLoading = false
 
@@ -255,7 +251,6 @@ fun VideoPlayerScreen(
                     LayoutInflater.from(ctx)
                         .inflate(R.layout.player_view, null) as PlayerView
                     ).also { pv ->
-                    playerView = pv
                     pv.player = exoPlayer
                 }
             },
@@ -267,6 +262,22 @@ fun VideoPlayerScreen(
             },
             modifier = Modifier.fillMaxSize()
         )
+
+        // 音声のみの場合のサムネイル表示（アスペクト比を維持して中央に配置）
+        if (showThumbnail && thumbnailUrl != null) {
+            val currentUrl = thumbnailUrl
+            AsyncImage(
+                model = currentUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+                onError = {
+                    Log.e(LOG_TAG, "Failed to load thumbnail: $currentUrl")
+                }
+            )
+        }
 
         // アラームモード時の時刻表示
         if (isAlarmMode) {
@@ -366,11 +377,6 @@ fun VideoPlayerScreen(
 
     // 動画再生の初期化処理
     LaunchedEffect(videoId, isAlarmMode) {
-        // playerViewの初期化を待機
-        val currentPlayerView = snapshotFlow { playerView }
-            .filterNotNull()
-            .first()
-
         if (isAlarmMode) {
             val alarmId = videoId.toLongOrNull() ?: -1L
             if (alarmId == -1L) {
@@ -449,9 +455,10 @@ fun VideoPlayerScreen(
                 scope.launch {
                     playVideo(
                         exoPlayer = exoPlayer,
-                        playerView = currentPlayerView,
                         video = queue.next(),
                         onLoading = { isLoading = it },
+                        onThumbnailChange = { thumbnailUrl = it },
+                        onShowThumbnail = { showThumbnail = it },
                         onError = {
                             scope.launch {
                                 snackbarHostState.showSnackbar(
@@ -468,9 +475,10 @@ fun VideoPlayerScreen(
             // 最初の動画を再生
             playVideo(
                 exoPlayer = exoPlayer,
-                playerView = currentPlayerView,
                 video = queue.next(),
                 onLoading = { isLoading = it },
+                onThumbnailChange = { thumbnailUrl = it },
+                onShowThumbnail = { showThumbnail = it },
                 onError = {
                     scope.launch {
                         snackbarHostState.showSnackbar(
@@ -492,9 +500,10 @@ fun VideoPlayerScreen(
             }
             playVideo(
                 exoPlayer = exoPlayer,
-                playerView = currentPlayerView,
                 video = video,
                 onLoading = { isLoading = it },
+                onThumbnailChange = { thumbnailUrl = it },
+                onShowThumbnail = { showThumbnail = it },
                 onError = {
                     scope.launch {
                         snackbarHostState.showSnackbar(
@@ -598,45 +607,29 @@ private fun startVibration(context: Context): Vibrator? {
 
 /**
  * 動画を再生
+ * 注意: この関数はメインスレッドから呼び出す必要があります
  */
+@Suppress("LongParameterList")
 private suspend fun playVideo(
     exoPlayer: ExoPlayer,
-    playerView: PlayerView,
     video: Video,
     onLoading: (Boolean) -> Unit,
+    onThumbnailChange: (String?) -> Unit,
+    onShowThumbnail: (Boolean) -> Unit,
     onError: () -> Unit
 ) {
-    withContext(Dispatchers.Main) {
-        onLoading(true)
-    }
+    onLoading(true)
+    // サムネイルを表示状態にリセット
+    onShowThumbnail(true)
+    // サムネイル URL を設定
+    onThumbnailChange(video.thumbnailUrl)
 
-    // サムネイルを背景に設定
-    val url = video.videoUrl
     if (BuildConfig.DEBUG) {
-        Log.d(LOG_TAG, "Loading thumbnail: ${video.thumbnailUrl}")
+        Log.d(LOG_TAG, "Setting thumbnail URL: ${video.thumbnailUrl}")
     }
-
-    // 前のGlideリクエストをキャンセル（viewにバインドしてライフサイクル管理）
-    withContext(Dispatchers.Main) {
-        Glide.with(playerView).clear(playerView)
-    }
-
-    Glide.with(playerView).load(video.thumbnailUrl.toUri())
-        .into(object : CustomViewTarget<View, Drawable>(playerView) {
-            override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-                if (BuildConfig.DEBUG) {
-                    Log.d(LOG_TAG, "Thumbnail loaded successfully")
-                }
-                playerView.background = resource
-            }
-
-            override fun onLoadFailed(errorDrawable: Drawable?) {
-                Log.e(LOG_TAG, "Failed to load thumbnail: ${video.thumbnailUrl}")
-            }
-            override fun onResourceCleared(placeholder: Drawable?) {}
-        })
 
     // 動画情報を取得
+    val url = video.videoUrl
     val infoResult = withContext(Dispatchers.IO) {
         val request = YoutubeDLRequest(url)
         request.addOption("-f", "best")
@@ -691,6 +684,7 @@ private const val LOG_TAG = "VideoPlayerScreen"
  * フォールバック用のデフォルトアラーム音を再生
  * アラームデータ取得に失敗した場合などに使用
  */
+@Suppress("TooGenericExceptionCaught")
 private fun playFallbackAlarm(context: Context): Ringtone? = try {
     val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
