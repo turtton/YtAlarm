@@ -144,8 +144,12 @@ fun VideoPlayerScreen(
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
             .build()
 
+        // USAGE_ALARMの場合、ExoPlayerはaudio focusの自動処理をサポートしないため
+        // handleAudioFocusをfalseに設定する
+        val handleAudioFocus = !isAlarmMode
+
         ExoPlayer.Builder(context)
-            .setAudioAttributes(audioAttributes, true)
+            .setAudioAttributes(audioAttributes, handleAudioFocus)
             .setWakeMode(C.WAKE_MODE_NETWORK)
             .build()
     }

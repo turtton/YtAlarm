@@ -56,6 +56,7 @@ import net.turtton.ytalarm.ui.compose.dialogs.TimePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VibrationWarningDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.DayOfWeekCompat
+import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -474,11 +475,18 @@ fun AlarmSettingsScreen(
 
         scope.launch(Dispatchers.IO) {
             try {
+                // insertSync/updateSyncで完了を待ってからスケジュール更新
                 if (currentAlarm.id == 0L) {
-                    alarmViewModel.insert(currentAlarm)
+                    alarmViewModel.insertSync(currentAlarm)
                 } else {
-                    alarmViewModel.update(currentAlarm)
+                    alarmViewModel.updateSync(currentAlarm)
                 }
+
+                // AlarmManagerにアラームを登録
+                val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                    .filter { it.isEnable }
+                updateAlarmSchedule(context, allAlarms)
+
                 withContext(Dispatchers.Main) {
                     onNavigateBack()
                 }

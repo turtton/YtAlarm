@@ -56,6 +56,7 @@ import net.turtton.ytalarm.util.extensions.alarmOrderUp
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
 import net.turtton.ytalarm.util.order.AlarmOrder
+import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -313,7 +314,13 @@ fun AlarmListScreen(
         orderUp = orderUp,
         onAlarmToggle = { alarm, isEnabled ->
             scope.launch(Dispatchers.IO) {
-                alarmViewModel.update(alarm.copy(isEnable = isEnabled))
+                // updateSyncで完了を待ってからスケジュール更新
+                alarmViewModel.updateSync(alarm.copy(isEnable = isEnabled))
+
+                // AlarmManagerにアラームを登録/キャンセル
+                val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                    .filter { it.isEnable }
+                updateAlarmSchedule(context, allAlarms)
             }
         },
         onAlarmClick = onNavigateToAlarmSettings,

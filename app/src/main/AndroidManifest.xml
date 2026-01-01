@@ -61,5 +61,8 @@
             android:launchMode="singleInstance">
         </activity>
         <receiver android:name=".worker.SnoozeRemoveReceiver"/>
+        <receiver
+            android:name=".receiver.AlarmReceiver"
+            android:exported="false" />
     </application>
 </manifest>

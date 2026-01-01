@@ -122,6 +122,10 @@
     <string name="snackbar_copied">Copied</string>
 
     <string name="notification_channel_name" translatable="false">YtAlarm</string>
+    <string name="notification_alarm_channel_name">Alarm</string>
+    <string name="notification_alarm_channel_description">Alarm notification channel</string>
+    <string name="notification_alarm_title">Alarm</string>
+    <string name="notification_alarm_description">Tap to dismiss</string>
     <string name="notification_snooze_channel_description" translatable="false">Snooze notification channel</string>
     <string name="notification_snooze_title">Snooze Enabled</string>
     <plurals name="notification_snooze_remain">
@@ -182,4 +186,19 @@
     <!-- Error messages for AboutPage -->
     <string name="error_no_browser">No browser app found</string>
     <string name="error_open_link">Failed to open link</string>
+
+    <!-- Permission Screen -->
+    <string name="permission_screen_title">Permissions Required</string>
+    <string name="permission_screen_description">YtAlarm requires the following permissions to function properly as an alarm app.</string>
+    <string name="permission_screen_continue">Continue</string>
+    <string name="permission_screen_required">Please grant all permissions to continue.</string>
+    <string name="permission_screen_grant">Grant</string>
+    <string name="permission_exact_alarm_title">Schedule Exact Alarms</string>
+    <string name="permission_exact_alarm_description">Required to trigger alarms at the exact time you set.</string>
+    <string name="permission_full_screen_title">Full Screen Intent</string>
+    <string name="permission_full_screen_description">Required to display alarm on lock screen.</string>
+    <string name="permission_overlay_title">Display Over Other Apps</string>
+    <string name="permission_overlay_description">Required to show alarm even when using other apps.</string>
+    <string name="permission_notification_title">Notifications</string>
+    <string name="permission_notification_description">Required to display alarm notifications.</string>
 </resources>
