@@ -15,6 +15,7 @@ import android.view.View
 import android.widget.DigitalClock
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,6 +43,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -134,6 +139,7 @@ fun VideoPlayerScreen(
     var hasError by remember { mutableStateOf(false) }
     var thumbnailUrl by remember { mutableStateOf<String?>(null) }
     var showThumbnail by remember { mutableStateOf(true) }
+    var currentTitle by remember { mutableStateOf<String?>(null) }
 
     // ExoPlayerの作成（AudioAttributes設定込み）
     val exoPlayer = remember {
@@ -279,21 +285,41 @@ fun VideoPlayerScreen(
             )
         }
 
-        // アラームモード時の時刻表示
+        // アラームモード時の時刻表示とタイトル
         if (isAlarmMode) {
-            AndroidView(
-                factory = { ctx ->
-                    @Suppress("DEPRECATION")
-                    DigitalClock(ctx).apply {
-                        textSize = 96f
-                        textAlignment = View.TEXT_ALIGNMENT_CENTER
-                    }
-                },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 32.dp)
-                    .align(Alignment.TopCenter)
-            )
+                    .align(Alignment.TopCenter),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        @Suppress("DEPRECATION")
+                        DigitalClock(ctx).apply {
+                            textSize = 96f
+                            textAlignment = View.TEXT_ALIGNMENT_CENTER
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                currentTitle?.let { title ->
+                    TitleText(title = title)
+                }
+            }
+        }
+
+        // 非アラームモード時のタイトル表示
+        if (!isAlarmMode) {
+            currentTitle?.let { title ->
+                TitleText(
+                    title = title,
+                    modifier = Modifier
+                        .padding(top = 32.dp)
+                        .align(Alignment.TopCenter)
+                )
+            }
         }
 
         // ローディング表示
@@ -459,6 +485,7 @@ fun VideoPlayerScreen(
                         onLoading = { isLoading = it },
                         onThumbnailChange = { thumbnailUrl = it },
                         onShowThumbnail = { showThumbnail = it },
+                        onTitleChange = { currentTitle = it },
                         onError = {
                             scope.launch {
                                 snackbarHostState.showSnackbar(
@@ -479,6 +506,7 @@ fun VideoPlayerScreen(
                 onLoading = { isLoading = it },
                 onThumbnailChange = { thumbnailUrl = it },
                 onShowThumbnail = { showThumbnail = it },
+                onTitleChange = { currentTitle = it },
                 onError = {
                     scope.launch {
                         snackbarHostState.showSnackbar(
@@ -504,6 +532,7 @@ fun VideoPlayerScreen(
                 onLoading = { isLoading = it },
                 onThumbnailChange = { thumbnailUrl = it },
                 onShowThumbnail = { showThumbnail = it },
+                onTitleChange = { currentTitle = it },
                 onError = {
                     scope.launch {
                         snackbarHostState.showSnackbar(
@@ -616,6 +645,7 @@ private suspend fun playVideo(
     onLoading: (Boolean) -> Unit,
     onThumbnailChange: (String?) -> Unit,
     onShowThumbnail: (Boolean) -> Unit,
+    onTitleChange: (String?) -> Unit,
     onError: () -> Unit
 ) {
     onLoading(true)
@@ -623,6 +653,8 @@ private suspend fun playVideo(
     onShowThumbnail(true)
     // サムネイル URL を設定
     onThumbnailChange(video.thumbnailUrl)
+    // タイトルを設定
+    onTitleChange(video.title)
 
     if (BuildConfig.DEBUG) {
         Log.d(LOG_TAG, "Setting thumbnail URL: ${video.thumbnailUrl}")
@@ -713,4 +745,31 @@ private fun VideoPlayerScreenPreview() {
             onDismiss = {}
         )
     }
+}
+
+/**
+ * 動画タイトル表示用のComposable
+ * @param title 表示するタイトル
+ * @param modifier 追加のModifier
+ */
+@Composable
+private fun TitleText(title: String, modifier: Modifier = Modifier) {
+    val contentDescriptionText = stringResource(
+        R.string.fragment_video_player_content_description_playing,
+        title
+    )
+    Text(
+        text = title,
+        color = Color.White,
+        style = MaterialTheme.typography.headlineSmall,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        modifier = modifier
+            .fillMaxWidth()
+            .basicMarquee()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .semantics {
+                contentDescription = contentDescriptionText
+            }
+    )
 }

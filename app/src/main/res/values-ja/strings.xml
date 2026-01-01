@@ -17,6 +17,7 @@
     <string name="fragment_video_player_button_snooze">スヌーズ</string>
     <string name="fragment_video_player_button_stop">停止</string>
     <string name="fragment_video_player_text_error">アラームの取得に失敗しました</string>
+    <string name="fragment_video_player_content_description_playing">再生中: %1$s</string>
     <string name="repeat_type_once">1回のみ</string>
     <string name="repeat_type_everyday">"毎日 "</string>
     <string name="menu_item_aram_list">アラーム</string>

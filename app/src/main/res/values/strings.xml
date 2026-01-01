@@ -26,6 +26,7 @@
     <string name="fragment_video_player_button_snooze">Snooze</string>
     <string name="fragment_video_player_button_stop">Stop</string>
     <string name="fragment_video_player_text_error">Failed to get Alarm data</string>
+    <string name="fragment_video_player_content_description_playing">Now playing: %1$s</string>
 
     <string name="repeat_type_once">Once</string>
     <string name="repeat_type_everyday">Everyday</string>
