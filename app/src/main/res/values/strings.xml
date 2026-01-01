@@ -112,7 +112,6 @@
     <string name="snackbar_error_failed_to_save_alarm">Failed to save alarm</string>
     <string name="snackbar_error_failed_to_get_video">Failed to get video data</string>
     <string name="snackbar_error_failed_to_import_video">Failed to import video</string>
-    <string name="snackbar_error_failed_to_prepare_vibration">Failed to prepare vibration system.</string>
     <string name="snackbar_error_failed_to_access_clipboard">Failed to access clipboard system.</string>
     <string name="snackbar_error_failed_to_access_settings_data">Failed to access settings data.</string>
     <string name="snackbar_error_empty_video">Video is Empty</string>
@@ -131,7 +130,6 @@
     </plurals>
     <string name="notification_download_video_info_channel_description" translatable="false">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
-    <string name="videoplayer_fragment_label">Playing</string>
     <string name="menu_playlist_option_rename">Rename</string>
 
     <string name="menu_alarm_option_sortrule">Sort Alarms</string>

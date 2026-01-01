@@ -30,7 +30,10 @@ val LocalVideoViewModel = compositionLocalOf<VideoViewModel> {
  *
  * ResourceContainerは状態を持つため、compositionLocalOf（staticではない）を使用し、
  * 変更時にRecompositionが適切にトリガーされるようにする。
+ *
+ * nullableにすることで、AlarmActivity以外（MainActivity等）で使用時もクラッシュしない。
+ * テスト用IdlingResourceが必要な場合のみ、CompositionLocalProviderで提供する。
  */
-val LocalVideoPlayerResourceContainer = compositionLocalOf<VideoPlayerLoadingResourceContainer> {
-    error("VideoPlayerLoadingResourceContainer not provided")
+val LocalVideoPlayerResourceContainer = compositionLocalOf<VideoPlayerLoadingResourceContainer?> {
+    null
 }

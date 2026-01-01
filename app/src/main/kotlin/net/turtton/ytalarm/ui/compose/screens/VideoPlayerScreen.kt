@@ -72,6 +72,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.extensions.hourOfDay
 import net.turtton.ytalarm.util.extensions.minute
@@ -112,6 +113,9 @@ fun VideoPlayerScreen(
     val view = LocalView.current
     val scope = rememberCoroutineScope()
 
+    // テスト用IdlingResource（AlarmActivityからCompositionLocalで提供される場合のみ有効）
+    val resourceContainer = LocalVideoPlayerResourceContainer.current
+
     val application = context.applicationContext as net.turtton.ytalarm.YtApplication
     val videoViewModel: VideoViewModel = viewModel(
         factory = VideoViewModelFactory(application.repository)
@@ -150,7 +154,7 @@ fun VideoPlayerScreen(
     val onPlaybackEndedState = remember { mutableStateOf<(() -> Unit)?>(null) }
 
     // 統合されたPlayer.Listener
-    val playerListener = remember(exoPlayer) {
+    val playerListener = remember(exoPlayer, resourceContainer) {
         object : Player.Listener {
             override fun onRenderedFirstFrame() {
                 // ビデオトラックがある場合のみ背景をクリア
@@ -161,6 +165,13 @@ fun VideoPlayerScreen(
                     playerView?.background = null
                 }
                 isLoading = false
+
+                // テスト用: 一定時間後にIdlingResourceをidleに設定
+                scope.launch {
+                    kotlinx.coroutines.delay(3.seconds)
+                    resourceContainer?.videoPlayerLoadingResourceController
+                        ?.videoPlayerLoadingResource?.isIdleNow = true
+                }
             }
 
             override fun onPlaybackStateChanged(playbackState: Int) {
@@ -193,6 +204,11 @@ fun VideoPlayerScreen(
     // フルスクリーンモードとリソースのクリーンアップ
     DisposableEffect(Unit) {
         enableFullScreenMode(view)
+
+        // テスト用: IdlingResourceを非idleに設定（動画読み込み開始）
+        resourceContainer?.videoPlayerLoadingResourceController
+            ?.videoPlayerLoadingResource?.isIdleNow = false
+
         onDispose {
             // ExoPlayerを解放
             exoPlayer.release()

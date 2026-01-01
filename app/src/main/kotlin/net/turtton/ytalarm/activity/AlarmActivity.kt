@@ -2,46 +2,74 @@ package net.turtton.ytalarm.activity
 
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.NavController
-import androidx.navigation.fragment.findNavController
-import net.turtton.ytalarm.R
-import net.turtton.ytalarm.databinding.ActivityAlarmBinding
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.lifecycle.lifecycleScope
+import com.yausername.youtubedl_android.YoutubeDL
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
-import net.turtton.ytalarm.ui.fragment.FragmentVideoPlayerArgs
-import net.turtton.ytalarm.util.initYtDL
+import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
+import net.turtton.ytalarm.ui.compose.screens.VideoPlayerScreen
+import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
 class AlarmActivity :
     AppCompatActivity(),
     VideoPlayerLoadingResourceContainer {
-    private lateinit var navController: NavController
-    lateinit var binding: ActivityAlarmBinding
 
     override val videoPlayerLoadingResourceController = VideoPlayerLoadingResourceController()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityAlarmBinding.inflate(layoutInflater)
-        initYtDL(binding.root.rootView)
 
-        setContentView(binding.root)
+        // YoutubeDLの初期化
+        initYtDL()
 
         val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1)
         if (alarmId == -1L) {
-            Log.e("AlarmActivity", "Failed to get alarm id")
+            Log.e(LOG_TAG, "Failed to get alarm id")
         }
-        val args = FragmentVideoPlayerArgs(alarmId.toString(), true)
 
-        val alarmNav = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_alarm)
-        navController = alarmNav!!.findNavController()
-        navController.setGraph(R.navigation.video_player, args.toBundle())
+        // Composeで画面を設定
+        setContent {
+            CompositionLocalProvider(
+                LocalVideoPlayerResourceContainer provides this
+            ) {
+                AppTheme {
+                    VideoPlayerScreen(
+                        videoId = alarmId.toString(),
+                        isAlarmMode = true,
+                        onDismiss = { finish() }
+                    )
+                }
+            }
+        }
     }
 
-    override fun onSupportNavigateUp(): Boolean =
-        navController.navigateUp() || super.onSupportNavigateUp()
+    /**
+     * YoutubeDLライブラリの初期化
+     */
+    private fun initYtDL() = lifecycleScope.launch {
+        runCatching {
+            withContext(Dispatchers.IO) {
+                YoutubeDL.getInstance().init(applicationContext)
+            }
+        }.onFailure {
+            Toast.makeText(
+                this@AlarmActivity,
+                "Internal error occurred.",
+                Toast.LENGTH_LONG
+            ).show()
+            Log.e(LOG_TAG, "YtDL initialization failed", it)
+        }
+    }
 
     companion object {
         const val EXTRA_ALARM_ID = "ALARM_ID"
+        private const val LOG_TAG = "AlarmActivity"
     }
 }

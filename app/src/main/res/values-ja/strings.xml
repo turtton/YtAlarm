@@ -73,7 +73,6 @@
     <string name="snackbar_error_failed_to_save_alarm">アラームの保存に失敗しました</string>
     <string name="snackbar_error_failed_to_get_video">ビデオの取得に失敗しました</string>
     <string name="snackbar_error_failed_to_import_video">ビデオのインポートに失敗しました</string>
-    <string name="snackbar_error_failed_to_prepare_vibration">バイブレーションシステムの初期化に失敗しました</string>
     <string name="snackbar_error_failed_to_access_clipboard">クリップボード機能の取得に失敗しました</string>
     <string name="snackbar_error_failed_to_access_settings_data">設定の取得に失敗しました</string>
     <string name="snackbar_error_empty_video">ビデオが存在しません</string>
@@ -84,7 +83,6 @@
     <string name="snackbar_copied">コピーしました</string>
     <string name="notification_snooze_title">スヌーズが有効です</string>
     <string name="notification_download_video_info_title">ビデオ情報を取得しています</string>
-    <string name="videoplayer_fragment_label">プレイヤー</string>
     <string name="menu_playlist_option_rename">名称変更</string>
     <string name="menu_alarm_option_sortrule">アラームを並び替え</string>
     <string name="menu_playlist_option_sortrule">プレイリストを並び替え</string>
