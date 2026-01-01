@@ -23,6 +23,8 @@
             android-tools
             fastlane
             imagemagick
+            ktlint
+            detekt
           ];
         };
       }
