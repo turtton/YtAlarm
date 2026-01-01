@@ -172,29 +172,24 @@ fun PlaylistScreenContent(
                         key = { it.id }
                     ) { playlist ->
                         // サムネイル取得
+                        // Drawable型は直接値を設定、Video型はデフォルト値を設定
                         val thumbnailUrl = remember(playlist.thumbnail) {
-                            mutableStateOf<Any?>(null)
+                            when (val thumbnail = playlist.thumbnail) {
+                                is Playlist.Thumbnail.Drawable -> mutableStateOf<Any?>(thumbnail.id)
+                                is Playlist.Thumbnail.Video -> mutableStateOf<Any?>(null)
+                            }
                         }
 
-                        playlist.thumbnail?.let { thumbnail ->
-                            when (thumbnail) {
-                                is Playlist.Thumbnail.Video -> {
-                                    // Video thumbnailの場合、VideoからURLを取得
-                                    LaunchedEffect(thumbnail.id) {
-                                        videoViewModel?.getFromIdAsync(
-                                            thumbnail.id
-                                        )?.let { deferred ->
-                                            val video = withContext(Dispatchers.IO) {
-                                                deferred.await()
-                                            }
-                                            thumbnailUrl.value = video?.thumbnailUrl
-                                        }
+                        // Video型のみ非同期でサムネイルURLを取得
+                        if (playlist.thumbnail is Playlist.Thumbnail.Video) {
+                            LaunchedEffect(playlist.thumbnail) {
+                                val thumbnail = playlist.thumbnail as Playlist.Thumbnail.Video
+                                val url = videoViewModel?.let { vm ->
+                                    withContext(Dispatchers.IO) {
+                                        vm.getFromIdAsync(thumbnail.id)?.await()?.thumbnailUrl
                                     }
                                 }
-
-                                is Playlist.Thumbnail.Drawable -> {
-                                    thumbnailUrl.value = thumbnail.id
-                                }
+                                thumbnailUrl.value = url ?: R.drawable.ic_no_image
                             }
                         }
                         val videoCount = playlist.videos.size
