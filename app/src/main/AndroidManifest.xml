@@ -59,7 +59,7 @@
         <activity
             android:name=".activity.AlarmActivity"
             android:excludeFromRecents="true"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.YtAlarm.NoActionBar"
             android:showWhenLocked="true"
             android:showOnLockScreen="true"

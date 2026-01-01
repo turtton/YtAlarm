@@ -5,13 +5,16 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
+import arrow.core.Either
+import arrow.core.raise.either
+import arrow.core.raise.ensure
+import net.turtton.ytalarm.R
+import net.turtton.ytalarm.activity.AlarmActivity
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.receiver.AlarmReceiver
 import net.turtton.ytalarm.util.extensions.pickNearestTime
@@ -20,11 +23,32 @@ import java.util.Calendar
 private const val ALARM_REQUEST_CODE = 0
 private const val SHOW_INTENT_REQUEST_CODE = 1
 
+/**
+ * アラームスケジュール更新時のエラー
+ */
+sealed interface AlarmScheduleError {
+    data object NoAlarmManager : AlarmScheduleError
+    data class PermissionDenied(val message: String) : AlarmScheduleError
+    data object NoEnabledAlarm : AlarmScheduleError
+}
+
 fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: Context) {
     observe(lifecycleOwner) { list ->
         if (list == null) return@observe
         val alarmList = list.filter { it.isEnable }.toMutableList()
-        updateAlarmSchedule(context, alarmList)
+        updateAlarmSchedule(context, alarmList).onLeft { error ->
+            val message = when (error) {
+                is AlarmScheduleError.PermissionDenied -> error.message
+
+                AlarmScheduleError.NoAlarmManager ->
+                    context.getString(R.string.error_no_alarm_manager)
+
+                AlarmScheduleError.NoEnabledAlarm -> null
+            }
+            message?.let {
+                Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
 
@@ -33,33 +57,40 @@ fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: 
  *
  * BroadcastReceiver経由でNotification + fullScreenIntentを使用することで、
  * Android 14以降のBackground Activity Launch制限を回避する。
+ *
+ * @return 成功時はRight(Unit)、失敗時はLeft(AlarmScheduleError)
  */
-fun updateAlarmSchedule(context: Context, alarmList: List<Alarm>) {
-    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+fun updateAlarmSchedule(
+    context: Context,
+    alarmList: List<Alarm>
+): Either<AlarmScheduleError, Unit> = either {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+        ?: raise(AlarmScheduleError.NoAlarmManager)
 
     val nowTime = Calendar.getInstance()
     val (alarm, calendar) = alarmList.pickNearestTime(nowTime) ?: run {
         // 有効なアラームがない場合はキャンセル
         cancelAlarm(context, alarmManager)
-        return
+        raise(AlarmScheduleError.NoEnabledAlarm)
     }
 
-    if (!alarm.isEnable) {
+    ensure(alarm.isEnable) {
         cancelAlarm(context, alarmManager)
-        return
+        AlarmScheduleError.NoEnabledAlarm
     }
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
-        Log.e("RegisterAlarm", "Can't schedule exact alarms - permission not granted")
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(context, "Error: Can't schedule exact alarms", Toast.LENGTH_SHORT).show()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        ensure(alarmManager.canScheduleExactAlarms()) {
+            Log.e("RegisterAlarm", "Can't schedule exact alarms - permission not granted")
+            AlarmScheduleError.PermissionDenied(
+                context.getString(R.string.error_schedule_exact_alarm)
+            )
         }
-        return
     }
 
     // BroadcastReceiver経由でアラームを発動
     val intent = Intent(context, AlarmReceiver::class.java).apply {
-        putExtra(AlarmReceiver.EXTRA_ALARM_ID, alarm.id)
+        putExtra(AlarmActivity.EXTRA_ALARM_ID, alarm.id)
     }
 
     val pendingIntent = PendingIntent.getBroadcast(

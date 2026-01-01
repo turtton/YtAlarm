@@ -1,6 +1,5 @@
 package net.turtton.ytalarm.receiver
 
-import android.app.ActivityOptions
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -14,7 +13,7 @@ import net.turtton.ytalarm.activity.AlarmActivity
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
-        val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1)
+        val alarmId = intent.getLongExtra(AlarmActivity.EXTRA_ALARM_ID, -1)
         if (alarmId == -1L) {
             return
         }
@@ -34,9 +33,5 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         context.startActivity(alarmIntent)
-    }
-
-    companion object {
-        const val EXTRA_ALARM_ID = "ALARM_ID"
     }
 }

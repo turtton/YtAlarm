@@ -122,6 +122,9 @@
     <string name="snackbar_failed_to_check_restriction">Failed to check app restriction status.</string>
     <string name="snackbar_copied">Copied</string>
     <string name="snackbar_error_no_alarm_permission">Cannot schedule exact alarms. Please grant permission in settings.</string>
+    <string name="error_schedule_exact_alarm">Cannot schedule exact alarms</string>
+    <string name="error_no_alarm_manager">Alarm service is not available</string>
+    <string name="error_invalid_alarm_id">Invalid alarm ID</string>
 
     <string name="notification_channel_name" translatable="false">YtAlarm</string>
     <string name="notification_alarm_channel_name">Alarm</string>

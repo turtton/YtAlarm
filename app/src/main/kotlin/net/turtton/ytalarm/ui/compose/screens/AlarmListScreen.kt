@@ -3,6 +3,7 @@ package net.turtton.ytalarm.ui.compose.screens
 import android.app.AlarmManager
 import android.content.Context
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,6 +55,7 @@ import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.components.AlarmItem
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.AlarmScheduleError
 import net.turtton.ytalarm.util.extensions.alarmOrderRule
 import net.turtton.ytalarm.util.extensions.alarmOrderUp
 import net.turtton.ytalarm.util.extensions.findActivity
@@ -333,13 +335,30 @@ fun AlarmListScreen(
                     }
                 }
 
-                // updateSyncで完了を待ってからスケジュール更新
-                alarmViewModel.updateSync(alarm.copy(isEnable = isEnabled))
+                val updatedAlarm = alarm.copy(isEnable = isEnabled)
+                alarmViewModel.update(updatedAlarm)
 
-                // AlarmManagerにアラームを登録/キャンセル
+                // 全アラームを取得して、同一IDのデータを更新済みのものに差し替え
                 val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
-                    .filter { it.isEnable }
-                updateAlarmSchedule(context, allAlarms)
+                val updatedList = allAlarms.map {
+                    if (it.id == alarm.id) updatedAlarm else it
+                }.filter { it.isEnable }
+
+                updateAlarmSchedule(context, updatedList).onLeft { error ->
+                    val message = when (error) {
+                        is AlarmScheduleError.PermissionDenied -> error.message
+
+                        AlarmScheduleError.NoAlarmManager ->
+                            context.getString(R.string.error_no_alarm_manager)
+
+                        AlarmScheduleError.NoEnabledAlarm -> null
+                    }
+                    message?.let {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
             }
         },
         onAlarmClick = onNavigateToAlarmSettings,

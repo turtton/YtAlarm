@@ -108,6 +108,23 @@ private fun NavGraphBuilder.alarmSettingsScreen(navController: NavHostController
         )
     ) { backStackEntry ->
         val alarmId = backStackEntry.arguments?.getLong("alarmId") ?: -1L
+        val context = LocalContext.current
+
+        // Deep Linkで不正なIDが渡された場合のエラー処理
+        // 0はRoom DBで使われないID、Deep Linkから0が渡された場合はエラー
+        if (alarmId == 0L) {
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                android.widget.Toast.makeText(
+                    context,
+                    context.getString(R.string.error_invalid_alarm_id),
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                navController.navigate(YtAlarmDestination.ALARM_LIST) {
+                    popUpTo(YtAlarmDestination.ALARM_LIST) { inclusive = true }
+                }
+            }
+            return@composable
+        }
 
         AlarmSettingsScreen(
             alarmId = alarmId,

@@ -30,8 +30,8 @@ class AlarmActivity :
         initYtDL()
 
         val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1)
-        if (alarmId == -1L) {
-            Log.e(LOG_TAG, "Failed to get alarm id")
+        if (alarmId <= 0L) {
+            Log.e(LOG_TAG, "Invalid alarm id: $alarmId, using fallback alarm")
         }
 
         // Composeで画面を設定

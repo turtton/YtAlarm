@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.media.AudioManager
+import android.media.Ringtone
+import android.media.RingtoneManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -69,7 +71,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
@@ -132,6 +133,7 @@ fun VideoPlayerScreen(
     }
     var currentVolume by remember { mutableStateOf<Int?>(null) }
     var vibrator by remember { mutableStateOf<Vibrator?>(null) }
+    var fallbackRingtone by remember { mutableStateOf<Ringtone?>(null) }
 
     var isLoading by remember { mutableStateOf(false) }
     var hasError by remember { mutableStateOf(false) }
@@ -233,6 +235,9 @@ fun VideoPlayerScreen(
 
             // バイブレーションを停止
             vibrator?.cancel()
+
+            // フォールバックアラーム音を停止
+            fallbackRingtone?.stop()
         }
     }
 
@@ -328,7 +333,7 @@ fun VideoPlayerScreen(
                                             minute = now.minute,
                                             repeatType = Alarm.RepeatType.Snooze
                                         )
-                                        alarmViewModel.insertSync(snoozeAlarm)
+                                        alarmViewModel.insert(snoozeAlarm)
                                         UpdateSnoozeNotifyWorker.registerWorker(context)
                                         withContext(Dispatchers.Main) {
                                             onDismiss()
@@ -372,8 +377,10 @@ fun VideoPlayerScreen(
                 snackbarHostState.showSnackbar(
                     context.getString(R.string.snackbar_error_failed_to_get_alarm)
                 )
-                Log.e(LOG_TAG, "Alarm id is -1")
-                hasError = true
+                Log.e(LOG_TAG, "Alarm id is -1, using fallback alarm")
+                // フォールバック: デフォルトアラーム音とバイブレーションを開始
+                fallbackRingtone = playFallbackAlarm(context)
+                vibrator = startVibration(context)
                 return@LaunchedEffect
             }
 
@@ -384,8 +391,10 @@ fun VideoPlayerScreen(
             // アラーム情報を取得
             val alarm = alarmViewModel.getFromIdAsync(alarmId).await()
             if (alarm == null) {
-                hasError = true
-                Log.e(LOG_TAG, "Failed to get alarm. TargetId: $alarmId")
+                Log.e(LOG_TAG, "Failed to get alarm. TargetId: $alarmId, using fallback alarm")
+                // フォールバック: デフォルトアラーム音とバイブレーションを開始
+                fallbackRingtone = playFallbackAlarm(context)
+                vibrator = startVibration(context)
                 return@LaunchedEffect
             }
 
@@ -408,7 +417,12 @@ fun VideoPlayerScreen(
                 snackbarHostState.showSnackbar(
                     context.getString(R.string.snackbar_error_empty_video)
                 )
-                Log.e(LOG_TAG, "Could not start alarm due to empty videos")
+                Log.e(LOG_TAG, "Could not start alarm due to empty videos, using fallback alarm")
+                // フォールバック: デフォルトアラーム音を開始（バイブレーションは既に開始済みの可能性）
+                fallbackRingtone = playFallbackAlarm(context)
+                if (vibrator == null && alarm.shouldVibrate) {
+                    vibrator = startVibration(context)
+                }
                 return@LaunchedEffect
             }
 
@@ -537,11 +551,11 @@ private suspend fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
     }
     when (repeatType) {
         is Alarm.RepeatType.Once -> {
-            alarmViewModel.updateSync(alarm.copy(repeatType = repeatType, isEnable = false))
+            alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
         }
 
         is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
-            alarmViewModel.updateSync(alarm)
+            alarmViewModel.update(alarm)
         }
 
         is Alarm.RepeatType.Snooze -> {
@@ -672,6 +686,28 @@ private val VIBRATION_TIMINGS = longArrayOf(VIBRATION_MILLIS, VIBRATION_MILLIS)
 private val VIBRATION_AMPLITUDES = intArrayOf(0, VIBRATION_STRENGTH)
 private const val VIBRATION_REPEAT_POS = 0
 private const val LOG_TAG = "VideoPlayerScreen"
+
+/**
+ * フォールバック用のデフォルトアラーム音を再生
+ * アラームデータ取得に失敗した場合などに使用
+ */
+private fun playFallbackAlarm(context: Context): Ringtone? = try {
+    val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+
+    alarmUri?.let { uri ->
+        RingtoneManager.getRingtone(context, uri)?.apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                isLooping = true
+            }
+            play()
+        }
+    }
+} catch (e: Exception) {
+    Log.e(LOG_TAG, "Failed to play fallback alarm", e)
+    null
+}
 
 @Preview(showBackground = true)
 @Composable

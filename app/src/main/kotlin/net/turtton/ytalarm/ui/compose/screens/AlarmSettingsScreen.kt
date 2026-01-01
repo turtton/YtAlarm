@@ -487,9 +487,9 @@ fun AlarmSettingsScreen(
             try {
                 // insertSync/updateSyncで完了を待ってからスケジュール更新
                 if (currentAlarm.id == 0L) {
-                    alarmViewModel.insertSync(currentAlarm)
+                    alarmViewModel.insert(currentAlarm)
                 } else {
-                    alarmViewModel.updateSync(currentAlarm)
+                    alarmViewModel.update(currentAlarm)
                 }
 
                 // AlarmManagerにアラームを登録
