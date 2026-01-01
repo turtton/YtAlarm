@@ -78,12 +78,6 @@
     </string-array>
     <string name="dialog_repeat_days_title">Days</string>
     <string name="dialog_repeat_days_ok">Confirm</string>
-    <string name="dialog_require_permission">Permission Required</string>
-    <string name="dialog_require_overlay_perm">This application requires \"Display over other apps\" permission to display alarm.</string>
-    <string name="dialog_require_overlay_perm_ok">Settings</string>
-    <string name="dialog_require_configuration">Configuration Required</string>
-    <string name="dialog_require_disable_restrictions">This application requires disabling the option \"Remove permissions if app is unused\"</string>
-    <string name="dialog_require_disable_restrictions_ok">Settings</string>
     <string name="dialog_shared_text_should_be_url_title">Error</string>
     <string name="dialog_shared_text_should_be_url_description">The shared text should start \"http..\"</string>
 
@@ -120,7 +114,6 @@
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
     <string name="snackbar_sync_started">Sync started</string>
     <string name="snackbar_detect_playlist_usage">Some playlists are used by alarms.</string>
-    <string name="snackbar_failed_to_check_restriction">Failed to check app restriction status.</string>
     <string name="snackbar_copied">Copied</string>
     <string name="snackbar_error_no_alarm_permission">Cannot schedule exact alarms. Please grant permission in settings.</string>
     <string name="error_schedule_exact_alarm">Cannot schedule exact alarms</string>
@@ -128,10 +121,6 @@
     <string name="error_invalid_alarm_id">Invalid alarm ID</string>
 
     <string name="notification_channel_name" translatable="false">YtAlarm</string>
-    <string name="notification_alarm_channel_name">Alarm</string>
-    <string name="notification_alarm_channel_description">Alarm notification channel</string>
-    <string name="notification_alarm_title">Alarm</string>
-    <string name="notification_alarm_description">Tap to dismiss</string>
     <string name="notification_snooze_channel_description" translatable="false">Snooze notification channel</string>
     <string name="notification_snooze_title">Snooze Enabled</string>
     <plurals name="notification_snooze_remain">
