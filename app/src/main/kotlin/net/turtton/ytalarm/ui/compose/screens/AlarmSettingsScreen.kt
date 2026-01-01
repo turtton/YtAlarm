@@ -132,6 +132,16 @@ fun AlarmSettingsScreenContent(
                 .padding(padding),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            // 0. 有効/無効トグル
+            item {
+                SwitchSettingItem(
+                    title = stringResource(R.string.setting_enabled),
+                    description = null,
+                    checked = alarm.isEnable,
+                    onCheckedChange = { onAlarmChange(alarm.copy(isEnable = it)) }
+                )
+            }
+
             // 1. 時刻設定
             item {
                 ClickableSettingItem(

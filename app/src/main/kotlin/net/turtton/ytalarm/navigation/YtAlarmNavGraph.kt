@@ -21,6 +21,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -101,6 +102,9 @@ private fun NavGraphBuilder.alarmSettingsScreen(navController: NavHostController
                 type = NavType.LongType
                 defaultValue = -1L
             }
+        ),
+        deepLinks = listOf(
+            navDeepLink { uriPattern = "ytalarm://alarm/{alarmId}" }
         )
     ) { backStackEntry ->
         val alarmId = backStackEntry.arguments?.getLong("alarmId") ?: -1L

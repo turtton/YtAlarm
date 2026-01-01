@@ -1,5 +1,8 @@
 package net.turtton.ytalarm.ui.compose.screens
 
+import android.app.AlarmManager
+import android.content.Context
+import android.os.Build
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -76,6 +79,7 @@ fun AlarmListScreenContent(
     alarms: List<Alarm>,
     orderRule: AlarmOrder,
     orderUp: Boolean,
+    snackbarHostState: SnackbarHostState,
     onAlarmToggle: (Alarm, Boolean) -> Unit,
     onAlarmClick: (Long) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -87,7 +91,6 @@ fun AlarmListScreenContent(
     videoViewModel: VideoViewModel? = null
 ) {
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -284,6 +287,7 @@ fun AlarmListScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val allAlarms by alarmViewModel.allAlarms.observeAsState(emptyList())
 
@@ -312,8 +316,23 @@ fun AlarmListScreen(
         alarms = sortedAlarms,
         orderRule = orderRule,
         orderUp = orderUp,
+        snackbarHostState = snackbarHostState,
         onAlarmToggle = { alarm, isEnabled ->
             scope.launch(Dispatchers.IO) {
+                // 有効化時のみ権限チェック
+                if (isEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val alarmManager =
+                        context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                    if (!alarmManager.canScheduleExactAlarms()) {
+                        withContext(Dispatchers.Main) {
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.snackbar_error_no_alarm_permission)
+                            )
+                        }
+                        return@launch // トグルを更新しない
+                    }
+                }
+
                 // updateSyncで完了を待ってからスケジュール更新
                 alarmViewModel.updateSync(alarm.copy(isEnable = isEnabled))
 
@@ -390,6 +409,7 @@ fun AlarmListScreenPreview() {
             alarms = dummyAlarms,
             orderRule = AlarmOrder.TIME,
             orderUp = true,
+            snackbarHostState = remember { SnackbarHostState() },
             onAlarmToggle = { _, _ -> },
             onAlarmClick = { },
             onOpenDrawer = { },

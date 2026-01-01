@@ -7,6 +7,7 @@
     <string name="thumbnail_description" translatable="false">PlaylistThumbnail</string>
     <string name="playlist_item_title" translatable="false">PlaylistTitle</string>
 
+    <string name="setting_enabled">Enabled</string>
     <string name="setting_time">Time</string>
     <string name="setting_repeat">Repeat</string>
     <string name="setting_playlist">Playlist</string>
@@ -120,6 +121,7 @@
     <string name="snackbar_detect_playlist_usage">Some playlists are used by alarms.</string>
     <string name="snackbar_failed_to_check_restriction">Failed to check app restriction status.</string>
     <string name="snackbar_copied">Copied</string>
+    <string name="snackbar_error_no_alarm_permission">Cannot schedule exact alarms. Please grant permission in settings.</string>
 
     <string name="notification_channel_name" translatable="false">YtAlarm</string>
     <string name="notification_alarm_channel_name">Alarm</string>

@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import androidx.core.net.toUri
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
 import net.turtton.ytalarm.database.structure.Alarm
@@ -17,6 +18,7 @@ import net.turtton.ytalarm.util.extensions.pickNearestTime
 import java.util.Calendar
 
 private const val ALARM_REQUEST_CODE = 0
+private const val SHOW_INTENT_REQUEST_CODE = 1
 
 fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: Context) {
     observe(lifecycleOwner) { list ->
@@ -68,7 +70,18 @@ fun updateAlarmSchedule(context: Context, alarmList: List<Alarm>) {
     )
 
     val targetTime = calendar.timeInMillis
-    val clockInfo = AlarmManager.AlarmClockInfo(targetTime, null)
+
+    // showIntent: システムのアラーム一覧からタップした時に開くIntent
+    // Deep Link経由でアラーム詳細画面を開く
+    val showIntent = Intent(Intent.ACTION_VIEW, "ytalarm://alarm/${alarm.id}".toUri())
+    val showPendingIntent = PendingIntent.getActivity(
+        context,
+        SHOW_INTENT_REQUEST_CODE,
+        showIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val clockInfo = AlarmManager.AlarmClockInfo(targetTime, showPendingIntent)
 
     alarmManager.setAlarmClock(clockInfo, pendingIntent)
 

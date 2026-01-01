@@ -144,8 +144,10 @@ fun VideoPlayerScreen(
             .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
             .build()
 
-        // USAGE_ALARMの場合、ExoPlayerはaudio focusの自動処理をサポートしないため
-        // handleAudioFocusをfalseに設定する
+        // USAGE_ALARMはシステム最優先のオーディオストリームであり、他のオーディオを強制的に中断する。
+        // audio focusのリクエストは不要であり、ExoPlayerはUSAGE_ALARMでhandleAudioFocus=trueの場合
+        // IllegalArgumentExceptionを投げるため、falseに設定する必要がある。
+        // https://developer.android.com/reference/android/media/AudioAttributes#USAGE_ALARM
         val handleAudioFocus = !isAlarmMode
 
         ExoPlayer.Builder(context)
@@ -326,7 +328,7 @@ fun VideoPlayerScreen(
                                             minute = now.minute,
                                             repeatType = Alarm.RepeatType.Snooze
                                         )
-                                        alarmViewModel.insert(snoozeAlarm)
+                                        alarmViewModel.insertSync(snoozeAlarm)
                                         UpdateSnoozeNotifyWorker.registerWorker(context)
                                         withContext(Dispatchers.Main) {
                                             onDismiss()
@@ -528,18 +530,18 @@ private fun setVolume(audioManager: AudioManager, alarmVolume: Int): Int {
 /**
  * アラームを更新
  */
-private fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
+private suspend fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
     var repeatType = alarm.repeatType
     if (repeatType is Alarm.RepeatType.Date) {
         repeatType = Alarm.RepeatType.Once
     }
     when (repeatType) {
         is Alarm.RepeatType.Once -> {
-            alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
+            alarmViewModel.updateSync(alarm.copy(repeatType = repeatType, isEnable = false))
         }
 
         is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
-            alarmViewModel.update(alarm)
+            alarmViewModel.updateSync(alarm)
         }
 
         is Alarm.RepeatType.Snooze -> {
