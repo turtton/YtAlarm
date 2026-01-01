@@ -300,6 +300,7 @@ fun VideoPlayerScreen(
                         DigitalClock(ctx).apply {
                             textSize = 96f
                             textAlignment = View.TEXT_ALIGNMENT_CENTER
+                            setTextColor(android.graphics.Color.WHITE)
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
