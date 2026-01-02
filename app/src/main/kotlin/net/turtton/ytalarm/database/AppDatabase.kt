@@ -92,11 +92,11 @@ abstract class AppDatabase : RoomDatabase() {
         suspend fun populateVideoDatabase(dao: VideoDao): Long = dao.insert(
             Video(
                 0,
-                "R0BTTbz_CbE",
-                "26.オドループ",
-                "https://i.ytimg.com/vi_webp/R0BTTbz_CbE/sddefault.webp",
-                "https://www.youtube.com/watch?v=R0BTTbz_CbE",
-                "youtube.com",
+                "1789054948",
+                "dancinwithsomebawdy",
+                "https://i1.sndcdn.com/artworks-5qgAgVY4upyMy8uY-NYXH5w-original.jpg",
+                "https://soundcloud.com/lookatcurren/dancinwithsomebawdy",
+                "soundcloud.com",
                 Video.State.Information()
             )
         )
