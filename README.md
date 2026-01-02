@@ -20,7 +20,7 @@
 <a href="https://f-droid.org/packages/net.turtton.ytalarm">
     <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">
 </a>
-</p>>
+</p>
 
 
 ------
