@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
 import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
@@ -257,9 +258,8 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                     scope.launch(Dispatchers.IO) {
                         try {
                             if (currentPlaylistIdForDialog == 0L) {
-                                // 新規プレイリスト作成
-                                var newPlaylist = createImportingPlaylist()
-                                    .copy(videos = selectedIds.toList())
+                                // 新規プレイリスト作成（既存動画のみなのでOriginal型）
+                                var newPlaylist = Playlist(videos = selectedIds.toList())
                                 newPlaylist.updateThumbnail()?.let { newPlaylist = it }
                                 playlistViewModel.insertAsync(newPlaylist).await()
                             } else {
