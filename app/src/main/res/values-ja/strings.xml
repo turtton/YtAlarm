@@ -143,4 +143,19 @@
     <string name="permission_notification_title">通知</string>
     <string name="permission_notification_description">アラームの通知を表示するために必要です。</string>
 
+    <!-- Settings Screen -->
+    <string name="menu_title_settings">設定</string>
+    <string name="nav_settings">設定</string>
+    <string name="settings_ytdlp_section">yt-dlp</string>
+    <string name="settings_ytdlp_update_channel">更新チャンネル</string>
+    <string name="settings_ytdlp_channel_stable">安定版</string>
+    <string name="settings_ytdlp_channel_nightly">開発版</string>
+    <string name="dialog_update_channel_title">更新チャンネル</string>
+    <string-array name="dialog_update_channel_choice">
+        <item>安定版</item>
+        <item>開発版</item>
+    </string-array>
+    <string name="notification_ytdlp_update_failed_title">yt-dlpの更新失敗</string>
+    <string name="notification_ytdlp_update_failed_description">yt-dlpを更新できませんでした。ネットワーク接続を確認してください。</string>
+
 </resources>

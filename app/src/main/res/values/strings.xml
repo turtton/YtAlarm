@@ -198,4 +198,20 @@
     <string name="permission_overlay_description">Required to show alarm even when using other apps.</string>
     <string name="permission_notification_title">Notifications</string>
     <string name="permission_notification_description">Required to display alarm notifications.</string>
+
+    <!-- Settings Screen -->
+    <string name="menu_title_settings">Settings</string>
+    <string name="nav_settings">Settings</string>
+    <string name="settings_ytdlp_section">yt-dlp</string>
+    <string name="settings_ytdlp_update_channel">Update Channel</string>
+    <string name="settings_ytdlp_channel_stable">Stable</string>
+    <string name="settings_ytdlp_channel_nightly">Nightly</string>
+    <string name="dialog_update_channel_title">Update Channel</string>
+    <string-array name="dialog_update_channel_choice">
+        <item>Stable</item>
+        <item>Nightly</item>
+    </string-array>
+    <string name="notification_ytdlp_update_channel_description" translatable="false">yt-dlp update notification channel</string>
+    <string name="notification_ytdlp_update_failed_title">yt-dlp Update Failed</string>
+    <string name="notification_ytdlp_update_failed_description">Could not update yt-dlp. Check your network connection.</string>
 </resources>

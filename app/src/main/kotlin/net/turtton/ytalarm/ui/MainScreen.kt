@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistPlay
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
@@ -213,6 +214,20 @@ private fun DrawerContent(currentRoute: String?, onNavigate: (String) -> Unit) {
         )
 
         Spacer(modifier = Modifier.weight(1f))
+
+        // Settings
+        NavigationDrawerItem(
+            icon = {
+                Icon(
+                    imageVector = Icons.Filled.Settings,
+                    contentDescription = null
+                )
+            },
+            label = { Text(stringResource(id = R.string.menu_title_settings)) },
+            selected = currentRoute == YtAlarmDestination.SETTINGS,
+            onClick = { onNavigate(YtAlarmDestination.SETTINGS) },
+            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
 
         // About
         NavigationDrawerItem(
