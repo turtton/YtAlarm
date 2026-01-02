@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.database.structure.Video
@@ -52,4 +53,8 @@ interface VideoDao {
 
     @Delete
     suspend fun delete(videos: List<Video>)
+
+    @Transaction
+    @Query("DELETE FROM videos")
+    suspend fun deleteAll()
 }

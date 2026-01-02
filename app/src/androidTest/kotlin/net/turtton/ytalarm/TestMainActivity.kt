@@ -28,7 +28,7 @@ class TestMainActivity {
     fun appLaunchesSuccessfully() {
         // アラームリスト画面のタイトルが表示されていることを確認
         composeTestRule.onNodeWithText(
-            composeTestRule.activity.getString(R.string.nav_alarm)
+            composeTestRule.activity.getString(R.string.nav_alarm_list)
         ).assertIsDisplayed()
     }
 }
