@@ -78,6 +78,7 @@
     <string name="snackbar_copied">コピーしました</string>
     <string name="snackbar_error_no_alarm_permission">正確なアラームをスケジュールできません。設定で権限を許可してください。</string>
     <string name="error_schedule_exact_alarm">正確なアラームをスケジュールできません</string>
+    <string name="snackbar_error_failed_to_schedule_alarm">アラームのスケジュールに失敗しました</string>
     <string name="error_no_alarm_manager">アラームサービスを利用できません</string>
     <string name="error_invalid_alarm_id">無効なアラームIDです</string>
     <string name="notification_snooze_title">スヌーズが有効です</string>

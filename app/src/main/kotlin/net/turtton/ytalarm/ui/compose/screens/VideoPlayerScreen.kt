@@ -3,7 +3,7 @@ package net.turtton.ytalarm.ui.compose.screens
 import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioManager
-import android.media.Ringtone
+import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
 import android.os.VibrationEffect
@@ -133,7 +133,7 @@ fun VideoPlayerScreen(
     }
     var currentVolume by remember { mutableStateOf<Int?>(null) }
     var vibrator by remember { mutableStateOf<Vibrator?>(null) }
-    var fallbackRingtone by remember { mutableStateOf<Ringtone?>(null) }
+    var fallbackMediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
 
     var isLoading by remember { mutableStateOf(false) }
     var hasError by remember { mutableStateOf(false) }
@@ -239,7 +239,7 @@ fun VideoPlayerScreen(
             vibrator?.cancel()
 
             // フォールバックアラーム音を停止
-            fallbackRingtone?.stop()
+            fallbackMediaPlayer?.release()
         }
     }
 
@@ -412,7 +412,7 @@ fun VideoPlayerScreen(
                 )
                 Log.e(LOG_TAG, "Alarm id is -1, using fallback alarm")
                 // フォールバック: デフォルトアラーム音とバイブレーションを開始
-                fallbackRingtone = playFallbackAlarm(context)
+                fallbackMediaPlayer = playFallbackAlarm(context)
                 vibrator = startVibration(context)
                 return@LaunchedEffect
             }
@@ -426,7 +426,7 @@ fun VideoPlayerScreen(
             if (alarm == null) {
                 Log.e(LOG_TAG, "Failed to get alarm. TargetId: $alarmId, using fallback alarm")
                 // フォールバック: デフォルトアラーム音とバイブレーションを開始
-                fallbackRingtone = playFallbackAlarm(context)
+                fallbackMediaPlayer = playFallbackAlarm(context)
                 vibrator = startVibration(context)
                 return@LaunchedEffect
             }
@@ -452,7 +452,7 @@ fun VideoPlayerScreen(
                 )
                 Log.e(LOG_TAG, "Could not start alarm due to empty videos, using fallback alarm")
                 // フォールバック: デフォルトアラーム音を開始（バイブレーションは既に開始済みの可能性）
-                fallbackRingtone = playFallbackAlarm(context)
+                fallbackMediaPlayer = playFallbackAlarm(context)
                 if (vibrator == null && alarm.shouldVibrate) {
                     vibrator = startVibration(context)
                 }
@@ -716,19 +716,26 @@ private const val LOG_TAG = "VideoPlayerScreen"
 /**
  * フォールバック用のデフォルトアラーム音を再生
  * アラームデータ取得に失敗した場合などに使用
+ * MediaPlayerを使用してAPI 28未満でもループ再生を実現
  */
 @Suppress("TooGenericExceptionCaught")
-private fun playFallbackAlarm(context: Context): Ringtone? = try {
+private fun playFallbackAlarm(context: Context): MediaPlayer? = try {
     val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
         ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
 
     alarmUri?.let { uri ->
-        RingtoneManager.getRingtone(context, uri)?.apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                isLooping = true
-            }
-            play()
+        MediaPlayer().apply {
+            setDataSource(context, uri)
+            setAudioAttributes(
+                android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            isLooping = true
+            prepare()
+            start()
         }
     }
 } catch (e: Exception) {
@@ -767,7 +774,10 @@ private fun TitleText(title: String, modifier: Modifier = Modifier) {
         maxLines = 1,
         modifier = modifier
             .fillMaxWidth()
-            .basicMarquee()
+            .basicMarquee(
+                iterations = Int.MAX_VALUE,
+                repeatDelayMillis = 1_000
+            )
             .padding(horizontal = 16.dp, vertical = 8.dp)
             .semantics {
                 contentDescription = contentDescriptionText

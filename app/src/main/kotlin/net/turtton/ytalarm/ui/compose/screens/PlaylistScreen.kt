@@ -173,10 +173,15 @@ fun PlaylistScreenContent(
                     ) { playlist ->
                         // サムネイル取得
                         // Drawable型は直接値を設定、Video型はデフォルト値を設定
-                        val thumbnailUrl = remember(playlist.thumbnail) {
+                        val thumbnailSource = remember(playlist.thumbnail) {
                             when (val thumbnail = playlist.thumbnail) {
-                                is Playlist.Thumbnail.Drawable -> mutableStateOf<Any?>(thumbnail.id)
-                                is Playlist.Thumbnail.Video -> mutableStateOf<Any?>(null)
+                                is Playlist.Thumbnail.Drawable -> mutableStateOf<ThumbnailSource>(
+                                    ThumbnailSource.DrawableRes(thumbnail.id)
+                                )
+
+                                is Playlist.Thumbnail.Video -> mutableStateOf<ThumbnailSource>(
+                                    ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
+                                )
                             }
                         }
 
@@ -189,14 +194,21 @@ fun PlaylistScreenContent(
                                         vm.getFromIdAsync(thumbnail.id)?.await()?.thumbnailUrl
                                     }
                                 }
-                                thumbnailUrl.value = url ?: R.drawable.ic_no_image
+                                thumbnailSource.value = if (url != null) {
+                                    ThumbnailSource.Url(url)
+                                } else {
+                                    ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
+                                }
                             }
                         }
                         val videoCount = playlist.videos.size
 
                         PlaylistItem(
                             playlist = playlist,
-                            thumbnailUrl = thumbnailUrl.value,
+                            thumbnailUrl = when (val source = thumbnailSource.value) {
+                                is ThumbnailSource.Url -> source.url
+                                is ThumbnailSource.DrawableRes -> source.resId
+                            },
                             videoCount = videoCount,
                             isSelected = selectedItems.contains(playlist.id),
                             onToggleSelection = {
@@ -547,4 +559,13 @@ fun PlaylistScreenPreview() {
             onCreatePlaylist = { }
         )
     }
+}
+
+/**
+ * サムネイル画像のソースを表すsealed class
+ * 型安全性を確保するため、Any?の代わりに使用
+ */
+private sealed class ThumbnailSource {
+    data class Url(val url: String) : ThumbnailSource()
+    data class DrawableRes(val resId: Int) : ThumbnailSource()
 }

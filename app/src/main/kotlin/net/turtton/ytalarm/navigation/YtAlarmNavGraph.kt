@@ -111,8 +111,9 @@ private fun NavGraphBuilder.alarmSettingsScreen(navController: NavHostController
         val context = LocalContext.current
 
         // Deep Linkで不正なIDが渡された場合のエラー処理
-        // 0はRoom DBで使われないID、Deep Linkから0が渡された場合はエラー
-        if (alarmId == 0L) {
+        // 0はRoom DBで使われないID、負の値も無効
+        // -1Lは内部的に新規作成を意味するが、Deep Linkからは許可しない
+        if (alarmId <= 0L) {
             androidx.compose.runtime.LaunchedEffect(Unit) {
                 android.widget.Toast.makeText(
                     context,

@@ -495,10 +495,28 @@ fun AlarmSettingsScreen(
                 // AlarmManagerにアラームを登録
                 val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
                     .filter { it.isEnable }
-                updateAlarmSchedule(context, allAlarms)
+                val scheduleResult = updateAlarmSchedule(context, allAlarms)
 
-                withContext(Dispatchers.Main) {
-                    onNavigateBack()
+                when (scheduleResult) {
+                    is arrow.core.Either.Left -> {
+                        android.util.Log.e(
+                            "AlarmSettingsScreen",
+                            "Failed to schedule alarm: ${scheduleResult.value}"
+                        )
+                        withContext(Dispatchers.Main) {
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.snackbar_error_failed_to_schedule_alarm)
+                            )
+                            // 保存は成功しているのでナビゲートはする（スケジュール失敗は警告扱い）
+                            onNavigateBack()
+                        }
+                    }
+
+                    is arrow.core.Either.Right -> {
+                        withContext(Dispatchers.Main) {
+                            onNavigateBack()
+                        }
+                    }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e

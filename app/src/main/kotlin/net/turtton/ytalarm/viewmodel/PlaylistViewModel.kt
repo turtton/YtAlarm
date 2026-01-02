@@ -14,6 +14,7 @@ import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.DataRepository
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.util.extensions.updateDate
 
 class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
@@ -22,6 +23,8 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
     init {
         // ViewModelインスタンス生成時にサムネイル検証を実行
         viewModelScope.launch {
+            // アプリ起動直後のI/O負荷を軽減するため少し遅延
+            kotlinx.coroutines.delay(THUMBNAIL_VALIDATION_DELAY_MS)
             validateAndUpdateThumbnails()
         }
     }
@@ -85,14 +88,17 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
         val thumbnail = playlist.thumbnail
         if (thumbnail !is Playlist.Thumbnail.Video) return null
 
-        // 現在のサムネイル動画が存在するかチェック
+        // 現在のサムネイル動画が存在し、有効な状態かチェック
         val originalVideo = runCatching {
             repository.getVideoFromIdSync(thumbnail.id)
         }.onFailure { e ->
             Log.e(TAG, "Failed to get video for thumbnail validation", e)
         }.getOrNull()
 
-        if (originalVideo != null) return null // サムネイルは有効
+        // 動画が存在し、Information状態であれば有効
+        if (originalVideo != null && originalVideo.stateData is Video.State.Information) {
+            return null
+        }
 
         // フォールバック: プレイリスト内の他の動画を一括取得して探す
         val candidateIds = playlist.videos.filter { it != thumbnail.id }
@@ -102,7 +108,8 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
 
         val fallbackVideoId = runCatching {
             val existingVideos = repository.getVideoFromIdsSync(candidateIds)
-            existingVideos.firstOrNull()?.id
+            // Information状態の動画のみを候補とする
+            existingVideos.firstOrNull { it.stateData is Video.State.Information }?.id
         }.onFailure { e ->
             Log.e(TAG, "Failed to get fallback videos", e)
         }.getOrNull()
@@ -118,6 +125,7 @@ class PlaylistViewModel(private val repository: DataRepository) : ViewModel() {
 
     companion object {
         private const val TAG = "PlaylistViewModel"
+        private const val THUMBNAIL_VALIDATION_DELAY_MS = 500L
     }
 }
 

@@ -117,6 +117,7 @@
     <string name="snackbar_copied">Copied</string>
     <string name="snackbar_error_no_alarm_permission">Cannot schedule exact alarms. Please grant permission in settings.</string>
     <string name="error_schedule_exact_alarm">Cannot schedule exact alarms</string>
+    <string name="snackbar_error_failed_to_schedule_alarm">Failed to schedule alarm</string>
     <string name="error_no_alarm_manager">Alarm service is not available</string>
     <string name="error_invalid_alarm_id">Invalid alarm ID</string>
 
