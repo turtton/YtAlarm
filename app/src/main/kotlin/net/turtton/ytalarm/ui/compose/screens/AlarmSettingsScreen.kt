@@ -86,6 +86,9 @@ fun AlarmSettingsScreenContent(
 ) {
     val context = LocalContext.current
 
+    // Pre-fetch string resources for use in lambdas
+    val errorPastDate = stringResource(R.string.snackbar_error_target_is_the_past_date)
+
     // ダイアログ表示状態
     var showTimePickerDialog by remember { mutableStateOf(false) }
     var showRepeatTypeDialog by remember { mutableStateOf(false) }
@@ -321,9 +324,7 @@ fun AlarmSettingsScreenContent(
                 val selectedDate = Date(millis)
                 if (selectedDate.before(Date())) {
                     scope.launch {
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.snackbar_error_target_is_the_past_date)
-                        )
+                        snackbarHostState.showSnackbar(errorPastDate)
                     }
                 } else {
                     onAlarmChange(alarm.copy(repeatType = Alarm.RepeatType.Date(selectedDate)))
@@ -392,6 +393,13 @@ fun AlarmSettingsScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Pre-fetch string resources for use in lambdas
+    val errorFailedToGetAlarm = stringResource(R.string.snackbar_error_failed_to_get_alarm)
+    val errorPlaylistIsNull = stringResource(R.string.snackbar_error_playlistid_is_null)
+    val errorPastDate = stringResource(R.string.snackbar_error_target_is_the_past_date)
+    val errorFailedToSchedule = stringResource(R.string.snackbar_error_failed_to_schedule_alarm)
+    val errorFailedToSave = stringResource(R.string.snackbar_error_failed_to_save_alarm)
+
     // Alarm取得とローカル状態管理
     var alarm by remember { mutableStateOf<Alarm?>(null) }
     var editingAlarm by remember { mutableStateOf<Alarm?>(null) }
@@ -423,9 +431,7 @@ fun AlarmSettingsScreen(
 
         if (alarm == null && alarmId != -1L) {
             // Alarm取得失敗
-            snackbarHostState.showSnackbar(
-                context.getString(R.string.snackbar_error_failed_to_get_alarm)
-            )
+            snackbarHostState.showSnackbar(errorFailedToGetAlarm)
             onNavigateBack()
         }
 
@@ -463,9 +469,7 @@ fun AlarmSettingsScreen(
         // バリデーション: プレイリスト選択必須
         if (currentAlarm.playListId.isEmpty()) {
             scope.launch {
-                snackbarHostState.showSnackbar(
-                    context.getString(R.string.snackbar_error_playlistid_is_null)
-                )
+                snackbarHostState.showSnackbar(errorPlaylistIsNull)
             }
             return
         }
@@ -475,9 +479,7 @@ fun AlarmSettingsScreen(
             val targetDate = (currentAlarm.repeatType as Alarm.RepeatType.Date).targetDate
             if (targetDate.before(Date())) {
                 scope.launch {
-                    snackbarHostState.showSnackbar(
-                        context.getString(R.string.snackbar_error_target_is_the_past_date)
-                    )
+                    snackbarHostState.showSnackbar(errorPastDate)
                 }
                 return
             }
@@ -504,9 +506,7 @@ fun AlarmSettingsScreen(
                             "Failed to schedule alarm: ${scheduleResult.value}"
                         )
                         withContext(Dispatchers.Main) {
-                            snackbarHostState.showSnackbar(
-                                context.getString(R.string.snackbar_error_failed_to_schedule_alarm)
-                            )
+                            snackbarHostState.showSnackbar(errorFailedToSchedule)
                             // 保存は成功しているのでナビゲートはする（スケジュール失敗は警告扱い）
                             onNavigateBack()
                         }
@@ -523,16 +523,12 @@ fun AlarmSettingsScreen(
             } catch (e: android.database.sqlite.SQLiteException) {
                 android.util.Log.e("AlarmSettingsScreen", "Database error saving alarm", e)
                 withContext(Dispatchers.Main) {
-                    snackbarHostState.showSnackbar(
-                        context.getString(R.string.snackbar_error_failed_to_save_alarm)
-                    )
+                    snackbarHostState.showSnackbar(errorFailedToSave)
                 }
             } catch (e: IllegalStateException) {
                 android.util.Log.e("AlarmSettingsScreen", "Failed to save alarm", e)
                 withContext(Dispatchers.Main) {
-                    snackbarHostState.showSnackbar(
-                        context.getString(R.string.snackbar_error_failed_to_save_alarm)
-                    )
+                    snackbarHostState.showSnackbar(errorFailedToSave)
                 }
             }
         }

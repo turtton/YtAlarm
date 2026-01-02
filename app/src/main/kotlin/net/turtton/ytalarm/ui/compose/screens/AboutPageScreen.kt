@@ -94,6 +94,12 @@ fun AboutPageScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
+    // Pre-fetch string resources for use in lambdas
+    val errorNoBrowser = stringResource(R.string.error_no_browser)
+    val errorOpenLink = stringResource(R.string.error_open_link)
+    val snackbarCopied = stringResource(R.string.snackbar_copied)
+    val snackbarClipboardError = stringResource(R.string.snackbar_error_failed_to_access_clipboard)
+
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -158,9 +164,7 @@ fun AboutPageScreen(
                             } catch (e: android.content.ActivityNotFoundException) {
                                 android.util.Log.w("AboutPageScreen", "No browser found", e)
                                 scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(R.string.error_no_browser)
-                                    )
+                                    snackbarHostState.showSnackbar(errorNoBrowser)
                                 }
                             } catch (e: SecurityException) {
                                 android.util.Log.e(
@@ -169,16 +173,12 @@ fun AboutPageScreen(
                                     e
                                 )
                                 scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(R.string.error_open_link)
-                                    )
+                                    snackbarHostState.showSnackbar(errorOpenLink)
                                 }
                             } catch (e: IllegalArgumentException) {
                                 android.util.Log.e("AboutPageScreen", "Invalid URL", e)
                                 scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(R.string.error_open_link)
-                                    )
+                                    snackbarHostState.showSnackbar(errorOpenLink)
                                 }
                             }
                         }
@@ -195,18 +195,12 @@ fun AboutPageScreen(
                                 clipboard.setPrimaryClip(clipData)
                                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
                                     scope.launch {
-                                        snackbarHostState.showSnackbar(
-                                            context.getString(R.string.snackbar_copied)
-                                        )
+                                        snackbarHostState.showSnackbar(snackbarCopied)
                                     }
                                 }
                             } else {
                                 scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(
-                                            R.string.snackbar_error_failed_to_access_clipboard
-                                        )
-                                    )
+                                    snackbarHostState.showSnackbar(snackbarClipboardError)
                                 }
                             }
                         }

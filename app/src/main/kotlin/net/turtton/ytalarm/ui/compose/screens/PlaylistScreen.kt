@@ -338,6 +338,10 @@ fun PlaylistScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Pre-fetch string resources for use in lambdas
+    val msgPlaylistUsage = stringResource(R.string.snackbar_detect_playlist_usage)
+    val msgPlaylistRenamed = stringResource(R.string.message_playlist_renamed)
+
     val playlists by playlistViewModel.allPlaylists.observeAsState(emptyList())
     val selectedItems = remember { mutableStateListOf<Long>() }
 
@@ -464,9 +468,7 @@ fun PlaylistScreen(
 
                 if (detectUsage) {
                     withContext(Dispatchers.Main) {
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.snackbar_detect_playlist_usage)
-                        )
+                        snackbarHostState.showSnackbar(msgPlaylistUsage)
                     }
                 }
 
@@ -496,9 +498,7 @@ fun PlaylistScreen(
                 playlistViewModel.update(playlist.copy(title = newName))
                 playlistToRename = null
                 scope.launch {
-                    snackbarHostState.showSnackbar(
-                        context.getString(R.string.message_playlist_renamed)
-                    )
+                    snackbarHostState.showSnackbar(msgPlaylistRenamed)
                 }
             },
             onDismiss = { playlistToRename = null }

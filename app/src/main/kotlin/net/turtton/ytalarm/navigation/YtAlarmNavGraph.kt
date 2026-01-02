@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -112,6 +113,9 @@ private fun NavGraphBuilder.alarmSettingsScreen(navController: NavHostController
         val alarmId = backStackEntry.arguments?.getLong("alarmId") ?: -1L
         val context = LocalContext.current
 
+        // Pre-fetch string resource for use in lambda
+        val errorInvalidAlarmId = stringResource(R.string.error_invalid_alarm_id)
+
         // Deep Linkで不正なIDが渡された場合のエラー処理
         // 0はRoom DBで使われないID、負の値も無効
         // -1Lは内部的に新規作成を意味するが、Deep Linkからは許可しない
@@ -119,7 +123,7 @@ private fun NavGraphBuilder.alarmSettingsScreen(navController: NavHostController
             androidx.compose.runtime.LaunchedEffect(Unit) {
                 android.widget.Toast.makeText(
                     context,
-                    context.getString(R.string.error_invalid_alarm_id),
+                    errorInvalidAlarmId,
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
                 navController.navigate(YtAlarmDestination.ALARM_LIST) {
@@ -173,6 +177,10 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         val context = LocalContext.current
         val scope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
+
+        // Pre-fetch string resources for use in lambdas
+        val msgVideosAdded = stringResource(R.string.message_videos_added)
+        val msgOperationFailed = stringResource(R.string.message_operation_failed)
 
         // ViewModels
         val videoViewModel: VideoViewModel = viewModel(
@@ -254,9 +262,7 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                                 playlistViewModel.update(playlist.copy(videos = updatedVideos))
 
                                 withContext(Dispatchers.Main) {
-                                    snackbarHostState.showSnackbar(
-                                        context.getString(R.string.message_videos_added)
-                                    )
+                                    snackbarHostState.showSnackbar(msgVideosAdded)
                                 }
                             }
                         } catch (e: kotlinx.coroutines.CancellationException) {
@@ -264,16 +270,12 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                         } catch (e: android.database.sqlite.SQLiteException) {
                             Log.e("YtAlarmNavGraph", "Database error adding videos to playlist", e)
                             withContext(Dispatchers.Main) {
-                                snackbarHostState.showSnackbar(
-                                    context.getString(R.string.message_operation_failed)
-                                )
+                                snackbarHostState.showSnackbar(msgOperationFailed)
                             }
                         } catch (e: IllegalStateException) {
                             Log.e("YtAlarmNavGraph", "Failed to add videos to playlist", e)
                             withContext(Dispatchers.Main) {
-                                snackbarHostState.showSnackbar(
-                                    context.getString(R.string.message_operation_failed)
-                                )
+                                snackbarHostState.showSnackbar(msgOperationFailed)
                             }
                         }
                     }

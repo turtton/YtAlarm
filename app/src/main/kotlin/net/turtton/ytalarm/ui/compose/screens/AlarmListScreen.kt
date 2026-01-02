@@ -291,6 +291,10 @@ fun AlarmListScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Pre-fetch string resources for use in lambdas
+    val errorNoAlarmPermission = stringResource(R.string.snackbar_error_no_alarm_permission)
+    val errorNoAlarmManager = stringResource(R.string.error_no_alarm_manager)
+
     val allAlarms by alarmViewModel.allAlarms.observeAsState(emptyList())
 
     val activity = context.findActivity() ?: return
@@ -327,9 +331,7 @@ fun AlarmListScreen(
                         context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
                     if (!alarmManager.canScheduleExactAlarms()) {
                         withContext(Dispatchers.Main) {
-                            snackbarHostState.showSnackbar(
-                                context.getString(R.string.snackbar_error_no_alarm_permission)
-                            )
+                            snackbarHostState.showSnackbar(errorNoAlarmPermission)
                         }
                         return@launch // トグルを更新しない
                     }
@@ -347,10 +349,7 @@ fun AlarmListScreen(
                 updateAlarmSchedule(context, updatedList).onLeft { error ->
                     val message = when (error) {
                         is AlarmScheduleError.PermissionDenied -> error.message
-
-                        AlarmScheduleError.NoAlarmManager ->
-                            context.getString(R.string.error_no_alarm_manager)
-
+                        AlarmScheduleError.NoAlarmManager -> errorNoAlarmManager
                         AlarmScheduleError.NoEnabledAlarm -> null
                     }
                     message?.let {

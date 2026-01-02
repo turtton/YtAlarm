@@ -29,7 +29,7 @@ androidx-test-runner = "1.7.0"
 androidx-test-espresso = "3.7.0"
 
 # Compose
-compose-bom = "2024.12.01"
+compose-bom = "2025.12.01"
 androidx-compose-compiler = "1.5.15"
 
 # Material Design
