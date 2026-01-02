@@ -14,6 +14,7 @@ import net.turtton.ytalarm.idling.VideoPlayerLoadingResource
 import net.turtton.ytalarm.util.TestDataHelper
 import org.junit.After
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,9 +55,6 @@ class TakeAlarmActivityScreenshots {
         // テストデータを事前に挿入し、アラームIDを取得
         val application = ApplicationProvider.getApplicationContext<YtApplication>()
         runBlocking {
-            // YoutubeDLを事前に初期化（最初のテスト実行時の遅延を回避）
-            YoutubeDL.getInstance().init(application)
-
             val database = application.database
             testAlarmId = TestDataHelper.insertAllTestData(
                 database.videoDao(),
@@ -73,6 +71,15 @@ class TakeAlarmActivityScreenshots {
             IdlingRegistry.getInstance().unregister(it)
         }
         scenario?.close()
+
+        // テストデータをクリーンアップ
+        val application = ApplicationProvider.getApplicationContext<YtApplication>()
+        runBlocking {
+            val database = application.database
+            database.alarmDao().deleteAll()
+            database.playlistDao().deleteAll()
+            database.videoDao().deleteAll()
+        }
     }
 
     @Test
@@ -110,5 +117,15 @@ class TakeAlarmActivityScreenshots {
     companion object {
         // 動画プレーヤーの読み込み待機時間（ミリ秒）
         private const val PLAYER_LOAD_WAIT_MS = 15000L
+
+        @JvmStatic
+        @BeforeClass
+        fun initYoutubeDL() {
+            // YoutubeDLを事前に初期化（最初のテスト実行時の遅延を回避）
+            val application = ApplicationProvider.getApplicationContext<YtApplication>()
+            runBlocking {
+                YoutubeDL.getInstance().init(application)
+            }
+        }
     }
 }

@@ -1,6 +1,6 @@
 package net.turtton.ytalarm
 
-import androidx.compose.ui.test.assertIsDisplayed
+import android.util.Log
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onFirst
@@ -75,6 +75,16 @@ class TakeMainActivityScreenshots {
         idlingResource?.also {
             IdlingRegistry.getInstance().unregister(it)
         }
+
+        // テストデータをクリーンアップ
+        composeTestRule.activityRule.scenario.onActivity { activity ->
+            runBlocking {
+                val database = (activity.application as YtApplication).database
+                database.alarmDao().deleteAll()
+                database.playlistDao().deleteAll()
+                database.videoDao().deleteAll()
+            }
+        }
     }
 
     @Test
@@ -123,12 +133,15 @@ class TakeMainActivityScreenshots {
 
         // 04-videos-playlist: 動画一覧（2番目のプレイリスト = Bandcampテストデータ）
         val playlistNodes = composeTestRule.onAllNodesWithContentDescription("Playlist thumbnail")
-        if (playlistNodes.fetchSemanticsNodes().size > 1) {
+        val playlistCount = playlistNodes.fetchSemanticsNodes().size
+        if (playlistCount > 1) {
             playlistNodes[1].performClick()
             composeTestRule.waitForIdle()
             Screengrab.screenshot("04-videos-playlist")
             composeTestRule.onNodeWithContentDescription("Back").performClick()
             composeTestRule.waitForIdle()
+        } else {
+            Log.w(LOG_TAG, "Skipping 04-videos-playlist: only $playlistCount playlist(s) found")
         }
 
         // 05-allvideos: 全動画一覧画面
@@ -164,6 +177,8 @@ class TakeMainActivityScreenshots {
     }
 
     companion object {
+        private const val LOG_TAG = "TakeMainActivityScreenshots"
+
         // 動画プレーヤーの読み込み待機時間（ミリ秒）
         private const val PLAYER_LOAD_WAIT_MS = 5000L
     }

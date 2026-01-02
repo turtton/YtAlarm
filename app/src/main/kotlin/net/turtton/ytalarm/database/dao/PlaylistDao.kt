@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 import net.turtton.ytalarm.database.structure.Playlist
@@ -41,6 +42,7 @@ interface PlaylistDao {
     @Delete
     suspend fun delete(playlists: List<Playlist>)
 
+    @Transaction
     @Query("DELETE FROM playlists")
     suspend fun deleteAll()
 }
