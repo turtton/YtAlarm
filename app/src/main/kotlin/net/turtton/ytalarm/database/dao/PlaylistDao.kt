@@ -40,4 +40,7 @@ interface PlaylistDao {
 
     @Delete
     suspend fun delete(playlists: List<Playlist>)
+
+    @Query("DELETE FROM playlists")
+    suspend fun deleteAll()
 }

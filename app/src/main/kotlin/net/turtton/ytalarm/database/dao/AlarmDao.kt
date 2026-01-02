@@ -24,7 +24,7 @@ interface AlarmDao {
     suspend fun getMatchedSync(repeatType: Alarm.RepeatType): List<Alarm>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(alarm: Alarm)
+    suspend fun insert(alarm: Alarm): Long
 
     @Update
     suspend fun update(alarm: Alarm)

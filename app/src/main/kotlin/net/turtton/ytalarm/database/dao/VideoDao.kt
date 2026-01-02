@@ -52,4 +52,7 @@ interface VideoDao {
 
     @Delete
     suspend fun delete(videos: List<Video>)
+
+    @Query("DELETE FROM videos")
+    suspend fun deleteAll()
 }
