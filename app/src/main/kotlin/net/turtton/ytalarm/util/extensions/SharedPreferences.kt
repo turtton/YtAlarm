@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.util.extensions
 
+import android.content.Context
 import android.content.SharedPreferences
 import android.view.View
 import androidx.core.content.edit
@@ -8,6 +9,14 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.util.order.AlarmOrder
 import net.turtton.ytalarm.util.order.PlaylistOrder
 import net.turtton.ytalarm.util.order.VideoOrder
+
+private const val APP_SETTINGS_PREF_NAME = "app_settings"
+
+/**
+ * アプリ設定用のSharedPreferencesを取得
+ */
+val Context.appSettings: SharedPreferences
+    get() = getSharedPreferences(APP_SETTINGS_PREF_NAME, Context.MODE_PRIVATE)
 
 fun SharedPreferences?.showMessageIfNull(view: View): SharedPreferences? = also {
     if (it == null) {
@@ -45,3 +54,8 @@ private const val PLAYLIST_ORDER_RULE = "PlaylistOrderRule"
 var SharedPreferences.playlistOrderRule: PlaylistOrder
     get() = PlaylistOrder.valueOf(getString(PLAYLIST_ORDER_RULE, PlaylistOrder.TITLE.name)!!)
     set(value) = edit { putString(PLAYLIST_ORDER_RULE, value.name) }
+
+private const val YTDLP_UPDATE_CHANNEL = "YtDlpUpdateChannel"
+var SharedPreferences.ytDlpUpdateChannel: String
+    get() = getString(YTDLP_UPDATE_CHANNEL, "STABLE") ?: "STABLE"
+    set(value) = edit { putString(YTDLP_UPDATE_CHANNEL, value) }

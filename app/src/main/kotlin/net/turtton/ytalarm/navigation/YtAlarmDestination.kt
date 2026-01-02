@@ -14,6 +14,7 @@ object YtAlarmDestination {
     const val ALL_VIDEOS = "all_videos"
     const val VIDEO_PLAYER = "video_player/{videoId}/{isAlarmMode}"
     const val ABOUT = "about"
+    const val SETTINGS = "settings"
 
     /**
      * アラーム設定画面のルートを生成

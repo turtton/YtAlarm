@@ -36,6 +36,7 @@ import net.turtton.ytalarm.ui.compose.screens.AlarmListScreen
 import net.turtton.ytalarm.ui.compose.screens.AlarmSettingsScreen
 import net.turtton.ytalarm.ui.compose.screens.AllVideosScreen
 import net.turtton.ytalarm.ui.compose.screens.PlaylistScreen
+import net.turtton.ytalarm.ui.compose.screens.SettingsScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoListScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoPlayerScreen
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -71,6 +72,7 @@ fun YtAlarmNavGraph(
         allVideosScreen(navController, onOpenDrawer)
         videoPlayerScreen(navController)
         aboutScreen()
+        settingsScreen(navController)
     }
 }
 
@@ -364,5 +366,18 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
 private fun NavGraphBuilder.aboutScreen() {
     composable(route = YtAlarmDestination.ABOUT) {
         AboutPageScreen()
+    }
+}
+
+/**
+ * 設定画面のルート定義
+ */
+private fun NavGraphBuilder.settingsScreen(navController: NavHostController) {
+    composable(route = YtAlarmDestination.SETTINGS) {
+        SettingsScreen(
+            onNavigateBack = {
+                navController.popBackStackSafely()
+            }
+        )
     }
 }
