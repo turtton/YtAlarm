@@ -46,6 +46,7 @@
     <plurals name="notification_snooze_remain">
         <item quantity="other">%d分後</item>
     </plurals>
+    <string name="notification_snooze_remain_soon">まもなく開始</string>
     <string name="dialog_execute_progress_title">インポート中</string>
     <string name="dialog_execute_progress_title_loading">読み込み中</string>
     <string name="dialog_execute_progress_eta_init">計測中</string>

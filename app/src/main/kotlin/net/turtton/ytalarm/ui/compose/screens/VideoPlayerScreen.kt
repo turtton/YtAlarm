@@ -140,6 +140,8 @@ fun VideoPlayerScreen(
     var thumbnailUrl by remember { mutableStateOf<String?>(null) }
     var showThumbnail by remember { mutableStateOf(true) }
     var currentTitle by remember { mutableStateOf<String?>(null) }
+    // スヌーズボタン用にアラーム情報を保持（削除後も参照可能にする）
+    var cachedAlarm by remember { mutableStateOf<Alarm?>(null) }
 
     // ExoPlayerの作成（AudioAttributes設定込み）
     val exoPlayer = remember {
@@ -359,22 +361,57 @@ fun VideoPlayerScreen(
                     Button(
                         onClick = {
                             scope.launch {
-                                val alarmId = videoId.toLongOrNull() ?: -1L
-                                if (alarmId != -1L) {
-                                    val alarm = alarmViewModel.getFromIdAsync(alarmId).await()
-                                    if (alarm != null) {
-                                        val now = Calendar.getInstance()
-                                        now += alarm.snoozeMinute.minutes
-                                        val snoozeAlarm = alarm.copy(
-                                            id = 0,
-                                            hour = now.hourOfDay,
-                                            minute = now.minute,
-                                            repeatType = Alarm.RepeatType.Snooze
-                                        )
-                                        alarmViewModel.insert(snoozeAlarm)
-                                        UpdateSnoozeNotifyWorker.registerWorker(context)
-                                        withContext(Dispatchers.Main) {
-                                            onDismiss()
+                                // cachedAlarmを使用（スヌーズアラームは発火後に削除されるため）
+                                val alarm = cachedAlarm
+                                if (alarm != null) {
+                                    // 既存のスヌーズアラームを削除
+                                    val existingSnoozes = alarmViewModel
+                                        .getMatchedAsync(Alarm.RepeatType.Snooze).await()
+                                    existingSnoozes.forEach { alarmViewModel.delete(it) }
+
+                                    // 削除をAlarmManagerに反映
+                                    val alarmsAfterDelete = alarmViewModel
+                                        .getAllAlarmsAsync().await()
+                                        .filter { it.isEnable }
+                                    updateAlarmSchedule(context, alarmsAfterDelete)
+
+                                    val now = Calendar.getInstance()
+                                    now += alarm.snoozeMinute.minutes
+                                    val snoozeAlarm = alarm.copy(
+                                        id = 0,
+                                        hour = now.hourOfDay,
+                                        minute = now.minute,
+                                        repeatType = Alarm.RepeatType.Snooze,
+                                        isEnable = true
+                                    )
+                                    alarmViewModel.insert(snoozeAlarm)
+
+                                    // AlarmManagerにスケジュール
+                                    val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                                        .filter { it.isEnable }
+                                    val scheduleResult = updateAlarmSchedule(context, allAlarms)
+
+                                    when (scheduleResult) {
+                                        is arrow.core.Either.Left -> {
+                                            Log.e(
+                                                LOG_TAG,
+                                                "Failed to schedule snooze: " +
+                                                    "${scheduleResult.value}"
+                                            )
+                                            val errorMsg = context.getString(
+                                                R.string.snackbar_error_failed_to_schedule_alarm
+                                            )
+                                            withContext(Dispatchers.Main) {
+                                                snackbarHostState.showSnackbar(errorMsg)
+                                                onDismiss()
+                                            }
+                                        }
+
+                                        is arrow.core.Either.Right -> {
+                                            UpdateSnoozeNotifyWorker.registerWorker(context)
+                                            withContext(Dispatchers.Main) {
+                                                onDismiss()
+                                            }
                                         }
                                     }
                                 }
@@ -430,6 +467,9 @@ fun VideoPlayerScreen(
                 vibrator = startVibration(context)
                 return@LaunchedEffect
             }
+
+            // スヌーズボタン用にアラーム情報を保持（削除後も参照可能にする）
+            cachedAlarm = alarm
 
             // アラームの更新
             updateAlarm(alarm, alarmViewModel)

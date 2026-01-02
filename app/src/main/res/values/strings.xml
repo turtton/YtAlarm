@@ -128,6 +128,7 @@
         <item quantity="one">Alarm will start after %d minute</item>
         <item quantity="other">Alarm will start after %d minutes</item>
     </plurals>
+    <string name="notification_snooze_remain_soon">Alarm will start soon</string>
     <string name="notification_download_video_info_channel_description" translatable="false">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
     <string name="menu_playlist_option_rename">Rename</string>
