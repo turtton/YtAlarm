@@ -114,6 +114,14 @@ fun VideoPlayerScreen(
     val view = LocalView.current
     val scope = rememberCoroutineScope()
 
+    // Pre-fetch string resources for use in lambdas
+    val errorFailedToImportVideo = stringResource(R.string.snackbar_error_failed_to_import_video)
+    val errorFailedToScheduleAlarm =
+        stringResource(R.string.snackbar_error_failed_to_schedule_alarm)
+    val errorFailedToGetAlarm = stringResource(R.string.snackbar_error_failed_to_get_alarm)
+    val errorEmptyVideo = stringResource(R.string.snackbar_error_empty_video)
+    val errorFailedToGetVideo = stringResource(R.string.snackbar_error_failed_to_get_video)
+
     // テスト用IdlingResource（AlarmActivityからCompositionLocalで提供される場合のみ有効）
     val resourceContainer = LocalVideoPlayerResourceContainer.current
 
@@ -197,9 +205,7 @@ fun VideoPlayerScreen(
                 isLoading = false
                 hasError = true
                 scope.launch {
-                    snackbarHostState.showSnackbar(
-                        context.getString(R.string.snackbar_error_failed_to_import_video)
-                    )
+                    snackbarHostState.showSnackbar(errorFailedToImportVideo)
                 }
             }
         }
@@ -398,11 +404,10 @@ fun VideoPlayerScreen(
                                                 "Failed to schedule snooze: " +
                                                     "${scheduleResult.value}"
                                             )
-                                            val errorMsg = context.getString(
-                                                R.string.snackbar_error_failed_to_schedule_alarm
-                                            )
                                             withContext(Dispatchers.Main) {
-                                                snackbarHostState.showSnackbar(errorMsg)
+                                                snackbarHostState.showSnackbar(
+                                                    errorFailedToScheduleAlarm
+                                                )
                                                 onDismiss()
                                             }
                                         }
@@ -444,9 +449,7 @@ fun VideoPlayerScreen(
         if (isAlarmMode) {
             val alarmId = videoId.toLongOrNull() ?: -1L
             if (alarmId == -1L) {
-                snackbarHostState.showSnackbar(
-                    context.getString(R.string.snackbar_error_failed_to_get_alarm)
-                )
+                snackbarHostState.showSnackbar(errorFailedToGetAlarm)
                 Log.e(LOG_TAG, "Alarm id is -1, using fallback alarm")
                 // フォールバック: デフォルトアラーム音とバイブレーションを開始
                 fallbackMediaPlayer = playFallbackAlarm(context)
@@ -487,9 +490,7 @@ fun VideoPlayerScreen(
                 .filter { it.stateData is Video.State.Information }
 
             if (videos.isEmpty()) {
-                snackbarHostState.showSnackbar(
-                    context.getString(R.string.snackbar_error_empty_video)
-                )
+                snackbarHostState.showSnackbar(errorEmptyVideo)
                 Log.e(LOG_TAG, "Could not start alarm due to empty videos, using fallback alarm")
                 // フォールバック: デフォルトアラーム音を開始（バイブレーションは既に開始済みの可能性）
                 fallbackMediaPlayer = playFallbackAlarm(context)
@@ -529,11 +530,7 @@ fun VideoPlayerScreen(
                         onTitleChange = { currentTitle = it },
                         onError = {
                             scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    context.getString(
-                                        R.string.snackbar_error_failed_to_import_video
-                                    )
-                                )
+                                snackbarHostState.showSnackbar(errorFailedToImportVideo)
                             }
                         }
                     )
@@ -550,9 +547,7 @@ fun VideoPlayerScreen(
                 onTitleChange = { currentTitle = it },
                 onError = {
                     scope.launch {
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.snackbar_error_failed_to_import_video)
-                        )
+                        snackbarHostState.showSnackbar(errorFailedToImportVideo)
                     }
                 }
             )
@@ -562,9 +557,7 @@ fun VideoPlayerScreen(
             if (video == null) {
                 Log.e(LOG_TAG, "Failed to get video. VideoId: $videoId")
                 hasError = true
-                snackbarHostState.showSnackbar(
-                    context.getString(R.string.snackbar_error_failed_to_get_video)
-                )
+                snackbarHostState.showSnackbar(errorFailedToGetVideo)
                 return@LaunchedEffect
             }
             playVideo(
@@ -576,9 +569,7 @@ fun VideoPlayerScreen(
                 onTitleChange = { currentTitle = it },
                 onError = {
                     scope.launch {
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.snackbar_error_failed_to_import_video)
-                        )
+                        snackbarHostState.showSnackbar(errorFailedToImportVideo)
                     }
                 }
             )

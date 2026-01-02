@@ -441,6 +441,15 @@ fun VideoListScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Pre-fetch string resources for use in lambdas
+    val msgThumbnailSet = stringResource(R.string.message_thumbnail_set)
+    val msgDownloadNotImpl = stringResource(R.string.message_download_not_implemented)
+    val msgReimportSuccess = stringResource(R.string.message_reimport_success)
+    val msgReimportFailed = stringResource(R.string.message_reimport_failed)
+    val msgSyncStarted = stringResource(R.string.snackbar_sync_started)
+    val msgVideoDeleted = stringResource(R.string.message_video_deleted)
+    val msgReimportStarted = stringResource(R.string.message_reimport_started)
+
     val currentId by remember { mutableLongStateOf(playlistId) }
     // playlistId == 0の場合は新規プレイリスト作成モード（空のリスト）
     // 全動画表示は AllVideosScreen で処理するため、ここでは扱わない
@@ -546,16 +555,12 @@ fun VideoListScreen(
                 )
             }
             scope.launch {
-                snackbarHostState.showSnackbar(
-                    context.getString(R.string.message_thumbnail_set)
-                )
+                snackbarHostState.showSnackbar(msgThumbnailSet)
             }
         },
         onDownload = { video ->
             scope.launch {
-                snackbarHostState.showSnackbar(
-                    context.getString(R.string.message_download_not_implemented)
-                )
+                snackbarHostState.showSnackbar(msgDownloadNotImpl)
             }
         },
         onReimport = { video ->
@@ -588,9 +593,7 @@ fun VideoListScreen(
 
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.message_reimport_success)
-                        )
+                        snackbarHostState.showSnackbar(msgReimportSuccess)
                     }
                 } catch (e: CancellationException) {
                     // キャンセル例外はログに記録して再スロー
@@ -607,9 +610,7 @@ fun VideoListScreen(
                     )
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.message_reimport_failed) + ": Parse error"
-                        )
+                        snackbarHostState.showSnackbar("$msgReimportFailed: Parse error")
                     }
                 } catch (e: java.net.UnknownHostException) {
                     android.util.Log.e(
@@ -619,9 +620,7 @@ fun VideoListScreen(
                     )
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.message_reimport_failed) + ": Network error"
-                        )
+                        snackbarHostState.showSnackbar("$msgReimportFailed: Network error")
                     }
                 } catch (e: java.io.IOException) {
                     android.util.Log.e(
@@ -631,9 +630,7 @@ fun VideoListScreen(
                     )
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.message_reimport_failed) + ": IO error"
-                        )
+                        snackbarHostState.showSnackbar("$msgReimportFailed: IO error")
                     }
                 } catch (e: IllegalStateException) {
                     android.util.Log.e(
@@ -643,9 +640,7 @@ fun VideoListScreen(
                     )
                     withContext(Dispatchers.Main) {
                         videoToReimport = null
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.message_reimport_failed)
-                        )
+                        snackbarHostState.showSnackbar(msgReimportFailed)
                     }
                 }
             }
@@ -690,9 +685,7 @@ fun VideoListScreen(
         onFabMainClick = {
             // Syncモード: 同期実行
             scope.launch {
-                snackbarHostState.showSnackbar(
-                    context.getString(R.string.snackbar_sync_started)
-                )
+                snackbarHostState.showSnackbar(msgSyncStarted)
                 // Sync processing not implemented yet
             }
         },
@@ -719,9 +712,7 @@ fun VideoListScreen(
                         videoViewModel.delete(video)
                         videoToDelete = null
                         scope.launch {
-                            snackbarHostState.showSnackbar(
-                                context.getString(R.string.message_video_deleted)
-                            )
+                            snackbarHostState.showSnackbar(msgVideoDeleted)
                         }
                     }
                 ) {
@@ -742,9 +733,7 @@ fun VideoListScreen(
             video = video,
             onConfirm = {
                 scope.launch {
-                    snackbarHostState.showSnackbar(
-                        context.getString(R.string.message_reimport_started)
-                    )
+                    snackbarHostState.showSnackbar(msgReimportStarted)
                 }
                 videoToReimport = null
             },
