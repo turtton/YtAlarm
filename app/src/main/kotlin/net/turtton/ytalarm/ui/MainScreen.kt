@@ -23,16 +23,23 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
+import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.navigation.YtAlarmDestination
+import net.turtton.ytalarm.ui.compose.screens.PermissionScreen
+import net.turtton.ytalarm.ui.compose.screens.hasMissingPermissions
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 
@@ -51,6 +58,23 @@ fun MainScreen(
     videoViewModel: VideoViewModel,
     videoPlayerResourceContainer: VideoPlayerLoadingResourceContainer
 ) {
+    val context = LocalContext.current
+
+    // 権限画面の表示状態（デバッグビルドではスキップ）
+    var showPermissionScreen by remember {
+        mutableStateOf(!BuildConfig.DEBUG && hasMissingPermissions(context))
+    }
+
+    // 権限画面を表示
+    if (showPermissionScreen) {
+        PermissionScreen(
+            onContinue = {
+                showPermissionScreen = false
+            }
+        )
+        return
+    }
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()

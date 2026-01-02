@@ -1,5 +1,9 @@
 package net.turtton.ytalarm.ui.compose.screens
 
+import android.app.AlarmManager
+import android.content.Context
+import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -51,11 +55,13 @@ import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.components.AlarmItem
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.AlarmScheduleError
 import net.turtton.ytalarm.util.extensions.alarmOrderRule
 import net.turtton.ytalarm.util.extensions.alarmOrderUp
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
 import net.turtton.ytalarm.util.order.AlarmOrder
+import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -75,6 +81,7 @@ fun AlarmListScreenContent(
     alarms: List<Alarm>,
     orderRule: AlarmOrder,
     orderUp: Boolean,
+    snackbarHostState: SnackbarHostState,
     onAlarmToggle: (Alarm, Boolean) -> Unit,
     onAlarmClick: (Long) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -86,7 +93,6 @@ fun AlarmListScreenContent(
     videoViewModel: VideoViewModel? = null
 ) {
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -283,6 +289,7 @@ fun AlarmListScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     val allAlarms by alarmViewModel.allAlarms.observeAsState(emptyList())
 
@@ -311,9 +318,47 @@ fun AlarmListScreen(
         alarms = sortedAlarms,
         orderRule = orderRule,
         orderUp = orderUp,
+        snackbarHostState = snackbarHostState,
         onAlarmToggle = { alarm, isEnabled ->
             scope.launch(Dispatchers.IO) {
-                alarmViewModel.update(alarm.copy(isEnable = isEnabled))
+                // 有効化時のみ権限チェック
+                if (isEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    val alarmManager =
+                        context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                    if (!alarmManager.canScheduleExactAlarms()) {
+                        withContext(Dispatchers.Main) {
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.snackbar_error_no_alarm_permission)
+                            )
+                        }
+                        return@launch // トグルを更新しない
+                    }
+                }
+
+                val updatedAlarm = alarm.copy(isEnable = isEnabled)
+                alarmViewModel.update(updatedAlarm)
+
+                // 全アラームを取得して、同一IDのデータを更新済みのものに差し替え
+                val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                val updatedList = allAlarms.map {
+                    if (it.id == alarm.id) updatedAlarm else it
+                }.filter { it.isEnable }
+
+                updateAlarmSchedule(context, updatedList).onLeft { error ->
+                    val message = when (error) {
+                        is AlarmScheduleError.PermissionDenied -> error.message
+
+                        AlarmScheduleError.NoAlarmManager ->
+                            context.getString(R.string.error_no_alarm_manager)
+
+                        AlarmScheduleError.NoEnabledAlarm -> null
+                    }
+                    message?.let {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
             }
         },
         onAlarmClick = onNavigateToAlarmSettings,
@@ -383,6 +428,7 @@ fun AlarmListScreenPreview() {
             alarms = dummyAlarms,
             orderRule = AlarmOrder.TIME,
             orderUp = true,
+            snackbarHostState = remember { SnackbarHostState() },
             onAlarmToggle = { _, _ -> },
             onAlarmClick = { },
             onOpenDrawer = { },

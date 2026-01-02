@@ -27,11 +27,11 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
         repository.getMatchedAlarmSync(repeatType)
     }
 
-    fun insert(alarm: Alarm) = viewModelScope.launch {
+    suspend fun insert(alarm: Alarm) {
         repository.insert(alarm)
     }
 
-    fun update(alarm: Alarm) = viewModelScope.launch {
+    suspend fun update(alarm: Alarm) {
         repository.update(alarm.updateDate())
     }
 

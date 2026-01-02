@@ -172,28 +172,32 @@ fun PlaylistScreenContent(
                         key = { it.id }
                     ) { playlist ->
                         // サムネイル取得
-                        val thumbnailUrl = remember(playlist.thumbnail) {
-                            mutableStateOf<Any?>(null)
+                        // Drawable型は直接値を設定、Video型はデフォルト値を設定
+                        val thumbnailSource = remember(playlist.thumbnail) {
+                            when (val thumbnail = playlist.thumbnail) {
+                                is Playlist.Thumbnail.Drawable -> mutableStateOf<ThumbnailSource>(
+                                    ThumbnailSource.DrawableRes(thumbnail.id)
+                                )
+
+                                is Playlist.Thumbnail.Video -> mutableStateOf<ThumbnailSource>(
+                                    ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
+                                )
+                            }
                         }
 
-                        playlist.thumbnail?.let { thumbnail ->
-                            when (thumbnail) {
-                                is Playlist.Thumbnail.Video -> {
-                                    // Video thumbnailの場合、VideoからURLを取得
-                                    LaunchedEffect(thumbnail.id) {
-                                        videoViewModel?.getFromIdAsync(
-                                            thumbnail.id
-                                        )?.let { deferred ->
-                                            val video = withContext(Dispatchers.IO) {
-                                                deferred.await()
-                                            }
-                                            thumbnailUrl.value = video?.thumbnailUrl
-                                        }
+                        // Video型のみ非同期でサムネイルURLを取得
+                        if (playlist.thumbnail is Playlist.Thumbnail.Video) {
+                            LaunchedEffect(playlist.thumbnail) {
+                                val thumbnail = playlist.thumbnail as Playlist.Thumbnail.Video
+                                val url = videoViewModel?.let { vm ->
+                                    withContext(Dispatchers.IO) {
+                                        vm.getFromIdAsync(thumbnail.id)?.await()?.thumbnailUrl
                                     }
                                 }
-
-                                is Playlist.Thumbnail.Drawable -> {
-                                    thumbnailUrl.value = thumbnail.id
+                                thumbnailSource.value = if (url != null) {
+                                    ThumbnailSource.Url(url)
+                                } else {
+                                    ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
                                 }
                             }
                         }
@@ -201,7 +205,10 @@ fun PlaylistScreenContent(
 
                         PlaylistItem(
                             playlist = playlist,
-                            thumbnailUrl = thumbnailUrl.value,
+                            thumbnailUrl = when (val source = thumbnailSource.value) {
+                                is ThumbnailSource.Url -> source.url
+                                is ThumbnailSource.DrawableRes -> source.resId
+                            },
                             videoCount = videoCount,
                             isSelected = selectedItems.contains(playlist.id),
                             onToggleSelection = {
@@ -552,4 +559,13 @@ fun PlaylistScreenPreview() {
             onCreatePlaylist = { }
         )
     }
+}
+
+/**
+ * サムネイル画像のソースを表すsealed class
+ * 型安全性を確保するため、Any?の代わりに使用
+ */
+private sealed class ThumbnailSource {
+    data class Url(val url: String) : ThumbnailSource()
+    data class DrawableRes(val resId: Int) : ThumbnailSource()
 }

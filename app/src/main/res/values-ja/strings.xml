@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="setting_enabled">有効</string>
     <string name="setting_time">時刻</string>
     <string name="setting_repeat">繰り返し</string>
     <string name="setting_playlist">プレイリスト</string>
@@ -17,6 +18,7 @@
     <string name="fragment_video_player_button_snooze">スヌーズ</string>
     <string name="fragment_video_player_button_stop">停止</string>
     <string name="fragment_video_player_text_error">アラームの取得に失敗しました</string>
+    <string name="fragment_video_player_content_description_playing">再生中: %1$s</string>
     <string name="repeat_type_once">1回のみ</string>
     <string name="repeat_type_everyday">"毎日 "</string>
     <string name="menu_item_aram_list">アラーム</string>
@@ -44,6 +46,7 @@
     <plurals name="notification_snooze_remain">
         <item quantity="other">%d分後</item>
     </plurals>
+    <string name="notification_snooze_remain_soon">まもなく開始</string>
     <string name="dialog_execute_progress_title">インポート中</string>
     <string name="dialog_execute_progress_title_loading">読み込み中</string>
     <string name="dialog_execute_progress_eta_init">計測中</string>
@@ -56,12 +59,6 @@
     <string name="dialog_remove_video_negative">キャンセル</string>
     <string name="dialog_repeat_choice_title">繰り返し</string>
     <string name="dialog_repeat_days_title">曜日</string>
-    <string name="dialog_require_permission">権限が必要です</string>
-    <string name="dialog_require_overlay_perm">アラーム機能を動作させるには\"フローティング表示\"を許可してください</string>
-    <string name="dialog_require_configuration">設定が必要です</string>
-    <string name="dialog_require_overlay_perm_ok">設定</string>
-    <string name="dialog_require_disable_restrictions_ok">設定</string>
-    <string name="dialog_require_disable_restrictions">\"アプリが未使用の場合に権限を削除\"を無効化してください  アラームが正しく機能しない場合があります。</string>
     <string name="dialog_shared_text_should_be_url_title">エラー</string>
     <string name="dialog_shared_text_should_be_url_description">入力する文字は\"http\"から初まる必要があります</string>
     <string name="dialog_vibration_waring_title">注意</string>
@@ -73,18 +70,20 @@
     <string name="snackbar_error_failed_to_save_alarm">アラームの保存に失敗しました</string>
     <string name="snackbar_error_failed_to_get_video">ビデオの取得に失敗しました</string>
     <string name="snackbar_error_failed_to_import_video">ビデオのインポートに失敗しました</string>
-    <string name="snackbar_error_failed_to_prepare_vibration">バイブレーションシステムの初期化に失敗しました</string>
     <string name="snackbar_error_failed_to_access_clipboard">クリップボード機能の取得に失敗しました</string>
     <string name="snackbar_error_failed_to_access_settings_data">設定の取得に失敗しました</string>
     <string name="snackbar_error_empty_video">ビデオが存在しません</string>
     <string name="snackbar_start_download">ダウンロード中</string>
     <string name="snackbar_sync_started">同期を開始しました</string>
     <string name="snackbar_detect_playlist_usage">プレイリストは既にアラームで使用されています</string>
-    <string name="snackbar_failed_to_check_restriction">権限の制限機能の確認に失敗しました</string>
     <string name="snackbar_copied">コピーしました</string>
+    <string name="snackbar_error_no_alarm_permission">正確なアラームをスケジュールできません。設定で権限を許可してください。</string>
+    <string name="error_schedule_exact_alarm">正確なアラームをスケジュールできません</string>
+    <string name="snackbar_error_failed_to_schedule_alarm">アラームのスケジュールに失敗しました</string>
+    <string name="error_no_alarm_manager">アラームサービスを利用できません</string>
+    <string name="error_invalid_alarm_id">無効なアラームIDです</string>
     <string name="notification_snooze_title">スヌーズが有効です</string>
     <string name="notification_download_video_info_title">ビデオ情報を取得しています</string>
-    <string name="videoplayer_fragment_label">プレイヤー</string>
     <string name="menu_playlist_option_rename">名称変更</string>
     <string name="menu_alarm_option_sortrule">アラームを並び替え</string>
     <string name="menu_playlist_option_sortrule">プレイリストを並び替え</string>
@@ -128,5 +127,20 @@
     <!-- Error messages for AboutPage -->
     <string name="error_no_browser">ブラウザアプリが見つかりません</string>
     <string name="error_open_link">リンクを開けませんでした</string>
+
+    <!-- Permission Screen -->
+    <string name="permission_screen_title">権限が必要です</string>
+    <string name="permission_screen_description">YtAlarmはアラームアプリとして正しく機能するために、以下の権限が必要です。</string>
+    <string name="permission_screen_continue">続行</string>
+    <string name="permission_screen_required">続行するにはすべての権限を許可してください。</string>
+    <string name="permission_screen_grant">許可</string>
+    <string name="permission_exact_alarm_title">正確なアラームのスケジュール</string>
+    <string name="permission_exact_alarm_description">設定した時刻に正確にアラームを鳴らすために必要です。</string>
+    <string name="permission_full_screen_title">全画面インテント</string>
+    <string name="permission_full_screen_description">ロック画面にアラームを表示するために必要です。</string>
+    <string name="permission_overlay_title">他のアプリの上に表示</string>
+    <string name="permission_overlay_description">他のアプリを使用中でもアラームを表示するために必要です。</string>
+    <string name="permission_notification_title">通知</string>
+    <string name="permission_notification_description">アラームの通知を表示するために必要です。</string>
 
 </resources>

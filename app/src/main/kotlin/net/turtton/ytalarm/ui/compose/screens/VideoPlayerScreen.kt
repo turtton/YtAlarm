@@ -1,18 +1,21 @@
 package net.turtton.ytalarm.ui.compose.screens
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.drawable.Drawable
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.media.RingtoneManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.DigitalClock
-import android.widget.VideoView
+import androidx.annotation.OptIn
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,9 +39,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,19 +55,25 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.transition.Transition
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
+import coil.compose.AsyncImage
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.YtApplication.Companion.repository
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.extensions.hourOfDay
 import net.turtton.ytalarm.util.extensions.minute
@@ -87,6 +101,7 @@ import kotlin.time.DurationUnit
  * @param snackbarHostState Snackbar表示用のホスト状態
  */
 @Suppress("LongMethod", "LongParameterList")
+@OptIn(UnstableApi::class)
 @Composable
 fun VideoPlayerScreen(
     videoId: String,
@@ -98,6 +113,9 @@ fun VideoPlayerScreen(
     val context = LocalContext.current
     val view = LocalView.current
     val scope = rememberCoroutineScope()
+
+    // テスト用IdlingResource（AlarmActivityからCompositionLocalで提供される場合のみ有効）
+    val resourceContainer = LocalVideoPlayerResourceContainer.current
 
     val application = context.applicationContext as net.turtton.ytalarm.YtApplication
     val videoViewModel: VideoViewModel = viewModel(
@@ -115,15 +133,98 @@ fun VideoPlayerScreen(
     }
     var currentVolume by remember { mutableStateOf<Int?>(null) }
     var vibrator by remember { mutableStateOf<Vibrator?>(null) }
+    var fallbackMediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
 
     var isLoading by remember { mutableStateOf(false) }
     var hasError by remember { mutableStateOf(false) }
-    var videoViewState by remember { mutableStateOf<VideoView?>(null) }
+    var thumbnailUrl by remember { mutableStateOf<String?>(null) }
+    var showThumbnail by remember { mutableStateOf(true) }
+    var currentTitle by remember { mutableStateOf<String?>(null) }
+    // スヌーズボタン用にアラーム情報を保持（削除後も参照可能にする）
+    var cachedAlarm by remember { mutableStateOf<Alarm?>(null) }
 
-    // フルスクリーンモードを有効化
+    // ExoPlayerの作成（AudioAttributes設定込み）
+    val exoPlayer = remember {
+        val audioAttributes = AudioAttributes.Builder()
+            .setUsage(if (isAlarmMode) C.USAGE_ALARM else C.USAGE_MEDIA)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .build()
+
+        // USAGE_ALARMはシステム最優先のオーディオストリームであり、他のオーディオを強制的に中断する。
+        // audio focusのリクエストは不要であり、ExoPlayerはUSAGE_ALARMでhandleAudioFocus=trueの場合
+        // IllegalArgumentExceptionを投げるため、falseに設定する必要がある。
+        // https://developer.android.com/reference/android/media/AudioAttributes#USAGE_ALARM
+        val handleAudioFocus = !isAlarmMode
+
+        ExoPlayer.Builder(context)
+            .setAudioAttributes(audioAttributes, handleAudioFocus)
+            .setWakeMode(C.WAKE_MODE_NETWORK)
+            .build()
+    }
+
+    // Player.Listenerの状態管理用（State型で競合状態を回避）
+    val onPlaybackEndedState = remember { mutableStateOf<(() -> Unit)?>(null) }
+
+    // 統合されたPlayer.Listener
+    val playerListener = remember(exoPlayer, resourceContainer) {
+        object : Player.Listener {
+            override fun onRenderedFirstFrame() {
+                // ビデオトラックがある場合のみサムネイルを非表示
+                val hasVideoTrack = exoPlayer.currentTracks.groups.any { group ->
+                    group.type == C.TRACK_TYPE_VIDEO && group.isSelected
+                }
+                if (hasVideoTrack) {
+                    showThumbnail = false
+                }
+                isLoading = false
+
+                // テスト用: 一定時間後にIdlingResourceをidleに設定
+                scope.launch {
+                    kotlinx.coroutines.delay(3.seconds)
+                    resourceContainer?.videoPlayerLoadingResourceController
+                        ?.videoPlayerLoadingResource?.isIdleNow = true
+                }
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED) {
+                    onPlaybackEndedState.value?.invoke()
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                Log.e(LOG_TAG, "ExoPlayer error: ${error.message}", error)
+                isLoading = false
+                hasError = true
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        context.getString(R.string.snackbar_error_failed_to_import_video)
+                    )
+                }
+            }
+        }
+    }
+
+    // ExoPlayerのライフサイクル管理
+    DisposableEffect(exoPlayer, playerListener) {
+        exoPlayer.addListener(playerListener)
+        onDispose {
+            exoPlayer.removeListener(playerListener)
+        }
+    }
+
+    // フルスクリーンモードとリソースのクリーンアップ
     DisposableEffect(Unit) {
         enableFullScreenMode(view)
+
+        // テスト用: IdlingResourceを非idleに設定（動画読み込み開始）
+        resourceContainer?.videoPlayerLoadingResourceController
+            ?.videoPlayerLoadingResource?.isIdleNow = false
+
         onDispose {
+            // ExoPlayerを解放
+            exoPlayer.release()
+
             // 音量を復元
             currentVolume?.let {
                 audioManager.setStreamVolume(
@@ -138,6 +239,9 @@ fun VideoPlayerScreen(
 
             // バイブレーションを停止
             vibrator?.cancel()
+
+            // フォールバックアラーム音を停止
+            fallbackMediaPlayer?.release()
         }
     }
 
@@ -146,47 +250,79 @@ fun VideoPlayerScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
-        // VideoView
+        // PlayerView
         AndroidView(
             factory = { ctx ->
-                VideoView(ctx).apply {
-                    videoViewState = this
-                    setOnPreparedListener { mediaPlayer ->
-                        mediaPlayer.setOnInfoListener { _, what, _ ->
-                            when (what) {
-                                MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START -> {
-                                    background = null
-                                    scope.launch {
-                                        delay(3.seconds)
-                                        isLoading = false
-                                    }
-                                    true
-                                }
-
-                                else -> false
-                            }
-                        }
-                    }
+                // XMLからインフレートしてTextureViewとtransparent shutterを適用
+                @SuppressLint("InflateParams")
+                (
+                    LayoutInflater.from(ctx)
+                        .inflate(R.layout.player_view, null) as PlayerView
+                    ).also { pv ->
+                    pv.player = exoPlayer
+                }
+            },
+            update = { pv ->
+                // ExoPlayerの参照が変わった場合に再バインド
+                if (pv.player != exoPlayer) {
+                    pv.player = exoPlayer
                 }
             },
             modifier = Modifier.fillMaxSize()
         )
 
-        // アラームモード時の時刻表示
+        // 音声のみの場合のサムネイル表示（アスペクト比を維持して中央に配置）
+        if (showThumbnail && thumbnailUrl != null) {
+            val currentUrl = thumbnailUrl
+            AsyncImage(
+                model = currentUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black),
+                onError = {
+                    Log.e(LOG_TAG, "Failed to load thumbnail: $currentUrl")
+                }
+            )
+        }
+
+        // アラームモード時の時刻表示とタイトル
         if (isAlarmMode) {
-            AndroidView(
-                factory = { ctx ->
-                    @Suppress("DEPRECATION")
-                    DigitalClock(ctx).apply {
-                        textSize = 96f
-                        textAlignment = View.TEXT_ALIGNMENT_CENTER
-                    }
-                },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 32.dp)
-                    .align(Alignment.TopCenter)
-            )
+                    .align(Alignment.TopCenter),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AndroidView(
+                    factory = { ctx ->
+                        @Suppress("DEPRECATION")
+                        DigitalClock(ctx).apply {
+                            textSize = 96f
+                            textAlignment = View.TEXT_ALIGNMENT_CENTER
+                            setTextColor(android.graphics.Color.WHITE)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                currentTitle?.let { title ->
+                    TitleText(title = title)
+                }
+            }
+        }
+
+        // 非アラームモード時のタイトル表示
+        if (!isAlarmMode) {
+            currentTitle?.let { title ->
+                TitleText(
+                    title = title,
+                    modifier = Modifier
+                        .padding(top = 32.dp)
+                        .align(Alignment.TopCenter)
+                )
+            }
         }
 
         // ローディング表示
@@ -225,22 +361,57 @@ fun VideoPlayerScreen(
                     Button(
                         onClick = {
                             scope.launch {
-                                val alarmId = videoId.toLongOrNull() ?: -1L
-                                if (alarmId != -1L) {
-                                    val alarm = alarmViewModel.getFromIdAsync(alarmId).await()
-                                    if (alarm != null) {
-                                        val now = Calendar.getInstance()
-                                        now += alarm.snoozeMinute.minutes
-                                        val snoozeAlarm = alarm.copy(
-                                            id = 0,
-                                            hour = now.hourOfDay,
-                                            minute = now.minute,
-                                            repeatType = Alarm.RepeatType.Snooze
-                                        )
-                                        alarmViewModel.insert(snoozeAlarm)
-                                        UpdateSnoozeNotifyWorker.registerWorker(context)
-                                        withContext(Dispatchers.Main) {
-                                            onDismiss()
+                                // cachedAlarmを使用（スヌーズアラームは発火後に削除されるため）
+                                val alarm = cachedAlarm
+                                if (alarm != null) {
+                                    // 既存のスヌーズアラームを削除
+                                    val existingSnoozes = alarmViewModel
+                                        .getMatchedAsync(Alarm.RepeatType.Snooze).await()
+                                    existingSnoozes.forEach { alarmViewModel.delete(it) }
+
+                                    // 削除をAlarmManagerに反映
+                                    val alarmsAfterDelete = alarmViewModel
+                                        .getAllAlarmsAsync().await()
+                                        .filter { it.isEnable }
+                                    updateAlarmSchedule(context, alarmsAfterDelete)
+
+                                    val now = Calendar.getInstance()
+                                    now += alarm.snoozeMinute.minutes
+                                    val snoozeAlarm = alarm.copy(
+                                        id = 0,
+                                        hour = now.hourOfDay,
+                                        minute = now.minute,
+                                        repeatType = Alarm.RepeatType.Snooze,
+                                        isEnable = true
+                                    )
+                                    alarmViewModel.insert(snoozeAlarm)
+
+                                    // AlarmManagerにスケジュール
+                                    val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                                        .filter { it.isEnable }
+                                    val scheduleResult = updateAlarmSchedule(context, allAlarms)
+
+                                    when (scheduleResult) {
+                                        is arrow.core.Either.Left -> {
+                                            Log.e(
+                                                LOG_TAG,
+                                                "Failed to schedule snooze: " +
+                                                    "${scheduleResult.value}"
+                                            )
+                                            val errorMsg = context.getString(
+                                                R.string.snackbar_error_failed_to_schedule_alarm
+                                            )
+                                            withContext(Dispatchers.Main) {
+                                                snackbarHostState.showSnackbar(errorMsg)
+                                                onDismiss()
+                                            }
+                                        }
+
+                                        is arrow.core.Either.Right -> {
+                                            UpdateSnoozeNotifyWorker.registerWorker(context)
+                                            withContext(Dispatchers.Main) {
+                                                onDismiss()
+                                            }
                                         }
                                     }
                                 }
@@ -268,7 +439,7 @@ fun VideoPlayerScreen(
         }
     }
 
-    // アラームモード時の初期化処理
+    // 動画再生の初期化処理
     LaunchedEffect(videoId, isAlarmMode) {
         if (isAlarmMode) {
             val alarmId = videoId.toLongOrNull() ?: -1L
@@ -276,8 +447,10 @@ fun VideoPlayerScreen(
                 snackbarHostState.showSnackbar(
                     context.getString(R.string.snackbar_error_failed_to_get_alarm)
                 )
-                Log.e(LOG_TAG, "Alarm id is -1")
-                hasError = true
+                Log.e(LOG_TAG, "Alarm id is -1, using fallback alarm")
+                // フォールバック: デフォルトアラーム音とバイブレーションを開始
+                fallbackMediaPlayer = playFallbackAlarm(context)
+                vibrator = startVibration(context)
                 return@LaunchedEffect
             }
 
@@ -288,10 +461,15 @@ fun VideoPlayerScreen(
             // アラーム情報を取得
             val alarm = alarmViewModel.getFromIdAsync(alarmId).await()
             if (alarm == null) {
-                hasError = true
-                Log.e(LOG_TAG, "Failed to get alarm. TargetId: $alarmId")
+                Log.e(LOG_TAG, "Failed to get alarm. TargetId: $alarmId, using fallback alarm")
+                // フォールバック: デフォルトアラーム音とバイブレーションを開始
+                fallbackMediaPlayer = playFallbackAlarm(context)
+                vibrator = startVibration(context)
                 return@LaunchedEffect
             }
+
+            // スヌーズボタン用にアラーム情報を保持（削除後も参照可能にする）
+            cachedAlarm = alarm
 
             // アラームの更新
             updateAlarm(alarm, alarmViewModel)
@@ -312,7 +490,12 @@ fun VideoPlayerScreen(
                 snackbarHostState.showSnackbar(
                     context.getString(R.string.snackbar_error_empty_video)
                 )
-                Log.e(LOG_TAG, "Could not start alarm due to empty videos")
+                Log.e(LOG_TAG, "Could not start alarm due to empty videos, using fallback alarm")
+                // フォールバック: デフォルトアラーム音を開始（バイブレーションは既に開始済みの可能性）
+                fallbackMediaPlayer = playFallbackAlarm(context)
+                if (vibrator == null && alarm.shouldVibrate) {
+                    vibrator = startVibration(context)
+                }
                 return@LaunchedEffect
             }
 
@@ -326,37 +509,24 @@ fun VideoPlayerScreen(
                 videos.iterator()
             }
 
-            // 最初の動画を再生
-            playVideo(
-                context = context,
-                videoView = videoViewState,
-                video = queue.next(),
-                onLoading = { isLoading = it },
-                onError = {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(
-                            context.getString(R.string.snackbar_error_failed_to_import_video)
-                        )
-                    }
-                }
-            )
-
-            // 完了時の処理
-            videoViewState?.setOnCompletionListener {
+            // 再生完了時のコールバックを設定
+            onPlaybackEndedState.value = playbackEnded@{
                 if (!queue.hasNext()) {
                     if (alarm.shouldLoop) {
                         queue = videos.iterator()
                     } else {
                         onDismiss()
-                        return@setOnCompletionListener
+                        return@playbackEnded
                     }
                 }
                 scope.launch {
                     playVideo(
-                        context = context,
-                        videoView = videoViewState,
+                        exoPlayer = exoPlayer,
                         video = queue.next(),
                         onLoading = { isLoading = it },
+                        onThumbnailChange = { thumbnailUrl = it },
+                        onShowThumbnail = { showThumbnail = it },
+                        onTitleChange = { currentTitle = it },
                         onError = {
                             scope.launch {
                                 snackbarHostState.showSnackbar(
@@ -369,6 +539,23 @@ fun VideoPlayerScreen(
                     )
                 }
             }
+
+            // 最初の動画を再生
+            playVideo(
+                exoPlayer = exoPlayer,
+                video = queue.next(),
+                onLoading = { isLoading = it },
+                onThumbnailChange = { thumbnailUrl = it },
+                onShowThumbnail = { showThumbnail = it },
+                onTitleChange = { currentTitle = it },
+                onError = {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            context.getString(R.string.snackbar_error_failed_to_import_video)
+                        )
+                    }
+                }
+            )
         } else {
             // 非アラームモード
             val video = videoViewModel.getFromVideoIdAsync(videoId).await()
@@ -381,10 +568,12 @@ fun VideoPlayerScreen(
                 return@LaunchedEffect
             }
             playVideo(
-                context = context,
-                videoView = videoViewState,
+                exoPlayer = exoPlayer,
                 video = video,
                 onLoading = { isLoading = it },
+                onThumbnailChange = { thumbnailUrl = it },
+                onShowThumbnail = { showThumbnail = it },
+                onTitleChange = { currentTitle = it },
                 onError = {
                     scope.launch {
                         snackbarHostState.showSnackbar(
@@ -434,7 +623,7 @@ private fun setVolume(audioManager: AudioManager, alarmVolume: Int): Int {
 /**
  * アラームを更新
  */
-private fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
+private suspend fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
     var repeatType = alarm.repeatType
     if (repeatType is Alarm.RepeatType.Date) {
         repeatType = Alarm.RepeatType.Once
@@ -488,36 +677,32 @@ private fun startVibration(context: Context): Vibrator? {
 
 /**
  * 動画を再生
+ * 注意: この関数はメインスレッドから呼び出す必要があります
  */
+@Suppress("LongParameterList")
 private suspend fun playVideo(
-    context: Context,
-    videoView: VideoView?,
+    exoPlayer: ExoPlayer,
     video: Video,
     onLoading: (Boolean) -> Unit,
+    onThumbnailChange: (String?) -> Unit,
+    onShowThumbnail: (Boolean) -> Unit,
+    onTitleChange: (String?) -> Unit,
     onError: () -> Unit
 ) {
-    withContext(Dispatchers.Main) {
-        onLoading(true)
-    }
+    onLoading(true)
+    // サムネイルを表示状態にリセット
+    onShowThumbnail(true)
+    // サムネイル URL を設定
+    onThumbnailChange(video.thumbnailUrl)
+    // タイトルを設定
+    onTitleChange(video.title)
 
-    // サムネイルを背景に設定
-    val url = video.videoUrl
-    videoView?.let { view ->
-        Glide.with(context).load(video.thumbnailUrl.toUri())
-            .into(object : CustomViewTarget<View, Drawable>(view) {
-                override fun onResourceReady(
-                    resource: Drawable,
-                    transition: Transition<in Drawable>?
-                ) {
-                    view.background = resource
-                }
-
-                override fun onLoadFailed(errorDrawable: Drawable?) {}
-                override fun onResourceCleared(placeholder: Drawable?) {}
-            })
+    if (BuildConfig.DEBUG) {
+        Log.d(LOG_TAG, "Setting thumbnail URL: ${video.thumbnailUrl}")
     }
 
     // 動画情報を取得
+    val url = video.videoUrl
     val infoResult = withContext(Dispatchers.IO) {
         val request = YoutubeDLRequest(url)
         request.addOption("-f", "best")
@@ -534,8 +719,13 @@ private suspend fun playVideo(
                 onError()
             } else {
                 onLoading(false)
-                videoView?.setVideoURI(videoUrl.toUri())
-                videoView?.start()
+                val mediaItem = MediaItem.fromUri(videoUrl.toUri())
+                // 前の動画をクリアしてから新しい動画を設定
+                exoPlayer.stop()
+                exoPlayer.clearMediaItems()
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.prepare()
+                exoPlayer.play()
             }
         }.onFailure { error ->
             Log.e(LOG_TAG, "failed to get stream info", error)
@@ -563,6 +753,36 @@ private val VIBRATION_AMPLITUDES = intArrayOf(0, VIBRATION_STRENGTH)
 private const val VIBRATION_REPEAT_POS = 0
 private const val LOG_TAG = "VideoPlayerScreen"
 
+/**
+ * フォールバック用のデフォルトアラーム音を再生
+ * アラームデータ取得に失敗した場合などに使用
+ * MediaPlayerを使用してAPI 28未満でもループ再生を実現
+ */
+@Suppress("TooGenericExceptionCaught")
+private fun playFallbackAlarm(context: Context): MediaPlayer? = try {
+    val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+
+    alarmUri?.let { uri ->
+        MediaPlayer().apply {
+            setDataSource(context, uri)
+            setAudioAttributes(
+                android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            isLooping = true
+            prepare()
+            start()
+        }
+    }
+} catch (e: Exception) {
+    Log.e(LOG_TAG, "Failed to play fallback alarm", e)
+    null
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun VideoPlayerScreenPreview() {
@@ -573,4 +793,34 @@ private fun VideoPlayerScreenPreview() {
             onDismiss = {}
         )
     }
+}
+
+/**
+ * 動画タイトル表示用のComposable
+ * @param title 表示するタイトル
+ * @param modifier 追加のModifier
+ */
+@Composable
+private fun TitleText(title: String, modifier: Modifier = Modifier) {
+    val contentDescriptionText = stringResource(
+        R.string.fragment_video_player_content_description_playing,
+        title
+    )
+    Text(
+        text = title,
+        color = Color.White,
+        style = MaterialTheme.typography.headlineSmall,
+        textAlign = TextAlign.Center,
+        maxLines = 1,
+        modifier = modifier
+            .fillMaxWidth()
+            .basicMarquee(
+                iterations = Int.MAX_VALUE,
+                repeatDelayMillis = 1_000
+            )
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .semantics {
+                contentDescription = contentDescriptionText
+            }
+    )
 }

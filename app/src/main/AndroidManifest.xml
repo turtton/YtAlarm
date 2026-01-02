@@ -37,7 +37,6 @@
             android:name="net.turtton.ytalarm.activity.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.YtAlarm.NoActionBar">
-            <nav-graph android:value="@navigation/video_player"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -47,6 +46,12 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <data android:mimeType="text/plain"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="ytalarm" android:host="alarm" />
+            </intent-filter>
             <meta-data
                 android:name="android.service.chooser.chooser_target_service"
                 android:value="androidx.sharetarget.ChooserTargetServiceCompat"/>
@@ -54,7 +59,7 @@
         <activity
             android:name=".activity.AlarmActivity"
             android:excludeFromRecents="true"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.YtAlarm.NoActionBar"
             android:showWhenLocked="true"
             android:showOnLockScreen="true"
@@ -62,5 +67,8 @@
             android:launchMode="singleInstance">
         </activity>
         <receiver android:name=".worker.SnoozeRemoveReceiver"/>
+        <receiver
+            android:name=".receiver.AlarmReceiver"
+            android:exported="false" />
     </application>
 </manifest>

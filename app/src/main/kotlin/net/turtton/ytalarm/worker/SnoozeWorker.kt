@@ -71,14 +71,18 @@ class UpdateSnoozeNotifyWorker(appContext: Context, workerParams: WorkerParamete
             return Result.success()
         }
 
-        val nextSnooze = snoozeAlarms.pickNearestTime(Calendar.getInstance())!!.first
-
         val now = Calendar.getInstance()
-        val minute = nextSnooze.minute - now[Calendar.MINUTE]
+        val (nextSnooze, nextSnoozeCalendar) = snoozeAlarms.pickNearestTime(now)!!
+        val diffMillis = nextSnoozeCalendar.timeInMillis - now.timeInMillis
+        val minute = (diffMillis / MILLIS_PER_MINUTE).toInt().coerceAtLeast(0)
 
         val title = applicationContext.getString(R.string.notification_snooze_title)
-        val description = applicationContext.resources
-            .getQuantityString(R.plurals.notification_snooze_remain, minute, minute)
+        val description = if (minute == 0) {
+            applicationContext.getString(R.string.notification_snooze_remain_soon)
+        } else {
+            applicationContext.resources
+                .getQuantityString(R.plurals.notification_snooze_remain, minute, minute)
+        }
         val cancelText = applicationContext.getString(R.string.cancel)
 
         val removeIntent = SnoozeRemoveReceiver.getIntent(applicationContext, nextSnooze.id)
@@ -106,6 +110,7 @@ class UpdateSnoozeNotifyWorker(appContext: Context, workerParams: WorkerParamete
     companion object {
         private const val NOTIFICATION_ID = 0
         private const val WORKER_ID = "UpdateSnoozeNotifyWorker"
+        private const val MILLIS_PER_MINUTE = 60_000L
 
         fun registerWorker(context: Context): Operation {
             val updateWorkRequest = OneTimeWorkRequestBuilder<UpdateSnoozeNotifyWorker>()

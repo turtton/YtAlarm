@@ -171,6 +171,7 @@ dependencies {
     implementation(libs.bundles.kotlinx.serialization)
 
     implementation(libs.bundles.youtubedl)
+    implementation(libs.bundles.androidx.media3)
     implementation(libs.glide)
     annotationProcessor(libs.glide.compiler)
     implementation(libs.bundles.arrow)

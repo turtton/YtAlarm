@@ -7,6 +7,7 @@
     <string name="thumbnail_description" translatable="false">PlaylistThumbnail</string>
     <string name="playlist_item_title" translatable="false">PlaylistTitle</string>
 
+    <string name="setting_enabled">Enabled</string>
     <string name="setting_time">Time</string>
     <string name="setting_repeat">Repeat</string>
     <string name="setting_playlist">Playlist</string>
@@ -25,6 +26,7 @@
     <string name="fragment_video_player_button_snooze">Snooze</string>
     <string name="fragment_video_player_button_stop">Stop</string>
     <string name="fragment_video_player_text_error">Failed to get Alarm data</string>
+    <string name="fragment_video_player_content_description_playing">Now playing: %1$s</string>
 
     <string name="repeat_type_once">Once</string>
     <string name="repeat_type_everyday">Everyday</string>
@@ -76,12 +78,6 @@
     </string-array>
     <string name="dialog_repeat_days_title">Days</string>
     <string name="dialog_repeat_days_ok">Confirm</string>
-    <string name="dialog_require_permission">Permission Required</string>
-    <string name="dialog_require_overlay_perm">This application requires \"Display over other apps\" permission to display alarm.</string>
-    <string name="dialog_require_overlay_perm_ok">Settings</string>
-    <string name="dialog_require_configuration">Configuration Required</string>
-    <string name="dialog_require_disable_restrictions">This application requires disabling the option \"Remove permissions if app is unused\"</string>
-    <string name="dialog_require_disable_restrictions_ok">Settings</string>
     <string name="dialog_shared_text_should_be_url_title">Error</string>
     <string name="dialog_shared_text_should_be_url_description">The shared text should start \"http..\"</string>
 
@@ -112,15 +108,18 @@
     <string name="snackbar_error_failed_to_save_alarm">Failed to save alarm</string>
     <string name="snackbar_error_failed_to_get_video">Failed to get video data</string>
     <string name="snackbar_error_failed_to_import_video">Failed to import video</string>
-    <string name="snackbar_error_failed_to_prepare_vibration">Failed to prepare vibration system.</string>
     <string name="snackbar_error_failed_to_access_clipboard">Failed to access clipboard system.</string>
     <string name="snackbar_error_failed_to_access_settings_data">Failed to access settings data.</string>
     <string name="snackbar_error_empty_video">Video is Empty</string>
     <string name="snackbar_start_download">Download is in progress. See notification.</string>
     <string name="snackbar_sync_started">Sync started</string>
     <string name="snackbar_detect_playlist_usage">Some playlists are used by alarms.</string>
-    <string name="snackbar_failed_to_check_restriction">Failed to check app restriction status.</string>
     <string name="snackbar_copied">Copied</string>
+    <string name="snackbar_error_no_alarm_permission">Cannot schedule exact alarms. Please grant permission in settings.</string>
+    <string name="error_schedule_exact_alarm">Cannot schedule exact alarms</string>
+    <string name="snackbar_error_failed_to_schedule_alarm">Failed to schedule alarm</string>
+    <string name="error_no_alarm_manager">Alarm service is not available</string>
+    <string name="error_invalid_alarm_id">Invalid alarm ID</string>
 
     <string name="notification_channel_name" translatable="false">YtAlarm</string>
     <string name="notification_snooze_channel_description" translatable="false">Snooze notification channel</string>
@@ -129,9 +128,9 @@
         <item quantity="one">Alarm will start after %d minute</item>
         <item quantity="other">Alarm will start after %d minutes</item>
     </plurals>
+    <string name="notification_snooze_remain_soon">Alarm will start soon</string>
     <string name="notification_download_video_info_channel_description" translatable="false">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
-    <string name="videoplayer_fragment_label">Playing</string>
     <string name="menu_playlist_option_rename">Rename</string>
 
     <string name="menu_alarm_option_sortrule">Sort Alarms</string>
@@ -184,4 +183,19 @@
     <!-- Error messages for AboutPage -->
     <string name="error_no_browser">No browser app found</string>
     <string name="error_open_link">Failed to open link</string>
+
+    <!-- Permission Screen -->
+    <string name="permission_screen_title">Permissions Required</string>
+    <string name="permission_screen_description">YtAlarm requires the following permissions to function properly as an alarm app.</string>
+    <string name="permission_screen_continue">Continue</string>
+    <string name="permission_screen_required">Please grant all permissions to continue.</string>
+    <string name="permission_screen_grant">Grant</string>
+    <string name="permission_exact_alarm_title">Schedule Exact Alarms</string>
+    <string name="permission_exact_alarm_description">Required to trigger alarms at the exact time you set.</string>
+    <string name="permission_full_screen_title">Full Screen Intent</string>
+    <string name="permission_full_screen_description">Required to display alarm on lock screen.</string>
+    <string name="permission_overlay_title">Display Over Other Apps</string>
+    <string name="permission_overlay_description">Required to show alarm even when using other apps.</string>
+    <string name="permission_notification_title">Notifications</string>
+    <string name="permission_notification_description">Required to display alarm notifications.</string>
 </resources>

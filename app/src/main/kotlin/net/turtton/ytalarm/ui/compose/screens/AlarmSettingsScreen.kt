@@ -56,6 +56,7 @@ import net.turtton.ytalarm.ui.compose.dialogs.TimePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VibrationWarningDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.DayOfWeekCompat
+import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -131,6 +132,16 @@ fun AlarmSettingsScreenContent(
                 .padding(padding),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            // 0. 有効/無効トグル
+            item {
+                SwitchSettingItem(
+                    title = stringResource(R.string.setting_enabled),
+                    description = null,
+                    checked = alarm.isEnable,
+                    onCheckedChange = { onAlarmChange(alarm.copy(isEnable = it)) }
+                )
+            }
+
             // 1. 時刻設定
             item {
                 ClickableSettingItem(
@@ -474,13 +485,38 @@ fun AlarmSettingsScreen(
 
         scope.launch(Dispatchers.IO) {
             try {
+                // insertSync/updateSyncで完了を待ってからスケジュール更新
                 if (currentAlarm.id == 0L) {
                     alarmViewModel.insert(currentAlarm)
                 } else {
                     alarmViewModel.update(currentAlarm)
                 }
-                withContext(Dispatchers.Main) {
-                    onNavigateBack()
+
+                // AlarmManagerにアラームを登録
+                val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                    .filter { it.isEnable }
+                val scheduleResult = updateAlarmSchedule(context, allAlarms)
+
+                when (scheduleResult) {
+                    is arrow.core.Either.Left -> {
+                        android.util.Log.e(
+                            "AlarmSettingsScreen",
+                            "Failed to schedule alarm: ${scheduleResult.value}"
+                        )
+                        withContext(Dispatchers.Main) {
+                            snackbarHostState.showSnackbar(
+                                context.getString(R.string.snackbar_error_failed_to_schedule_alarm)
+                            )
+                            // 保存は成功しているのでナビゲートはする（スケジュール失敗は警告扱い）
+                            onNavigateBack()
+                        }
+                    }
+
+                    is arrow.core.Either.Right -> {
+                        withContext(Dispatchers.Main) {
+                            onNavigateBack()
+                        }
+                    }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 throw e
