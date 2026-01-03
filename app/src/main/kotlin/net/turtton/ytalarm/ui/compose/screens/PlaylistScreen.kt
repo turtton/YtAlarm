@@ -534,15 +534,6 @@ fun PlaylistScreen(
 
     // 削除確認ダイアログ
     playlistToDelete?.let { playlist ->
-        // 事前チェック: アラームで使用中の場合はSnackbarを表示してダイアログを閉じる
-        if (playlistsInUse.contains(playlist.id)) {
-            scope.launch {
-                snackbarHostState.showSnackbar(msgPlaylistUsage)
-            }
-            playlistToDelete = null
-            return@let
-        }
-
         AlertDialog(
             onDismissRequest = { playlistToDelete = null },
             title = { Text(stringResource(R.string.dialog_delete_playlist_title)) },
