@@ -41,6 +41,13 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
     @SuppressLint("RestrictedApi")
     override suspend fun doWork(): Result {
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
+        val isSyncMode = inputData.getBoolean(KEY_SYNC_MODE, false)
+        val syncPlaylistId = inputData.getLong(KEY_SYNC_PLAYLIST_ID, 0L)
+
+        if (isSyncMode && syncPlaylistId > 0) {
+            return doSyncWork(targetUrl, syncPlaylistId)
+        }
+
         var playlistArray = inputData.getLongArray(KEY_PLAYLIST)
 
         val stateTitle = applicationContext.getString(R.string.item_video_list_state_importing)
@@ -280,6 +287,72 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
             }
         }
 
+    private suspend fun doSyncWork(targetUrl: String, playlistId: Long): Result {
+        val playlist = repository.getPlaylistFromIdSync(playlistId)
+            ?: return Result.failure()
+
+        val playlistType = playlist.type as? Playlist.Type.CloudPlaylist
+            ?: return Result.failure()
+
+        val (videos, type) = download(targetUrl)
+            ?: return Result.failure()
+
+        if (type !is Type.Playlist) {
+            return Result.failure()
+        }
+
+        syncCloudPlaylist(playlist, playlistType, videos)
+        return Result.success()
+    }
+
+    private suspend fun syncCloudPlaylist(
+        playlist: Playlist,
+        playlistType: Playlist.Type.CloudPlaylist,
+        newVideos: List<Video>
+    ) {
+        val targetIds = mutableListOf<Long>()
+        val videosToInsert = newVideos.filter { video ->
+            checkVideoDuplication(video.videoId, video.domain)
+                ?.also { duplicatedId -> targetIds += duplicatedId }
+                .let { it == null }
+        }
+        targetIds += repository.insert(videosToInsert)
+
+        var updatedPlaylist = playlist
+
+        when (playlistType.syncRule) {
+            Playlist.SyncRule.ALWAYS_ADD -> {
+                val currentVideos = playlist.videos.toMutableSet()
+                currentVideos.addAll(targetIds)
+                updatedPlaylist = updatedPlaylist.copy(videos = currentVideos.toList())
+            }
+
+            Playlist.SyncRule.DELETE_IF_NOT_EXIST -> {
+                val thumbnail = playlist.thumbnail
+                val newThumbnail = if (thumbnail is Playlist.Thumbnail.Video &&
+                    !targetIds.contains(thumbnail.id)
+                ) {
+                    targetIds.firstOrNull()?.let { Playlist.Thumbnail.Video(it) }
+                        ?: Playlist.Thumbnail.Drawable(R.drawable.ic_no_image)
+                } else {
+                    thumbnail
+                }
+                updatedPlaylist = updatedPlaylist.copy(
+                    videos = targetIds,
+                    thumbnail = newThumbnail
+                )
+            }
+        }
+
+        val updatedType = playlistType.copy(workerId = id)
+        updatedPlaylist = updatedPlaylist.copy(
+            type = updatedType,
+            lastUpdated = java.util.Calendar.getInstance()
+        )
+
+        repository.update(updatedPlaylist)
+    }
+
     private sealed interface Type {
         object Video : Type
 
@@ -291,6 +364,30 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         const val WORKER_ID = "VideoDownloadWorker"
         private const val KEY_URL = "DownloadUrl"
         private const val KEY_PLAYLIST = "PlaylistId"
+        private const val KEY_SYNC_MODE = "SyncMode"
+        private const val KEY_SYNC_PLAYLIST_ID = "SyncPlaylistId"
+
+        fun registerSyncWorker(
+            context: Context,
+            playlistId: Long,
+            playlistUrl: String
+        ): OneTimeWorkRequest {
+            val data = Data.Builder()
+                .putString(KEY_URL, playlistUrl)
+                .putBoolean(KEY_SYNC_MODE, true)
+                .putLong(KEY_SYNC_PLAYLIST_ID, playlistId)
+                .build()
+            val request = OneTimeWorkRequestBuilder<VideoInfoDownloadWorker>()
+                .setInputData(data)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                "SyncWorker_$playlistId",
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
+            return request
+        }
 
         fun registerWorker(
             context: Context,

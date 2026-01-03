@@ -1,7 +1,10 @@
 package net.turtton.ytalarm.ui.compose.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +37,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableLongStateOf
@@ -42,7 +46,9 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -52,11 +58,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -77,6 +88,16 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
+import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
+
+// Sync回転アニメーション設定
+// マイナス値はSyncアイコンの矢印方向と回転方向を合わせるため
+private const val SYNC_ROTATION_DEGREES = -360f
+private const val SYNC_ANIMATION_DURATION_MS = 2000
+
+// アニメーションOFF端末でのCPU負荷防止用の閾値と待機時間
+private const val ANIMATION_MIN_DURATION_MS = 50L
+private const val ANIMATION_FALLBACK_DELAY_MS = 1000L
 
 /**
  * 動画一覧画面のコンテンツ（プレビュー可能）
@@ -96,6 +117,7 @@ fun VideoListScreenContent(
     orderUp: Boolean,
     selectedItems: List<Long>,
     isFabExpanded: Boolean,
+    isSyncing: Boolean,
     expandedMenus: Map<Long, Boolean>,
     onItemSelect: (Long, Boolean) -> Unit,
     onItemClick: (String) -> Unit,
@@ -215,6 +237,49 @@ fun VideoListScreenContent(
                         }
                     }
 
+                    // Sync中の回転アニメーション
+                    val syncRotation = remember { Animatable(0f) }
+                    val shouldRotate = isSyncMode && isSyncing
+                    // shouldRotateはパラメータ由来のローカル変数のため、snapshotFlowで
+                    // 変更を検知するにはrememberUpdatedStateでState化する必要がある
+                    val currentShouldRotate by rememberUpdatedState(shouldRotate)
+
+                    // LaunchedEffect(Unit)を使用する理由:
+                    // - shouldRotateがfalseになっても即座に停止せず、1周完了してから停止させたい
+                    // - LaunchedEffect(shouldRotate)だと変更時に即キャンセル→再起動され、
+                    //   回転途中から0°へアニメーションして逆回転になってしまう
+                    // - コンポーネント破棄時はCoroutineScopeがキャンセルされるため問題なし
+                    LaunchedEffect(Unit) {
+                        while (true) {
+                            // 回転許可が出るまで待機（snapshotFlowでState変更を監視）
+                            snapshotFlow { currentShouldRotate }.filter { it }.first()
+                            val startTime = System.currentTimeMillis()
+                            syncRotation.animateTo(
+                                targetValue = SYNC_ROTATION_DEGREES,
+                                animationSpec = tween(
+                                    durationMillis = SYNC_ANIMATION_DURATION_MS,
+                                    easing = LinearEasing
+                                )
+                            )
+                            // アニメーションOFF端末ではanimateToが即座に完了するため、
+                            // 無限ループが高速回転してCPU負荷が発生する。これを防止する。
+                            val elapsedTime = System.currentTimeMillis() - startTime
+                            if (elapsedTime < ANIMATION_MIN_DURATION_MS) {
+                                delay(ANIMATION_FALLBACK_DELAY_MS)
+                            }
+                            syncRotation.snapTo(0f)
+                        }
+                    }
+
+                    // 通常のFAB展開アニメーション
+                    val expandRotation by animateFloatAsState(
+                        targetValue = if (isFabExpanded && !isAllVideosMode) 45f else 0f,
+                        label = "fab_rotation"
+                    )
+
+                    // 最終的な回転角度
+                    val rotation = if (shouldRotate) syncRotation.value else expandRotation
+
                     // メインFAB
                     FloatingActionButton(
                         onClick = {
@@ -230,10 +295,6 @@ fun VideoListScreenContent(
                             }
                         }
                     ) {
-                        val rotation by animateFloatAsState(
-                            targetValue = if (isFabExpanded && !isAllVideosMode) 45f else 0f,
-                            label = "fab_rotation"
-                        )
                         Icon(
                             imageVector = when {
                                 isSyncMode -> Icons.Default.Sync
@@ -484,6 +545,14 @@ fun VideoListScreen(
     val isOriginalMode = playlistType is Playlist.Type.Original || playlistType == null
     val isSyncMode = playlistType is Playlist.Type.CloudPlaylist
 
+    // 同期Workerの状態を監視
+    val syncWorkInfo by WorkManager.getInstance(context)
+        .getWorkInfosForUniqueWorkLiveData("SyncWorker_$currentId")
+        .observeAsState(emptyList())
+    val isSyncing = syncWorkInfo.any { workInfo ->
+        workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED
+    }
+
     // 動画リストを取得
     // - playlistId=0 (新規プレイリスト): 空のリスト
     // - playlistId>0 (既存プレイリスト): プレイリストの動画を取得
@@ -530,6 +599,7 @@ fun VideoListScreen(
         orderUp = orderUp,
         selectedItems = selectedItems.toList(),
         isFabExpanded = isFabExpanded,
+        isSyncing = isSyncing,
         expandedMenus = expandedMenus,
         onItemSelect = { id, isSelected ->
             if (isSelected) {
@@ -684,9 +754,18 @@ fun VideoListScreen(
         },
         onFabMainClick = {
             // Syncモード: 同期実行
-            scope.launch {
-                snackbarHostState.showSnackbar(msgSyncStarted)
-                // Sync processing not implemented yet
+            val cloudType = playlist?.type as? Playlist.Type.CloudPlaylist
+            if (cloudType != null) {
+                // Worker登録を先に実行（snackbarは待機するため）
+                VideoInfoDownloadWorker.registerSyncWorker(
+                    context,
+                    currentId,
+                    cloudType.url
+                )
+                // スナックバーは非同期で表示
+                scope.launch {
+                    snackbarHostState.showSnackbar(msgSyncStarted)
+                }
             }
         },
         onFabUrlClick = {
@@ -790,6 +869,7 @@ fun VideoListScreenPreview() {
             orderUp = true,
             selectedItems = emptyList(),
             isFabExpanded = false,
+            isSyncing = false,
             expandedMenus = emptyMap(),
             onItemSelect = { _, _ -> },
             onItemClick = { },
