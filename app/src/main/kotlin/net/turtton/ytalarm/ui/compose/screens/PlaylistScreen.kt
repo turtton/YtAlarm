@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.ui.compose.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -44,7 +45,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.work.WorkManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
@@ -86,16 +89,17 @@ fun PlaylistScreenContent(
     onMenuClick: (Playlist) -> Unit,
     onMenuDismiss: (Long) -> Unit,
     onRename: (Playlist) -> Unit,
+    onDelete: (Playlist) -> Unit,
+    playlistsInUse: Set<Long>,
     onOpenDrawer: () -> Unit,
     onDeletePlaylists: () -> Unit,
     onSortRuleChange: (PlaylistOrder) -> Unit,
     onOrderUpToggle: () -> Unit,
     onCreatePlaylist: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
     videoViewModel: VideoViewModel? = null
 ) {
-    val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -231,7 +235,9 @@ fun PlaylistScreenContent(
                                     playlist = playlist,
                                     expanded = expandedMenus[playlist.id] ?: false,
                                     onDismiss = { onMenuDismiss(playlist.id) },
-                                    onRename = onRename
+                                    onRename = onRename,
+                                    onDelete = onDelete,
+                                    isDeleteEnabled = !playlistsInUse.contains(playlist.id)
                                 )
                             }
                         )
@@ -341,13 +347,22 @@ fun PlaylistScreen(
     // Pre-fetch string resources for use in lambdas
     val msgPlaylistUsage = stringResource(R.string.snackbar_detect_playlist_usage)
     val msgPlaylistRenamed = stringResource(R.string.message_playlist_renamed)
+    val msgPlaylistDeleted = stringResource(R.string.message_playlist_deleted)
+    val msgDeleteFailed = stringResource(R.string.error_delete_playlist_failed)
 
     val playlists by playlistViewModel.allPlaylists.observeAsState(emptyList())
+    val alarms by alarmViewModel.allAlarms.observeAsState(emptyList())
     val selectedItems = remember { mutableStateListOf<Long>() }
+
+    // アラームで使用中のプレイリストIDを事前に計算
+    val playlistsInUse = remember(alarms) {
+        alarms.flatMap { it.playListId }.distinct().toSet()
+    }
 
     // メニュー展開状態の管理
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
     var playlistToRename by remember { mutableStateOf<Playlist?>(null) }
+    var playlistToDelete by remember { mutableStateOf<Playlist?>(null) }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -444,6 +459,17 @@ fun PlaylistScreen(
         onRename = { playlist ->
             playlistToRename = playlist
         },
+        onDelete = { playlist ->
+            // アラームで使用中の場合はSnackbarを表示
+            if (playlistsInUse.contains(playlist.id)) {
+                scope.launch {
+                    snackbarHostState.showSnackbar(msgPlaylistUsage)
+                }
+            } else {
+                playlistToDelete = playlist
+            }
+        },
+        playlistsInUse = playlistsInUse,
         onOpenDrawer = onOpenDrawer,
         onDeletePlaylists = {
             scope.launch(Dispatchers.IO) {
@@ -486,6 +512,7 @@ fun PlaylistScreen(
         onCreatePlaylist = {
             onNavigateToVideoList(0L)
         },
+        snackbarHostState = snackbarHostState,
         modifier = modifier,
         videoViewModel = videoViewModel
     )
@@ -502,6 +529,77 @@ fun PlaylistScreen(
                 }
             },
             onDismiss = { playlistToRename = null }
+        )
+    }
+
+    // 削除確認ダイアログ
+    playlistToDelete?.let { playlist ->
+        // 事前チェック: アラームで使用中の場合はSnackbarを表示してダイアログを閉じる
+        if (playlistsInUse.contains(playlist.id)) {
+            scope.launch {
+                snackbarHostState.showSnackbar(msgPlaylistUsage)
+            }
+            playlistToDelete = null
+            return@let
+        }
+
+        AlertDialog(
+            onDismissRequest = { playlistToDelete = null },
+            title = { Text(stringResource(R.string.dialog_delete_playlist_title)) },
+            text = {
+                Text(stringResource(R.string.dialog_delete_playlist_message, playlist.title))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                ensureActive()
+
+                                // 削除直前に再度アラーム使用チェック（競合状態対策）
+                                val currentAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                                ensureActive()
+
+                                val currentPlaylistsInUse = currentAlarms
+                                    .flatMap { it.playListId }
+                                    .toSet()
+
+                                if (currentPlaylistsInUse.contains(playlist.id)) {
+                                    withContext(Dispatchers.Main) {
+                                        playlistToDelete = null
+                                        snackbarHostState.showSnackbar(msgPlaylistUsage)
+                                    }
+                                    return@launch
+                                }
+
+                                ensureActive()
+                                playlistViewModel.delete(playlist)
+                                ensureActive()
+
+                                withContext(Dispatchers.Main) {
+                                    playlistToDelete = null
+                                    snackbarHostState.showSnackbar(msgPlaylistDeleted)
+                                }
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Exception) {
+                                Log.e("PlaylistScreen", "Failed to delete playlist", e)
+                                withContext(Dispatchers.Main) {
+                                    playlistToDelete = null
+                                    snackbarHostState.showSnackbar(msgDeleteFailed)
+                                }
+                            }
+                        }
+                    }
+                ) {
+                    Text(stringResource(R.string.dialog_remove_video_positive))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { playlistToDelete = null }) {
+                    Text(stringResource(R.string.dialog_remove_video_negative))
+                }
+            }
         )
     }
 }
@@ -540,6 +638,7 @@ fun PlaylistScreenPreview() {
                 lastUpdated = java.util.Calendar.getInstance()
             )
         )
+        val snackbarHostState = remember { SnackbarHostState() }
 
         PlaylistScreenContent(
             playlists = dummyPlaylists,
@@ -552,11 +651,14 @@ fun PlaylistScreenPreview() {
             onMenuClick = { },
             onMenuDismiss = { },
             onRename = { },
+            onDelete = { },
+            playlistsInUse = emptySet(),
             onOpenDrawer = { },
             onDeletePlaylists = { },
             onSortRuleChange = { },
             onOrderUpToggle = { },
-            onCreatePlaylist = { }
+            onCreatePlaylist = { },
+            snackbarHostState = snackbarHostState
         )
     }
 }

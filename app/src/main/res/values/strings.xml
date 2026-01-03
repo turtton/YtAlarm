@@ -132,6 +132,11 @@
     <string name="notification_download_video_info_channel_description" translatable="false">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
     <string name="menu_playlist_option_rename">Rename</string>
+    <string name="menu_playlist_option_delete">Delete</string>
+    <string name="dialog_delete_playlist_title">Delete Playlist</string>
+    <string name="dialog_delete_playlist_message">Delete \"%1$s\"?</string>
+    <string name="message_playlist_deleted">Playlist deleted</string>
+    <string name="error_delete_playlist_failed">Failed to delete playlist</string>
 
     <string name="menu_alarm_option_sortrule">Sort Alarms</string>
     <string name="menu_playlist_option_sortrule">Sort Playlists</string>

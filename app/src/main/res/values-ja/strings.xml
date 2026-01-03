@@ -85,6 +85,11 @@
     <string name="notification_snooze_title">スヌーズが有効です</string>
     <string name="notification_download_video_info_title">ビデオ情報を取得しています</string>
     <string name="menu_playlist_option_rename">名称変更</string>
+    <string name="menu_playlist_option_delete">削除</string>
+    <string name="dialog_delete_playlist_title">プレイリストの削除</string>
+    <string name="dialog_delete_playlist_message">\"%1$s\"を削除しますか？</string>
+    <string name="message_playlist_deleted">プレイリストを削除しました</string>
+    <string name="error_delete_playlist_failed">プレイリストの削除に失敗しました</string>
     <string name="menu_alarm_option_sortrule">アラームを並び替え</string>
     <string name="menu_playlist_option_sortrule">プレイリストを並び替え</string>
     <string name="menu_video_list_option_sortrule">動画を並び替え</string>
