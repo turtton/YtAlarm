@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -137,7 +138,7 @@ fun PlaylistScreenContent(
                     }
                     // ソートルール選択ボタン
                     IconButton(onClick = { showSortDialog = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Sort rule")
+                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort rule")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -192,10 +193,10 @@ fun PlaylistScreenContent(
                         // Video型のみ非同期でサムネイルURLを取得
                         if (playlist.thumbnail is Playlist.Thumbnail.Video) {
                             LaunchedEffect(playlist.thumbnail) {
-                                val thumbnail = playlist.thumbnail as Playlist.Thumbnail.Video
+                                val thumbnail = playlist.thumbnail
                                 val url = videoViewModel?.let { vm ->
                                     withContext(Dispatchers.IO) {
-                                        vm.getFromIdAsync(thumbnail.id)?.await()?.thumbnailUrl
+                                        vm.getFromIdAsync(thumbnail.id).await()?.thumbnailUrl
                                     }
                                 }
                                 thumbnailSource.value = if (url != null) {
@@ -259,7 +260,7 @@ fun PlaylistScreenContent(
                         androidx.compose.material3.RadioButton(
                             selected = orderRule.ordinal == index,
                             onClick = {
-                                onSortRuleChange(PlaylistOrder.values()[index])
+                                onSortRuleChange(PlaylistOrder.entries[index])
                                 showSortDialog = false
                             }
                         )
