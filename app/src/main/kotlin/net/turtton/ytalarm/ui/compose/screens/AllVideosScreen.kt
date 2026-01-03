@@ -82,6 +82,7 @@ fun AllVideosScreen(
         orderUp = orderUp,
         selectedItems = selectedItems.toList(),
         isFabExpanded = false,
+        isSyncing = false,
         expandedMenus = expandedMenus,
         onItemSelect = { id, isSelected ->
             if (isSelected) {

@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
 import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
@@ -40,6 +41,8 @@ import net.turtton.ytalarm.ui.compose.screens.PlaylistScreen
 import net.turtton.ytalarm.ui.compose.screens.SettingsScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoListScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoPlayerScreen
+import net.turtton.ytalarm.util.extensions.createImportingPlaylist
+import net.turtton.ytalarm.util.extensions.updateThumbnail
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
@@ -162,7 +165,7 @@ private fun NavGraphBuilder.playlistScreen(
 /**
  * 動画一覧画面のルート定義
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
     composable(
         route = YtAlarmDestination.VIDEO_LIST,
@@ -221,19 +224,48 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         if (showUrlInputDialog) {
             UrlInputDialog(
                 onConfirm = { url ->
-                    // VideoInfoDownloadWorkerを使用してバックグラウンドでインポート
-                    // Workerが重複チェック、プレイリスト追加、通知などを処理
-                    val targetPlaylists = if (currentPlaylistIdForDialog != 0L) {
-                        longArrayOf(currentPlaylistIdForDialog)
-                    } else {
-                        longArrayOf()
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            val targetPlaylistId = if (currentPlaylistIdForDialog != 0L) {
+                                currentPlaylistIdForDialog
+                            } else {
+                                // 新規プレイリスト作成（Importing状態）
+                                val newPlaylist = createImportingPlaylist()
+                                playlistViewModel.insertAsync(newPlaylist).await()
+                            }
+                            // VideoInfoDownloadWorkerを使用してバックグラウンドでインポート
+                            VideoInfoDownloadWorker.registerWorker(
+                                context,
+                                url,
+                                longArrayOf(targetPlaylistId)
+                            )
+                            // 新規プレイリストの場合、新しいIDで画面を再ナビゲート
+                            if (currentPlaylistIdForDialog == 0L) {
+                                withContext(Dispatchers.Main) {
+                                    showUrlInputDialog = false
+                                    navController.navigate(
+                                        YtAlarmDestination.videoList(targetPlaylistId)
+                                    ) {
+                                        popUpTo(YtAlarmDestination.videoList(0L)) {
+                                            inclusive = true
+                                        }
+                                    }
+                                }
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    showUrlInputDialog = false
+                                }
+                            }
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                            Log.e("YtAlarmNavGraph", "Failed to create playlist for URL import", e)
+                            withContext(Dispatchers.Main) {
+                                showUrlInputDialog = false
+                                snackbarHostState.showSnackbar(msgOperationFailed)
+                            }
+                        }
                     }
-                    VideoInfoDownloadWorker.registerWorker(
-                        context,
-                        url,
-                        targetPlaylists
-                    )
-                    showUrlInputDialog = false
                 },
                 onDismiss = { showUrlInputDialog = false }
             )
@@ -254,13 +286,30 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                 onConfirm = { selectedIds ->
                     scope.launch(Dispatchers.IO) {
                         try {
-                            val playlist = playlistViewModel
-                                .getFromIdAsync(currentPlaylistIdForDialog)
-                                .await()
-                            if (playlist != null) {
-                                val updatedVideos = (playlist.videos + selectedIds).distinct()
-                                playlistViewModel.update(playlist.copy(videos = updatedVideos))
-
+                            if (currentPlaylistIdForDialog == 0L) {
+                                // 新規プレイリスト作成（既存動画のみなのでOriginal型）
+                                var newPlaylist = Playlist(videos = selectedIds.toList())
+                                newPlaylist.updateThumbnail()?.let { newPlaylist = it }
+                                val newId = playlistViewModel.insertAsync(newPlaylist).await()
+                                // 新しいプレイリストIDで画面を再ナビゲート
+                                withContext(Dispatchers.Main) {
+                                    showMultiChoiceDialog = false
+                                    navController.navigate(YtAlarmDestination.videoList(newId)) {
+                                        popUpTo(YtAlarmDestination.videoList(0L)) {
+                                            inclusive = true
+                                        }
+                                    }
+                                    snackbarHostState.showSnackbar(msgVideosAdded)
+                                }
+                            } else {
+                                // 既存プレイリストに追加
+                                val playlist = playlistViewModel
+                                    .getFromIdAsync(currentPlaylistIdForDialog)
+                                    .await()
+                                if (playlist != null) {
+                                    val updatedVideos = (playlist.videos + selectedIds).distinct()
+                                    playlistViewModel.update(playlist.copy(videos = updatedVideos))
+                                }
                                 withContext(Dispatchers.Main) {
                                     snackbarHostState.showSnackbar(msgVideosAdded)
                                 }
