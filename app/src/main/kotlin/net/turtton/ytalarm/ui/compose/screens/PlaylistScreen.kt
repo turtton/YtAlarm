@@ -582,7 +582,7 @@ fun PlaylistScreen(
                                 }
                             } catch (e: CancellationException) {
                                 throw e
-                            } catch (e: Exception) {
+                            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                                 Log.e("PlaylistScreen", "Failed to delete playlist", e)
                                 withContext(Dispatchers.Main) {
                                     playlistToDelete = null

@@ -165,7 +165,7 @@ private fun NavGraphBuilder.playlistScreen(
 /**
  * 動画一覧画面のルート定義
  */
-@Suppress("LongMethod")
+@Suppress("LongMethod", "CyclomaticComplexMethod")
 private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
     composable(
         route = YtAlarmDestination.VIDEO_LIST,
@@ -258,7 +258,7 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                             }
                         } catch (e: kotlinx.coroutines.CancellationException) {
                             throw e
-                        } catch (e: Exception) {
+                        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                             Log.e("YtAlarmNavGraph", "Failed to create playlist for URL import", e)
                             withContext(Dispatchers.Main) {
                                 showUrlInputDialog = false

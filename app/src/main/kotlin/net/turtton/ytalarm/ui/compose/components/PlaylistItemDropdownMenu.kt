@@ -18,8 +18,8 @@ fun PlaylistItemDropdownMenu(
     onDismiss: () -> Unit,
     onRename: (Playlist) -> Unit,
     onDelete: (Playlist) -> Unit,
-    isDeleteEnabled: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDeleteEnabled: Boolean = true
 ) {
     DropdownMenu(
         expanded = expanded,
