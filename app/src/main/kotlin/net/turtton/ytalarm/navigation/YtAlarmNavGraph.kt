@@ -119,10 +119,11 @@ private fun NavGraphBuilder.alarmSettingsScreen(navController: NavHostController
         // Pre-fetch string resource for use in lambda
         val errorInvalidAlarmId = stringResource(R.string.error_invalid_alarm_id)
 
-        // Deep Linkで不正なIDが渡された場合のエラー処理
-        // 0はRoom DBで使われないID、負の値も無効
-        // -1Lは内部的に新規作成を意味するが、Deep Linkからは許可しない
-        if (alarmId <= 0L) {
+        // 不正なIDのエラー処理
+        // 0はRoom DBで使われないID
+        // -1Lは新規作成を意味する（許可）
+        // -1L未満の負値は無効
+        if (alarmId == 0L || alarmId < -1L) {
             androidx.compose.runtime.LaunchedEffect(Unit) {
                 android.widget.Toast.makeText(
                     context,

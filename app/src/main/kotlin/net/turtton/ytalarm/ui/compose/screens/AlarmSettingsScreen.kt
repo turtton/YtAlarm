@@ -55,6 +55,7 @@ import net.turtton.ytalarm.ui.compose.dialogs.SnoozeMinutePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.TimePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VibrationWarningDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.AlarmScheduleError
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
@@ -476,7 +477,7 @@ fun AlarmSettingsScreen(
 
         // バリデーション: 過去日付チェック（Date型の場合）
         if (currentAlarm.repeatType is Alarm.RepeatType.Date) {
-            val targetDate = (currentAlarm.repeatType as Alarm.RepeatType.Date).targetDate
+            val targetDate = currentAlarm.repeatType.targetDate
             if (targetDate.before(Date())) {
                 scope.launch {
                     snackbarHostState.showSnackbar(errorPastDate)
@@ -501,13 +502,18 @@ fun AlarmSettingsScreen(
 
                 when (scheduleResult) {
                     is arrow.core.Either.Left -> {
-                        android.util.Log.e(
-                            "AlarmSettingsScreen",
-                            "Failed to schedule alarm: ${scheduleResult.value}"
-                        )
+                        val error = scheduleResult.value
+                        // NoEnabledAlarmはエラーではなく正常なケース（無効アラームの保存時など）
+                        if (error != AlarmScheduleError.NoEnabledAlarm) {
+                            android.util.Log.e(
+                                "AlarmSettingsScreen",
+                                "Failed to schedule alarm: $error"
+                            )
+                        }
                         withContext(Dispatchers.Main) {
-                            snackbarHostState.showSnackbar(errorFailedToSchedule)
-                            // 保存は成功しているのでナビゲートはする（スケジュール失敗は警告扱い）
+                            if (error != AlarmScheduleError.NoEnabledAlarm) {
+                                snackbarHostState.showSnackbar(errorFailedToSchedule)
+                            }
                             onNavigateBack()
                         }
                     }
