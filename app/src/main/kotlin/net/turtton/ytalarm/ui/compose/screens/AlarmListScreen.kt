@@ -12,11 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -127,7 +127,7 @@ fun AlarmListScreenContent(
                     }
                     // ソートルール選択ボタン
                     IconButton(onClick = { showSortDialog = true }) {
-                        Icon(Icons.Default.Sort, contentDescription = "Sort rule")
+                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort rule")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -420,9 +420,9 @@ fun AlarmListScreen(
                                         AlarmScheduleError.NoAlarmManager -> errorNoAlarmManager
                                         AlarmScheduleError.NoEnabledAlarm -> null
                                     }
-                                    message?.let {
-                                        scope.launch(Dispatchers.Main) {
-                                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                                    message?.let { msg ->
+                                        withContext(Dispatchers.Main) {
+                                            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                 }

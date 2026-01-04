@@ -281,7 +281,9 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                     DisplayData(
                         id = video.id,
                         title = video.title,
-                        thumbnailUrl = video.thumbnailUrl?.let { DisplayDataThumbnail.Url(it) }
+                        thumbnailUrl = video.thumbnailUrl.takeIf {
+                            it.isNotEmpty()
+                        }?.let { DisplayDataThumbnail.Url(it) }
                     )
                 },
                 onConfirm = { selectedIds ->
