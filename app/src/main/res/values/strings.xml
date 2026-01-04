@@ -22,6 +22,7 @@
     </plurals>
     <string name="setting_vibration">Vibration</string>
     <string name="item_video_list_state_importing">Importing</string>
+    <string name="item_video_list_state_import_failed">Import Failed</string>
     <string name="fragment_video_player_button_dismiss">Dismiss</string>
     <string name="fragment_video_player_button_snooze">Snooze</string>
     <string name="fragment_video_player_button_stop">Stop</string>

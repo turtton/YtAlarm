@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -19,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,6 +47,9 @@ fun VideoItem(
     onMenuDismiss: () -> Unit = {},
     menuContent: (@Composable () -> Unit)? = null
 ) {
+    val isFailed = (video.stateData as? Video.State.Importing)
+        ?.state is Video.WorkerState.Failed
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -58,21 +63,39 @@ fun VideoItem(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = video.thumbnailUrl.ifEmpty { R.drawable.ic_no_image },
-                contentDescription = "Video thumbnail",
-                modifier = Modifier.size(width = 132.dp, height = 64.dp),
-                contentScale = ContentScale.Crop
-            )
+            Box {
+                AsyncImage(
+                    model = video.thumbnailUrl.ifEmpty { R.drawable.ic_no_image },
+                    contentDescription = "Video thumbnail",
+                    modifier = Modifier.size(width = 132.dp, height = 64.dp),
+                    contentScale = ContentScale.Crop
+                )
+                if (isFailed) {
+                    Icon(
+                        imageVector = Icons.Default.Error,
+                        contentDescription = "Import failed",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.align(Alignment.Center).size(32.dp)
+                    )
+                }
+            }
 
             Column(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = video.title,
+                    text = if (isFailed) {
+                        stringResource(R.string.item_video_list_state_import_failed)
+                    } else {
+                        video.title
+                    },
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Normal,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = if (isFailed) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )

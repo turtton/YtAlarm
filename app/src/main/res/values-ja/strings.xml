@@ -14,6 +14,7 @@
     <string name="setting_snooze">スヌーズ</string>
     <string name="setting_vibration">バイブレーション</string>
     <string name="item_video_list_state_importing">取得中</string>
+    <string name="item_video_list_state_import_failed">インポート失敗</string>
     <string name="fragment_video_player_button_dismiss">停止</string>
     <string name="fragment_video_player_button_snooze">スヌーズ</string>
     <string name="fragment_video_player_button_stop">停止</string>
