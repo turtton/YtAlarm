@@ -122,6 +122,7 @@ fun AboutPageScreen(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 24.dp)
@@ -139,6 +140,7 @@ fun AboutPageScreen(
                 text = versionText,
                 style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp)
