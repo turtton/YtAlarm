@@ -20,6 +20,13 @@ object TestDataHelper {
     // Mixed Tracks: SoundCloud/YouTube からの混合プレイリスト（4トラック）
     private val MIXED_TRACKS = listOf(
         TrackInfo(
+            videoId = "1789054948",
+            title = "dancinwithsomebawdy",
+            thumbnailUrl = "https://i1.sndcdn.com/artworks-5qgAgVY4upyMy8uY-NYXH5w-original.jpg",
+            videoUrl = "https://soundcloud.com/lookatcurren/dancinwithsomebawdy",
+            domain = "soundcloud.com"
+        ),
+        TrackInfo(
             videoId = "2231400578",
             title = "B4LLooN - ⠀",
             thumbnailUrl = "https://i1.sndcdn.com/artworks-idsxjqvK6cjedLNx-pad9OA-original.png",
