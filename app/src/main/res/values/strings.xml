@@ -138,6 +138,11 @@
     <string name="message_playlist_deleted">Playlist deleted</string>
     <string name="error_delete_playlist_failed">Failed to delete playlist</string>
 
+    <string name="dialog_delete_alarm_title">Delete Alarm</string>
+    <string name="dialog_delete_alarm_message">Delete alarm at %1$02d:%2$02d?</string>
+    <string name="message_alarm_deleted">Alarm deleted</string>
+    <string name="error_delete_alarm_failed">Failed to delete alarm</string>
+
     <string name="menu_alarm_option_sortrule">Sort Alarms</string>
     <string name="menu_playlist_option_sortrule">Sort Playlists</string>
     <string name="menu_video_list_option_sortrule">Sort Videos</string>

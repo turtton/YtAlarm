@@ -90,6 +90,11 @@
     <string name="dialog_delete_playlist_message">\"%1$s\"を削除しますか？</string>
     <string name="message_playlist_deleted">プレイリストを削除しました</string>
     <string name="error_delete_playlist_failed">プレイリストの削除に失敗しました</string>
+
+    <string name="dialog_delete_alarm_title">アラームの削除</string>
+    <string name="dialog_delete_alarm_message">%1$02d:%2$02dのアラームを削除しますか？</string>
+    <string name="message_alarm_deleted">アラームを削除しました</string>
+    <string name="error_delete_alarm_failed">アラームの削除に失敗しました</string>
     <string name="menu_alarm_option_sortrule">アラームを並び替え</string>
     <string name="menu_playlist_option_sortrule">プレイリストを並び替え</string>
     <string name="menu_video_list_option_sortrule">動画を並び替え</string>

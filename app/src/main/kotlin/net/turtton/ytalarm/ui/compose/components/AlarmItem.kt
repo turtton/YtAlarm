@@ -1,6 +1,7 @@
 package net.turtton.ytalarm.ui.compose.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +26,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AlarmItem(
     alarm: Alarm,
@@ -32,6 +34,7 @@ fun AlarmItem(
     thumbnailUrl: Any?,
     onToggle: (Boolean) -> Unit,
     onClick: () -> Unit,
+    onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -45,7 +48,7 @@ fun AlarmItem(
         Row(
             modifier = Modifier
                 .weight(1f)
-                .clickable(onClick = onClick),
+                .combinedClickable(onClick = onClick, onLongClick = onLongClick),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -108,7 +111,8 @@ private fun AlarmItemPreview() {
             playlistTitle = "Morning Playlist",
             thumbnailUrl = null,
             onToggle = {},
-            onClick = {}
+            onClick = {},
+            onLongClick = {}
         )
     }
 }
