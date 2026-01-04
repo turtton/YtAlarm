@@ -5,17 +5,17 @@
     
     
       
-      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000228049">
+      <testcase classname="fastlane.lanes" name="0: default_platform" time="0.000181499">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="1: assembleDebug assembleAndroidTest -PnoSplits" time="1.596397667">
+      <testcase classname="fastlane.lanes" name="1: assembleDebug assembleAndroidTest -PnoSplits" time="15.679699187">
         
       </testcase>
     
       
-      <testcase classname="fastlane.lanes" name="2: screengrab" time="53.900687277">
+      <testcase classname="fastlane.lanes" name="2: screengrab" time="68.714879509">
         
       </testcase>
     
