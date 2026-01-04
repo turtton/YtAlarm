@@ -17,9 +17,9 @@ object VideoInformationSerializer : KSerializer<VideoInformation> {
         val surrogate = decoder.decodeSerializableValue(VideoInformationSurrogate.serializer())
         val type = when (surrogate.type) {
             "video" -> VideoInformation.Type.Video(
-                surrogate.fullTitle!!,
-                surrogate.thumbnailUrl!!,
-                surrogate.videoUrl!!
+                surrogate.fullTitle ?: surrogate.title ?: surrogate.id,
+                surrogate.thumbnailUrl ?: "",
+                surrogate.videoUrl ?: surrogate.url
             )
 
             "playlist" -> VideoInformation.Type.Playlist(
