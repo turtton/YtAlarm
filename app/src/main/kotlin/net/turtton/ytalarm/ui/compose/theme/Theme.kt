@@ -11,7 +11,14 @@ private val DarkColorScheme = darkColorScheme(
     primary = PrimaryRed,
     onPrimary = Color.White,
     secondary = Red700,
-    error = ErrorRed700
+    error = ErrorRed700,
+    surface = Color(0xFF1C1B1F),
+    surfaceContainerLow = Color(0xFF1D1B20),
+    surfaceContainer = Color(0xFF211F26),
+    onSurface = Color.White,
+    onSurfaceVariant = Color(0xFFCAC4D0),
+    background = Color(0xFF1C1B1F),
+    onBackground = Color.White
 )
 
 private val LightColorScheme = lightColorScheme(
