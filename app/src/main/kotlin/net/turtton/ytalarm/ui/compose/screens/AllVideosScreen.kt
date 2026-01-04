@@ -166,7 +166,10 @@ fun AllVideosScreen(
             onConfirm = {
                 videoToReimport = null
                 scope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(msgReimportStarted)
+                }
+                scope.launch {
                     val result = videoViewModel.reimportVideo(video)
                     val message = when (result) {
                         is ReimportResult.Success -> msgReimportSuccess
@@ -176,6 +179,7 @@ fun AllVideosScreen(
                         is ReimportResult.Error.Downloader -> msgReimportErrorDownloader
                         is ReimportResult.Error.NoUrl -> msgReimportFailed
                     }
+                    snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(message)
                 }
             },
