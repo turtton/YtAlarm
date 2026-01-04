@@ -71,7 +71,7 @@ fun DayOfWeekPickerDialog(
             val hasSelection = selectedDays.values.any { it }
             TextButton(
                 onClick = {
-                    val selected = selectedDays.filter { it.value }.keys.toList()
+                    val selected = DayOfWeekCompat.entries.filter { selectedDays[it] == true }
                     if (selected.isNotEmpty()) {
                         onConfirm(selected)
                     }
