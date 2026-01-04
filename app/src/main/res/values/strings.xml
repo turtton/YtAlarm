@@ -22,6 +22,7 @@
     </plurals>
     <string name="setting_vibration">Vibration</string>
     <string name="item_video_list_state_importing">Importing</string>
+    <string name="item_video_list_state_import_failed">Import Failed</string>
     <string name="fragment_video_player_button_dismiss">Dismiss</string>
     <string name="fragment_video_player_button_snooze">Snooze</string>
     <string name="fragment_video_player_button_stop">Stop</string>
@@ -186,6 +187,10 @@
     <string name="message_reimport_started">Updating video information…</string>
     <string name="message_reimport_success">Video information updated successfully</string>
     <string name="message_reimport_failed">Failed to update video information</string>
+    <string name="message_reimport_error_parse">Failed to update: Parse error</string>
+    <string name="message_reimport_error_network">Failed to update: Network error</string>
+    <string name="message_reimport_error_io">Failed to update: IO error</string>
+    <string name="message_reimport_error_downloader">Failed to update: Downloader error</string>
     <string name="message_playlist_renamed">Playlist renamed</string>
     <string name="message_videos_added">Videos added to playlist</string>
     <string name="message_operation_failed">Operation failed</string>

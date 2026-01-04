@@ -14,6 +14,7 @@
     <string name="setting_snooze">スヌーズ</string>
     <string name="setting_vibration">バイブレーション</string>
     <string name="item_video_list_state_importing">取得中</string>
+    <string name="item_video_list_state_import_failed">インポート失敗</string>
     <string name="fragment_video_player_button_dismiss">停止</string>
     <string name="fragment_video_player_button_snooze">スヌーズ</string>
     <string name="fragment_video_player_button_stop">停止</string>
@@ -130,6 +131,10 @@
     <string name="message_reimport_started">動画情報を更新中…</string>
     <string name="message_reimport_success">動画情報を更新しました</string>
     <string name="message_reimport_failed">動画情報の更新に失敗しました</string>
+    <string name="message_reimport_error_parse">更新失敗: パースエラー</string>
+    <string name="message_reimport_error_network">更新失敗: ネットワークエラー</string>
+    <string name="message_reimport_error_io">更新失敗: IOエラー</string>
+    <string name="message_reimport_error_downloader">更新失敗: ダウンローダーエラー</string>
     <string name="message_playlist_renamed">プレイリスト名を変更しました</string>
     <string name="message_videos_added">動画をプレイリストに追加しました</string>
     <string name="message_operation_failed">操作に失敗しました</string>

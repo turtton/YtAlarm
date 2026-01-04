@@ -60,32 +60,30 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import com.yausername.youtubedl_android.YoutubeDL
-import com.yausername.youtubedl_android.YoutubeDLRequest
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.compose.components.VideoItem
 import net.turtton.ytalarm.ui.compose.components.VideoItemDropdownMenu
+import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
-import net.turtton.ytalarm.util.VideoInformation
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
+import net.turtton.ytalarm.util.extensions.sorted
 import net.turtton.ytalarm.util.extensions.videoOrderRule
 import net.turtton.ytalarm.util.extensions.videoOrderUp
 import net.turtton.ytalarm.util.order.VideoOrder
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
+import net.turtton.ytalarm.viewmodel.ReimportResult
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
@@ -510,6 +508,10 @@ fun VideoListScreen(
     val msgSyncStarted = stringResource(R.string.snackbar_sync_started)
     val msgVideoDeleted = stringResource(R.string.message_video_deleted)
     val msgReimportStarted = stringResource(R.string.message_reimport_started)
+    val msgReimportErrorParse = stringResource(R.string.message_reimport_error_parse)
+    val msgReimportErrorNetwork = stringResource(R.string.message_reimport_error_network)
+    val msgReimportErrorIO = stringResource(R.string.message_reimport_error_io)
+    val msgReimportErrorDownloader = stringResource(R.string.message_reimport_error_downloader)
 
     val currentId by remember { mutableLongStateOf(playlistId) }
     // playlistId == 0の場合は新規プレイリスト作成モード（空のリスト）
@@ -568,15 +570,7 @@ fun VideoListScreen(
 
     // ソート処理
     val sortedVideos = remember(videos, orderRule, orderUp) {
-        val mutableList = videos.toMutableList()
-        when (orderRule) {
-            VideoOrder.TITLE -> mutableList.sortBy { it.title }
-            VideoOrder.CREATION_DATE -> mutableList.sortBy { it.creationDate.timeInMillis }
-        }
-        if (!orderUp) {
-            mutableList.reverse()
-        }
-        mutableList
+        videos.sorted(orderRule, orderUp)
     }
 
     // タイトルの決定: 新規プレイリストモード、既存プレイリストモード
@@ -589,220 +583,137 @@ fun VideoListScreen(
 
     // VideoListScreenContentを呼び出す
     // isAllVideosMode = false: 全動画モードは AllVideosScreen で処理
-    VideoListScreenContent(
-        playlistTitle = playlistTitle,
-        isNewPlaylist = isNewPlaylistMode,
-        isAllVideosMode = false,
-        videos = sortedVideos,
-        playlistType = playlistType,
-        orderRule = orderRule,
-        orderUp = orderUp,
-        selectedItems = selectedItems.toList(),
-        isFabExpanded = isFabExpanded,
-        isSyncing = isSyncing,
-        expandedMenus = expandedMenus,
-        onItemSelect = { id, isSelected ->
-            if (isSelected) {
-                selectedItems.add(id)
-            } else {
-                selectedItems.remove(id)
-            }
-        },
-        onItemClick = { videoId ->
-            onNavigateToVideoPlayer(videoId)
-        },
-        onMenuClick = { video ->
-            expandedMenus[video.id] = true
-        },
-        onMenuDismiss = { videoId ->
-            expandedMenus.remove(videoId)
-        },
-        onSetThumbnail = { video ->
-            videoForThumbnail = video
-            playlist?.let { pl ->
-                playlistViewModel.update(
-                    pl.copy(thumbnail = Playlist.Thumbnail.Video(video.id))
-                )
-            }
-            scope.launch {
-                snackbarHostState.showSnackbar(msgThumbnailSet)
-            }
-        },
-        onDownload = { video ->
-            scope.launch {
-                snackbarHostState.showSnackbar(msgDownloadNotImpl)
-            }
-        },
-        onReimport = { video ->
-            videoToReimport = video
-            scope.launch(Dispatchers.IO) {
-                try {
-                    // キャンセルチェック
-                    ensureActive()
-
-                    // YoutubeDLで動画情報を再取得
-                    val request = YoutubeDLRequest(video.videoUrl)
-                        .addOption("--dump-single-json")
-                        .addOption("-f", "b")
-                    val result = YoutubeDL.getInstance().execute(request) { _, _, _ -> }
-
-                    // 再度キャンセルチェック
-                    ensureActive()
-
-                    // JSONをパースして動画情報を取得
-                    val json = Json { ignoreUnknownKeys = true }
-                    val videoInfo = json.decodeFromString<VideoInformation>(result.out)
-                    val newVideo = videoInfo.toVideo()
-
-                    // 既存のVideoのIDと作成日時を維持したまま情報を更新
-                    val updatedVideo = newVideo.copy(
-                        id = video.id,
-                        creationDate = video.creationDate
-                    )
-                    videoViewModel.update(updatedVideo)
-
-                    withContext(Dispatchers.Main) {
-                        videoToReimport = null
-                        snackbarHostState.showSnackbar(msgReimportSuccess)
-                    }
-                } catch (e: CancellationException) {
-                    // キャンセル例外はログに記録して再スロー
-                    android.util.Log.d(
-                        "VideoListScreen",
-                        "Reimport cancelled for video: ${video.videoId}"
-                    )
-                    throw e
-                } catch (e: kotlinx.serialization.SerializationException) {
-                    android.util.Log.e(
-                        "VideoListScreen",
-                        "JSON parse error during reimport: ${video.videoId}",
-                        e
-                    )
-                    withContext(Dispatchers.Main) {
-                        videoToReimport = null
-                        snackbarHostState.showSnackbar("$msgReimportFailed: Parse error")
-                    }
-                } catch (e: java.net.UnknownHostException) {
-                    android.util.Log.e(
-                        "VideoListScreen",
-                        "Network error during reimport: ${video.videoId}",
-                        e
-                    )
-                    withContext(Dispatchers.Main) {
-                        videoToReimport = null
-                        snackbarHostState.showSnackbar("$msgReimportFailed: Network error")
-                    }
-                } catch (e: java.io.IOException) {
-                    android.util.Log.e(
-                        "VideoListScreen",
-                        "IO error during reimport: ${video.videoId}",
-                        e
-                    )
-                    withContext(Dispatchers.Main) {
-                        videoToReimport = null
-                        snackbarHostState.showSnackbar("$msgReimportFailed: IO error")
-                    }
-                } catch (e: IllegalStateException) {
-                    android.util.Log.e(
-                        "VideoListScreen",
-                        "Reimport failed for video: ${video.videoId}",
-                        e
-                    )
-                    withContext(Dispatchers.Main) {
-                        videoToReimport = null
-                        snackbarHostState.showSnackbar(msgReimportFailed)
-                    }
+    Box(modifier = modifier.fillMaxSize()) {
+        VideoListScreenContent(
+            playlistTitle = playlistTitle,
+            isNewPlaylist = isNewPlaylistMode,
+            isAllVideosMode = false,
+            videos = sortedVideos,
+            playlistType = playlistType,
+            orderRule = orderRule,
+            orderUp = orderUp,
+            selectedItems = selectedItems.toList(),
+            isFabExpanded = isFabExpanded,
+            isSyncing = isSyncing,
+            expandedMenus = expandedMenus,
+            onItemSelect = { id, isSelected ->
+                if (isSelected) {
+                    selectedItems.add(id)
+                } else {
+                    selectedItems.remove(id)
                 }
-            }
-        },
-        onDeleteSingleVideo = { video ->
-            videoToDelete = video
-        },
-        onNavigateBack = onNavigateBack,
-        onDeleteVideos = {
-            scope.launch(Dispatchers.IO) {
-                // 選択された動画をプレイリストから削除
-                val currentPlaylist = playlistViewModel.getFromIdAsync(currentId).await()
-                currentPlaylist?.let { pl ->
-                    val updatedVideos = pl.videos.filter { !selectedItems.contains(it) }
-                    playlistViewModel.update(pl.copy(videos = updatedVideos))
+            },
+            onItemClick = { videoId ->
+                onNavigateToVideoPlayer(videoId)
+            },
+            onMenuClick = { video ->
+                expandedMenus[video.id] = true
+            },
+            onMenuDismiss = { videoId ->
+                expandedMenus.remove(videoId)
+            },
+            onSetThumbnail = { video ->
+                videoForThumbnail = video
+                playlist?.let { pl ->
+                    playlistViewModel.update(
+                        pl.copy(thumbnail = Playlist.Thumbnail.Video(video.id))
+                    )
                 }
-
-                withContext(Dispatchers.Main) {
-                    selectedItems.clear()
-                }
-            }
-        },
-        onSortRuleChange = { rule ->
-            preferences.videoOrderRule = rule
-        },
-        onOrderUpToggle = {
-            preferences.videoOrderUp = !orderUp
-        },
-        onSyncRuleChange = { rule ->
-            scope.launch(Dispatchers.IO) {
-                val pl = playlistViewModel.getFromIdAsync(currentId).await()
-                val type = pl?.type as? Playlist.Type.CloudPlaylist
-                if (pl != null && type != null) {
-                    val updatedType = type.copy(syncRule = rule)
-                    playlistViewModel.update(pl.copy(type = updatedType))
-                }
-            }
-        },
-        onFabExpandToggle = {
-            isFabExpanded = !isFabExpanded
-        },
-        onFabMainClick = {
-            // Syncモード: 同期実行
-            val cloudType = playlist?.type as? Playlist.Type.CloudPlaylist
-            if (cloudType != null) {
-                // Worker登録を先に実行（snackbarは待機するため）
-                VideoInfoDownloadWorker.registerSyncWorker(
-                    context,
-                    currentId,
-                    cloudType.url
-                )
-                // スナックバーは非同期で表示
                 scope.launch {
-                    snackbarHostState.showSnackbar(msgSyncStarted)
+                    snackbarHostState.showSnackbar(msgThumbnailSet)
                 }
-            }
-        },
-        onFabUrlClick = {
-            isFabExpanded = false
-            onShowUrlInputDialog(currentId)
-        },
-        onFabMultiChoiceClick = {
-            isFabExpanded = false
-            onShowMultiChoiceDialog(currentId)
-        },
-        modifier = modifier
-    )
+            },
+            onDownload = { video ->
+                scope.launch {
+                    snackbarHostState.showSnackbar(msgDownloadNotImpl)
+                }
+            },
+            onReimport = { video ->
+                videoToReimport = video
+            },
+            onDeleteSingleVideo = { video ->
+                videoToDelete = video
+            },
+            onNavigateBack = onNavigateBack,
+            onDeleteVideos = {
+                scope.launch(Dispatchers.IO) {
+                    // 選択された動画をプレイリストから削除
+                    val currentPlaylist = playlistViewModel.getFromIdAsync(currentId).await()
+                    currentPlaylist?.let { pl ->
+                        val updatedVideos = pl.videos.filter { !selectedItems.contains(it) }
+                        playlistViewModel.update(pl.copy(videos = updatedVideos))
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        selectedItems.clear()
+                    }
+                }
+            },
+            onSortRuleChange = { rule ->
+                preferences.videoOrderRule = rule
+            },
+            onOrderUpToggle = {
+                preferences.videoOrderUp = !orderUp
+            },
+            onSyncRuleChange = { rule ->
+                scope.launch(Dispatchers.IO) {
+                    val pl = playlistViewModel.getFromIdAsync(currentId).await()
+                    val type = pl?.type as? Playlist.Type.CloudPlaylist
+                    if (pl != null && type != null) {
+                        val updatedType = type.copy(syncRule = rule)
+                        playlistViewModel.update(pl.copy(type = updatedType))
+                    }
+                }
+            },
+            onFabExpandToggle = {
+                isFabExpanded = !isFabExpanded
+            },
+            onFabMainClick = {
+                // Syncモード: 同期実行
+                val cloudType = playlist?.type as? Playlist.Type.CloudPlaylist
+                if (cloudType != null) {
+                    // Worker登録を先に実行（snackbarは待機するため）
+                    VideoInfoDownloadWorker.registerSyncWorker(
+                        context,
+                        currentId,
+                        cloudType.url
+                    )
+                    // スナックバーは非同期で表示
+                    scope.launch {
+                        snackbarHostState.showSnackbar(msgSyncStarted)
+                    }
+                }
+            },
+            onFabUrlClick = {
+                isFabExpanded = false
+                onShowUrlInputDialog(currentId)
+            },
+            onFabMultiChoiceClick = {
+                isFabExpanded = false
+                onShowMultiChoiceDialog(currentId)
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        // Snackbar用のホスト
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
 
     // 削除確認ダイアログ
     videoToDelete?.let { video ->
-        AlertDialog(
-            onDismissRequest = { videoToDelete = null },
-            title = { Text(stringResource(R.string.dialog_delete_video_title)) },
-            text = { Text(stringResource(R.string.dialog_delete_video_message, video.title)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        videoViewModel.delete(video)
-                        videoToDelete = null
-                        scope.launch {
-                            snackbarHostState.showSnackbar(msgVideoDeleted)
-                        }
-                    }
-                ) {
-                    Text(stringResource(R.string.dialog_remove_video_positive))
+        DeleteVideoDialog(
+            video = video,
+            onConfirm = {
+                videoViewModel.delete(video)
+                videoToDelete = null
+                scope.launch {
+                    snackbarHostState.showSnackbar(msgVideoDeleted)
                 }
             },
-            dismissButton = {
-                TextButton(onClick = { videoToDelete = null }) {
-                    Text(stringResource(R.string.dialog_remove_video_negative))
-                }
-            }
+            onDismiss = { videoToDelete = null }
         )
     }
 
@@ -811,10 +722,24 @@ fun VideoListScreen(
         VideoReimportDialog(
             video = video,
             onConfirm = {
+                videoToReimport = null
                 scope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(msgReimportStarted)
                 }
-                videoToReimport = null
+                scope.launch {
+                    val result = videoViewModel.reimportVideo(video)
+                    val message = when (result) {
+                        is ReimportResult.Success -> msgReimportSuccess
+                        is ReimportResult.Error.Parse -> msgReimportErrorParse
+                        is ReimportResult.Error.Network -> msgReimportErrorNetwork
+                        is ReimportResult.Error.IO -> msgReimportErrorIO
+                        is ReimportResult.Error.Downloader -> msgReimportErrorDownloader
+                        is ReimportResult.Error.NoUrl -> msgReimportFailed
+                    }
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(message)
+                }
             },
             onDismiss = { videoToReimport = null }
         )

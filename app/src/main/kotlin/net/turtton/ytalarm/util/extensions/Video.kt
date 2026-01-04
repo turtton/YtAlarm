@@ -5,8 +5,16 @@ import androidx.work.WorkManager
 import kotlinx.coroutines.guava.await
 import net.turtton.ytalarm.database.structure.Video
 
-fun Video.copyAsFailed(url: String) =
-    copy(stateData = Video.State.Importing(Video.WorkerState.Failed(url)))
+/**
+ * Creates a copy of this video marked as failed import.
+ * Note: [domain] is intentionally set to the full URL to display the source URL in the UI
+ * when the import fails, as the actual domain cannot be determined at this point.
+ */
+fun Video.copyAsFailed(url: String) = copy(
+    videoUrl = url,
+    domain = url,
+    stateData = Video.State.Importing(Video.WorkerState.Failed(url))
+)
 
 /**
  * Collects videos which finished downloading or importing except state is [Video.WorkerState.Failed].
