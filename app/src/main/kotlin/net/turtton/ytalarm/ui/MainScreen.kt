@@ -41,6 +41,7 @@ import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.navigation.YtAlarmDestination
 import net.turtton.ytalarm.ui.compose.screens.PermissionScreen
 import net.turtton.ytalarm.ui.compose.screens.hasMissingPermissions
+import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 
@@ -84,56 +85,60 @@ fun MainScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    CompositionLocalProvider(
-        LocalPlaylistViewModel provides playlistViewModel,
-        LocalVideoViewModel provides videoViewModel,
-        LocalVideoPlayerResourceContainer provides videoPlayerResourceContainer
-    ) {
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            drawerContent = {
-                ModalDrawerSheet {
-                    DrawerHeader()
-                    HorizontalDivider()
-                    DrawerContent(
-                        currentRoute = currentRoute,
-                        onNavigate = { route ->
-                            // 現在のルートを取得
-                            val current = navController.currentBackStackEntry?.destination?.route
-                            // ルートが異なる場合のみナビゲート
-                            if (current != route) {
-                                // Drawerを非同期で閉じる（完了を待たない）
-                                scope.launch {
-                                    drawerState.close()
-                                }
-                                // 即座にナビゲーションを実行（タイムラグ解消）
-                                navController.navigate(route) {
-                                    // スタート画面まで戻り、状態を保存/復元してナビゲート
-                                    popUpTo(YtAlarmDestination.ALARM_LIST) {
-                                        saveState = true
+    AppTheme {
+        CompositionLocalProvider(
+            LocalPlaylistViewModel provides playlistViewModel,
+            LocalVideoViewModel provides videoViewModel,
+            LocalVideoPlayerResourceContainer provides videoPlayerResourceContainer
+        ) {
+            ModalNavigationDrawer(
+                drawerState = drawerState,
+                drawerContent = {
+                    ModalDrawerSheet {
+                        DrawerHeader()
+                        HorizontalDivider()
+                        DrawerContent(
+                            currentRoute = currentRoute,
+                            onNavigate = { route ->
+                                // 現在のルートを取得
+                                val current = navController.currentBackStackEntry
+                                    ?.destination
+                                    ?.route
+                                // ルートが異なる場合のみナビゲート
+                                if (current != route) {
+                                    // Drawerを非同期で閉じる（完了を待たない）
+                                    scope.launch {
+                                        drawerState.close()
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            } else {
-                                // 同じルートの場合はDrawerを閉じるのみ
-                                scope.launch {
-                                    drawerState.close()
+                                    // 即座にナビゲーションを実行（タイムラグ解消）
+                                    navController.navigate(route) {
+                                        // スタート画面まで戻り、状態を保存/復元してナビゲート
+                                        popUpTo(YtAlarmDestination.ALARM_LIST) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                } else {
+                                    // 同じルートの場合はDrawerを閉じるのみ
+                                    scope.launch {
+                                        drawerState.close()
+                                    }
                                 }
                             }
-                        }
-                    )
-                }
-            }
-        ) {
-            YtAlarmApp(
-                navController = navController,
-                onOpenDrawer = {
-                    scope.launch {
-                        drawerState.open()
+                        )
                     }
                 }
-            )
+            ) {
+                YtAlarmApp(
+                    navController = navController,
+                    onOpenDrawer = {
+                        scope.launch {
+                            drawerState.open()
+                        }
+                    }
+                )
+            }
         }
     }
 }

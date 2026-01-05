@@ -1,0 +1,12 @@
+Major UI overhaul: Migrated to Jetpack Compose
+
+New features:
+- Long press to delete alarms
+- Playlist sync and delete options
+- Auto-update yt-dlp
+
+Bug fixes:
+- HLS streaming support (ExoPlayer)
+- Alarm scheduling issues on Android 14+
+- Dark theme improvements
+- Radio stream support

@@ -26,6 +26,7 @@
     <string name="menu_title_playlist">プレイリスト</string>
     <string name="menu_title_video_list">ビデオ</string>
     <string name="menu_title_aboutpage">概要</string>
+    <string name="nav_about">概要</string>
 
     <!-- Navigation titles for Compose screens -->
     <string name="nav_alarm_list">アラーム一覧</string>

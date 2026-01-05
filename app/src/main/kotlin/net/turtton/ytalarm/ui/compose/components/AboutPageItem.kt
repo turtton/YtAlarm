@@ -74,6 +74,7 @@ fun AboutPageItem(
                 text = stringResource(id = title),
                 fontSize = 20.sp,
                 style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 2
             )
 
