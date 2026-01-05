@@ -13,9 +13,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -84,10 +91,13 @@ private val AboutItems: List<AboutPageData> = listOf(
  *
  * アプリの情報、ライセンス、寄付リンクなどを表示
  *
+ * @param onNavigateBack 戻るボタン押下時のコールバック
  * @param snackbarHostState Snackbar表示用のホスト状態
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutPageScreen(
+    onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() }
 ) {
@@ -100,115 +110,134 @@ fun AboutPageScreen(
     val snackbarCopied = stringResource(R.string.snackbar_copied)
     val snackbarClipboardError = stringResource(R.string.snackbar_error_failed_to_access_clipboard)
 
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        // アプリアイコン
-        item {
-            Image(
-                painter = painterResource(id = R.drawable.ic_launcher_logo_round),
-                contentDescription = stringResource(R.string.app_name),
-                modifier = Modifier
-                    .padding(top = 16.dp)
-                    .size(100.dp)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.nav_about)) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
+                }
             )
-        }
+        },
+        modifier = modifier
+    ) { paddingValues ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            // アプリアイコン
+            item {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_logo_round),
+                    contentDescription = stringResource(R.string.app_name),
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .size(100.dp)
+                )
+            }
 
-        // アプリ名
-        item {
-            Text(
-                text = stringResource(R.string.app_name),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 24.dp)
-            )
-        }
+            // アプリ名
+            item {
+                Text(
+                    text = stringResource(R.string.app_name),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp)
+                )
+            }
 
-        // バージョン情報
-        item {
-            val versionText = stringResource(
-                R.string.version,
-                BuildConfig.VERSION_NAME,
-                BuildConfig.VERSION_CODE
-            )
-            Text(
-                text = versionText,
-                style = MaterialTheme.typography.bodyMedium,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            )
-        }
+            // バージョン情報
+            item {
+                val versionText = stringResource(
+                    R.string.version,
+                    BuildConfig.VERSION_NAME,
+                    BuildConfig.VERSION_CODE
+                )
+                Text(
+                    text = versionText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
+            }
 
-        // About情報リスト
-        items(
-            items = AboutItems,
-            key = { it.title }
-        ) { item ->
-            AboutPageItem(
-                thumbnail = item.thumbnail,
-                title = item.title,
-                details = item.details,
-                onClick = {
-                    when (item) {
-                        is AboutPageData.LinkData -> {
-                            // リンクを開く
-                            try {
-                                val intent = Intent(Intent.ACTION_VIEW, item.url.toUri())
-                                context.startActivity(intent)
-                            } catch (e: android.content.ActivityNotFoundException) {
-                                android.util.Log.w("AboutPageScreen", "No browser found", e)
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(errorNoBrowser)
-                                }
-                            } catch (e: SecurityException) {
-                                android.util.Log.e(
-                                    "AboutPageScreen",
-                                    "Security error opening link",
-                                    e
-                                )
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(errorOpenLink)
-                                }
-                            } catch (e: IllegalArgumentException) {
-                                android.util.Log.e("AboutPageScreen", "Invalid URL", e)
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(errorOpenLink)
-                                }
-                            }
-                        }
-
-                        is AboutPageData.CopyableData -> {
-                            // クリップボードにコピー
-                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE)
-                                as? ClipboardManager
-                            if (clipboard != null) {
-                                val clipData = ClipData.newPlainText(
-                                    "YtAlarmClipData",
-                                    item.clipData
-                                )
-                                clipboard.setPrimaryClip(clipData)
-                                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+            // About情報リスト
+            items(
+                items = AboutItems,
+                key = { it.title }
+            ) { item ->
+                AboutPageItem(
+                    thumbnail = item.thumbnail,
+                    title = item.title,
+                    details = item.details,
+                    onClick = {
+                        when (item) {
+                            is AboutPageData.LinkData -> {
+                                // リンクを開く
+                                try {
+                                    val intent = Intent(Intent.ACTION_VIEW, item.url.toUri())
+                                    context.startActivity(intent)
+                                } catch (e: android.content.ActivityNotFoundException) {
+                                    android.util.Log.w("AboutPageScreen", "No browser found", e)
                                     scope.launch {
-                                        snackbarHostState.showSnackbar(snackbarCopied)
+                                        snackbarHostState.showSnackbar(errorNoBrowser)
+                                    }
+                                } catch (e: SecurityException) {
+                                    android.util.Log.e(
+                                        "AboutPageScreen",
+                                        "Security error opening link",
+                                        e
+                                    )
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(errorOpenLink)
+                                    }
+                                } catch (e: IllegalArgumentException) {
+                                    android.util.Log.e("AboutPageScreen", "Invalid URL", e)
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(errorOpenLink)
                                     }
                                 }
-                            } else {
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(snackbarClipboardError)
+                            }
+
+                            is AboutPageData.CopyableData -> {
+                                // クリップボードにコピー
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE)
+                                    as? ClipboardManager
+                                if (clipboard != null) {
+                                    val clipData = ClipData.newPlainText(
+                                        "YtAlarmClipData",
+                                        item.clipData
+                                    )
+                                    clipboard.setPrimaryClip(clipData)
+                                    if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.S_V2) {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(snackbarCopied)
+                                        }
+                                    }
+                                } else {
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar(snackbarClipboardError)
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            )
+                )
+            }
         }
     }
 }
@@ -248,6 +277,6 @@ private sealed interface AboutPageData {
 @Composable
 private fun AboutPageScreenPreview() {
     AppTheme {
-        AboutPageScreen()
+        AboutPageScreen(onNavigateBack = {})
     }
 }

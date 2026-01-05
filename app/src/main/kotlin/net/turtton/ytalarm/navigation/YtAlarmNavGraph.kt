@@ -75,7 +75,7 @@ fun YtAlarmNavGraph(
         videoListScreen(navController)
         allVideosScreen(navController, onOpenDrawer)
         videoPlayerScreen(navController)
-        aboutScreen()
+        aboutScreen(navController)
         settingsScreen(navController)
     }
 }
@@ -417,9 +417,13 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
 /**
  * About画面のルート定義
  */
-private fun NavGraphBuilder.aboutScreen() {
+private fun NavGraphBuilder.aboutScreen(navController: NavHostController) {
     composable(route = YtAlarmDestination.ABOUT) {
-        AboutPageScreen()
+        AboutPageScreen(
+            onNavigateBack = {
+                navController.popBackStackSafely()
+            }
+        )
     }
 }
 
