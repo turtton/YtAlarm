@@ -5,11 +5,11 @@ Please confirm that they are working at [yt-dlp](https://github.com/yt-dlp/yt-dl
 
 :white_check_mark: : Perfect, :warning: : Partial, :no_entry_sign: : Broken
 
-| Name                           | Domain                | Status                    |
-|--------------------------------|-----------------------|---------------------------|
-| Youtube                        | youtube.com, youtu.be | :white_check_mark:        |
-| SoundCloud                     | soundcloud.com        | :white_check_mark:        |
-| Bandcamp                       | bandcamp.com          | :white_check_mark:        |
-| Niconico                       | nicovideo.jp          | :warning:(Only downloads) |
-| Twitter                        | twitter.com           | :white_check_mark:        |
-| Radio stream URL search engine | streamurl.link        | :white_check_mark:        |
+| Name                           | Domain                | Status                    | Tested Source                                            |
+|--------------------------------|-----------------------|---------------------------|----------------------------------------------------------|
+| Youtube                        | youtube.com, youtu.be | :white_check_mark:        | https://youtu.be/3UJZ8CndI8Y                             |
+| SoundCloud                     | soundcloud.com        | :white_check_mark:        | https://soundcloud.com/lookatcurren/feelmyheart          |
+| Bandcamp                       | bandcamp.com          | :white_check_mark:        | https://memoryscape.bandcamp.com/track/urban-groove-flip |
+| Niconico                       | nicovideo.jp          | :warning:(Only downloads) | https://www.nicovideo.jp/watch/sm42571607                |
+| Twitter                        | twitter.com, x.com    | :white_check_mark:        | https://x.com/Nanatsukaze_ofc/status/2008475838581547432 |
+| Radio stream URL search engine | streamurl.link        | :white_check_mark:        | https://stream-relay-geo.ntslive.net/stream2             |
