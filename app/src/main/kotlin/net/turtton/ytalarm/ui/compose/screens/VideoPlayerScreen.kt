@@ -681,11 +681,9 @@ private fun startVibration(context: Context): Vibrator? {
             .setUsage(android.media.AudioAttributes.USAGE_ALARM)
             .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build()
-        @Suppress("DEPRECATION")
         vibrator.vibrate(wave, audioAttributes)
     } else {
         // Android 7以下: 非推奨APIを使用
-        @Suppress("DEPRECATION")
         vibrator.vibrate(VIBRATION_TIMINGS, VIBRATION_REPEAT_POS)
     }
 
