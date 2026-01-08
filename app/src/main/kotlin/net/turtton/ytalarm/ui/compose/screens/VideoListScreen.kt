@@ -75,6 +75,7 @@ import net.turtton.ytalarm.ui.compose.components.VideoItemDropdownMenu
 import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.ui.compose.theme.Dimensions
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
 import net.turtton.ytalarm.util.extensions.sorted
@@ -330,7 +331,8 @@ fun VideoListScreenContent(
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = Dimensions.fabContentPadding()
                 ) {
                     items(
                         items = videos,

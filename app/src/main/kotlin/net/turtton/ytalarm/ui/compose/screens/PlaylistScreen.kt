@@ -59,6 +59,7 @@ import net.turtton.ytalarm.ui.compose.components.PlaylistItem
 import net.turtton.ytalarm.ui.compose.components.PlaylistItemDropdownMenu
 import net.turtton.ytalarm.ui.compose.dialogs.RenamePlaylistDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.ui.compose.theme.Dimensions
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.playlistOrderRule
 import net.turtton.ytalarm.util.extensions.playlistOrderUp
@@ -170,7 +171,8 @@ fun PlaylistScreenContent(
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = Dimensions.fabContentPadding()
                 ) {
                     items(
                         items = playlists,
