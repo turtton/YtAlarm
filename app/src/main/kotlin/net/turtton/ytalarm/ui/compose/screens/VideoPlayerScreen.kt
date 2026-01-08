@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
@@ -638,6 +639,10 @@ private suspend fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
 
 /**
  * バイブレーションを開始
+ *
+ * アラーム用途であることを明示しないと一部のデバイスでバイブレーションが抑制される。
+ * - Android 13+ (API 33): VibrationAttributes.USAGE_ALARM を使用
+ * - Android 8-12 (API 26-32): AudioAttributes.USAGE_ALARM を使用（deprecated APIだが動作する）
  */
 @Suppress("DEPRECATION")
 private fun startVibration(context: Context): Vibrator? {
@@ -652,14 +657,33 @@ private fun startVibration(context: Context): Vibrator? {
         return null
     }
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        // Android 13以降: VibrationAttributesでアラーム用途を明示
         val wave = VibrationEffect.createWaveform(
             VIBRATION_TIMINGS,
             VIBRATION_AMPLITUDES,
             VIBRATION_REPEAT_POS
         )
-        vibrator.vibrate(wave)
+        val attributes = VibrationAttributes.Builder()
+            .setUsage(VibrationAttributes.USAGE_ALARM)
+            .build()
+        vibrator.vibrate(wave, attributes)
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // Android 8-12: AudioAttributesでアラーム用途を明示
+        // vibrate(VibrationEffect, VibrationAttributes)はAPI 33以降のため、
+        // API 26-32ではAudioAttributesを使用する
+        val wave = VibrationEffect.createWaveform(
+            VIBRATION_TIMINGS,
+            VIBRATION_AMPLITUDES,
+            VIBRATION_REPEAT_POS
+        )
+        val audioAttributes = android.media.AudioAttributes.Builder()
+            .setUsage(android.media.AudioAttributes.USAGE_ALARM)
+            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build()
+        vibrator.vibrate(wave, audioAttributes)
     } else {
+        // Android 7以下: 非推奨APIを使用
         vibrator.vibrate(VIBRATION_TIMINGS, VIBRATION_REPEAT_POS)
     }
 

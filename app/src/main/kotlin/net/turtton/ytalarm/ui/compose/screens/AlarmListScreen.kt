@@ -57,6 +57,7 @@ import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.components.AlarmItem
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.ui.compose.theme.Dimensions
 import net.turtton.ytalarm.util.AlarmScheduleError
 import net.turtton.ytalarm.util.extensions.alarmOrderRule
 import net.turtton.ytalarm.util.extensions.alarmOrderUp
@@ -159,7 +160,8 @@ fun AlarmListScreenContent(
                 )
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = Dimensions.fabContentPadding()
                 ) {
                     items(
                         items = alarms,

@@ -55,6 +55,7 @@ import net.turtton.ytalarm.ui.compose.dialogs.SnoozeMinutePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.TimePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VibrationWarningDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.ui.compose.theme.Dimensions
 import net.turtton.ytalarm.util.AlarmScheduleError
 import net.turtton.ytalarm.util.DayOfWeekCompat
 import net.turtton.ytalarm.util.updateAlarmSchedule
@@ -134,6 +135,7 @@ fun AlarmSettingsScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
+            contentPadding = Dimensions.fabContentPadding(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // 0. 有効/無効トグル
