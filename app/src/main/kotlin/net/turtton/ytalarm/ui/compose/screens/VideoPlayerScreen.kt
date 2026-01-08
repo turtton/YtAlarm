@@ -696,7 +696,11 @@ private suspend fun playVideo(
     val url = video.videoUrl
     val infoResult = withContext(Dispatchers.IO) {
         val request = YoutubeDLRequest(url)
-        request.addOption("-f", "best")
+        // b[height<=720]: 720p以下の映像付きフォーマットを優先（高解像度での音声途切れ回避）
+        // b[height>0]: 720p以下がない場合は映像付きの最高品質
+        // ba[abr<=320]: 音声のみの場合、320kbps以下を選択（Bandcamp等の認証回避）
+        // ba/b: フォールバック
+        request.addOption("-f", "b[height<=720]/b[height>0]/ba[abr<=320]/ba/b")
         runCatching {
             YoutubeDL.getInstance().getInfo(request)
         }
