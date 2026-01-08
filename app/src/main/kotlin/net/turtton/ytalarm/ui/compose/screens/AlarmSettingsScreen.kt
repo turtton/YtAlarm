@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -134,6 +135,7 @@ fun AlarmSettingsScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
+            contentPadding = PaddingValues(bottom = 80.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // 0. 有効/無効トグル
