@@ -31,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,6 +56,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.ui.compose.components.AlarmEditBottomSheet
 import net.turtton.ytalarm.ui.compose.components.AlarmItem
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.ui.compose.theme.Dimensions
@@ -71,6 +73,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
+import java.util.Calendar
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -97,7 +100,6 @@ fun AlarmListScreenContent(
     playlistViewModel: PlaylistViewModel? = null,
     videoViewModel: VideoViewModel? = null
 ) {
-    val scope = rememberCoroutineScope()
     var showSortDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -243,7 +245,7 @@ fun AlarmListScreenContent(
                         RadioButton(
                             selected = orderRule.ordinal == index,
                             onClick = {
-                                onSortRuleChange(AlarmOrder.values()[index])
+                                onSortRuleChange(AlarmOrder.entries[index])
                                 showSortDialog = false
                             }
                         )
@@ -272,14 +274,19 @@ fun AlarmListScreenContent(
  * - 並び替え（昇順/降順）
  * - アラームのON/OFF切り替え
  * - 新規アラーム作成（FAB）
- * - アラーム設定画面へのナビゲーション
+ * - アラーム編集（ボトムシート）
+ *
+ * @param onOpenDrawer ドロワーを開くコールバック
+ * @param modifier Modifier
+ * @param initialAlarmId Deep linkで指定されたアラームID（オプション）
  */
+@Suppress("LongMethod", "CyclomaticComplexMethod", "ThrowsCount")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmListScreen(
-    onNavigateToAlarmSettings: (alarmId: Long) -> Unit,
     onOpenDrawer: () -> Unit,
     modifier: Modifier = Modifier,
+    initialAlarmId: Long? = null,
     alarmViewModel: AlarmViewModel = viewModel(
         factory = AlarmViewModelFactory(
             (LocalContext.current.applicationContext as YtApplication).repository
@@ -305,9 +312,59 @@ fun AlarmListScreen(
     val errorNoAlarmManager = stringResource(R.string.error_no_alarm_manager)
     val msgAlarmDeleted = stringResource(R.string.message_alarm_deleted)
     val errorDeleteFailed = stringResource(R.string.error_delete_alarm_failed)
+    val errorFailedToSchedule = stringResource(R.string.snackbar_error_failed_to_schedule_alarm)
+    val errorFailedToSave = stringResource(R.string.snackbar_error_failed_to_save_alarm)
 
     // 削除対象のアラーム
     var alarmToDelete by remember { mutableStateOf<Alarm?>(null) }
+
+    // ボトムシート状態管理（sealed classで統合）
+    var editState by remember { mutableStateOf<AlarmEditState>(AlarmEditState.Hidden) }
+
+    // 保存エラーメッセージ（ボトムシート内のSnackbarで表示）
+    var saveErrorMessage by remember { mutableStateOf<String?>(null) }
+
+    // ボトムシートのSheetState
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = false
+    )
+
+    // Deep linkからの初期表示（初回のみ実行）
+    LaunchedEffect(Unit) {
+        if (initialAlarmId != null) {
+            editState = when (initialAlarmId) {
+                -1L -> AlarmEditState.CreatingNew(createDefaultAlarm())
+                else -> AlarmEditState.Editing(initialAlarmId, null)
+            }
+        }
+    }
+
+    // 編集対象アラームの取得（Editing状態でalarmがnullの場合）
+    LaunchedEffect(editState) {
+        when (val state = editState) {
+            is AlarmEditState.Editing -> {
+                if (state.alarm == null) {
+                    val alarm = withContext(Dispatchers.IO) {
+                        try {
+                            alarmViewModel.getFromIdAsync(state.alarmId).await()
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                            Log.e("AlarmListScreen", "Failed to get alarm: ${state.alarmId}", e)
+                            null
+                        }
+                    }
+                    editState = if (alarm != null) {
+                        state.copy(alarm = alarm)
+                    } else {
+                        AlarmEditState.Hidden
+                    }
+                }
+            }
+
+            else -> { /* no-op */ }
+        }
+    }
 
     val allAlarms by alarmViewModel.allAlarms.observeAsState(emptyList())
 
@@ -355,8 +412,8 @@ fun AlarmListScreen(
                 alarmViewModel.update(updatedAlarm)
 
                 // 全アラームを取得して、同一IDのデータを更新済みのものに差し替え
-                val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
-                val updatedList = allAlarms.map {
+                val currentAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                val updatedList = currentAlarms.map {
                     if (it.id == alarm.id) updatedAlarm else it
                 }.filter { it.isEnable }
 
@@ -374,7 +431,9 @@ fun AlarmListScreen(
                 }
             }
         },
-        onAlarmClick = onNavigateToAlarmSettings,
+        onAlarmClick = { alarmId ->
+            editState = AlarmEditState.Editing(alarmId, null)
+        },
         onAlarmLongClick = { alarm ->
             alarmToDelete = alarm
         },
@@ -386,7 +445,7 @@ fun AlarmListScreen(
             preferences.alarmOrderUp = !orderUp
         },
         onCreateAlarm = {
-            onNavigateToAlarmSettings(-1)
+            editState = AlarmEditState.CreatingNew(createDefaultAlarm())
         },
         modifier = modifier,
         playlistViewModel = playlistViewModel,
@@ -455,11 +514,108 @@ fun AlarmListScreen(
             }
         )
     }
+
+    // アラーム編集ボトムシート
+    val currentAlarm = when (val state = editState) {
+        is AlarmEditState.Hidden -> null
+        is AlarmEditState.CreatingNew -> state.alarm
+        is AlarmEditState.Editing -> state.alarm
+    }
+
+    currentAlarm?.let { alarm ->
+        AlarmEditBottomSheet(
+            alarm = alarm,
+            isNewAlarm = editState is AlarmEditState.CreatingNew,
+            sheetState = sheetState,
+            playlistViewModel = playlistViewModel,
+            videoViewModel = videoViewModel,
+            onAlarmChange = { updatedAlarm ->
+                editState = when (val state = editState) {
+                    is AlarmEditState.Hidden -> state
+                    is AlarmEditState.CreatingNew -> state.copy(alarm = updatedAlarm)
+                    is AlarmEditState.Editing -> state.copy(alarm = updatedAlarm)
+                }
+            },
+            onSaveRequest = {
+                val alarmToSave = currentAlarm
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        // insertSync/updateSyncで完了を待ってからスケジュール更新
+                        if (alarmToSave.id == 0L) {
+                            alarmViewModel.insert(alarmToSave)
+                        } else {
+                            alarmViewModel.update(alarmToSave)
+                        }
+
+                        // AlarmManagerにアラームを登録
+                        val scheduledAlarms = alarmViewModel.getAllAlarmsAsync().await()
+                            .filter { it.isEnable }
+                        val scheduleResult = updateAlarmSchedule(context, scheduledAlarms)
+
+                        when (scheduleResult) {
+                            is arrow.core.Either.Left -> {
+                                val error = scheduleResult.value
+                                // NoEnabledAlarmはエラーではなく正常なケース
+                                if (error != AlarmScheduleError.NoEnabledAlarm) {
+                                    Log.e(
+                                        "AlarmListScreen",
+                                        "Failed to schedule alarm: $error"
+                                    )
+                                    withContext(Dispatchers.Main) {
+                                        saveErrorMessage = errorFailedToSchedule
+                                    }
+                                }
+                            }
+
+                            is arrow.core.Either.Right -> {
+                                // 成功
+                            }
+                        }
+
+                        withContext(Dispatchers.Main) {
+                            editState = AlarmEditState.Hidden
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                        Log.e("AlarmListScreen", "Failed to save alarm", e)
+                        withContext(Dispatchers.Main) {
+                            saveErrorMessage = errorFailedToSave
+                        }
+                    }
+                }
+            },
+            onDelete = {
+                // ボトムシートを閉じて削除確認ダイアログを表示
+                val alarmToDeleteFromSheet = currentAlarm
+                editState = AlarmEditState.Hidden
+                alarmToDelete = alarmToDeleteFromSheet
+            },
+            onDismiss = {
+                editState = AlarmEditState.Hidden
+            },
+            saveErrorMessage = saveErrorMessage,
+            onSaveErrorShown = {
+                saveErrorMessage = null
+            }
+        )
+    }
 }
+
+/**
+ * デフォルトのアラームを作成
+ */
+private fun createDefaultAlarm(): Alarm = Alarm(
+    hour = 7,
+    minute = 0,
+    repeatType = Alarm.RepeatType.Once,
+    creationDate = Calendar.getInstance(),
+    lastUpdated = Calendar.getInstance()
+)
 
 @Preview(showBackground = true)
 @Composable
-fun AlarmListScreenPreview() {
+private fun AlarmListScreenPreview() {
     AppTheme {
         // ダミーデータを作成
         val dummyAlarms = listOf(
