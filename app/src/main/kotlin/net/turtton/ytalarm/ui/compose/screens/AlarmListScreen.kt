@@ -541,10 +541,11 @@ fun AlarmListScreen(
                 scope.launch(Dispatchers.IO) {
                     try {
                         // insertSync/updateSyncで完了を待ってからスケジュール更新
-                        if (alarmToSave.id == 0L) {
+                        val savedAlarmId = if (alarmToSave.id == 0L) {
                             alarmViewModel.insert(alarmToSave)
                         } else {
                             alarmViewModel.update(alarmToSave)
+                            alarmToSave.id
                         }
 
                         // AlarmManagerにアラームを登録
@@ -552,7 +553,7 @@ fun AlarmListScreen(
                             .filter { it.isEnable }
                         val scheduleResult = updateAlarmSchedule(context, scheduledAlarms)
 
-                        when (scheduleResult) {
+                        val scheduleError = when (scheduleResult) {
                             is arrow.core.Either.Left -> {
                                 val error = scheduleResult.value
                                 // NoEnabledAlarmはエラーではなく正常なケース
@@ -561,19 +562,23 @@ fun AlarmListScreen(
                                         "AlarmListScreen",
                                         "Failed to schedule alarm: $error"
                                     )
-                                    withContext(Dispatchers.Main) {
-                                        saveErrorMessage = errorFailedToSchedule
-                                    }
+                                    // isEnableをfalseにして再更新
+                                    val disabledAlarm =
+                                        alarmToSave.copy(id = savedAlarmId, isEnable = false)
+                                    alarmViewModel.update(disabledAlarm)
+                                    errorFailedToSchedule
+                                } else {
+                                    null
                                 }
                             }
 
-                            is arrow.core.Either.Right -> {
-                                // 成功
-                            }
+                            is arrow.core.Either.Right -> null
                         }
 
                         withContext(Dispatchers.Main) {
                             editState = AlarmEditState.Hidden
+                            // エラーがあればBottomSheet閉じた後にSnackbar表示
+                            scheduleError?.let { snackbarHostState.showSnackbar(it) }
                         }
                     } catch (e: CancellationException) {
                         throw e
