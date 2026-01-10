@@ -14,6 +14,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.DigitalClock
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -64,6 +65,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import arrow.core.Either
 import coil.compose.AsyncImage
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -76,6 +78,7 @@ import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.AlarmScheduleError
 import net.turtton.ytalarm.util.extensions.hourOfDay
 import net.turtton.ytalarm.util.extensions.minute
 import net.turtton.ytalarm.util.extensions.plusAssign
@@ -122,6 +125,7 @@ fun VideoPlayerScreen(
     val errorFailedToGetAlarm = stringResource(R.string.snackbar_error_failed_to_get_alarm)
     val errorEmptyVideo = stringResource(R.string.snackbar_error_empty_video)
     val errorFailedToGetVideo = stringResource(R.string.snackbar_error_failed_to_get_video)
+    val errorNoAlarmManager = stringResource(R.string.error_no_alarm_manager)
 
     // テスト用IdlingResource（AlarmActivityからCompositionLocalで提供される場合のみ有効）
     val resourceContainer = LocalVideoPlayerResourceContainer.current
@@ -458,10 +462,6 @@ fun VideoPlayerScreen(
                 return@LaunchedEffect
             }
 
-            // アラーム一覧を更新
-            val alarmList = alarmViewModel.getAllAlarmsAsync().await().filter { it.isEnable }
-            updateAlarmSchedule(context, alarmList)
-
             // アラーム情報を取得
             val alarm = alarmViewModel.getFromIdAsync(alarmId).await()
             if (alarm == null) {
@@ -475,8 +475,20 @@ fun VideoPlayerScreen(
             // スヌーズボタン用にアラーム情報を保持（削除後も参照可能にする）
             cachedAlarm = alarm
 
-            // アラームの更新
-            updateAlarm(alarm, alarmViewModel)
+            // アラーム発火後の処理とスケジュール再登録
+            processAlarmAfterFiring(context, alarm, alarmViewModel).onLeft { error ->
+                val message = when (error) {
+                    is AlarmScheduleError.PermissionDenied -> error.message
+                    AlarmScheduleError.NoAlarmManager -> errorNoAlarmManager
+                    AlarmScheduleError.NoEnabledAlarm -> null
+                }
+                message?.let {
+                    Log.e(LOG_TAG, "Failed to schedule next alarm: $it")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
 
             // バイブレーション開始
             if (alarm.shouldVibrate) {
@@ -613,9 +625,17 @@ private fun setVolume(audioManager: AudioManager, alarmVolume: Int): Int {
 }
 
 /**
- * アラームを更新
+ * アラーム発火後の処理を行い、次のアラームをスケジュールする
+ *
+ * - Once/Date型: isEnable=falseに設定
+ * - Snooze型: アラームを削除
+ * - Everyday/Days型: 変更なし
  */
-private suspend fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
+private suspend fun processAlarmAfterFiring(
+    context: Context,
+    alarm: Alarm,
+    alarmViewModel: AlarmViewModel
+): Either<AlarmScheduleError, Unit> {
     var repeatType = alarm.repeatType
     if (repeatType is Alarm.RepeatType.Date) {
         repeatType = Alarm.RepeatType.Once
@@ -635,6 +655,10 @@ private suspend fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
 
         else -> {}
     }
+
+    // アラーム更新後にスケジュールを更新
+    val alarmList = alarmViewModel.getAllAlarmsAsync().await().filter { it.isEnable }
+    return updateAlarmSchedule(context, alarmList)
 }
 
 /**
