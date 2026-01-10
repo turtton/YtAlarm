@@ -118,8 +118,8 @@ class TakeMainActivityScreenshots {
         waitForImagesAndIdle()
         Screengrab.screenshot("06-alarmSettings")
 
-        // 戻る
-        composeTestRule.onNodeWithContentDescription("Back").performClick()
+        // ボトムシートを閉じる（システム戻るボタン使用）
+        Espresso.pressBack()
         waitForImagesAndIdle()
 
         // 07-drawer: ナビゲーションドロワー

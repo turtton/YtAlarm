@@ -1,0 +1,9 @@
+Alarm UI improvements:
+- Replaced alarm settings screen with bottom sheet (Google Clock style)
+- Unified FAB bottom padding across all list screens
+
+Bug fixes:
+- Fixed Once alarm being rescheduled after firing
+- Added error handling when alarm schedule fails
+- Fixed vibration suppression on some devices
+- Improved yt-dlp format selection for better playback compatibility
