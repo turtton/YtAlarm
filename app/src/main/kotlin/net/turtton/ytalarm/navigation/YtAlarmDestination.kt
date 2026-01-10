@@ -8,18 +8,12 @@ package net.turtton.ytalarm.navigation
  */
 object YtAlarmDestination {
     const val ALARM_LIST = "alarm_list"
-    const val ALARM_SETTINGS = "alarm_settings/{alarmId}"
     const val PLAYLIST = "playlist"
     const val VIDEO_LIST = "video_list/{playlistId}"
     const val ALL_VIDEOS = "all_videos"
     const val VIDEO_PLAYER = "video_player/{videoId}/{isAlarmMode}"
     const val ABOUT = "about"
     const val SETTINGS = "settings"
-
-    /**
-     * アラーム設定画面のルートを生成
-     */
-    fun alarmSettings(alarmId: Long): String = "alarm_settings/$alarmId"
 
     /**
      * 動画一覧画面のルートを生成

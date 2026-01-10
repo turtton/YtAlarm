@@ -35,7 +35,6 @@ import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.UrlInputDialog
 import net.turtton.ytalarm.ui.compose.screens.AboutPageScreen
 import net.turtton.ytalarm.ui.compose.screens.AlarmListScreen
-import net.turtton.ytalarm.ui.compose.screens.AlarmSettingsScreen
 import net.turtton.ytalarm.ui.compose.screens.AllVideosScreen
 import net.turtton.ytalarm.ui.compose.screens.PlaylistScreen
 import net.turtton.ytalarm.ui.compose.screens.SettingsScreen
@@ -70,7 +69,6 @@ fun YtAlarmNavGraph(
         modifier = modifier
     ) {
         alarmListScreen(navController, onOpenDrawer)
-        alarmSettingsScreen(navController)
         playlistScreen(navController, onOpenDrawer)
         videoListScreen(navController)
         allVideosScreen(navController, onOpenDrawer)
@@ -82,66 +80,58 @@ fun YtAlarmNavGraph(
 
 /**
  * アラーム一覧画面のルート定義
+ *
+ * Deep link（ytalarm://alarm/{alarmId}）にも対応し、
+ * 指定されたアラームIDでボトムシートを開く
  */
+@Suppress("UnusedParameter") // navController reserved for potential future use with deep links
 private fun NavGraphBuilder.alarmListScreen(
     navController: NavHostController,
     onOpenDrawer: () -> Unit
 ) {
-    composable(route = YtAlarmDestination.ALARM_LIST) {
-        AlarmListScreen(
-            onNavigateToAlarmSettings = { alarmId ->
-                navController.navigate(YtAlarmDestination.alarmSettings(alarmId))
-            },
-            onOpenDrawer = onOpenDrawer
-        )
-    }
-}
-
-/**
- * アラーム設定画面のルート定義
- */
-private fun NavGraphBuilder.alarmSettingsScreen(navController: NavHostController) {
     composable(
-        route = YtAlarmDestination.ALARM_SETTINGS,
+        route = YtAlarmDestination.ALARM_LIST,
+        deepLinks = listOf(
+            navDeepLink { uriPattern = "ytalarm://alarm/{alarmId}" }
+        ),
         arguments = listOf(
             navArgument("alarmId") {
                 type = NavType.LongType
-                defaultValue = -1L
+                defaultValue = 0L // 0Lはボトムシートを開かない
             }
-        ),
-        deepLinks = listOf(
-            navDeepLink { uriPattern = "ytalarm://alarm/{alarmId}" }
         )
     ) { backStackEntry ->
-        val alarmId = backStackEntry.arguments?.getLong("alarmId") ?: -1L
+        val alarmId = backStackEntry.arguments?.getLong("alarmId") ?: 0L
         val context = LocalContext.current
 
         // Pre-fetch string resource for use in lambda
         val errorInvalidAlarmId = stringResource(R.string.error_invalid_alarm_id)
 
         // 不正なIDのエラー処理
-        // 0はRoom DBで使われないID
+        // 0はボトムシートを開かない（通常のアラーム一覧表示）
         // -1Lは新規作成を意味する（許可）
         // -1L未満の負値は無効
-        if (alarmId == 0L || alarmId < -1L) {
-            androidx.compose.runtime.LaunchedEffect(Unit) {
-                android.widget.Toast.makeText(
-                    context,
-                    errorInvalidAlarmId,
-                    android.widget.Toast.LENGTH_SHORT
-                ).show()
-                navController.navigate(YtAlarmDestination.ALARM_LIST) {
-                    popUpTo(YtAlarmDestination.ALARM_LIST) { inclusive = true }
+        val initialAlarmId: Long? = when {
+            alarmId == 0L -> null
+
+            // 不正なID
+            alarmId < -1L -> {
+                androidx.compose.runtime.LaunchedEffect(Unit) {
+                    android.widget.Toast.makeText(
+                        context,
+                        errorInvalidAlarmId,
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
                 }
+                null
             }
-            return@composable
+
+            else -> alarmId // -1L（新規作成）または正のID（編集）
         }
 
-        AlarmSettingsScreen(
-            alarmId = alarmId,
-            onNavigateBack = {
-                navController.popBackStackSafely()
-            }
+        AlarmListScreen(
+            onOpenDrawer = onOpenDrawer,
+            initialAlarmId = initialAlarmId
         )
     }
 }

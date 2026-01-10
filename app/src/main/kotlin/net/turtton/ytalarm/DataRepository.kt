@@ -28,9 +28,7 @@ class DataRepository(private val database: AppDatabase) {
     }
 
     @WorkerThread
-    suspend fun insert(alarm: Alarm) {
-        database.alarmDao().insert(alarm)
-    }
+    suspend fun insert(alarm: Alarm): Long = database.alarmDao().insert(alarm)
 
     @WorkerThread
     suspend fun delete(alarm: Alarm) {
