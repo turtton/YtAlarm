@@ -114,9 +114,8 @@ private fun NavGraphBuilder.alarmListScreen(
         val initialAlarmId: Long? = when {
             alarmId == 0L -> null
 
-            // 通常表示
+            // 不正なID
             alarmId < -1L -> {
-                // 不正なID
                 androidx.compose.runtime.LaunchedEffect(Unit) {
                     android.widget.Toast.makeText(
                         context,

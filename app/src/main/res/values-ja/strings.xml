@@ -30,8 +30,6 @@
 
     <!-- Navigation titles for Compose screens -->
     <string name="nav_alarm_list">アラーム一覧</string>
-    <string name="nav_new_alarm">新規アラーム</string>
-    <string name="nav_edit_alarm">アラーム編集</string>
     <string name="nav_playlist">プレイリスト一覧</string>
     <string name="nav_video_list">動画一覧</string>
     <string name="nav_video_list_all">すべての動画</string>
@@ -57,7 +55,7 @@
     <!-- Remove video dialog -->
     <string name="dialog_remove_video_title">動画を削除</string>
     <string name="dialog_remove_video_message">選択した動画を削除しますか？</string>
-    <string name="dialog_remove_video_positive">削除</string>
+    <string name="button_delete">削除</string>
     <string name="dialog_remove_video_negative">キャンセル</string>
     <string name="dialog_repeat_choice_title">繰り返し</string>
     <string name="dialog_repeat_days_title">曜日</string>

@@ -46,7 +46,7 @@ fun AlarmBottomSheetActions(
                     contentColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text(text = stringResource(R.string.dialog_remove_video_positive))
+                Text(text = stringResource(R.string.button_delete))
             }
         }
         Spacer(modifier = Modifier.weight(1f))

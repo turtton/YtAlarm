@@ -298,7 +298,7 @@ fun PlaylistScreenContent(
                         showDeleteDialog = false
                     }
                 ) {
-                    Text(stringResource(R.string.dialog_remove_video_positive))
+                    Text(stringResource(R.string.button_delete))
                 }
             },
             dismissButton = {
@@ -586,7 +586,7 @@ fun PlaylistScreen(
                         }
                     }
                 ) {
-                    Text(stringResource(R.string.dialog_remove_video_positive))
+                    Text(stringResource(R.string.button_delete))
                 }
             },
             dismissButton = {

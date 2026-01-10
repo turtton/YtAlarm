@@ -504,7 +504,7 @@ fun AlarmListScreen(
                         }
                     }
                 ) {
-                    Text(stringResource(R.string.dialog_remove_video_positive))
+                    Text(stringResource(R.string.button_delete))
                 }
             },
             dismissButton = {
@@ -537,15 +537,14 @@ fun AlarmListScreen(
                 }
             },
             onSaveRequest = {
-                val alarmToSave = currentAlarm
                 scope.launch(Dispatchers.IO) {
                     try {
                         // insertSync/updateSyncで完了を待ってからスケジュール更新
-                        val savedAlarmId = if (alarmToSave.id == 0L) {
-                            alarmViewModel.insert(alarmToSave)
+                        val savedAlarmId = if (currentAlarm.id == 0L) {
+                            alarmViewModel.insert(currentAlarm)
                         } else {
-                            alarmViewModel.update(alarmToSave)
-                            alarmToSave.id
+                            alarmViewModel.update(currentAlarm)
+                            currentAlarm.id
                         }
 
                         // AlarmManagerにアラームを登録
@@ -564,7 +563,7 @@ fun AlarmListScreen(
                                     )
                                     // isEnableをfalseにして再更新
                                     val disabledAlarm =
-                                        alarmToSave.copy(id = savedAlarmId, isEnable = false)
+                                        currentAlarm.copy(id = savedAlarmId, isEnable = false)
                                     alarmViewModel.update(disabledAlarm)
                                     errorFailedToSchedule
                                 } else {

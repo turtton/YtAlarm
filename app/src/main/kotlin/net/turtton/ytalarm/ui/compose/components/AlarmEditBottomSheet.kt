@@ -81,9 +81,9 @@ fun AlarmEditBottomSheet(
     onSaveRequest: () -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
     saveErrorMessage: String? = null,
-    onSaveErrorShown: () -> Unit = {},
-    modifier: Modifier = Modifier
+    onSaveErrorShown: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
