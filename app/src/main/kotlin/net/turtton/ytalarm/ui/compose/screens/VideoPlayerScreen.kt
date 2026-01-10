@@ -14,6 +14,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.DigitalClock
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -64,6 +65,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import arrow.core.Either
 import coil.compose.AsyncImage
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -76,9 +78,7 @@ import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
-import net.turtton.ytalarm.util.extensions.hourOfDay
-import net.turtton.ytalarm.util.extensions.minute
-import net.turtton.ytalarm.util.extensions.plusAssign
+import net.turtton.ytalarm.util.AlarmScheduleError
 import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
@@ -87,9 +87,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.UpdateSnoozeNotifyWorker
-import java.util.Calendar
 import kotlin.math.roundToInt
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
@@ -122,6 +120,7 @@ fun VideoPlayerScreen(
     val errorFailedToGetAlarm = stringResource(R.string.snackbar_error_failed_to_get_alarm)
     val errorEmptyVideo = stringResource(R.string.snackbar_error_empty_video)
     val errorFailedToGetVideo = stringResource(R.string.snackbar_error_failed_to_get_video)
+    val errorNoAlarmManager = stringResource(R.string.error_no_alarm_manager)
 
     // テスト用IdlingResource（AlarmActivityからCompositionLocalで提供される場合のみ有効）
     val resourceContainer = LocalVideoPlayerResourceContainer.current
@@ -371,39 +370,18 @@ fun VideoPlayerScreen(
                                 // cachedAlarmを使用（スヌーズアラームは発火後に削除されるため）
                                 val alarm = cachedAlarm
                                 if (alarm != null) {
-                                    // 既存のスヌーズアラームを削除
-                                    val existingSnoozes = alarmViewModel
-                                        .getMatchedAsync(Alarm.RepeatType.Snooze).await()
-                                    existingSnoozes.forEach { alarmViewModel.delete(it) }
+                                    // スヌーズアラーム作成（ViewModel）
+                                    alarmViewModel.createSnoozeAlarm(alarm)
 
-                                    // 削除をAlarmManagerに反映
-                                    val alarmsAfterDelete = alarmViewModel
-                                        .getAllAlarmsAsync().await()
-                                        .filter { it.isEnable }
-                                    updateAlarmSchedule(context, alarmsAfterDelete)
-
-                                    val now = Calendar.getInstance()
-                                    now += alarm.snoozeMinute.minutes
-                                    val snoozeAlarm = alarm.copy(
-                                        id = 0,
-                                        hour = now.hourOfDay,
-                                        minute = now.minute,
-                                        repeatType = Alarm.RepeatType.Snooze,
-                                        isEnable = true
-                                    )
-                                    alarmViewModel.insert(snoozeAlarm)
-
-                                    // AlarmManagerにスケジュール
-                                    val allAlarms = alarmViewModel.getAllAlarmsAsync().await()
-                                        .filter { it.isEnable }
-                                    val scheduleResult = updateAlarmSchedule(context, allAlarms)
+                                    // スケジュール更新（UI層）
+                                    val enabledAlarms = alarmViewModel.getEnabledAlarmsSync()
+                                    val scheduleResult = updateAlarmSchedule(context, enabledAlarms)
 
                                     when (scheduleResult) {
-                                        is arrow.core.Either.Left -> {
+                                        is Either.Left -> {
                                             Log.e(
                                                 LOG_TAG,
-                                                "Failed to schedule snooze: " +
-                                                    "${scheduleResult.value}"
+                                                "Failed to schedule snooze: ${scheduleResult.value}"
                                             )
                                             withContext(Dispatchers.Main) {
                                                 snackbarHostState.showSnackbar(
@@ -413,7 +391,7 @@ fun VideoPlayerScreen(
                                             }
                                         }
 
-                                        is arrow.core.Either.Right -> {
+                                        is Either.Right -> {
                                             UpdateSnoozeNotifyWorker.registerWorker(context)
                                             withContext(Dispatchers.Main) {
                                                 onDismiss()
@@ -458,10 +436,6 @@ fun VideoPlayerScreen(
                 return@LaunchedEffect
             }
 
-            // アラーム一覧を更新
-            val alarmList = alarmViewModel.getAllAlarmsAsync().await().filter { it.isEnable }
-            updateAlarmSchedule(context, alarmList)
-
             // アラーム情報を取得
             val alarm = alarmViewModel.getFromIdAsync(alarmId).await()
             if (alarm == null) {
@@ -475,8 +449,26 @@ fun VideoPlayerScreen(
             // スヌーズボタン用にアラーム情報を保持（削除後も参照可能にする）
             cachedAlarm = alarm
 
-            // アラームの更新
-            updateAlarm(alarm, alarmViewModel)
+            // アラーム発火後の処理（ViewModel）
+            alarmViewModel.processAfterFiring(alarm)
+
+            // スケジュール再登録（UI層）
+            val enabledAlarms = alarmViewModel.getEnabledAlarmsSync()
+            // Toastを使用する理由: アラームが即時停止されても
+            // エラー内容がユーザーに確実に見えるようにするため
+            updateAlarmSchedule(context, enabledAlarms).onLeft { error ->
+                val message = when (error) {
+                    is AlarmScheduleError.PermissionDenied -> error.message
+                    AlarmScheduleError.NoAlarmManager -> errorNoAlarmManager
+                    AlarmScheduleError.NoEnabledAlarm -> null
+                }
+                message?.let {
+                    Log.e(LOG_TAG, "Failed to schedule next alarm: $it")
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
 
             // バイブレーション開始
             if (alarm.shouldVibrate) {
@@ -610,31 +602,6 @@ private fun setVolume(audioManager: AudioManager, alarmVolume: Int): Int {
     val volume = (maxVolume * volumeRate).roundToInt()
     audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_PLAY_SOUND)
     return currentVolume
-}
-
-/**
- * アラームを更新
- */
-private suspend fun updateAlarm(alarm: Alarm, alarmViewModel: AlarmViewModel) {
-    var repeatType = alarm.repeatType
-    if (repeatType is Alarm.RepeatType.Date) {
-        repeatType = Alarm.RepeatType.Once
-    }
-    when (repeatType) {
-        is Alarm.RepeatType.Once -> {
-            alarmViewModel.update(alarm.copy(repeatType = repeatType, isEnable = false))
-        }
-
-        is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
-            alarmViewModel.update(alarm)
-        }
-
-        is Alarm.RepeatType.Snooze -> {
-            alarmViewModel.delete(alarm)
-        }
-
-        else -> {}
-    }
 }
 
 /**
