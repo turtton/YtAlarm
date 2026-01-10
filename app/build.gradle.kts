@@ -22,7 +22,7 @@ val minor = 1
 // Max:19
 // Patch always calculated at five times in versionName and also adds abiFilter numberings in versionCode.
 // Please see actualPatchVer.
-val patch = 2
+val patch = 3
 
 val hasNoSplits = hasProperty("noSplits")
 
