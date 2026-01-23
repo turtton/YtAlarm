@@ -4,6 +4,7 @@
     android:id="@+id/compose_player_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:keepScreenOn="true"
     app:use_controller="false"
     app:shutter_background_color="@android:color/transparent"
     app:surface_type="texture_view" />
