@@ -324,11 +324,6 @@ fun AlarmListScreen(
     // 保存エラーメッセージ（ボトムシート内のSnackbarで表示）
     var saveErrorMessage by remember { mutableStateOf<String?>(null) }
 
-    // ボトムシートのSheetState
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = false
-    )
-
     // Deep linkからの初期表示（初回のみ実行）
     LaunchedEffect(Unit) {
         if (initialAlarmId != null) {
@@ -523,6 +518,9 @@ fun AlarmListScreen(
     }
 
     currentAlarm?.let { alarm ->
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = false
+        )
         AlarmEditBottomSheet(
             alarm = alarm,
             isNewAlarm = editState is AlarmEditState.CreatingNew,

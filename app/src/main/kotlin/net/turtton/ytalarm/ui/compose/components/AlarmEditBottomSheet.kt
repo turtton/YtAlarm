@@ -3,18 +3,31 @@ package net.turtton.ytalarm.ui.compose.components
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +42,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -414,20 +429,49 @@ private fun AlarmEditBottomSheetContent(
     val context = LocalContext.current
 
     Column(modifier = modifier.fillMaxWidth()) {
-        // 時刻表示
-        AlarmTimeDisplay(
-            hour = alarm.hour,
-            minute = alarm.minute,
-            onTimeClick = onTimeClick
-        )
+        // Header: 時刻表示 + アクションボタン
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, end = 16.dp, top = 16.dp, bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "%02d:%02d".format(alarm.hour, alarm.minute),
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Light,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.clickable(onClick = onTimeClick)
+            )
+            IconButton(onClick = onTimeClick) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = stringResource(R.string.setting_time),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(modifier = Modifier.weight(1f))
+            if (!isNewAlarm) {
+                OutlinedButton(
+                    onClick = onDelete,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(text = stringResource(R.string.button_delete))
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+            Button(onClick = onSave) {
+                Text(text = stringResource(R.string.ok))
+            }
+        }
 
         HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
         // 設定項目
         LazyColumn(
-            modifier = Modifier
-                .weight(1f, fill = false)
-                .fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             // 0. 有効/無効トグル
@@ -516,12 +560,5 @@ private fun AlarmEditBottomSheetContent(
                 )
             }
         }
-
-        // 削除・保存ボタン
-        AlarmBottomSheetActions(
-            isNewAlarm = isNewAlarm,
-            onDelete = onDelete,
-            onSave = onSave
-        )
     }
 }
