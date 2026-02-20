@@ -7,7 +7,7 @@ targetSdk = "36"
 
 # Kotlin
 kotlin = "2.3.10"
-ksp = "2.3.5"
+ksp = "2.3.6"
 kotlinter = "5.4.2"
 detekt = "1.23.8"
 
