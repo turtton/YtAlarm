@@ -96,7 +96,7 @@ jobs:
         uses: gradle/actions/setup-gradle@f29f5a9d7b09a7c6b29859002d29d24e1674c884 # v5.0.1
 
       - name: Check and Prepare report
-        run: ./gradlew check :rootCoverageReport --stacktrace
+        run: ./gradlew check :koverXmlReport --stacktrace
 
       - name: Generate report
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -114,7 +114,7 @@ jobs:
         uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: "build/reports/jacoco.xml"
+          files: "build/reports/kover/report.xml"
 
       - name: Analize Dependencies
         uses: fossas/fossa-action@c414b9ad82eaad041e47a7cf62a4f02411f427a0 # v1.8.0

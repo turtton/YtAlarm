@@ -27,7 +27,7 @@ See @.github/CONTRIBUTING.md
 ./gradlew test                   # 単体テスト実行
 ./gradlew connectedAndroidTest   # UIテスト実行
 ./gradlew check                  # 全チェック実行 (lint, test, detekt含む)
-./gradlew :rootCoverageReport    # カバレッジレポート生成
+./gradlew :koverXmlReport        # カバレッジレポート生成
 
 # コード品質チェック
 ./gradlew ktlintCheck           # Kotlinコードスタイルチェック
@@ -78,7 +78,7 @@ app/src/main/kotlin/net/turtton/ytalarm/
 ### テスト構成
 - **Unit Tests**: Kotest (JUnit5スタイル) + Mockito
 - **UI Tests**: Espresso + Robolectric
-- **Coverage**: JaCoCo使用、カバレッジレポートは `:rootCoverageReport`
+- **Coverage**: Kover使用、カバレッジレポートは `:koverXmlReport`
 
 ## 開発時の注意事項
 

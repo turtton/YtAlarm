@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     id("androidx.navigation.safeargs.kotlin")
@@ -8,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlinter)
     alias(libs.plugins.detekt)
     alias(libs.plugins.androidx.room)
+    alias(libs.plugins.kover)
 }
 
 kotlin {
@@ -72,8 +72,6 @@ android {
 
     buildTypes {
         debug {
-            enableUnitTestCoverage = true
-            enableAndroidTestCoverage = true
         }
         release {
             isMinifyEnabled = false
