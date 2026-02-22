@@ -26,34 +26,38 @@ plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.androidx.room) apply false
-    alias(libs.plugins.kotlin.android) apply false
     alias(libs.plugins.kotlinter) apply false
     alias(libs.plugins.detekt) apply false
-    // Related: https://github.com/NeoTech-Software/Android-Root-Coverage-Plugin?tab=readme-ov-file#4-compatibility
-    alias(libs.plugins.root.coverage)
+    alias(libs.plugins.kover)
 }
 
 tasks.create("clean") {
     delete(rootProject.layout.buildDirectory)
 }
 
-rootCoverage {
-    excludes = listOf(
-        // Android
-        "**/R.class",
-        "**/R\$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*_Impl*",
-        "**/Fragment*Args.*",
-        "**/Fragment*Args\$*",
-        "**/Fragment*Directions.*",
-        "**/Fragment*Directions\$*",
-        "**/*Directions\$*.*",
-        "**/databinding/**"
-    )
+dependencies {
+    kover(project(":app"))
+}
 
-    generateXml = true
-
-    executeAndroidTests = false
+kover {
+    reports {
+        filters {
+            excludes {
+                classes(
+                    "*.R",
+                    "*.R$*",
+                    "*.BuildConfig",
+                    "*.BuildConfig$*",
+                    "*Manifest*",
+                    "*_Impl*",
+                    "*Fragment*Args",
+                    "*Fragment*Args$*",
+                    "*Fragment*Directions",
+                    "*Fragment*Directions$*",
+                    "*Directions$*",
+                    "*.databinding.*"
+                )
+            }
+        }
+    }
 }
