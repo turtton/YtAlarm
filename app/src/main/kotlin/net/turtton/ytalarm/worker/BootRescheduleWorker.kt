@@ -15,9 +15,11 @@ class BootRescheduleWorker(appContext: Context, workerParams: WorkerParameters) 
     CoroutineIOWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
         withContext(Dispatchers.IO) {
-            val alarms = repository.getAllAlarmsSync()
-            Log.d(TAG, "Rescheduling alarms after boot: ${alarms.count { it.isEnable }} enabled")
-            updateAlarmSchedule(applicationContext, alarms)
+            val enabledAlarms = repository.getAllAlarmsSync().filter { it.isEnable }
+            Log.d(TAG, "Rescheduling alarms after boot: ${enabledAlarms.size} enabled")
+            updateAlarmSchedule(applicationContext, enabledAlarms).onLeft { error ->
+                Log.e(TAG, "Failed to reschedule alarms: $error")
+            }
         }
         return Result.success()
     }
