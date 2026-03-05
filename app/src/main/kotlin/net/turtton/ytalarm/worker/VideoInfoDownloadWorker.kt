@@ -47,19 +47,28 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         targetUrl: String,
         playlistArray: LongArray?
     ): Result {
-        // まず動画として取得を試みる
-        return when (val importResult = useCaseContainer.fetchAndImportVideo(targetUrl)) {
-            is ImportResult.Success -> {
-                if (playlistArray != null && playlistArray.isNotEmpty()) {
-                    addVideoToPlaylists(useCaseContainer, importResult.videoId, playlistArray)
-                }
-                Result.success()
-            }
+        // 1. Importingプレースホルダーを先にDBに挿入（UIに即表示）
+        val importingTitle = applicationContext.getString(R.string.item_video_list_state_importing)
+        val placeholderId = useCaseContainer.insertImportingPlaceholder(importingTitle)
+
+        // 2. プレースホルダーをプレイリストに追加
+        if (playlistArray != null && playlistArray.isNotEmpty()) {
+            addVideoToPlaylists(useCaseContainer, placeholderId, playlistArray)
+        }
+
+        // 3. 動画情報を取得してプレースホルダーを更新
+        return when (
+            val importResult = useCaseContainer.fetchAndImportVideo(targetUrl, placeholderId)
+        ) {
+            is ImportResult.Success -> Result.success()
 
             is ImportResult.Duplicate -> {
+                // プレースホルダーは fetchAndImportVideo 内で削除済み
+                // 既存動画をプレイリストに追加（プレースホルダーから置き換え）
                 if (playlistArray != null && playlistArray.isNotEmpty()) {
-                    addVideoToPlaylists(
+                    replaceVideoInPlaylists(
                         useCaseContainer,
+                        placeholderId,
                         importResult.existingVideoId,
                         playlistArray
                     )
@@ -68,16 +77,21 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
             }
 
             is ImportResult.Failure.UnsupportedUrl -> {
+                // プレイリストとして再試行（プレースホルダーは削除）
+                useCaseContainer.deleteVideoById(placeholderId)
+                removeVideoFromPlaylists(useCaseContainer, placeholderId, playlistArray)
                 doImportCloudPlaylist(useCaseContainer, targetUrl, playlistArray)
             }
 
             is ImportResult.Failure.Network -> {
                 Log.e(WORKER_ID, "Network error. Url: $targetUrl")
+                useCaseContainer.markVideoAsFailed(placeholderId, targetUrl)
                 Result.failure()
             }
 
             is ImportResult.Failure.Parse -> {
                 Log.e(WORKER_ID, "Parse error. Url: $targetUrl")
+                useCaseContainer.markVideoAsFailed(placeholderId, targetUrl)
                 Result.failure()
             }
         }
@@ -135,6 +149,33 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         val updatedPlaylists = playlists.map { playlist ->
             val newVideos = playlist.videos.toMutableSet().apply { add(videoId) }.toList()
             updatePlaylistWithThumbnail(useCaseContainer, playlist, newVideos)
+        }
+        useCaseContainer.updateAllPlaylists(updatedPlaylists)
+    }
+
+    private suspend fun replaceVideoInPlaylists(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        oldVideoId: Long,
+        newVideoId: Long,
+        playlistArray: LongArray
+    ) {
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        val updatedPlaylists = playlists.map { playlist ->
+            val newVideos = playlist.videos.map { if (it == oldVideoId) newVideoId else it }
+            updatePlaylistWithThumbnail(useCaseContainer, playlist, newVideos)
+        }
+        useCaseContainer.updateAllPlaylists(updatedPlaylists)
+    }
+
+    private suspend fun removeVideoFromPlaylists(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        videoId: Long,
+        playlistArray: LongArray?
+    ) {
+        if (playlistArray == null || playlistArray.isEmpty()) return
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        val updatedPlaylists = playlists.map { playlist ->
+            playlist.copy(videos = playlist.videos.filter { it != videoId })
         }
         useCaseContainer.updateAllPlaylists(updatedPlaylists)
     }

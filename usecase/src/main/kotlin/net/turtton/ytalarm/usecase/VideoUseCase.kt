@@ -148,6 +148,15 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
     }
 
     /**
+     * IDを指定して動画を削除する。
+     */
+    suspend fun deleteVideoById(videoId: Long) {
+        val executor = localDataSource.dataSource.createExecutor()
+        val video = localDataSource.videoRepository.getFromIdSync(executor, videoId) ?: return
+        localDataSource.videoRepository.delete(executor, video)
+    }
+
+    /**
      * 動画リストを一括削除する。
      */
     suspend fun deleteAllVideos(videos: List<Video>) {

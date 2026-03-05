@@ -46,12 +46,32 @@ interface ImportUseCase<LExec, RExec, LDS, RDS>
     val remoteDataSource: RDS
 
     /**
+     * Importing状態のプレースホルダー動画をDBに挿入する。
+     * UI上で「インポート中」を即座に表示するために使用する。
+     *
+     * @param title プレースホルダーに表示するタイトル
+     * @return 挿入されたプレースホルダーのID
+     */
+    suspend fun insertImportingPlaceholder(title: String): Long {
+        val executor = localDataSource.dataSource.createExecutor()
+        val placeholder = Video(
+            videoId = "",
+            title = title,
+            state = Video.State.Importing
+        )
+        return localDataSource.videoRepository.insert(executor, placeholder)
+    }
+
+    /**
      * URLから動画情報を取得してDBに登録する（重複チェック含む）。
+     * [placeholderVideoId] が指定された場合、新規挿入ではなくそのレコードを更新する。
+     * 失敗時にプレースホルダーを [Video.State.Failed] に更新する処理は呼び出し元の責務。
      *
      * @param url 動画URL
+     * @param placeholderVideoId プレースホルダー動画のID（nullの場合は新規挿入）
      * @return インポート結果
      */
-    suspend fun fetchAndImportVideo(url: String): ImportResult {
+    suspend fun fetchAndImportVideo(url: String, placeholderVideoId: Long? = null): ImportResult {
         val lExecutor = localDataSource.dataSource.createExecutor()
         val rExecutor = remoteDataSource.dataSource.createExecutor()
 
@@ -74,6 +94,13 @@ interface ImportUseCase<LExec, RExec, LDS, RDS>
 
                 val duplicateId = checkVideoDuplication(info.id, info.domain)
                 if (duplicateId != null) {
+                    if (placeholderVideoId != null) {
+                        val placeholder = localDataSource.videoRepository
+                            .getFromIdSync(lExecutor, placeholderVideoId)
+                        if (placeholder != null) {
+                            localDataSource.videoRepository.delete(lExecutor, placeholder)
+                        }
+                    }
                     return ImportResult.Duplicate(duplicateId)
                 }
 
@@ -85,10 +112,35 @@ interface ImportUseCase<LExec, RExec, LDS, RDS>
                     domain = info.domain,
                     state = Video.State.Information()
                 )
-                val newId = localDataSource.videoRepository.insert(lExecutor, video)
-                ImportResult.Success(newId)
+
+                if (placeholderVideoId != null) {
+                    localDataSource.videoRepository.update(
+                        lExecutor,
+                        video.copy(id = placeholderVideoId)
+                    )
+                    ImportResult.Success(placeholderVideoId)
+                } else {
+                    val newId = localDataSource.videoRepository.insert(lExecutor, video)
+                    ImportResult.Success(newId)
+                }
             }
         }
+    }
+
+    /**
+     * 指定した動画を [Video.State.Failed] に更新する。
+     * インポート失敗時にプレースホルダーを失敗状態にするために使用する。
+     *
+     * @param videoId 対象の動画ID
+     * @param sourceUrl 失敗元のURL
+     */
+    suspend fun markVideoAsFailed(videoId: Long, sourceUrl: String) {
+        val executor = localDataSource.dataSource.createExecutor()
+        val video = localDataSource.videoRepository.getFromIdSync(executor, videoId) ?: return
+        localDataSource.videoRepository.update(
+            executor,
+            video.copy(state = Video.State.Failed(sourceUrl))
+        )
     }
 
     /**
