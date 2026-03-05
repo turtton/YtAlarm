@@ -267,17 +267,23 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         // MultiChoiceVideoDialog: 既存動画をプレイリストに追加
         if (showMultiChoiceDialog) {
             val allVideos by videoViewModel.allVideos.observeAsState(emptyList())
+            val currentPlaylist by playlistViewModel
+                .getFromId(currentPlaylistIdForDialog)
+                .observeAsState()
+            val existingVideoIds = currentPlaylist?.videos?.toSet() ?: emptySet()
 
             MultiChoiceVideoDialog(
-                displayDataList = allVideos.map { video ->
-                    DisplayData(
-                        id = video.id,
-                        title = video.title,
-                        thumbnailUrl = video.thumbnailUrl.takeIf {
-                            it.isNotEmpty()
-                        }?.let { DisplayDataThumbnail.Url(it) }
-                    )
-                },
+                displayDataList = allVideos
+                    .filter { it.id !in existingVideoIds }
+                    .map { video ->
+                        DisplayData(
+                            id = video.id,
+                            title = video.title,
+                            thumbnailUrl = video.thumbnailUrl.takeIf {
+                                it.isNotEmpty()
+                            }?.let { DisplayDataThumbnail.Url(it) }
+                        )
+                    },
                 onConfirm = { selectedIds ->
                     scope.launch(Dispatchers.IO) {
                         try {
