@@ -2,7 +2,6 @@ package net.turtton.ytalarm.usecase
 
 import arrow.core.Either
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.Clock

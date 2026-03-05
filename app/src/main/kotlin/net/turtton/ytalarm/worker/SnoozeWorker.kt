@@ -76,6 +76,7 @@ class UpdateSnoozeNotifyWorker(appContext: Context, workerParams: WorkerParamete
                     cal.set(Calendar.HOUR_OF_DAY, alarm.hour)
                     cal.set(Calendar.MINUTE, alarm.minute)
                     cal.set(Calendar.SECOND, 0)
+                    cal.set(Calendar.MILLISECOND, 0)
                     if (cal.timeInMillis <= now.timeInMillis) {
                         cal.add(Calendar.DATE, 1)
                     }
