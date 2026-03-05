@@ -68,6 +68,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.compose.components.VideoItem
@@ -110,7 +111,7 @@ fun VideoListScreenContent(
     playlistTitle: String,
     isNewPlaylist: Boolean,
     isAllVideosMode: Boolean,
-    videos: List<net.turtton.ytalarm.database.structure.Video>,
+    videos: List<Video>,
     playlistType: Playlist.Type?,
     orderRule: VideoOrder,
     orderUp: Boolean,
@@ -120,12 +121,12 @@ fun VideoListScreenContent(
     expandedMenus: Map<Long, Boolean>,
     onItemSelect: (Long, Boolean) -> Unit,
     onItemClick: (String) -> Unit,
-    onMenuClick: (net.turtton.ytalarm.database.structure.Video) -> Unit,
+    onMenuClick: (Video) -> Unit,
     onMenuDismiss: (Long) -> Unit,
-    onSetThumbnail: (net.turtton.ytalarm.database.structure.Video) -> Unit,
-    onDownload: (net.turtton.ytalarm.database.structure.Video) -> Unit,
-    onReimport: (net.turtton.ytalarm.database.structure.Video) -> Unit,
-    onDeleteSingleVideo: (net.turtton.ytalarm.database.structure.Video) -> Unit,
+    onSetThumbnail: (Video) -> Unit,
+    onDownload: (Video) -> Unit,
+    onReimport: (Video) -> Unit,
+    onDeleteSingleVideo: (Video) -> Unit,
     onNavigateBack: () -> Unit,
     onDeleteVideos: () -> Unit,
     onSortRuleChange: (VideoOrder) -> Unit,
@@ -489,12 +490,14 @@ fun VideoListScreen(
     modifier: Modifier = Modifier,
     videoViewModel: VideoViewModel = viewModel(
         factory = VideoViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     ),
     playlistViewModel: PlaylistViewModel = viewModel(
         factory = PlaylistViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     )
 ) {
@@ -512,8 +515,6 @@ fun VideoListScreen(
     val msgReimportStarted = stringResource(R.string.message_reimport_started)
     val msgReimportErrorParse = stringResource(R.string.message_reimport_error_parse)
     val msgReimportErrorNetwork = stringResource(R.string.message_reimport_error_network)
-    val msgReimportErrorIO = stringResource(R.string.message_reimport_error_io)
-    val msgReimportErrorDownloader = stringResource(R.string.message_reimport_error_downloader)
 
     val currentId by remember { mutableLongStateOf(playlistId) }
     // playlistId == 0の場合は新規プレイリスト作成モード（空のリスト）
@@ -530,13 +531,13 @@ fun VideoListScreen(
     // メニュー展開状態の管理
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
     var videoToDelete by remember {
-        mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null)
+        mutableStateOf<Video?>(null)
     }
     var videoToReimport by remember {
-        mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null)
+        mutableStateOf<Video?>(null)
     }
     var videoForThumbnail by remember {
-        mutableStateOf<net.turtton.ytalarm.database.structure.Video?>(null)
+        mutableStateOf<Video?>(null)
     }
 
     val activity = context.findActivity() ?: return
@@ -563,7 +564,7 @@ fun VideoListScreen(
     // 全動画表示は AllVideosScreen で処理
     val videos by if (isNewPlaylistMode) {
         // 新規プレイリスト作成モード: 空のリスト
-        remember { mutableStateOf(emptyList<net.turtton.ytalarm.database.structure.Video>()) }
+        remember { mutableStateOf(emptyList<Video>()) }
     } else {
         // 既存プレイリストの動画を取得
         val videoIds = playlist?.videos ?: emptyList()
@@ -735,8 +736,6 @@ fun VideoListScreen(
                         is ReimportResult.Success -> msgReimportSuccess
                         is ReimportResult.Error.Parse -> msgReimportErrorParse
                         is ReimportResult.Error.Network -> msgReimportErrorNetwork
-                        is ReimportResult.Error.IO -> msgReimportErrorIO
-                        is ReimportResult.Error.Downloader -> msgReimportErrorDownloader
                         is ReimportResult.Error.NoUrl -> msgReimportFailed
                     }
                     snackbarHostState.currentSnackbarData?.dismiss()
@@ -754,32 +753,32 @@ fun VideoListScreenPreview() {
     AppTheme {
         // ダミーデータを作成
         val dummyVideos = listOf(
-            net.turtton.ytalarm.database.structure.Video(
+            Video(
                 id = 1L,
                 videoId = "video1",
                 title = "Morning Meditation",
                 domain = "youtube.com",
-                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(
+                stateData = Video.State.Information(
                     isStreamable = true
                 ),
                 creationDate = java.util.Calendar.getInstance()
             ),
-            net.turtton.ytalarm.database.structure.Video(
+            Video(
                 id = 2L,
                 videoId = "video2",
                 title = "Workout Music Mix",
                 domain = "youtube.com",
-                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(
+                stateData = Video.State.Information(
                     isStreamable = true
                 ),
                 creationDate = java.util.Calendar.getInstance()
             ),
-            net.turtton.ytalarm.database.structure.Video(
+            Video(
                 id = 3L,
                 videoId = "video3",
                 title = "Relaxing Sounds",
                 domain = "soundcloud.com",
-                stateData = net.turtton.ytalarm.database.structure.Video.State.Information(
+                stateData = Video.State.Information(
                     isStreamable = true
                 ),
                 creationDate = java.util.Calendar.getInstance()

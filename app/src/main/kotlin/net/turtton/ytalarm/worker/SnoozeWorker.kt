@@ -6,36 +6,33 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.kernel.entity.Alarm
 import net.turtton.ytalarm.util.extensions.compatPendingIntentFlag
-import net.turtton.ytalarm.util.extensions.pickNearestTime
-import net.turtton.ytalarm.util.updateAlarmSchedule
 import java.util.*
 
 const val SNOOZE_NOTIFICATION = "net.turtton.ytalarm.SnoozeNotification"
 
 class SnoozeRemoveWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineIOWorker(appContext, workerParams) {
+    CoroutineWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
         val targetId = inputData.getLong(KEY_TARGET, -1)
         if (targetId == -1L) {
             return Result.failure()
         }
 
-        withContext(Dispatchers.IO) {
-            val target = repository.getAlarmFromIdSync(targetId) ?: return@withContext
-            repository.delete(target)
-            updateAlarmSchedule(applicationContext, repository.getAllAlarmsSync())
-        }
+        val useCaseContainer = (applicationContext as YtApplication).dataContainerProvider
+            .getUseCaseContainer()
+        val target = useCaseContainer.getAlarmById(targetId) ?: return Result.success()
+        useCaseContainer.deleteAlarmAndReschedule(target)
 
         UpdateSnoozeNotifyWorker.registerWorker(applicationContext)
         return Result.success()
@@ -59,11 +56,11 @@ class SnoozeRemoveWorker(appContext: Context, workerParams: WorkerParameters) :
 }
 
 class UpdateSnoozeNotifyWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineIOWorker(appContext, workerParams) {
+    CoroutineWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
-        val snoozeAlarms = withContext(Dispatchers.IO) {
-            repository.getMatchedAlarmSync(Alarm.RepeatType.Snooze)
-        }
+        val useCaseContainer = (applicationContext as YtApplication).dataContainerProvider
+            .getUseCaseContainer()
+        val snoozeAlarms = useCaseContainer.getMatchedAlarms(Alarm.RepeatType.Snooze)
         val notificationManager = NotificationManagerCompat.from(applicationContext)
 
         if (snoozeAlarms.isEmpty()) {
@@ -72,7 +69,24 @@ class UpdateSnoozeNotifyWorker(appContext: Context, workerParams: WorkerParamete
         }
 
         val now = Calendar.getInstance()
-        val (nextSnooze, nextSnoozeCalendar) = snoozeAlarms.pickNearestTime(now)!!
+        val (nextSnooze, nextSnoozeCalendar) = snoozeAlarms
+            .associateWith { alarm ->
+                Calendar.getInstance().also { cal ->
+                    cal.timeInMillis = now.timeInMillis
+                    cal.set(Calendar.HOUR_OF_DAY, alarm.hour)
+                    cal.set(Calendar.MINUTE, alarm.minute)
+                    cal.set(Calendar.SECOND, 0)
+                    if (cal.timeInMillis <= now.timeInMillis) {
+                        cal.add(Calendar.DATE, 1)
+                    }
+                }
+            }
+            .minByOrNull { (_, cal) -> cal.timeInMillis }
+            ?.toPair()
+            ?: run {
+                notificationManager.cancel(NOTIFICATION_ID)
+                return Result.success()
+            }
         val diffMillis = nextSnoozeCalendar.timeInMillis - now.timeInMillis
         val minute = (diffMillis / MILLIS_PER_MINUTE).toInt().coerceAtLeast(0)
 

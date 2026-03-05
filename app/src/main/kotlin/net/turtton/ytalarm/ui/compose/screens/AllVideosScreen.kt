@@ -22,6 +22,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
@@ -49,7 +50,8 @@ fun AllVideosScreen(
     modifier: Modifier = Modifier,
     videoViewModel: VideoViewModel = viewModel(
         factory = VideoViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     )
 ) {
@@ -63,8 +65,6 @@ fun AllVideosScreen(
     val msgReimportStarted = stringResource(R.string.message_reimport_started)
     val msgReimportErrorParse = stringResource(R.string.message_reimport_error_parse)
     val msgReimportErrorNetwork = stringResource(R.string.message_reimport_error_network)
-    val msgReimportErrorIO = stringResource(R.string.message_reimport_error_io)
-    val msgReimportErrorDownloader = stringResource(R.string.message_reimport_error_downloader)
 
     val selectedItems = remember { mutableStateListOf<Long>() }
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
@@ -175,8 +175,6 @@ fun AllVideosScreen(
                         is ReimportResult.Success -> msgReimportSuccess
                         is ReimportResult.Error.Parse -> msgReimportErrorParse
                         is ReimportResult.Error.Network -> msgReimportErrorNetwork
-                        is ReimportResult.Error.IO -> msgReimportErrorIO
-                        is ReimportResult.Error.Downloader -> msgReimportErrorDownloader
                         is ReimportResult.Error.NoUrl -> msgReimportFailed
                     }
                     snackbarHostState.currentSnackbarData?.dismiss()

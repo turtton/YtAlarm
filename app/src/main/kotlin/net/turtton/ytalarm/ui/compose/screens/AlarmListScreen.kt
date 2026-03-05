@@ -54,6 +54,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.components.AlarmEditBottomSheet
@@ -289,17 +290,20 @@ fun AlarmListScreen(
     initialAlarmId: Long? = null,
     alarmViewModel: AlarmViewModel = viewModel(
         factory = AlarmViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     ),
     playlistViewModel: PlaylistViewModel = viewModel(
         factory = PlaylistViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     ),
     videoViewModel: VideoViewModel = viewModel(
         factory = VideoViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     )
 ) {
@@ -403,14 +407,14 @@ fun AlarmListScreen(
                     }
                 }
 
-                val updatedAlarm = alarm.copy(isEnable = isEnabled)
+                val updatedAlarm = alarm.copy(isEnabled = isEnabled)
                 alarmViewModel.update(updatedAlarm)
 
                 // 全アラームを取得して、同一IDのデータを更新済みのものに差し替え
                 val currentAlarms = alarmViewModel.getAllAlarmsAsync().await()
                 val updatedList = currentAlarms.map {
                     if (it.id == alarm.id) updatedAlarm else it
-                }.filter { it.isEnable }
+                }.filter { it.isEnabled }
 
                 updateAlarmSchedule(context, updatedList).onLeft { error ->
                     val message = when (error) {
@@ -467,7 +471,7 @@ fun AlarmListScreen(
 
                                 // 残りの有効なアラームでスケジュール更新
                                 val remainingAlarms = alarmViewModel.getAllAlarmsAsync().await()
-                                    .filter { it.isEnable }
+                                    .filter { it.isEnabled }
                                 ensureActive()
 
                                 updateAlarmSchedule(context, remainingAlarms).onLeft { error ->
@@ -547,7 +551,7 @@ fun AlarmListScreen(
 
                         // AlarmManagerにアラームを登録
                         val scheduledAlarms = alarmViewModel.getAllAlarmsAsync().await()
-                            .filter { it.isEnable }
+                            .filter { it.isEnabled }
                         val scheduleResult = updateAlarmSchedule(context, scheduledAlarms)
 
                         val scheduleError = when (scheduleResult) {
@@ -561,7 +565,7 @@ fun AlarmListScreen(
                                     )
                                     // isEnableをfalseにして再更新
                                     val disabledAlarm =
-                                        currentAlarm.copy(id = savedAlarmId, isEnable = false)
+                                        currentAlarm.copy(id = savedAlarmId, isEnabled = false)
                                     alarmViewModel.update(disabledAlarm)
                                     errorFailedToSchedule
                                 } else {
@@ -635,7 +639,7 @@ private fun AlarmListScreenPreview() {
                     )
                 ),
                 playListId = listOf(1L),
-                isEnable = true,
+                isEnabled = true,
                 creationDate = java.util.Calendar.getInstance(),
                 lastUpdated = java.util.Calendar.getInstance()
             ),
@@ -645,7 +649,7 @@ private fun AlarmListScreenPreview() {
                 minute = 0,
                 repeatType = Alarm.RepeatType.Everyday,
                 playListId = listOf(2L),
-                isEnable = false,
+                isEnabled = false,
                 creationDate = java.util.Calendar.getInstance(),
                 lastUpdated = java.util.Calendar.getInstance()
             ),
@@ -655,7 +659,7 @@ private fun AlarmListScreenPreview() {
                 minute = 45,
                 repeatType = Alarm.RepeatType.Once,
                 playListId = listOf(3L),
-                isEnable = true,
+                isEnabled = true,
                 creationDate = java.util.Calendar.getInstance(),
                 lastUpdated = java.util.Calendar.getInstance()
             )

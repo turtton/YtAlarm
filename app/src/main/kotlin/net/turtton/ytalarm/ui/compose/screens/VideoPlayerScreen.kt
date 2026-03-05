@@ -74,6 +74,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
+import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.database.structure.Alarm
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
@@ -125,15 +127,21 @@ fun VideoPlayerScreen(
     // テスト用IdlingResource（AlarmActivityからCompositionLocalで提供される場合のみ有効）
     val resourceContainer = LocalVideoPlayerResourceContainer.current
 
-    val application = context.applicationContext as net.turtton.ytalarm.YtApplication
+    val application = context.applicationContext as YtApplication
     val videoViewModel: VideoViewModel = viewModel(
-        factory = VideoViewModelFactory(application.repository)
+        factory = VideoViewModelFactory(
+            application.dataContainerProvider.getUseCaseContainer()
+        )
     )
     val playlistViewModel: PlaylistViewModel = viewModel(
-        factory = PlaylistViewModelFactory(application.repository)
+        factory = PlaylistViewModelFactory(
+            application.dataContainerProvider.getUseCaseContainer()
+        )
     )
     val alarmViewModel: AlarmViewModel = viewModel(
-        factory = AlarmViewModelFactory(application.repository)
+        factory = AlarmViewModelFactory(
+            application.dataContainerProvider.getUseCaseContainer()
+        )
     )
 
     val audioManager = remember {

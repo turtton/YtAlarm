@@ -296,7 +296,7 @@ object TestDataHelper {
                 } else {
                     emptyList()
                 },
-                isEnable = true
+                isEnabled = true
             )
         )
 
@@ -308,7 +308,7 @@ object TestDataHelper {
                 minute = 45,
                 repeatType = Alarm.RepeatType.Everyday,
                 playListId = if (playlistIds.size > 1) listOf(playlistIds[1]) else playlistIds,
-                isEnable = false
+                isEnabled = false
             )
         )
 

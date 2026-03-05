@@ -18,3 +18,6 @@ dependencyResolutionManagement {
 }
 rootProject.name = "YtAlarm"
 include(":app")
+include(":kernel")
+include(":datasource")
+include(":usecase")

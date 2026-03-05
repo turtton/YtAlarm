@@ -18,7 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.YtApplication.Companion.repository
+import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
@@ -43,11 +43,11 @@ class MainActivity :
     override val videoPlayerLoadingResourceController = VideoPlayerLoadingResourceController()
 
     val playlistViewModel: PlaylistViewModel by viewModels {
-        PlaylistViewModelFactory(application.repository)
+        PlaylistViewModelFactory(application.dataContainerProvider.getUseCaseContainer())
     }
 
     val videoViewModel: VideoViewModel by viewModels {
-        VideoViewModelFactory(application.repository)
+        VideoViewModelFactory(application.dataContainerProvider.getUseCaseContainer())
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

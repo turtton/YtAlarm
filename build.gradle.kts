@@ -25,6 +25,7 @@ buildscript {
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.androidx.room) apply false
     alias(libs.plugins.kotlinter) apply false
     alias(libs.plugins.detekt) apply false
@@ -37,6 +38,7 @@ tasks.create("clean") {
 
 dependencies {
     kover(project(":app"))
+    kover(project(":kernel"))
 }
 
 kover {

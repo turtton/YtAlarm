@@ -7,8 +7,6 @@ sealed class ReimportResult {
     sealed class Error : ReimportResult() {
         data object Parse : Error()
         data object Network : Error()
-        data object IO : Error()
-        data object Downloader : Error()
         data object NoUrl : Error()
     }
 }

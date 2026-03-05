@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
@@ -177,14 +178,15 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         val msgOperationFailed = stringResource(R.string.message_operation_failed)
 
         // ViewModels
+        val ytApp = context.applicationContext as YtApplication
         val videoViewModel: VideoViewModel = viewModel(
             factory = VideoViewModelFactory(
-                (context.applicationContext as YtApplication).repository
+                ytApp.dataContainerProvider.getUseCaseContainer()
             )
         )
         val playlistViewModel: PlaylistViewModel = viewModel(
             factory = PlaylistViewModelFactory(
-                (context.applicationContext as YtApplication).repository
+                ytApp.dataContainerProvider.getUseCaseContainer()
             )
         )
 

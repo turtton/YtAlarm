@@ -2,9 +2,9 @@ package net.turtton.ytalarm.util.serializer
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import net.turtton.ytalarm.util.VideoInformation
+import net.turtton.ytalarm.datasource.serializer.VideoInformationSerializer
+import net.turtton.ytalarm.kernel.dto.VideoInformation
 
 @Suppress("UNUSED")
 class TestVideoInformationSerializer :
@@ -35,7 +35,7 @@ class TestVideoInformationSerializer :
             }
             """.trimIndent()
             test("video") {
-                val decoded = json.decodeFromString<VideoInformation>(rowVideoData)
+                val decoded = json.decodeFromString(VideoInformationSerializer, rowVideoData)
                 decoded shouldBe videoData
             }
             test("playlist") {
@@ -57,7 +57,7 @@ class TestVideoInformationSerializer :
                     VideoInformation.Type.Playlist(listOf(videoData))
                 )
 
-                val decoded = json.decodeFromString<VideoInformation>(exampleData)
+                val decoded = json.decodeFromString(VideoInformationSerializer, exampleData)
                 decoded shouldBe expected
             }
         }

@@ -2,24 +2,23 @@ package net.turtton.ytalarm.worker
 
 import android.content.Context
 import android.util.Log
+import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import net.turtton.ytalarm.util.updateAlarmSchedule
+import net.turtton.ytalarm.YtApplication
 
 class BootRescheduleWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineIOWorker(appContext, workerParams) {
+    CoroutineWorker(appContext, workerParams) {
     override suspend fun doWork(): Result {
-        withContext(Dispatchers.IO) {
-            val enabledAlarms = repository.getAllAlarmsSync().filter { it.isEnable }
-            Log.d(TAG, "Rescheduling alarms after boot: ${enabledAlarms.size} enabled")
-            updateAlarmSchedule(applicationContext, enabledAlarms).onLeft { error ->
-                Log.e(TAG, "Failed to reschedule alarms: $error")
-            }
+        val useCaseContainer = (applicationContext as YtApplication).dataContainerProvider
+            .getUseCaseContainer()
+        val enabledAlarms = useCaseContainer.getEnabledAlarms()
+        Log.d(TAG, "Rescheduling alarms after boot: ${enabledAlarms.size} enabled")
+        useCaseContainer.alarmScheduler.scheduleNextAlarm(enabledAlarms).onLeft { error ->
+            Log.e(TAG, "Failed to reschedule alarms: $error")
         }
         return Result.success()
     }

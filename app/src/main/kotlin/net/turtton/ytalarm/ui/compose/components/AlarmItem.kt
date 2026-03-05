@@ -90,7 +90,7 @@ fun AlarmItem(
         }
 
         Switch(
-            checked = alarm.isEnable,
+            checked = alarm.isEnabled,
             onCheckedChange = onToggle
         )
     }
@@ -106,7 +106,7 @@ private fun AlarmItemPreview() {
                 hour = 7,
                 minute = 30,
                 repeatType = Alarm.RepeatType.Everyday,
-                isEnable = true
+                isEnabled = true
             ),
             playlistTitle = "Morning Playlist",
             thumbnailUrl = null,
