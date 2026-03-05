@@ -9,9 +9,9 @@ import net.turtton.ytalarm.datasource.repository.RoomAlarmRepository
 import net.turtton.ytalarm.datasource.repository.RoomPlaylistRepository
 import net.turtton.ytalarm.datasource.repository.RoomVideoRepository
 import net.turtton.ytalarm.datasource.repository.YtDlpVideoInfoRepository
-import net.turtton.ytalarm.kernel.di.LocalDataSourceContainer
-import net.turtton.ytalarm.kernel.di.RemoteDataSourceContainer
 import net.turtton.ytalarm.platform.AndroidAlarmScheduler
+import net.turtton.ytalarm.usecase.LocalDataSourceContainer
+import net.turtton.ytalarm.usecase.RemoteDataSourceContainer
 import net.turtton.ytalarm.usecase.UseCaseContainer
 
 /**

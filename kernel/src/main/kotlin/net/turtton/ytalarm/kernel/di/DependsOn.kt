@@ -24,13 +24,3 @@ interface DependsOnPlaylistRepository<Executor> {
 interface DependsOnVideoInfoRepository<Executor> {
     val videoInfoRepository: VideoInfoRepository<Executor>
 }
-
-interface LocalDataSourceContainer<Executor> :
-    DependsOnAlarmRepository<Executor>,
-    DependsOnVideoRepository<Executor>,
-    DependsOnPlaylistRepository<Executor>,
-    DependsOnDataSource<Executor>
-
-interface RemoteDataSourceContainer<Executor> :
-    DependsOnVideoInfoRepository<Executor>,
-    DependsOnDataSource<Executor>

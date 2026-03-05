@@ -52,7 +52,7 @@ See @.github/CONTRIBUTING.md
 #### Kernel層 (:kernel)
 - ドメインEntity（`Alarm`, `Video`, `Playlist`）— 全フィールドimmutable、kotlinx.datetime使用
 - Repository<Executor>インターフェース（`AlarmRepository`, `VideoRepository`, `PlaylistRepository`, `VideoInfoRepository`）
-- DI基盤（`DataSource<Executor>`, `DependsOn*`, `LocalDataSourceContainer`, `RemoteDataSourceContainer`）
+- DI基盤（`DataSource<Executor>`, `DependsOn*`）
 - プラットフォームPort（`AlarmSchedulerPort`）
 - ドメインロジック（`AlarmScheduling.kt` — toNextFireTime, pickNearestTime等）
 
@@ -69,6 +69,7 @@ See @.github/CONTRIBUTING.md
   - `PlaylistUseCase` — プレイリスト操作・サムネイル管理
   - `VideoUseCase` — 動画操作・GC
   - `ImportUseCase` — 動画/プレイリストインポート・同期
+- `LocalDataSourceContainer`, `RemoteDataSourceContainer` — データソース依存グルーピング
 - `UseCaseContainer` — 全UseCase合成インターフェース
 
 #### App層 (:app)
@@ -102,7 +103,7 @@ kernel/src/main/kotlin/net/turtton/ytalarm/kernel/
 ├── dto/           # VideoInformation DTO
 ├── error/         # VideoInfoError, StreamError
 ├── repository/    # Repository<Executor>インターフェース
-├── di/            # DataSource, DependsOn*, Containers
+├── di/            # DataSource, DependsOn*
 └── port/          # AlarmSchedulerPort
 
 datasource/src/main/kotlin/net/turtton/ytalarm/datasource/
@@ -117,6 +118,7 @@ datasource/src/main/kotlin/net/turtton/ytalarm/datasource/
 
 usecase/src/main/kotlin/net/turtton/ytalarm/usecase/
 ├── AlarmUseCase.kt, PlaylistUseCase.kt, VideoUseCase.kt, ImportUseCase.kt
+├── LocalDataSourceContainer.kt, RemoteDataSourceContainer.kt  # DI Containers
 └── UseCaseContainer.kt
 
 app/src/main/kotlin/net/turtton/ytalarm/

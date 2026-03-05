@@ -5,8 +5,8 @@ import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import net.turtton.ytalarm.datasource.local.AppDatabase
 import net.turtton.ytalarm.datasource.remote.YtDlpExecutor
-import net.turtton.ytalarm.kernel.di.LocalDataSourceContainer
-import net.turtton.ytalarm.kernel.di.RemoteDataSourceContainer
+import net.turtton.ytalarm.usecase.LocalDataSourceContainer
+import net.turtton.ytalarm.usecase.RemoteDataSourceContainer
 import net.turtton.ytalarm.usecase.UseCaseContainer
 import org.mockito.kotlin.mock
 
