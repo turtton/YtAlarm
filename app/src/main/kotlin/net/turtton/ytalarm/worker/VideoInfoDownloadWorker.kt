@@ -57,7 +57,7 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         }
 
         // 3. 動画情報を取得してプレースホルダーを更新
-        return when (
+        val result = when (
             val importResult = useCaseContainer.fetchAndImportVideo(targetUrl, placeholderId)
         ) {
             is ImportResult.Success -> Result.success()
@@ -95,6 +95,13 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
                 Result.failure()
             }
         }
+
+        // 4. プレイリストの Importing → Original 遷移（全動画の更新が完了していれば）
+        if (playlistArray != null && playlistArray.isNotEmpty()) {
+            finalizePlaylistAfterImport(useCaseContainer, playlistArray)
+        }
+
+        return result
     }
 
     private suspend fun doImportCloudPlaylist(
@@ -191,6 +198,34 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
             updatePlaylistWithThumbnail(useCaseContainer, playlist, newVideos)
         }
         useCaseContainer.updateAllPlaylists(updatedPlaylists)
+    }
+
+    private suspend fun finalizePlaylistAfterImport(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        playlistArray: LongArray
+    ) {
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        val updatedPlaylists = playlists.mapNotNull { playlist ->
+            if (playlist.type !is Playlist.Type.Importing) return@mapNotNull null
+
+            // プレイリスト内の全動画が更新中でないかチェック
+            val videos = useCaseContainer.getVideosByIdsSync(playlist.videos)
+            val hasUpdating = videos.any { it.state.isUpdating() }
+            if (hasUpdating) return@mapNotNull null
+
+            var updated = playlist.copy(type = Playlist.Type.Original)
+            // サムネイルがNoneの場合、最初のInformation動画のサムネイルに更新
+            if (updated.thumbnail == Playlist.Thumbnail.None) {
+                val firstReady = videos.firstOrNull { it.state is Video.State.Information }
+                if (firstReady != null) {
+                    updated = updated.copy(thumbnail = Playlist.Thumbnail.Video(firstReady.id))
+                }
+            }
+            updated
+        }
+        if (updatedPlaylists.isNotEmpty()) {
+            useCaseContainer.updateAllPlaylists(updatedPlaylists)
+        }
     }
 
     private suspend fun updatePlaylistWithThumbnail(
