@@ -6,14 +6,13 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.kernel.entity.Video
 
 @Composable
-fun DeleteVideoDialog(video: Video, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+fun DeleteVideoDialog(videoTitle: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.dialog_delete_video_title)) },
-        text = { Text(stringResource(R.string.dialog_delete_video_message, video.title)) },
+        text = { Text(stringResource(R.string.dialog_delete_video_message, videoTitle)) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(stringResource(R.string.button_delete))

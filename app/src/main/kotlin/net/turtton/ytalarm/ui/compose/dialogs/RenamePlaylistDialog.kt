@@ -14,11 +14,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.kernel.entity.Playlist
 
 @Composable
-fun RenamePlaylistDialog(playlist: Playlist, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
-    var newName by remember { mutableStateOf(playlist.title) }
+fun RenamePlaylistDialog(currentTitle: String, onConfirm: (String) -> Unit, onDismiss: () -> Unit) {
+    var newName by remember { mutableStateOf(currentTitle) }
     var isError by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -46,11 +45,11 @@ fun RenamePlaylistDialog(playlist: Playlist, onConfirm: (String) -> Unit, onDism
         confirmButton = {
             TextButton(
                 onClick = {
-                    if (newName.isNotBlank() && newName != playlist.title) {
+                    if (newName.isNotBlank() && newName != currentTitle) {
                         onConfirm(newName)
                     }
                 },
-                enabled = newName.isNotBlank() && newName != playlist.title
+                enabled = newName.isNotBlank() && newName != currentTitle
             ) {
                 Text(stringResource(android.R.string.ok))
             }

@@ -28,13 +28,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.ui.model.VideoUiModel
 
 @Suppress("UnusedParameter")
 @Composable
 fun VideoItem(
-    video: Video,
+    video: VideoUiModel,
     domainOrSize: String,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
@@ -46,7 +46,7 @@ fun VideoItem(
     onMenuDismiss: () -> Unit = {},
     menuContent: (@Composable () -> Unit)? = null
 ) {
-    val isFailed = video.state is Video.State.Failed
+    val isFailed = video.isFailed
 
     Row(
         modifier = modifier
@@ -136,14 +136,9 @@ fun VideoItem(
 private fun VideoItemPreview() {
     AppTheme {
         VideoItem(
-            video = Video(
-                id = 1L,
+            video = VideoUiModel.preview(
                 videoId = "test123",
-                title = "Sample Video Title That Is Very Long And Should Be Truncated",
-                thumbnailUrl = "",
-                videoUrl = "https://example.com/video",
-                domain = "youtube.com",
-                state = Video.State.Information(isStreamable = true)
+                title = "Sample Video Title That Is Very Long And Should Be Truncated"
             ),
             domainOrSize = "youtube.com",
             isSelected = false,
@@ -159,14 +154,9 @@ private fun VideoItemPreview() {
 private fun VideoItemSelectedPreview() {
     AppTheme {
         VideoItem(
-            video = Video(
-                id = 1L,
+            video = VideoUiModel.preview(
                 videoId = "test123",
-                title = "Selected Video",
-                thumbnailUrl = "",
-                videoUrl = "https://example.com/video",
-                domain = "youtube.com",
-                state = Video.State.Information(isStreamable = true)
+                title = "Selected Video"
             ),
             domainOrSize = "youtube.com",
             isSelected = true,

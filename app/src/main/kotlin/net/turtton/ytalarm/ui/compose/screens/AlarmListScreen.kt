@@ -49,7 +49,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.DayOfWeek
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
@@ -60,6 +59,8 @@ import net.turtton.ytalarm.ui.compose.components.AlarmEditBottomSheet
 import net.turtton.ytalarm.ui.compose.components.AlarmItem
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.ui.compose.theme.Dimensions
+import net.turtton.ytalarm.ui.model.AlarmUiModel
+import net.turtton.ytalarm.ui.model.toUiModel
 import net.turtton.ytalarm.util.extensions.alarmOrderRule
 import net.turtton.ytalarm.util.extensions.alarmOrderUp
 import net.turtton.ytalarm.util.extensions.findActivity
@@ -83,13 +84,13 @@ import kotlin.coroutines.cancellation.CancellationException
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AlarmListScreenContent(
-    alarms: List<Alarm>,
+    alarms: List<AlarmUiModel>,
     orderRule: AlarmOrder,
     orderUp: Boolean,
     snackbarHostState: SnackbarHostState,
-    onAlarmToggle: (Alarm, Boolean) -> Unit,
+    onAlarmToggle: (Long, Boolean) -> Unit,
     onAlarmClick: (Long) -> Unit,
-    onAlarmLongClick: (Alarm) -> Unit,
+    onAlarmLongClick: (Long) -> Unit,
     onOpenDrawer: () -> Unit,
     onSortRuleChange: (AlarmOrder) -> Unit,
     onOrderUpToggle: () -> Unit,
@@ -216,13 +217,13 @@ fun AlarmListScreenContent(
                             playlistTitle = playlistTitle,
                             thumbnailUrl = thumbnailUrl.value,
                             onToggle = { isEnabled ->
-                                onAlarmToggle(alarm, isEnabled)
+                                onAlarmToggle(alarm.id, isEnabled)
                             },
                             onClick = {
                                 onAlarmClick(alarm.id)
                             },
                             onLongClick = {
-                                onAlarmLongClick(alarm)
+                                onAlarmLongClick(alarm.id)
                             }
                         )
                     }
@@ -316,8 +317,8 @@ fun AlarmListScreen(
     val errorFailedToSchedule = stringResource(R.string.snackbar_error_failed_to_schedule_alarm)
     val errorFailedToSave = stringResource(R.string.snackbar_error_failed_to_save_alarm)
 
-    // 削除対象のアラーム
-    var alarmToDelete by remember { mutableStateOf<Alarm?>(null) }
+    // 削除対象のアラームID
+    var alarmToDeleteId by remember { mutableStateOf<Long?>(null) }
 
     // ボトムシート状態管理（sealed classで統合）
     var editState by remember { mutableStateOf<AlarmEditState>(AlarmEditState.Hidden) }
@@ -384,15 +385,21 @@ fun AlarmListScreen(
         mutableList
     }
 
+    val alarmMap = remember(allAlarms) { allAlarms.associateBy { it.id } }
+
+    val alarmUiModels = remember(sortedAlarms) {
+        sortedAlarms.map { it.toUiModel(context) }
+    }
+
     // AlarmListScreenContentを呼び出す
     AlarmListScreenContent(
-        alarms = sortedAlarms,
+        alarms = alarmUiModels,
         orderRule = orderRule,
         orderUp = orderUp,
         snackbarHostState = snackbarHostState,
-        onAlarmToggle = { alarm, isEnabled ->
+        onAlarmToggle = { alarmId, isEnabled ->
             scope.launch(Dispatchers.IO) {
-                alarmViewModel.toggleAlarm(alarm.id, isEnabled).onLeft { error ->
+                alarmViewModel.toggleAlarm(alarmId, isEnabled).onLeft { error ->
                     val message = when (error) {
                         is AlarmScheduleError.PermissionDenied -> errorNoAlarmPermission
                         AlarmScheduleError.NoAlarmManager -> errorNoAlarmManager
@@ -409,8 +416,8 @@ fun AlarmListScreen(
         onAlarmClick = { alarmId ->
             editState = AlarmEditState.Editing(alarmId, null)
         },
-        onAlarmLongClick = { alarm ->
-            alarmToDelete = alarm
+        onAlarmLongClick = { alarmId ->
+            alarmToDeleteId = alarmId
         },
         onOpenDrawer = onOpenDrawer,
         onSortRuleChange = { rule ->
@@ -428,9 +435,10 @@ fun AlarmListScreen(
     )
 
     // 削除確認ダイアログ
-    alarmToDelete?.let { alarm ->
+    alarmToDeleteId?.let { id ->
+        val alarm = alarmMap[id] ?: return@let
         AlertDialog(
-            onDismissRequest = { alarmToDelete = null },
+            onDismissRequest = { alarmToDeleteId = null },
             title = { Text(stringResource(R.string.dialog_delete_alarm_title)) },
             text = {
                 Text(stringResource(R.string.dialog_delete_alarm_message, alarm.hour, alarm.minute))
@@ -458,7 +466,7 @@ fun AlarmListScreen(
                                 }
 
                                 withContext(Dispatchers.Main) {
-                                    alarmToDelete = null
+                                    alarmToDeleteId = null
                                     snackbarHostState.showSnackbar(msgAlarmDeleted)
                                 }
                             } catch (e: CancellationException) {
@@ -466,7 +474,7 @@ fun AlarmListScreen(
                             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                                 Log.e("AlarmListScreen", "Failed to delete alarm", e)
                                 withContext(Dispatchers.Main) {
-                                    alarmToDelete = null
+                                    alarmToDeleteId = null
                                     snackbarHostState.showSnackbar(errorDeleteFailed)
                                 }
                             }
@@ -477,7 +485,7 @@ fun AlarmListScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { alarmToDelete = null }) {
+                TextButton(onClick = { alarmToDeleteId = null }) {
                     Text(stringResource(R.string.dialog_remove_video_negative))
                 }
             }
@@ -545,9 +553,9 @@ fun AlarmListScreen(
             },
             onDelete = {
                 // ボトムシートを閉じて削除確認ダイアログを表示
-                val alarmToDeleteFromSheet = currentAlarm
+                val alarmIdToDelete = currentAlarm.id
                 editState = AlarmEditState.Hidden
-                alarmToDelete = alarmToDeleteFromSheet
+                alarmToDeleteId = alarmIdToDelete
             },
             onDismiss = {
                 editState = AlarmEditState.Hidden
@@ -576,38 +584,9 @@ private fun AlarmListScreenPreview() {
     AppTheme {
         // ダミーデータを作成
         val dummyAlarms = listOf(
-            Alarm(
-                id = 1L,
-                hour = 7,
-                minute = 30,
-                repeatType = Alarm.RepeatType.Days(
-                    listOf(
-                        DayOfWeek.MONDAY,
-                        DayOfWeek.TUESDAY,
-                        DayOfWeek.WEDNESDAY,
-                        DayOfWeek.THURSDAY,
-                        DayOfWeek.FRIDAY
-                    )
-                ),
-                playlistIds = listOf(1L),
-                isEnabled = true
-            ),
-            Alarm(
-                id = 2L,
-                hour = 9,
-                minute = 0,
-                repeatType = Alarm.RepeatType.Everyday,
-                playlistIds = listOf(2L),
-                isEnabled = false
-            ),
-            Alarm(
-                id = 3L,
-                hour = 18,
-                minute = 45,
-                repeatType = Alarm.RepeatType.Once,
-                playlistIds = listOf(3L),
-                isEnabled = true
-            )
+            AlarmUiModel.preview(id = 1L, hour = 7, minute = 30, repeatTypeDisplay = "Mon-Fri"),
+            AlarmUiModel.preview(id = 2L, hour = 9, minute = 0, isEnabled = false),
+            AlarmUiModel.preview(id = 3L, hour = 18, minute = 45)
         )
 
         AlarmListScreenContent(

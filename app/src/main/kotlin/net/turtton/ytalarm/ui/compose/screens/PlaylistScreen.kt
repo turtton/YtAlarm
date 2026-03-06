@@ -60,6 +60,8 @@ import net.turtton.ytalarm.ui.compose.components.PlaylistItemDropdownMenu
 import net.turtton.ytalarm.ui.compose.dialogs.RenamePlaylistDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.ui.compose.theme.Dimensions
+import net.turtton.ytalarm.ui.model.PlaylistUiModel
+import net.turtton.ytalarm.ui.model.toUiModel
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.playlistOrderRule
 import net.turtton.ytalarm.util.extensions.playlistOrderUp
@@ -81,17 +83,17 @@ import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistScreenContent(
-    playlists: List<Playlist>,
+    playlists: List<PlaylistUiModel>,
     orderRule: PlaylistOrder,
     orderUp: Boolean,
     selectedItems: List<Long>,
     expandedMenus: Map<Long, Boolean>,
     onItemSelect: (Long, Boolean) -> Unit,
     onItemClick: (Long) -> Unit,
-    onMenuClick: (Playlist) -> Unit,
+    onMenuClick: (Long) -> Unit,
     onMenuDismiss: (Long) -> Unit,
-    onRename: (Playlist) -> Unit,
-    onDelete: (Playlist) -> Unit,
+    onRename: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
     playlistsInUse: Set<Long>,
     onOpenDrawer: () -> Unit,
     onDeletePlaylists: () -> Unit,
@@ -179,21 +181,19 @@ fun PlaylistScreenContent(
                         key = { it.id }
                     ) { playlist ->
                         // サムネイル取得
-                        // None型はデフォルト画像を設定、Video型はデフォルト値を設定後に非同期で取得
-                        val thumbnailSource = remember(playlist.thumbnail) {
+                        val thumbnailSource = remember(playlist.thumbnailVideoId) {
                             mutableStateOf<ThumbnailSource>(
                                 ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
                             )
                         }
 
-                        // Video型のみ非同期でサムネイルURLを取得
-                        val thumbnailVideo =
-                            playlist.thumbnail as? Playlist.Thumbnail.Video
-                        if (thumbnailVideo != null) {
-                            LaunchedEffect(playlist.thumbnail) {
+                        // thumbnailVideoIdがある場合のみ非同期でサムネイルURLを取得
+                        val thumbnailVideoId = playlist.thumbnailVideoId
+                        if (thumbnailVideoId != null) {
+                            LaunchedEffect(thumbnailVideoId) {
                                 val url = videoViewModel?.let { vm ->
                                     withContext(Dispatchers.IO) {
-                                        vm.getFromIdAsync(thumbnailVideo.id).await()?.thumbnailUrl
+                                        vm.getFromIdAsync(thumbnailVideoId).await()?.thumbnailUrl
                                     }
                                 }
                                 thumbnailSource.value = if (url != null) {
@@ -203,7 +203,6 @@ fun PlaylistScreenContent(
                                 }
                             }
                         }
-                        val videoCount = playlist.videos.size
 
                         PlaylistItem(
                             playlist = playlist,
@@ -211,7 +210,7 @@ fun PlaylistScreenContent(
                                 is ThumbnailSource.Url -> source.url
                                 is ThumbnailSource.DrawableRes -> source.resId
                             },
-                            videoCount = videoCount,
+                            videoCount = playlist.videoCount,
                             isSelected = selectedItems.contains(playlist.id),
                             onToggleSelection = {
                                 onItemSelect(playlist.id, !selectedItems.contains(playlist.id))
@@ -225,16 +224,15 @@ fun PlaylistScreenContent(
                             },
                             menuExpanded = expandedMenus[playlist.id] ?: false,
                             onMenuClick = {
-                                onMenuClick(playlist)
+                                onMenuClick(playlist.id)
                             },
                             onMenuDismiss = { onMenuDismiss(playlist.id) },
                             menuContent = {
                                 PlaylistItemDropdownMenu(
-                                    playlist = playlist,
                                     expanded = expandedMenus[playlist.id] ?: false,
                                     onDismiss = { onMenuDismiss(playlist.id) },
-                                    onRename = onRename,
-                                    onDelete = onDelete,
+                                    onRename = { onRename(playlist.id) },
+                                    onDelete = { onDelete(playlist.id) },
                                     isDeleteEnabled = !playlistsInUse.contains(playlist.id)
                                 )
                             }
@@ -362,8 +360,8 @@ fun PlaylistScreen(
 
     // メニュー展開状態の管理
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
-    var playlistToRename by remember { mutableStateOf<Playlist?>(null) }
-    var playlistToDelete by remember { mutableStateOf<Playlist?>(null) }
+    var playlistToRenameId by remember { mutableStateOf<Long?>(null) }
+    var playlistToDeleteId by remember { mutableStateOf<Long?>(null) }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -413,9 +411,12 @@ fun PlaylistScreen(
         mutableList
     }
 
+    val playlistMap = remember(playlists) { playlists.associateBy { it.id } }
+    val playlistUiModels = remember(sortedPlaylists) { sortedPlaylists.map { it.toUiModel() } }
+
     // PlaylistScreenContentを呼び出す
     PlaylistScreenContent(
-        playlists = sortedPlaylists,
+        playlists = playlistUiModels,
         orderRule = orderRule,
         orderUp = orderUp,
         selectedItems = selectedItems.toList(),
@@ -428,23 +429,23 @@ fun PlaylistScreen(
             }
         },
         onItemClick = onNavigateToVideoList,
-        onMenuClick = { playlist ->
-            expandedMenus[playlist.id] = true
+        onMenuClick = { playlistId ->
+            expandedMenus[playlistId] = true
         },
         onMenuDismiss = { playlistId ->
             expandedMenus.remove(playlistId)
         },
-        onRename = { playlist ->
-            playlistToRename = playlist
+        onRename = { playlistId ->
+            playlistToRenameId = playlistId
         },
-        onDelete = { playlist ->
+        onDelete = { playlistId ->
             // アラームで使用中の場合はSnackbarを表示
-            if (playlistsInUse.contains(playlist.id)) {
+            if (playlistsInUse.contains(playlistId)) {
                 scope.launch {
                     snackbarHostState.showSnackbar(msgPlaylistUsage)
                 }
             } else {
-                playlistToDelete = playlist
+                playlistToDeleteId = playlistId
             }
         },
         playlistsInUse = playlistsInUse,
@@ -496,24 +497,26 @@ fun PlaylistScreen(
     )
 
     // リネームダイアログ
-    playlistToRename?.let { playlist ->
+    playlistToRenameId?.let { id ->
+        val playlist = playlistMap[id] ?: return@let
         RenamePlaylistDialog(
-            playlist = playlist,
+            currentTitle = playlist.title,
             onConfirm = { newName ->
                 playlistViewModel.update(playlist.copy(title = newName))
-                playlistToRename = null
+                playlistToRenameId = null
                 scope.launch {
                     snackbarHostState.showSnackbar(msgPlaylistRenamed)
                 }
             },
-            onDismiss = { playlistToRename = null }
+            onDismiss = { playlistToRenameId = null }
         )
     }
 
     // 削除確認ダイアログ
-    playlistToDelete?.let { playlist ->
+    playlistToDeleteId?.let { id ->
+        val playlist = playlistMap[id] ?: return@let
         AlertDialog(
-            onDismissRequest = { playlistToDelete = null },
+            onDismissRequest = { playlistToDeleteId = null },
             title = { Text(stringResource(R.string.dialog_delete_playlist_title)) },
             text = {
                 Text(stringResource(R.string.dialog_delete_playlist_message, playlist.title))
@@ -533,9 +536,9 @@ fun PlaylistScreen(
                                     .flatMap { it.playlistIds }
                                     .toSet()
 
-                                if (currentPlaylistsInUse.contains(playlist.id)) {
+                                if (currentPlaylistsInUse.contains(id)) {
                                     withContext(Dispatchers.Main) {
-                                        playlistToDelete = null
+                                        playlistToDeleteId = null
                                         snackbarHostState.showSnackbar(msgPlaylistUsage)
                                     }
                                     return@launch
@@ -546,7 +549,7 @@ fun PlaylistScreen(
                                 ensureActive()
 
                                 withContext(Dispatchers.Main) {
-                                    playlistToDelete = null
+                                    playlistToDeleteId = null
                                     snackbarHostState.showSnackbar(msgPlaylistDeleted)
                                 }
                             } catch (e: CancellationException) {
@@ -554,7 +557,7 @@ fun PlaylistScreen(
                             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                                 Log.e("PlaylistScreen", "Failed to delete playlist", e)
                                 withContext(Dispatchers.Main) {
-                                    playlistToDelete = null
+                                    playlistToDeleteId = null
                                     snackbarHostState.showSnackbar(msgDeleteFailed)
                                 }
                             }
@@ -565,7 +568,7 @@ fun PlaylistScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { playlistToDelete = null }) {
+                TextButton(onClick = { playlistToDeleteId = null }) {
                     Text(stringResource(R.string.dialog_remove_video_negative))
                 }
             }
@@ -579,26 +582,20 @@ fun PlaylistScreenPreview() {
     AppTheme {
         // ダミーデータを作成
         val dummyPlaylists = listOf(
-            Playlist(
+            PlaylistUiModel.preview(
                 id = 1L,
                 title = "Morning Playlist",
-                videos = listOf(1L, 2L, 3L),
-                thumbnail = Playlist.Thumbnail.None,
-                type = Playlist.Type.Original
+                videoCount = 3
             ),
-            Playlist(
+            PlaylistUiModel.preview(
                 id = 2L,
                 title = "Workout Music",
-                videos = listOf(4L, 5L),
-                thumbnail = Playlist.Thumbnail.None,
-                type = Playlist.Type.Original
+                videoCount = 2
             ),
-            Playlist(
+            PlaylistUiModel.preview(
                 id = 3L,
                 title = "Relaxing Sounds",
-                videos = listOf(6L, 7L, 8L, 9L),
-                thumbnail = Playlist.Thumbnail.None,
-                type = Playlist.Type.Original
+                videoCount = 4
             )
         )
         val snackbarHostState = remember { SnackbarHostState() }

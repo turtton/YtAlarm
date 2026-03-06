@@ -26,6 +26,7 @@ import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
+import net.turtton.ytalarm.ui.model.toUiModel
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
 import net.turtton.ytalarm.util.extensions.sorted
@@ -68,8 +69,8 @@ fun AllVideosScreen(
 
     val selectedItems = remember { mutableStateListOf<Long>() }
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
-    var videoToDelete by remember { mutableStateOf<Video?>(null) }
-    var videoToReimport by remember { mutableStateOf<Video?>(null) }
+    var videoToDeleteId by remember { mutableStateOf<Long?>(null) }
+    var videoToReimportId by remember { mutableStateOf<Long?>(null) }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -84,6 +85,12 @@ fun AllVideosScreen(
         videos.sorted(orderRule, orderUp)
     }
 
+    // ID→Videoマップ（ダイアログ等でVideoオブジェクトが必要な場合に使用）
+    val videoMap = remember(videos) { videos.associateBy { it.id } }
+
+    // UiModel変換
+    val videoUiModels = remember(sortedVideos) { sortedVideos.map { it.toUiModel() } }
+
     val playlistTitle = stringResource(R.string.nav_video_list_all)
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -91,7 +98,7 @@ fun AllVideosScreen(
             playlistTitle = playlistTitle,
             isNewPlaylist = false,
             isAllVideosMode = true,
-            videos = sortedVideos,
+            videos = videoUiModels,
             playlistType = null,
             orderRule = orderRule,
             orderUp = orderUp,
@@ -109,19 +116,19 @@ fun AllVideosScreen(
             onItemClick = { videoId ->
                 onNavigateToVideoPlayer(videoId)
             },
-            onMenuClick = { video ->
-                expandedMenus[video.id] = true
+            onMenuClick = { videoId ->
+                expandedMenus[videoId] = true
             },
             onMenuDismiss = { videoId ->
                 expandedMenus.remove(videoId)
             },
             onSetThumbnail = { /* Not applicable for all videos mode */ },
             onDownload = { /* Not implemented yet */ },
-            onReimport = { video ->
-                videoToReimport = video
+            onReimport = { videoId ->
+                videoToReimportId = videoId
             },
-            onDeleteSingleVideo = { video ->
-                videoToDelete = video
+            onDeleteSingleVideo = { videoId ->
+                videoToDeleteId = videoId
             },
             onNavigateBack = { /* Not used in all videos mode */ },
             onOpenDrawer = onOpenDrawer,
@@ -148,23 +155,25 @@ fun AllVideosScreen(
     }
 
     // 削除確認ダイアログ
-    videoToDelete?.let { video ->
+    videoToDeleteId?.let { id ->
+        val video = videoMap[id] ?: return@let
         DeleteVideoDialog(
-            video = video,
+            videoTitle = video.title,
             onConfirm = {
                 videoViewModel.delete(video)
-                videoToDelete = null
+                videoToDeleteId = null
             },
-            onDismiss = { videoToDelete = null }
+            onDismiss = { videoToDeleteId = null }
         )
     }
 
     // 再インポートダイアログ
-    videoToReimport?.let { video ->
+    videoToReimportId?.let { id ->
+        val video = videoMap[id] ?: return@let
         VideoReimportDialog(
-            video = video,
+            videoTitle = video.title,
             onConfirm = {
-                videoToReimport = null
+                videoToReimportId = null
                 scope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(msgReimportStarted)
@@ -181,7 +190,7 @@ fun AllVideosScreen(
                     snackbarHostState.showSnackbar(message)
                 }
             },
-            onDismiss = { videoToReimport = null }
+            onDismiss = { videoToReimportId = null }
         )
     }
 }

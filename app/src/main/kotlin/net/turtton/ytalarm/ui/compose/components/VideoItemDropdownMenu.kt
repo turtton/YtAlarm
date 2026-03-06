@@ -9,17 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.kernel.entity.Video
 
 @Composable
 fun VideoItemDropdownMenu(
-    video: Video,
     expanded: Boolean,
     onDismiss: () -> Unit,
-    onSetThumbnail: (Video) -> Unit,
-    onDownload: (Video) -> Unit,
-    onReimport: (Video) -> Unit,
-    onDelete: (Video) -> Unit,
+    onSetThumbnail: () -> Unit,
+    onDownload: () -> Unit,
+    onReimport: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     DropdownMenu(
@@ -31,7 +29,7 @@ fun VideoItemDropdownMenu(
         DropdownMenuItem(
             text = { Text(stringResource(R.string.menu_video_list_item_option_set_thumbnail)) },
             onClick = {
-                onSetThumbnail(video)
+                onSetThumbnail()
                 onDismiss()
             }
         )
@@ -40,7 +38,7 @@ fun VideoItemDropdownMenu(
         DropdownMenuItem(
             text = { Text(stringResource(R.string.menu_video_list_item_option_download)) },
             onClick = {
-                onDownload(video)
+                onDownload()
                 onDismiss()
             }
         )
@@ -49,7 +47,7 @@ fun VideoItemDropdownMenu(
         DropdownMenuItem(
             text = { Text(stringResource(R.string.menu_video_list_item_option_reimport)) },
             onClick = {
-                onReimport(video)
+                onReimport()
                 onDismiss()
             }
         )
@@ -65,7 +63,7 @@ fun VideoItemDropdownMenu(
                 )
             },
             onClick = {
-                onDelete(video)
+                onDelete()
                 onDismiss()
             }
         )

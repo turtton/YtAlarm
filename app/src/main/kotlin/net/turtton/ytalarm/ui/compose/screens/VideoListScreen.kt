@@ -77,6 +77,8 @@ import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.ui.compose.theme.Dimensions
+import net.turtton.ytalarm.ui.model.VideoUiModel
+import net.turtton.ytalarm.ui.model.toUiModel
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
 import net.turtton.ytalarm.util.extensions.sorted
@@ -111,7 +113,7 @@ fun VideoListScreenContent(
     playlistTitle: String,
     isNewPlaylist: Boolean,
     isAllVideosMode: Boolean,
-    videos: List<Video>,
+    videos: List<VideoUiModel>,
     playlistType: Playlist.Type?,
     orderRule: VideoOrder,
     orderUp: Boolean,
@@ -121,12 +123,12 @@ fun VideoListScreenContent(
     expandedMenus: Map<Long, Boolean>,
     onItemSelect: (Long, Boolean) -> Unit,
     onItemClick: (String) -> Unit,
-    onMenuClick: (Video) -> Unit,
+    onMenuClick: (Long) -> Unit,
     onMenuDismiss: (Long) -> Unit,
-    onSetThumbnail: (Video) -> Unit,
-    onDownload: (Video) -> Unit,
-    onReimport: (Video) -> Unit,
-    onDeleteSingleVideo: (Video) -> Unit,
+    onSetThumbnail: (Long) -> Unit,
+    onDownload: (Long) -> Unit,
+    onReimport: (Long) -> Unit,
+    onDeleteSingleVideo: (Long) -> Unit,
     onNavigateBack: () -> Unit,
     onDeleteVideos: () -> Unit,
     onSortRuleChange: (VideoOrder) -> Unit,
@@ -358,18 +360,17 @@ fun VideoListScreenContent(
                             },
                             menuExpanded = expandedMenus[video.id] ?: false,
                             onMenuClick = {
-                                onMenuClick(video)
+                                onMenuClick(video.id)
                             },
                             onMenuDismiss = { onMenuDismiss(video.id) },
                             menuContent = {
                                 VideoItemDropdownMenu(
-                                    video = video,
                                     expanded = expandedMenus[video.id] ?: false,
                                     onDismiss = { onMenuDismiss(video.id) },
-                                    onSetThumbnail = onSetThumbnail,
-                                    onDownload = onDownload,
-                                    onReimport = onReimport,
-                                    onDelete = onDeleteSingleVideo
+                                    onSetThumbnail = { onSetThumbnail(video.id) },
+                                    onDownload = { onDownload(video.id) },
+                                    onReimport = { onReimport(video.id) },
+                                    onDelete = { onDeleteSingleVideo(video.id) }
                                 )
                             }
                         )
@@ -530,15 +531,8 @@ fun VideoListScreen(
 
     // メニュー展開状態の管理
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
-    var videoToDelete by remember {
-        mutableStateOf<Video?>(null)
-    }
-    var videoToReimport by remember {
-        mutableStateOf<Video?>(null)
-    }
-    var videoForThumbnail by remember {
-        mutableStateOf<Video?>(null)
-    }
+    var videoToDeleteId by remember { mutableStateOf<Long?>(null) }
+    var videoToReimportId by remember { mutableStateOf<Long?>(null) }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -576,6 +570,12 @@ fun VideoListScreen(
         videos.sorted(orderRule, orderUp)
     }
 
+    // ID→Videoマップ（ダイアログ等でVideoオブジェクトが必要な場合に使用）
+    val videoMap = remember(videos) { videos.associateBy { it.id } }
+
+    // UiModel変換
+    val videoUiModels = remember(sortedVideos) { sortedVideos.map { it.toUiModel() } }
+
     // タイトルの決定: 新規プレイリストモード、既存プレイリストモード
     // 全動画モードは AllVideosScreen で処理
     val playlistTitle = if (isNewPlaylistMode) {
@@ -591,7 +591,7 @@ fun VideoListScreen(
             playlistTitle = playlistTitle,
             isNewPlaylist = isNewPlaylistMode,
             isAllVideosMode = false,
-            videos = sortedVideos,
+            videos = videoUiModels,
             playlistType = playlistType,
             orderRule = orderRule,
             orderUp = orderUp,
@@ -609,33 +609,32 @@ fun VideoListScreen(
             onItemClick = { videoId ->
                 onNavigateToVideoPlayer(videoId)
             },
-            onMenuClick = { video ->
-                expandedMenus[video.id] = true
+            onMenuClick = { videoId ->
+                expandedMenus[videoId] = true
             },
             onMenuDismiss = { videoId ->
                 expandedMenus.remove(videoId)
             },
-            onSetThumbnail = { video ->
-                videoForThumbnail = video
+            onSetThumbnail = { videoId ->
                 playlist?.let { pl ->
                     playlistViewModel.update(
-                        pl.copy(thumbnail = Playlist.Thumbnail.Video(video.id))
+                        pl.copy(thumbnail = Playlist.Thumbnail.Video(videoId))
                     )
                 }
                 scope.launch {
                     snackbarHostState.showSnackbar(msgThumbnailSet)
                 }
             },
-            onDownload = { video ->
+            onDownload = { _ ->
                 scope.launch {
                     snackbarHostState.showSnackbar(msgDownloadNotImpl)
                 }
             },
-            onReimport = { video ->
-                videoToReimport = video
+            onReimport = { videoId ->
+                videoToReimportId = videoId
             },
-            onDeleteSingleVideo = { video ->
-                videoToDelete = video
+            onDeleteSingleVideo = { videoId ->
+                videoToDeleteId = videoId
             },
             onNavigateBack = onNavigateBack,
             onDeleteVideos = {
@@ -706,26 +705,28 @@ fun VideoListScreen(
     }
 
     // 削除確認ダイアログ
-    videoToDelete?.let { video ->
+    videoToDeleteId?.let { id ->
+        val video = videoMap[id] ?: return@let
         DeleteVideoDialog(
-            video = video,
+            videoTitle = video.title,
             onConfirm = {
                 videoViewModel.delete(video)
-                videoToDelete = null
+                videoToDeleteId = null
                 scope.launch {
                     snackbarHostState.showSnackbar(msgVideoDeleted)
                 }
             },
-            onDismiss = { videoToDelete = null }
+            onDismiss = { videoToDeleteId = null }
         )
     }
 
     // 再インポートダイアログ
-    videoToReimport?.let { video ->
+    videoToReimportId?.let { id ->
+        val video = videoMap[id] ?: return@let
         VideoReimportDialog(
-            video = video,
+            videoTitle = video.title,
             onConfirm = {
-                videoToReimport = null
+                videoToReimportId = null
                 scope.launch {
                     snackbarHostState.currentSnackbarData?.dismiss()
                     snackbarHostState.showSnackbar(msgReimportStarted)
@@ -742,7 +743,7 @@ fun VideoListScreen(
                     snackbarHostState.showSnackbar(message)
                 }
             },
-            onDismiss = { videoToReimport = null }
+            onDismiss = { videoToReimportId = null }
         )
     }
 }
@@ -753,32 +754,21 @@ fun VideoListScreenPreview() {
     AppTheme {
         // ダミーデータを作成
         val dummyVideos = listOf(
-            Video(
+            VideoUiModel.preview(
                 id = 1L,
                 videoId = "video1",
-                title = "Morning Meditation",
-                domain = "youtube.com",
-                state = Video.State.Information(
-                    isStreamable = true
-                )
+                title = "Morning Meditation"
             ),
-            Video(
+            VideoUiModel.preview(
                 id = 2L,
                 videoId = "video2",
-                title = "Workout Music Mix",
-                domain = "youtube.com",
-                state = Video.State.Information(
-                    isStreamable = true
-                )
+                title = "Workout Music Mix"
             ),
-            Video(
+            VideoUiModel.preview(
                 id = 3L,
                 videoId = "video3",
                 title = "Relaxing Sounds",
-                domain = "soundcloud.com",
-                state = Video.State.Information(
-                    isStreamable = true
-                )
+                domain = "soundcloud.com"
             )
         )
 
