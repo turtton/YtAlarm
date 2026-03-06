@@ -38,7 +38,7 @@ material = "1.13.0"
 # Kotlinx
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.10.0"
-kotlinx-datetime = "0.7.1-0.6.x-compat"
+kotlinx-datetime = "0.7.1"
 
 # Third party
 youtubedl-android = "0.18.1"

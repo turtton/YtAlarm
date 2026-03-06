@@ -4,7 +4,6 @@ import arrow.core.Either
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.Clock
 import net.turtton.ytalarm.kernel.di.DataSource
 import net.turtton.ytalarm.kernel.di.DependsOnDataSource
 import net.turtton.ytalarm.kernel.di.DependsOnVideoInfoRepository
@@ -21,6 +20,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 
 class VideoUseCaseTest :
