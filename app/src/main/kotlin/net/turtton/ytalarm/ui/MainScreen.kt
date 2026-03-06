@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.ui
 
+import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -20,10 +22,13 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,16 +39,25 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
+import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.navigation.YtAlarmDestination
+import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
+import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
+import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
 import net.turtton.ytalarm.ui.compose.screens.PermissionScreen
 import net.turtton.ytalarm.ui.compose.screens.hasMissingPermissions
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.extensions.createImportingPlaylist
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModel
+import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
+
+private const val CREATE_NEW_PLAYLIST_ID = 0L
 
 /**
  * YtAlarmアプリのメイン画面
@@ -58,7 +72,9 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 fun MainScreen(
     playlistViewModel: PlaylistViewModel,
     videoViewModel: VideoViewModel,
-    videoPlayerResourceContainer: VideoPlayerLoadingResourceContainer
+    videoPlayerResourceContainer: VideoPlayerLoadingResourceContainer,
+    sharedUrl: String? = null,
+    onSharedUrlConsumed: () -> Unit = {}
 ) {
     val context = LocalContext.current
 
@@ -84,6 +100,69 @@ fun MainScreen(
     // 現在のルートを取得（Drawer選択状態の管理用）
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+
+    // 共有URL処理のState管理
+    var pendingSharedUrl by remember { mutableStateOf<String?>(null) }
+    var showUrlErrorDialog by remember { mutableStateOf(false) }
+    var showPlaylistSelectDialog by remember { mutableStateOf(false) }
+
+    // 共有URLを受信したら処理を開始
+    LaunchedEffect(sharedUrl) {
+        if (sharedUrl != null) {
+            if (!sharedUrl.startsWith("http")) {
+                showUrlErrorDialog = true
+            } else {
+                pendingSharedUrl = sharedUrl
+                showPlaylistSelectDialog = true
+            }
+            onSharedUrlConsumed()
+        }
+    }
+
+    // URLエラーダイアログ
+    if (showUrlErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showUrlErrorDialog = false },
+            title = { Text(stringResource(R.string.dialog_shared_text_should_be_url_title)) },
+            text = { Text(stringResource(R.string.dialog_shared_text_should_be_url_description)) },
+            confirmButton = {
+                TextButton(onClick = { showUrlErrorDialog = false }) {
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        )
+    }
+
+    // プレイリスト選択ダイアログ
+    if (showPlaylistSelectDialog && pendingSharedUrl != null) {
+        SharedUrlPlaylistSelectDialog(
+            playlistViewModel = playlistViewModel,
+            onConfirm = { selectedPlaylistIds ->
+                val url = pendingSharedUrl ?: return@SharedUrlPlaylistSelectDialog
+                scope.launch(Dispatchers.IO) {
+                    val targetPlaylistIds = selectedPlaylistIds.mapNotNull { id ->
+                        if (id == CREATE_NEW_PLAYLIST_ID) {
+                            val newPlaylist = createImportingPlaylist()
+                            playlistViewModel.insertAsync(newPlaylist).await()
+                        } else {
+                            id
+                        }
+                    }.toLongArray()
+                    VideoInfoDownloadWorker.registerWorker(
+                        context,
+                        url,
+                        targetPlaylistIds
+                    )
+                }
+                showPlaylistSelectDialog = false
+                pendingSharedUrl = null
+            },
+            onDismiss = {
+                showPlaylistSelectDialog = false
+                pendingSharedUrl = null
+            }
+        )
+    }
 
     AppTheme {
         CompositionLocalProvider(
@@ -246,6 +325,71 @@ private fun DrawerContent(currentRoute: String?, onNavigate: (String) -> Unit) {
             selected = currentRoute == YtAlarmDestination.ABOUT,
             onClick = { onNavigate(YtAlarmDestination.ABOUT) },
             modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+        )
+    }
+}
+
+/**
+ * 共有URLのプレイリスト選択ダイアログ
+ *
+ * 既存プレイリスト一覧と「新規プレイリスト作成」オプションを表示する。
+ */
+@Composable
+private fun SharedUrlPlaylistSelectDialog(
+    playlistViewModel: PlaylistViewModel,
+    onConfirm: (Set<Long>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val videoViewModel = LocalVideoViewModel.current
+    val allPlaylists by playlistViewModel.allPlaylists.observeAsState(emptyList())
+    val newPlaylistTitle = stringResource(R.string.dialog_shared_url_new_playlist)
+
+    var displayDataList by remember { mutableStateOf<List<DisplayData<Long>>>(emptyList()) }
+
+    LaunchedEffect(allPlaylists, newPlaylistTitle) {
+        displayDataList = kotlinx.coroutines.withContext(Dispatchers.IO) {
+            val playlistItems = allPlaylists.map { playlist ->
+                val thumbnailUrl = when (val thumbnail = playlist.thumbnail) {
+                    is Playlist.Thumbnail.Video -> {
+                        try {
+                            val video = videoViewModel.getFromIdAsync(thumbnail.id).await()
+                            video?.thumbnailUrl?.let {
+                                DisplayDataThumbnail.Url(it)
+                            } ?: DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                        } catch (e: kotlinx.coroutines.CancellationException) {
+                            throw e
+                        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                            Log.w("MainScreen", "Failed to get video thumbnail: ${thumbnail.id}", e)
+                            DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                        }
+                    }
+
+                    is Playlist.Thumbnail.None -> {
+                        DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                    }
+                }
+                DisplayData(
+                    id = playlist.id,
+                    title = playlist.title,
+                    thumbnailUrl = thumbnailUrl
+                )
+            }
+            listOf(
+                DisplayData(
+                    id = CREATE_NEW_PLAYLIST_ID,
+                    title = newPlaylistTitle,
+                    thumbnailUrl = DisplayDataThumbnail.Drawable(R.drawable.ic_add_playlist)
+                )
+            ) + playlistItems
+        }
+    }
+
+    if (displayDataList.isNotEmpty()) {
+        // タイトル付きのMultiChoiceVideoDialogを表示
+        MultiChoiceVideoDialog(
+            displayDataList = displayDataList,
+            onConfirm = onConfirm,
+            onDismiss = onDismiss
         )
     }
 }

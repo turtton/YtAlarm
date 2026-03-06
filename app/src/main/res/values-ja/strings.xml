@@ -61,6 +61,7 @@
     <string name="dialog_repeat_days_title">曜日</string>
     <string name="dialog_shared_text_should_be_url_title">エラー</string>
     <string name="dialog_shared_text_should_be_url_description">入力する文字は\"http\"から初まる必要があります</string>
+    <string name="dialog_shared_url_new_playlist">新しいプレイリストを作成</string>
     <string name="dialog_vibration_waring_title">注意</string>
     <string name="dialog_vibration_waring_message">バイブレーションはAndroid12では正常に動作しない場合があります</string>
     <string name="dialog_vibration_warning_show_issue">Issueを開く</string>
