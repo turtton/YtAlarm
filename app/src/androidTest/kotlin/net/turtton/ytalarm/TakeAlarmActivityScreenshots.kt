@@ -10,6 +10,7 @@ import androidx.test.filters.LargeTest
 import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.runBlocking
 import net.turtton.ytalarm.activity.AlarmActivity
+import net.turtton.ytalarm.datasource.local.RoomDataSource
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResource
 import net.turtton.ytalarm.util.TestDataHelper
 import org.junit.After
@@ -55,7 +56,7 @@ class TakeAlarmActivityScreenshots {
         // テストデータを事前に挿入し、アラームIDを取得
         val application = ApplicationProvider.getApplicationContext<YtApplication>()
         runBlocking {
-            val database = application.database
+            val database = RoomDataSource(application).createExecutor()
             testAlarmId = TestDataHelper.insertAllTestData(
                 database.videoDao(),
                 database.playlistDao(),
@@ -75,7 +76,7 @@ class TakeAlarmActivityScreenshots {
         // テストデータをクリーンアップ
         val application = ApplicationProvider.getApplicationContext<YtApplication>()
         runBlocking {
-            val database = application.database
+            val database = RoomDataSource(application).createExecutor()
             database.alarmDao().deleteAll()
             database.playlistDao().deleteAll()
             database.videoDao().deleteAll()

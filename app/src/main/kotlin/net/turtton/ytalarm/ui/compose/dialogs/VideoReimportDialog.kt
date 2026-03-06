@@ -6,7 +6,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.kernel.entity.Video
 
 @Composable
 fun VideoReimportDialog(video: Video, onConfirm: () -> Unit, onDismiss: () -> Unit) {

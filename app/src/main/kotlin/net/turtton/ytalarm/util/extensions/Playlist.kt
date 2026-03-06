@@ -1,12 +1,11 @@
 package net.turtton.ytalarm.util.extensions
 
-import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Playlist
-import java.util.*
+import kotlinx.datetime.Clock
+import net.turtton.ytalarm.kernel.entity.Playlist
 
 fun createImportingPlaylist() = Playlist(
     type = Playlist.Type.Importing,
-    thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_download)
+    thumbnail = Playlist.Thumbnail.None
 )
 
 fun Playlist.insertVideos(videoIds: Set<Long>): Playlist {
@@ -20,7 +19,7 @@ fun Playlist.updateThumbnail(): Playlist? {
     return copy(thumbnail = Playlist.Thumbnail.Video(targetVideoId))
 }
 
-fun Playlist.updateDate(): Playlist = copy(lastUpdated = Calendar.getInstance())
+fun Playlist.updateDate(): Playlist = copy(lastUpdated = Clock.System.now())
 
 fun List<Playlist>.updateDate(): List<Playlist> = map { it.updateDate() }
 

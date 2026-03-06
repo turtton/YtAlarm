@@ -23,8 +23,9 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.kernel.entity.Alarm
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.extensions.getDisplay
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

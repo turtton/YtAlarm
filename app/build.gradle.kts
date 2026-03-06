@@ -176,8 +176,6 @@ dependencies {
 
     implementation(libs.bundles.youtubedl)
     implementation(libs.bundles.androidx.media3)
-    implementation(libs.glide)
-    annotationProcessor(libs.glide.compiler)
     implementation(libs.bundles.arrow)
 
     testImplementation(libs.junit)

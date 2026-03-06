@@ -43,7 +43,6 @@ kotlinx-datetime = "0.6.2"
 # Third party
 youtubedl-android = "0.18.1"
 media3 = "1.9.2"
-glide = "5.0.5"
 coil = "2.7.0"
 arrow = "2.2.1.1"
 ktlint = "1.8.0"
@@ -131,10 +130,6 @@ youtubedl-android-library = { group = "io.github.junkfood02.youtubedl-android", 
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3" }
 androidx-media3-ui = { group = "androidx.media3", name = "media3-ui", version.ref = "media3" }
-
-# Glide
-glide = { group = "com.github.bumptech.glide", name = "glide", version.ref = "glide" }
-glide-compiler = { group = "com.github.bumptech.glide", name = "compiler", version.ref = "glide" }
 
 # Coil (for Compose)
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }

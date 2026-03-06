@@ -45,7 +45,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.work.WorkManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -54,8 +53,8 @@ import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
-import net.turtton.ytalarm.database.structure.Playlist
-import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.kernel.entity.Playlist
+import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.components.PlaylistItem
 import net.turtton.ytalarm.ui.compose.components.PlaylistItemDropdownMenu
 import net.turtton.ytalarm.ui.compose.dialogs.RenamePlaylistDialog
@@ -180,26 +179,21 @@ fun PlaylistScreenContent(
                         key = { it.id }
                     ) { playlist ->
                         // サムネイル取得
-                        // Drawable型は直接値を設定、Video型はデフォルト値を設定
+                        // None型はデフォルト画像を設定、Video型はデフォルト値を設定後に非同期で取得
                         val thumbnailSource = remember(playlist.thumbnail) {
-                            when (val thumbnail = playlist.thumbnail) {
-                                is Playlist.Thumbnail.Drawable -> mutableStateOf<ThumbnailSource>(
-                                    ThumbnailSource.DrawableRes(thumbnail.id)
-                                )
-
-                                is Playlist.Thumbnail.Video -> mutableStateOf<ThumbnailSource>(
-                                    ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
-                                )
-                            }
+                            mutableStateOf<ThumbnailSource>(
+                                ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
+                            )
                         }
 
                         // Video型のみ非同期でサムネイルURLを取得
-                        if (playlist.thumbnail is Playlist.Thumbnail.Video) {
+                        val thumbnailVideo =
+                            playlist.thumbnail as? Playlist.Thumbnail.Video
+                        if (thumbnailVideo != null) {
                             LaunchedEffect(playlist.thumbnail) {
-                                val thumbnail = playlist.thumbnail
                                 val url = videoViewModel?.let { vm ->
                                     withContext(Dispatchers.IO) {
-                                        vm.getFromIdAsync(thumbnail.id).await()?.thumbnailUrl
+                                        vm.getFromIdAsync(thumbnailVideo.id).await()?.thumbnailUrl
                                     }
                                 }
                                 thumbnailSource.value = if (url != null) {
@@ -363,7 +357,7 @@ fun PlaylistScreen(
 
     // アラームで使用中のプレイリストIDを事前に計算
     val playlistsInUse = remember(alarms) {
-        alarms.flatMap { it.playListId }.distinct().toSet()
+        alarms.flatMap { it.playlistIds }.distinct().toSet()
     }
 
     // メニュー展開状態の管理
@@ -388,31 +382,8 @@ fun PlaylistScreen(
                     val video = videoViewModel.getFromIdAsync(
                         videoId
                     ).await() ?: return@filter false
-                    val state = when (val stateData = video.stateData) {
-                        is Video.State.Importing -> stateData.state as? Video.WorkerState.Working
-                        is Video.State.Downloading -> stateData.state as? Video.WorkerState.Working
-                        else -> return@filter false
-                    } ?: return@filter false
-
-                    val workManager = WorkManager.getInstance(context)
-                    try {
-                        val workerState = workManager.getWorkInfoById(state.workerId).get()?.state
-                        workerState == null || workerState.isFinished
-                    } catch (e: java.util.concurrent.ExecutionException) {
-                        android.util.Log.e(
-                            "PlaylistScreen",
-                            "Failed to check worker state: ${state.workerId}",
-                            e
-                        )
-                        true // ワーカー情報取得失敗時はガベージコレクション対象とする
-                    } catch (e: InterruptedException) {
-                        android.util.Log.e(
-                            "PlaylistScreen",
-                            "Interrupted while checking worker state: ${state.workerId}",
-                            e
-                        )
-                        true // ワーカー情報取得失敗時はガベージコレクション対象とする
-                    }
+                    // Importing状態はまだ処理中なので除外、Failed状態はガベージ対象
+                    video.state is Video.State.Failed
                 }
                 if (garbage.isNotEmpty()) {
                     playlistViewModel.delete(garbage)
@@ -483,7 +454,7 @@ fun PlaylistScreen(
                 val alarmsAsync = alarmViewModel.getAllAlarmsAsync()
                 val playlistsAsync = playlistViewModel.getFromIdsAsync(selectedItems.toList())
 
-                val usingList = alarmsAsync.await().flatMap { it.playListId }.distinct()
+                val usingList = alarmsAsync.await().flatMap { it.playlistIds }.distinct()
                 val deletable = arrayListOf<Playlist>()
                 var detectUsage = false
 
@@ -559,7 +530,7 @@ fun PlaylistScreen(
                                 ensureActive()
 
                                 val currentPlaylistsInUse = currentAlarms
-                                    .flatMap { it.playListId }
+                                    .flatMap { it.playlistIds }
                                     .toSet()
 
                                 if (currentPlaylistsInUse.contains(playlist.id)) {
@@ -612,28 +583,22 @@ fun PlaylistScreenPreview() {
                 id = 1L,
                 title = "Morning Playlist",
                 videos = listOf(1L, 2L, 3L),
-                thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_no_image),
-                type = Playlist.Type.Original,
-                creationDate = java.util.Calendar.getInstance(),
-                lastUpdated = java.util.Calendar.getInstance()
+                thumbnail = Playlist.Thumbnail.None,
+                type = Playlist.Type.Original
             ),
             Playlist(
                 id = 2L,
                 title = "Workout Music",
                 videos = listOf(4L, 5L),
-                thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_no_image),
-                type = Playlist.Type.Original,
-                creationDate = java.util.Calendar.getInstance(),
-                lastUpdated = java.util.Calendar.getInstance()
+                thumbnail = Playlist.Thumbnail.None,
+                type = Playlist.Type.Original
             ),
             Playlist(
                 id = 3L,
                 title = "Relaxing Sounds",
                 videos = listOf(6L, 7L, 8L, 9L),
-                thumbnail = Playlist.Thumbnail.Drawable(R.drawable.ic_no_image),
-                type = Playlist.Type.Original,
-                creationDate = java.util.Calendar.getInstance(),
-                lastUpdated = java.util.Calendar.getInstance()
+                thumbnail = Playlist.Thumbnail.None,
+                type = Playlist.Type.Original
             )
         )
         val snackbarHostState = remember { SnackbarHostState() }

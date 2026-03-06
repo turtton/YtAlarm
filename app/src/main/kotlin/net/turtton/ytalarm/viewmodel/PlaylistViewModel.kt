@@ -9,19 +9,13 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.usecase.UseCaseContainer
-import net.turtton.ytalarm.util.extensions.toDomain
-import net.turtton.ytalarm.util.extensions.toLegacy
-import net.turtton.ytalarm.util.extensions.updateDate
 
 class PlaylistViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>) : ViewModel() {
     val allPlaylists: LiveData<List<Playlist>> by lazy {
-        useCaseContainer.getAllPlaylistsFlow()
-            .map { list -> list.map { it.toLegacy() } }
-            .asLiveData()
+        useCaseContainer.getAllPlaylistsFlow().asLiveData()
     }
 
     init {
@@ -38,39 +32,38 @@ class PlaylistViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, 
     }
 
     val allPlaylistsAsync: Deferred<List<Playlist>> get() = viewModelScope.async {
-        useCaseContainer.getAllPlaylistsSync().map { it.toLegacy() }
+        useCaseContainer.getAllPlaylistsSync()
     }
 
     fun getFromId(id: Long): LiveData<Playlist?> = useCaseContainer.getPlaylistByIdFlow(id)
-        .map { it?.toLegacy() }
         .asLiveData()
 
     fun getFromIdAsync(id: Long): Deferred<Playlist?> = viewModelScope.async {
-        useCaseContainer.getPlaylistByIdSync(id)?.toLegacy()
+        useCaseContainer.getPlaylistByIdSync(id)
     }
 
     fun getFromIdsAsync(ids: List<Long>): Deferred<List<Playlist>> = viewModelScope.async {
-        useCaseContainer.getPlaylistsByIdsSync(ids).map { it.toLegacy() }
+        useCaseContainer.getPlaylistsByIdsSync(ids)
     }
 
     fun update(playlist: Playlist) = viewModelScope.launch {
-        useCaseContainer.updatePlaylist(playlist.updateDate().toDomain())
+        useCaseContainer.updatePlaylist(playlist)
     }
 
     fun update(playlists: List<Playlist>) = viewModelScope.launch {
-        useCaseContainer.updateAllPlaylists(playlists.map { it.updateDate().toDomain() })
+        useCaseContainer.updateAllPlaylists(playlists)
     }
 
     fun insertAsync(playlist: Playlist): Deferred<Long> = viewModelScope.async {
-        useCaseContainer.insertPlaylist(playlist.toDomain())
+        useCaseContainer.insertPlaylist(playlist)
     }
 
     fun delete(playlist: Playlist) = viewModelScope.launch {
-        useCaseContainer.deletePlaylist(playlist.toDomain())
+        useCaseContainer.deletePlaylist(playlist)
     }
 
     fun delete(playlists: List<Playlist>) = viewModelScope.launch {
-        useCaseContainer.deleteAllPlaylists(playlists.map { it.toDomain() })
+        useCaseContainer.deleteAllPlaylists(playlists)
     }
 
     companion object {

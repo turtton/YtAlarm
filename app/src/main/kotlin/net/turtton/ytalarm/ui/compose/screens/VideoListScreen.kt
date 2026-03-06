@@ -69,8 +69,8 @@ import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
-import net.turtton.ytalarm.database.structure.Playlist
-import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.kernel.entity.Playlist
+import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.components.VideoItem
 import net.turtton.ytalarm.ui.compose.components.VideoItemDropdownMenu
 import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
@@ -758,30 +758,27 @@ fun VideoListScreenPreview() {
                 videoId = "video1",
                 title = "Morning Meditation",
                 domain = "youtube.com",
-                stateData = Video.State.Information(
+                state = Video.State.Information(
                     isStreamable = true
-                ),
-                creationDate = java.util.Calendar.getInstance()
+                )
             ),
             Video(
                 id = 2L,
                 videoId = "video2",
                 title = "Workout Music Mix",
                 domain = "youtube.com",
-                stateData = Video.State.Information(
+                state = Video.State.Information(
                     isStreamable = true
-                ),
-                creationDate = java.util.Calendar.getInstance()
+                )
             ),
             Video(
                 id = 3L,
                 videoId = "video3",
                 title = "Relaxing Sounds",
                 domain = "soundcloud.com",
-                stateData = Video.State.Information(
+                state = Video.State.Information(
                     isStreamable = true
-                ),
-                creationDate = java.util.Calendar.getInstance()
+                )
             )
         )
 

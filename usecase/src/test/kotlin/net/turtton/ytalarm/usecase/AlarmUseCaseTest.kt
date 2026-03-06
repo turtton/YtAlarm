@@ -4,6 +4,7 @@ import arrow.core.Either
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
 import net.turtton.ytalarm.kernel.di.DataSource
@@ -160,9 +161,12 @@ class AlarmUseCaseTest :
                 whenever(mockAlarmRepo.getMatched(Unit, Alarm.RepeatType.Snooze))
                     .thenReturn(emptyList())
                 whenever(mockAlarmRepo.insert(any(), any())).thenReturn(100L)
+                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
 
-                val result = useCase.createSnoozeAlarm(originalAlarm)
+                val either = useCase.createSnoozeAlarm(originalAlarm)
 
+                either.shouldBeInstanceOf<Either.Right<Alarm>>()
+                val result = either.value
                 result.repeatType shouldBe Alarm.RepeatType.Snooze
                 result.isEnabled shouldBe true
                 result.id shouldBe 100L
@@ -173,6 +177,7 @@ class AlarmUseCaseTest :
                 whenever(mockAlarmRepo.getMatched(Unit, Alarm.RepeatType.Snooze))
                     .thenReturn(listOf(existingSnooze))
                 whenever(mockAlarmRepo.insert(any(), any())).thenReturn(100L)
+                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
 
                 val originalAlarm = Alarm(id = 1L, snoozeMinute = 5)
                 useCase.createSnoozeAlarm(originalAlarm)

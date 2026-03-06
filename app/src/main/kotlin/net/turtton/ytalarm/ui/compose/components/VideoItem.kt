@@ -28,9 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
-import java.util.Calendar
 
 @Suppress("UnusedParameter")
 @Composable
@@ -47,8 +46,7 @@ fun VideoItem(
     onMenuDismiss: () -> Unit = {},
     menuContent: (@Composable () -> Unit)? = null
 ) {
-    val isFailed = (video.stateData as? Video.State.Importing)
-        ?.state is Video.WorkerState.Failed
+    val isFailed = video.state is Video.State.Failed
 
     Row(
         modifier = modifier
@@ -145,8 +143,7 @@ private fun VideoItemPreview() {
                 thumbnailUrl = "",
                 videoUrl = "https://example.com/video",
                 domain = "youtube.com",
-                stateData = Video.State.Information(isStreamable = true),
-                creationDate = Calendar.getInstance()
+                state = Video.State.Information(isStreamable = true)
             ),
             domainOrSize = "youtube.com",
             isSelected = false,
@@ -169,8 +166,7 @@ private fun VideoItemSelectedPreview() {
                 thumbnailUrl = "",
                 videoUrl = "https://example.com/video",
                 domain = "youtube.com",
-                stateData = Video.State.Information(isStreamable = true),
-                creationDate = Calendar.getInstance()
+                state = Video.State.Information(isStreamable = true)
             ),
             domainOrSize = "youtube.com",
             isSelected = true,

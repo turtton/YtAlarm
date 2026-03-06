@@ -49,9 +49,14 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DayOfWeek
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Alarm
-import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.kernel.entity.Alarm
+import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.ui.compose.dialogs.AlarmDatePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.DayOfWeekPickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
@@ -62,10 +67,9 @@ import net.turtton.ytalarm.ui.compose.dialogs.RepeatTypeSelection
 import net.turtton.ytalarm.ui.compose.dialogs.SnoozeMinutePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.TimePickerDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VibrationWarningDialog
-import net.turtton.ytalarm.util.DayOfWeekCompat
+import net.turtton.ytalarm.util.extensions.getDisplay
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModel
-import java.util.Date
 
 /**
  * アラーム編集用ボトムシート
@@ -143,11 +147,11 @@ fun AlarmEditBottomSheet(
     // プレイリスト情報取得
     var playlistTitle by remember { mutableStateOf("") }
 
-    LaunchedEffect(alarm.playListId) {
-        if (alarm.playListId.isNotEmpty()) {
+    LaunchedEffect(alarm.playlistIds) {
+        if (alarm.playlistIds.isNotEmpty()) {
             withContext(Dispatchers.IO) {
                 try {
-                    val playlists = playlistViewModel.getFromIdsAsync(alarm.playListId).await()
+                    val playlists = playlistViewModel.getFromIdsAsync(alarm.playlistIds).await()
                     playlistTitle = playlists.joinToString(", ") { it.title }
                 } catch (e: kotlinx.coroutines.CancellationException) {
                     throw e
@@ -182,14 +186,15 @@ fun AlarmEditBottomSheet(
     // バリデーション付き保存処理
     val onSaveWithValidation: () -> Unit = {
         // バリデーション: プレイリスト選択必須
-        if (alarm.playListId.isEmpty()) {
+        if (alarm.playlistIds.isEmpty()) {
             scope.launch {
                 snackbarHostState.showSnackbar(errorPlaylistIsNull)
             }
         } else if (alarm.repeatType is Alarm.RepeatType.Date) {
             // バリデーション: 過去日付チェック
-            val targetDate = alarm.repeatType.targetDate
-            if (targetDate.before(Date())) {
+            val targetDate = (alarm.repeatType as Alarm.RepeatType.Date).targetDate
+            val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+            if (targetDate < today) {
                 scope.launch {
                     snackbarHostState.showSnackbar(errorPastDate)
                 }
@@ -298,7 +303,7 @@ fun AlarmEditBottomSheet(
             initialSelectedDays = initialDays,
             onConfirm = { days ->
                 val newRepeatType = when {
-                    days.size == DayOfWeekCompat.entries.size -> Alarm.RepeatType.Everyday
+                    days.size == DayOfWeek.entries.size -> Alarm.RepeatType.Everyday
                     else -> Alarm.RepeatType.Days(days)
                 }
                 onAlarmChange(alarm.copy(repeatType = newRepeatType))
@@ -310,12 +315,30 @@ fun AlarmEditBottomSheet(
 
     // 日付選択
     if (showDatePickerDialog) {
-        val initialMillis = (alarm.repeatType as? Alarm.RepeatType.Date)?.targetDate?.time
+        val initialMillis = (alarm.repeatType as? Alarm.RepeatType.Date)?.let { dateType ->
+            java.util.Calendar.getInstance().apply {
+                set(
+                    dateType.targetDate.year,
+                    dateType.targetDate.monthNumber - 1,
+                    dateType.targetDate.dayOfMonth,
+                    0,
+                    0,
+                    0
+                )
+                set(java.util.Calendar.MILLISECOND, 0)
+            }.timeInMillis
+        }
         AlarmDatePickerDialog(
             initialDateMillis = initialMillis,
             onConfirm = { millis ->
-                val selectedDate = Date(millis)
-                if (selectedDate.before(Date())) {
+                val cal = java.util.Calendar.getInstance().apply { timeInMillis = millis }
+                val selectedDate = LocalDate(
+                    cal.get(java.util.Calendar.YEAR),
+                    cal.get(java.util.Calendar.MONTH) + 1,
+                    cal.get(java.util.Calendar.DAY_OF_MONTH)
+                )
+                val today = Clock.System.todayIn(TimeZone.currentSystemDefault())
+                if (selectedDate < today) {
                     scope.launch {
                         snackbarHostState.showSnackbar(errorPastDate)
                     }
@@ -381,8 +404,8 @@ fun AlarmEditBottomSheet(
                             }
                         }
 
-                        is Playlist.Thumbnail.Drawable -> {
-                            DisplayDataThumbnail.Drawable(thumbnail.id)
+                        is Playlist.Thumbnail.None -> {
+                            DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
                         }
                     }
                     DisplayData(
@@ -397,9 +420,9 @@ fun AlarmEditBottomSheet(
         if (displayDataList.isNotEmpty()) {
             MultiChoiceVideoDialog(
                 displayDataList = displayDataList,
-                initialSelectedIds = alarm.playListId.toSet(),
+                initialSelectedIds = alarm.playlistIds.toSet(),
                 onConfirm = { selectedIds ->
-                    onAlarmChange(alarm.copy(playListId = selectedIds.toList()))
+                    onAlarmChange(alarm.copy(playlistIds = selectedIds.toList()))
                     showPlaylistDialog = false
                 },
                 onDismiss = { showPlaylistDialog = false }

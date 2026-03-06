@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.usecase
 
+import arrow.core.Either
 import kotlinx.coroutines.flow.Flow
 import kotlinx.datetime.Clock
 import kotlinx.datetime.DateTimeUnit
@@ -9,6 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 import net.turtton.ytalarm.kernel.di.DependsOnAlarmRepository
 import net.turtton.ytalarm.kernel.di.DependsOnDataSource
 import net.turtton.ytalarm.kernel.entity.Alarm
+import net.turtton.ytalarm.kernel.port.AlarmScheduleError
 import net.turtton.ytalarm.kernel.port.AlarmSchedulerPort
 
 /**
@@ -66,10 +68,14 @@ interface AlarmUseCase<LExec, LDS>
 
     /**
      * アラームを更新する。
+     * lastUpdatedを自動的に現在時刻に更新する。
      */
     suspend fun updateAlarm(alarm: Alarm) {
         val executor = localDataSource.dataSource.createExecutor()
-        localDataSource.alarmRepository.update(executor, alarm)
+        localDataSource.alarmRepository.update(
+            executor,
+            alarm.copy(lastUpdated = Clock.System.now())
+        )
     }
 
     /**
@@ -86,7 +92,7 @@ interface AlarmUseCase<LExec, LDS>
      * - Everyday/Days型: そのまま更新（スケジュール維持）
      * - Snooze型: アラームを削除
      */
-    suspend fun processAfterFiring(alarm: Alarm) {
+    suspend fun processAfterFiring(alarm: Alarm): Either<AlarmScheduleError, Unit> {
         val executor = localDataSource.dataSource.createExecutor()
         when (alarm.repeatType) {
             is Alarm.RepeatType.Once,
@@ -108,7 +114,7 @@ interface AlarmUseCase<LExec, LDS>
         }
 
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        alarmScheduler.scheduleNextAlarm(allAlarms)
+        return alarmScheduler.scheduleNextAlarm(allAlarms)
     }
 
     /**
@@ -119,7 +125,10 @@ interface AlarmUseCase<LExec, LDS>
      * @param clock 時刻取得用のClock（テスト可能にするためパラメータ化）
      * @return 作成されたスヌーズアラーム
      */
-    suspend fun createSnoozeAlarm(originalAlarm: Alarm, clock: Clock = Clock.System): Alarm {
+    suspend fun createSnoozeAlarm(
+        originalAlarm: Alarm,
+        clock: Clock = Clock.System
+    ): Either<AlarmScheduleError, Alarm> {
         val executor = localDataSource.dataSource.createExecutor()
 
         // 既存のスヌーズアラームを削除
@@ -144,9 +153,7 @@ interface AlarmUseCase<LExec, LDS>
         val result = snoozeAlarm.copy(id = newId)
 
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        alarmScheduler.scheduleNextAlarm(allAlarms)
-
-        return result
+        return alarmScheduler.scheduleNextAlarm(allAlarms).map { result }
     }
 
     /**
@@ -156,12 +163,13 @@ interface AlarmUseCase<LExec, LDS>
      * @param alarmId 対象アラームのID
      * @param enabled 有効にする場合はtrue
      */
-    suspend fun toggleAlarm(alarmId: Long, enabled: Boolean) {
+    suspend fun toggleAlarm(alarmId: Long, enabled: Boolean): Either<AlarmScheduleError, Unit> {
         val executor = localDataSource.dataSource.createExecutor()
-        val alarm = localDataSource.alarmRepository.getFromId(executor, alarmId) ?: return
+        val alarm = localDataSource.alarmRepository.getFromId(executor, alarmId)
+            ?: return Either.Right(Unit)
         localDataSource.alarmRepository.update(executor, alarm.copy(isEnabled = enabled))
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        alarmScheduler.scheduleNextAlarm(allAlarms)
+        return alarmScheduler.scheduleNextAlarm(allAlarms)
     }
 
     /**
@@ -170,7 +178,7 @@ interface AlarmUseCase<LExec, LDS>
      *
      * @param alarm 保存するアラーム
      */
-    suspend fun saveAlarmAndSchedule(alarm: Alarm) {
+    suspend fun saveAlarmAndSchedule(alarm: Alarm): Either<AlarmScheduleError, Unit> {
         val executor = localDataSource.dataSource.createExecutor()
         if (alarm.id == 0L) {
             localDataSource.alarmRepository.insert(executor, alarm)
@@ -178,7 +186,7 @@ interface AlarmUseCase<LExec, LDS>
             localDataSource.alarmRepository.update(executor, alarm)
         }
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        alarmScheduler.scheduleNextAlarm(allAlarms)
+        return alarmScheduler.scheduleNextAlarm(allAlarms)
     }
 
     /**
@@ -186,11 +194,11 @@ interface AlarmUseCase<LExec, LDS>
      *
      * @param alarm 削除するアラーム
      */
-    suspend fun deleteAlarmAndReschedule(alarm: Alarm) {
+    suspend fun deleteAlarmAndReschedule(alarm: Alarm): Either<AlarmScheduleError, Unit> {
         val executor = localDataSource.dataSource.createExecutor()
         localDataSource.alarmRepository.delete(executor, alarm)
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        alarmScheduler.scheduleNextAlarm(allAlarms)
+        return alarmScheduler.scheduleNextAlarm(allAlarms)
     }
 
     /**

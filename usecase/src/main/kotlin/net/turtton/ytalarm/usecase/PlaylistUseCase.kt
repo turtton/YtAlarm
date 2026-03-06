@@ -1,6 +1,7 @@
 package net.turtton.ytalarm.usecase
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Clock
 import net.turtton.ytalarm.kernel.di.DependsOnAlarmRepository
 import net.turtton.ytalarm.kernel.di.DependsOnDataSource
 import net.turtton.ytalarm.kernel.di.DependsOnPlaylistRepository
@@ -65,10 +66,14 @@ interface PlaylistUseCase<LExec, LDS>
 
     /**
      * プレイリストを更新する。
+     * lastUpdatedを自動的に現在時刻に更新する。
      */
     suspend fun updatePlaylist(playlist: Playlist) {
         val executor = localDataSource.dataSource.createExecutor()
-        localDataSource.playlistRepository.update(executor, playlist)
+        localDataSource.playlistRepository.update(
+            executor,
+            playlist.copy(lastUpdated = Clock.System.now())
+        )
     }
 
     /**

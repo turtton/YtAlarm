@@ -1,3 +1,5 @@
+@file:Suppress("NewApi")
+
 package net.turtton.ytalarm.ui.compose.dialogs
 
 import androidx.compose.foundation.clickable
@@ -18,19 +20,20 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.DayOfWeek
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
-import net.turtton.ytalarm.util.DayOfWeekCompat
+import net.turtton.ytalarm.util.extensions.getDisplay
 
 @Composable
 fun DayOfWeekPickerDialog(
-    initialSelectedDays: List<DayOfWeekCompat>,
-    onConfirm: (List<DayOfWeekCompat>) -> Unit,
+    initialSelectedDays: List<DayOfWeek>,
+    onConfirm: (List<DayOfWeek>) -> Unit,
     onDismiss: () -> Unit
 ) {
     val selectedDays = remember(initialSelectedDays) {
-        val map = mutableStateMapOf<DayOfWeekCompat, Boolean>()
-        DayOfWeekCompat.entries.forEach { day ->
+        val map = mutableStateMapOf<DayOfWeek, Boolean>()
+        DayOfWeek.entries.forEach { day ->
             map[day] = initialSelectedDays.contains(day)
         }
         map
@@ -43,7 +46,7 @@ fun DayOfWeekPickerDialog(
         title = { Text(stringResource(R.string.dialog_repeat_days_title)) },
         text = {
             Column {
-                DayOfWeekCompat.entries.forEach { day ->
+                DayOfWeek.entries.forEach { day ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -71,7 +74,7 @@ fun DayOfWeekPickerDialog(
             val hasSelection = selectedDays.values.any { it }
             TextButton(
                 onClick = {
-                    val selected = DayOfWeekCompat.entries.filter { selectedDays[it] == true }
+                    val selected = DayOfWeek.entries.filter { selectedDays[it] == true }
                     if (selected.isNotEmpty()) {
                         onConfirm(selected)
                     }
@@ -95,9 +98,9 @@ fun DayOfWeekPickerDialogPreview() {
     AppTheme {
         DayOfWeekPickerDialog(
             initialSelectedDays = listOf(
-                DayOfWeekCompat.MONDAY,
-                DayOfWeekCompat.WEDNESDAY,
-                DayOfWeekCompat.FRIDAY
+                DayOfWeek.MONDAY,
+                DayOfWeek.WEDNESDAY,
+                DayOfWeek.FRIDAY
             ),
             onConfirm = {},
             onDismiss = {}
