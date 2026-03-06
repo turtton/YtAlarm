@@ -154,7 +154,9 @@ interface AlarmUseCase<LExec, LDS>
             hour = localSnoozeTime.hour,
             minute = localSnoozeTime.minute,
             repeatType = Alarm.RepeatType.Snooze,
-            isEnabled = true
+            isEnabled = true,
+            creationDate = now,
+            lastUpdated = now
         )
         val newId = localDataSource.alarmRepository.insert(executor, snoozeAlarm)
         val result = snoozeAlarm.copy(id = newId)
@@ -174,12 +176,13 @@ interface AlarmUseCase<LExec, LDS>
         val executor = localDataSource.dataSource.createExecutor()
         val alarm = localDataSource.alarmRepository.getFromId(executor, alarmId)
             ?: return Either.Right(Unit)
-        localDataSource.alarmRepository.update(
-            executor,
-            alarm.copy(isEnabled = enabled, lastUpdated = Clock.System.now())
-        )
+        val updated = alarm.copy(isEnabled = enabled, lastUpdated = Clock.System.now())
+        localDataSource.alarmRepository.update(executor, updated)
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        return alarmScheduler.scheduleNextAlarm(allAlarms)
+        return alarmScheduler.scheduleNextAlarm(allAlarms).onLeft {
+            // スケジュール失敗時はDB状態をロールバック
+            localDataSource.alarmRepository.update(executor, alarm)
+        }
     }
 
     /**
@@ -191,13 +194,23 @@ interface AlarmUseCase<LExec, LDS>
     suspend fun saveAlarmAndSchedule(alarm: Alarm): Either<AlarmScheduleError, Unit> {
         val executor = localDataSource.dataSource.createExecutor()
         val alarmWithTimestamp = alarm.copy(lastUpdated = Clock.System.now())
-        if (alarmWithTimestamp.id == 0L) {
+        val isNew = alarmWithTimestamp.id == 0L
+        val insertedId = if (isNew) {
             localDataSource.alarmRepository.insert(executor, alarmWithTimestamp)
         } else {
             localDataSource.alarmRepository.update(executor, alarmWithTimestamp)
+            alarmWithTimestamp.id
         }
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        return alarmScheduler.scheduleNextAlarm(allAlarms)
+        return alarmScheduler.scheduleNextAlarm(allAlarms).onLeft {
+            // スケジュール失敗時はDB変更をロールバック
+            if (isNew) {
+                val inserted = alarmWithTimestamp.copy(id = insertedId)
+                localDataSource.alarmRepository.delete(executor, inserted)
+            } else {
+                localDataSource.alarmRepository.update(executor, alarm)
+            }
+        }
     }
 
     /**
