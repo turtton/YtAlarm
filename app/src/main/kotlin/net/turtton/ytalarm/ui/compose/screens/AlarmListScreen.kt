@@ -563,7 +563,7 @@ fun AlarmListScreen(
                                         "AlarmListScreen",
                                         "Failed to schedule alarm: $error"
                                     )
-                                    // isEnableをfalseにして再更新
+                                    // isEnabledをfalseにして再更新
                                     val disabledAlarm =
                                         currentAlarm.copy(id = savedAlarmId, isEnabled = false)
                                     alarmViewModel.update(disabledAlarm)

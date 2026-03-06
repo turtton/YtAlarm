@@ -63,7 +63,7 @@ class AlarmViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>)
     /**
      * アラーム発火後の状態遷移を処理する
      *
-     * - Once/Date型: isEnable=falseに設定
+     * - Once/Date型: isEnabled=falseに設定
      * - Everyday/Days型: そのまま更新
      * - Snooze型: アラームを削除
      */
