@@ -134,6 +134,10 @@ android {
 }
 
 dependencies {
+    implementation(project(":kernel"))
+    implementation(project(":datasource"))
+    implementation(project(":usecase"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
@@ -168,6 +172,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.bundles.kotlinx.serialization)
+    implementation(libs.kotlinx.datetime)
 
     implementation(libs.bundles.youtubedl)
     implementation(libs.bundles.androidx.media3)

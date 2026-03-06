@@ -53,6 +53,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.database.structure.Video
 import net.turtton.ytalarm.ui.compose.components.PlaylistItem
@@ -329,17 +330,20 @@ fun PlaylistScreen(
     modifier: Modifier = Modifier,
     playlistViewModel: PlaylistViewModel = viewModel(
         factory = PlaylistViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     ),
     videoViewModel: VideoViewModel = viewModel(
         factory = VideoViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     ),
     alarmViewModel: AlarmViewModel = viewModel(
         factory = AlarmViewModelFactory(
-            (LocalContext.current.applicationContext as YtApplication).repository
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
         )
     )
 ) {

@@ -7,35 +7,37 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.DataRepository
 import net.turtton.ytalarm.database.structure.Alarm
-import net.turtton.ytalarm.util.extensions.hourOfDay
-import net.turtton.ytalarm.util.extensions.minute
-import net.turtton.ytalarm.util.extensions.plusAssign
+import net.turtton.ytalarm.usecase.UseCaseContainer
+import net.turtton.ytalarm.util.extensions.toDomain
+import net.turtton.ytalarm.util.extensions.toLegacy
 import net.turtton.ytalarm.util.extensions.updateDate
-import java.util.Calendar
-import kotlin.time.Duration.Companion.minutes
 
-class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
-    val allAlarms: LiveData<List<Alarm>> by lazy { repository.allAlarms.asLiveData() }
+class AlarmViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>) : ViewModel() {
+    val allAlarms: LiveData<List<Alarm>> by lazy {
+        useCaseContainer.getAllAlarmsFlow()
+            .map { list -> list.map { it.toLegacy() } }
+            .asLiveData()
+    }
 
     fun getAllAlarmsAsync(): Deferred<List<Alarm>> = viewModelScope.async {
-        repository.getAllAlarmsSync()
+        useCaseContainer.getAllAlarmsSync().map { it.toLegacy() }
     }
 
     fun getFromIdAsync(id: Long): Deferred<Alarm?> = viewModelScope.async {
-        repository.getAlarmFromIdSync(id)
+        useCaseContainer.getAlarmById(id)?.toLegacy()
     }
 
     fun getMatchedAsync(repeatType: Alarm.RepeatType) = viewModelScope.async {
-        repository.getMatchedAlarmSync(repeatType)
+        useCaseContainer.getMatchedAlarms(repeatType.toDomain()).map { it.toLegacy() }
     }
 
-    suspend fun insert(alarm: Alarm): Long = repository.insert(alarm)
+    suspend fun insert(alarm: Alarm): Long = useCaseContainer.insertAlarm(alarm.toDomain())
 
     suspend fun update(alarm: Alarm) {
-        repository.update(alarm.updateDate())
+        useCaseContainer.updateAlarm(alarm.updateDate().toDomain())
     }
 
     /**
@@ -45,7 +47,7 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
      * suspend関数内からの呼び出しには[deleteSync]を使用すること。
      */
     fun delete(alarm: Alarm) = viewModelScope.launch {
-        repository.delete(alarm)
+        deleteSync(alarm)
     }
 
     /**
@@ -55,37 +57,18 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
      * suspend関数内からの呼び出し用。
      */
     suspend fun deleteSync(alarm: Alarm) {
-        repository.delete(alarm)
+        useCaseContainer.deleteAlarm(alarm.toDomain())
     }
 
     /**
      * アラーム発火後の状態遷移を処理する
      *
-     * - Once/Date型: isEnable=falseに設定
+     * - Once/Date型: isEnabled=falseに設定
      * - Everyday/Days型: そのまま更新
      * - Snooze型: アラームを削除
      */
     suspend fun processAfterFiring(alarm: Alarm) {
-        var repeatType = alarm.repeatType
-        if (repeatType is Alarm.RepeatType.Date) {
-            repeatType = Alarm.RepeatType.Once
-        }
-
-        when (repeatType) {
-            is Alarm.RepeatType.Once -> {
-                update(alarm.copy(repeatType = repeatType, isEnable = false))
-            }
-
-            is Alarm.RepeatType.Everyday, is Alarm.RepeatType.Days -> {
-                update(alarm)
-            }
-
-            is Alarm.RepeatType.Snooze -> {
-                deleteSync(alarm)
-            }
-
-            else -> {}
-        }
+        useCaseContainer.processAfterFiring(alarm.toDomain())
     }
 
     /**
@@ -97,24 +80,8 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
      * @param originalAlarm 元のアラーム
      * @return 作成されたスヌーズアラーム
      */
-    suspend fun createSnoozeAlarm(originalAlarm: Alarm): Alarm {
-        // 既存のスヌーズアラームを削除
-        val existingSnoozes = repository.getMatchedAlarmSync(Alarm.RepeatType.Snooze)
-        existingSnoozes.forEach { deleteSync(it) }
-
-        // 新しいスヌーズアラームを作成
-        val now = Calendar.getInstance()
-        now += originalAlarm.snoozeMinute.minutes
-        val snoozeAlarm = originalAlarm.copy(
-            id = 0,
-            hour = now.hourOfDay,
-            minute = now.minute,
-            repeatType = Alarm.RepeatType.Snooze,
-            isEnable = true
-        )
-        val newId = repository.insert(snoozeAlarm)
-        return snoozeAlarm.copy(id = newId)
-    }
+    suspend fun createSnoozeAlarm(originalAlarm: Alarm): Alarm =
+        useCaseContainer.createSnoozeAlarm(originalAlarm.toDomain()).toLegacy()
 
     /**
      * 有効なアラームリストを取得する
@@ -125,16 +92,17 @@ class AlarmViewModel(private val repository: DataRepository) : ViewModel() {
      *
      * @return 有効なアラームのリスト
      */
-    suspend fun getEnabledAlarmsSync(): List<Alarm> = repository.getAllAlarmsSync().filter {
-        it.isEnable
+    suspend fun getEnabledAlarmsSync(): List<Alarm> = useCaseContainer.getEnabledAlarms().map {
+        it.toLegacy()
     }
 }
 
-class AlarmViewModelFactory(private val repository: DataRepository) : ViewModelProvider.Factory {
+class AlarmViewModelFactory(private val useCaseContainer: UseCaseContainer<*, *, *, *>) :
+    ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(AlarmViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return AlarmViewModel(repository) as T
+            return AlarmViewModel(useCaseContainer) as T
         } else {
             error("Unknown ViewModel class")
         }

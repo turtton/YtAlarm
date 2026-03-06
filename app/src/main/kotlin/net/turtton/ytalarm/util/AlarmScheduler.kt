@@ -35,7 +35,7 @@ sealed interface AlarmScheduleError {
 fun LiveData<List<Alarm>>.observeAlarm(lifecycleOwner: LifecycleOwner, context: Context) {
     observe(lifecycleOwner) { list ->
         if (list == null) return@observe
-        val alarmList = list.filter { it.isEnable }.toMutableList()
+        val alarmList = list.filter { it.isEnabled }.toMutableList()
         updateAlarmSchedule(context, alarmList).onLeft { error ->
             val message = when (error) {
                 is AlarmScheduleError.PermissionDenied -> error.message
@@ -74,7 +74,7 @@ fun updateAlarmSchedule(
         raise(AlarmScheduleError.NoEnabledAlarm)
     }
 
-    ensure(alarm.isEnable) {
+    ensure(alarm.isEnabled) {
         cancelAlarm(context, alarmManager)
         AlarmScheduleError.NoEnabledAlarm
     }

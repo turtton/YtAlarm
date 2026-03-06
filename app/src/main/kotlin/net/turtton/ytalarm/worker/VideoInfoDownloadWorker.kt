@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
@@ -13,79 +14,121 @@ import androidx.work.Operation
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import arrow.core.flatMap
-import arrow.core.fold
-import arrow.core.raise.catch
-import arrow.core.raise.either
-import com.yausername.youtubedl_android.YoutubeDL
-import com.yausername.youtubedl_android.YoutubeDLRequest
-import kotlinx.coroutines.guava.await
-import kotlinx.serialization.json.Json
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Playlist
-import net.turtton.ytalarm.database.structure.Video
-import net.turtton.ytalarm.util.VideoInformation
-import net.turtton.ytalarm.util.extensions.copyAsFailed
-import net.turtton.ytalarm.util.extensions.createImportingPlaylist
-import net.turtton.ytalarm.util.extensions.deleteVideo
-import net.turtton.ytalarm.util.extensions.hasUpdatingVideo
-import net.turtton.ytalarm.util.extensions.insertVideos
-import net.turtton.ytalarm.util.extensions.updateThumbnail
+import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.kernel.entity.Playlist
+import net.turtton.ytalarm.kernel.entity.Video
+import net.turtton.ytalarm.usecase.ImportResult
+import net.turtton.ytalarm.usecase.UseCaseContainer
 
 const val VIDEO_DOWNLOAD_NOTIFICATION = "net.turtton.ytalarm.VideoDLNotification"
 
 class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineIOWorker(appContext, workerParams) {
-    private val json = Json { ignoreUnknownKeys = true }
+    CoroutineWorker(appContext, workerParams) {
 
     @SuppressLint("RestrictedApi")
     override suspend fun doWork(): Result {
+        val useCaseContainer = (applicationContext as YtApplication).dataContainerProvider
+            .getUseCaseContainer()
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
         val isSyncMode = inputData.getBoolean(KEY_SYNC_MODE, false)
         val syncPlaylistId = inputData.getLong(KEY_SYNC_PLAYLIST_ID, 0L)
 
         if (isSyncMode && syncPlaylistId > 0) {
-            return doSyncWork(targetUrl, syncPlaylistId)
+            return doSyncWork(useCaseContainer, targetUrl, syncPlaylistId)
         }
 
-        var playlistArray = inputData.getLongArray(KEY_PLAYLIST)
+        val playlistArray = inputData.getLongArray(KEY_PLAYLIST)
+        return doImportWork(useCaseContainer, targetUrl, playlistArray)
+    }
 
-        val stateTitle = applicationContext.getString(R.string.item_video_list_state_importing)
-        val data = Video.State.Importing(Video.WorkerState.Working(id))
-        var targetVideo = Video(videoId = "", title = stateTitle, stateData = data)
+    private suspend fun doImportWork(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        targetUrl: String,
+        playlistArray: LongArray?
+    ): Result {
+        // 1. Importingプレースホルダーを先にDBに挿入（UIに即表示）
+        val importingTitle = applicationContext.getString(R.string.item_video_list_state_importing)
+        val placeholderId = useCaseContainer.insertImportingPlaceholder(importingTitle)
 
-        val targetVideoId = repository.insert(targetVideo)
-        targetVideo = repository.getVideoFromIdSync(targetVideoId)!!
+        // 2. プレースホルダーをプレイリストに追加
+        if (playlistArray != null && playlistArray.isNotEmpty()) {
+            addVideoToPlaylists(useCaseContainer, placeholderId, playlistArray)
+        }
 
-        @Suppress("ControlFlowWithEmptyBody", "EmptyWhileBlock")
-        while (
-            WorkManager.getInstance(applicationContext)
-                .getWorkInfoById(id)
-                .await()
-                .let { it == null || it.state.isFinished }
+        // 3. 動画情報を取得してプレースホルダーを更新
+        val result = when (
+            val importResult = useCaseContainer.fetchAndImportVideo(targetUrl, placeholderId)
         ) {
+            is ImportResult.Success -> Result.success()
+
+            is ImportResult.Duplicate -> {
+                // プレースホルダーは fetchAndImportVideo 内で削除済み
+                // 既存動画をプレイリストに追加（プレースホルダーから置き換え）
+                if (playlistArray != null && playlistArray.isNotEmpty()) {
+                    replaceVideoInPlaylists(
+                        useCaseContainer,
+                        placeholderId,
+                        importResult.existingVideoId,
+                        playlistArray
+                    )
+                }
+                Result.success()
+            }
+
+            is ImportResult.Failure.UnsupportedUrl -> {
+                // プレイリストとして再試行（プレースホルダーは削除）
+                useCaseContainer.deleteVideoById(placeholderId)
+                removeVideoFromPlaylists(useCaseContainer, placeholderId, playlistArray)
+                doImportCloudPlaylist(useCaseContainer, targetUrl, playlistArray)
+            }
+
+            is ImportResult.Failure.Network -> {
+                Log.e(WORKER_ID, "Network error. Url: $targetUrl")
+                useCaseContainer.markVideoAsFailed(placeholderId, targetUrl)
+                Result.failure()
+            }
+
+            is ImportResult.Failure.Parse -> {
+                Log.e(WORKER_ID, "Parse error. Url: $targetUrl")
+                useCaseContainer.markVideoAsFailed(placeholderId, targetUrl)
+                Result.failure()
+            }
         }
-        playlistArray = playlistArray?.insertVideoInPlaylists(targetVideo)
 
-        val (videos, type) = download(targetUrl)
-            ?: run {
-                repository.update(targetVideo.copyAsFailed(targetUrl))
-                return Result.failure()
-            }
-
-        when (type) {
-            is Type.Video -> {
-                val video = videos.first()
-                insertVideo(playlistArray, video, targetVideo)
-            }
-
-            is Type.Playlist -> {
-                repository.delete(targetVideo)
-                insertCloudPlaylist(playlistArray, videos, targetVideoId, type)
-            }
+        // 4. プレイリストの Importing → Original 遷移（全動画の更新が完了していれば）
+        if (playlistArray != null && playlistArray.isNotEmpty()) {
+            finalizePlaylistAfterImport(useCaseContainer, playlistArray)
         }
 
-        return Result.success()
+        return result
+    }
+
+    private suspend fun doImportCloudPlaylist(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        targetUrl: String,
+        playlistArray: LongArray?
+    ): Result {
+        val playlistResult = useCaseContainer.importCloudPlaylist(targetUrl)
+        return playlistResult.fold(
+            ifLeft = { failure ->
+                Log.e(WORKER_ID, "Import failed. Url: $targetUrl, reason: $failure")
+                Result.failure()
+            },
+            ifRight = { newPlaylistId ->
+                if (playlistArray != null && playlistArray.isNotEmpty()) {
+                    val newPlaylist = useCaseContainer.getPlaylistByIdSync(newPlaylistId)
+                    if (newPlaylist != null) {
+                        addCloudPlaylistVideosToPlaylists(
+                            useCaseContainer,
+                            newPlaylist.videos,
+                            playlistArray
+                        )
+                    }
+                }
+                Result.success()
+            }
+        )
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
@@ -104,259 +147,130 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         return ForegroundInfo(NOTIFICATION_ID, notification.build())
     }
 
-    private fun download(targetUrl: String): Pair<List<Video>, Type>? = either {
-        catch({
-            val request = YoutubeDLRequest(targetUrl)
-                .addOption("--dump-single-json")
-                .addOption("-f", "b")
-            YoutubeDL.getInstance().execute(request) { _, _, _ -> }
-        }) { error ->
-            raise(error)
-        }
-    }.flatMap { result ->
-        either {
-            catch({
-                json.decodeFromString<VideoInformation>(result.out)
-            }) { error ->
-                raise(error)
-            }
-        }
-    }.fold(
-        ifLeft = { error ->
-            Log.e(WORKER_ID, "Download failed. Url: $targetUrl", error)
-            null
-        },
-        ifRight = { videoInfo ->
-            when (videoInfo.typeData) {
-                is VideoInformation.Type.Video -> {
-                    listOf(videoInfo.toVideo()) to Type.Video
-                }
-
-                is VideoInformation.Type.Playlist -> {
-                    videoInfo.typeData
-                        .entries
-                        .map(VideoInformation::toVideo)
-                        .let { videos ->
-                            videos to Type.Playlist(videoInfo.title!!, videoInfo.url)
-                        }
-                }
-            }
-        }
-    )
-
-    private suspend fun insertVideo(
-        playlistArray: LongArray?,
-        newVideo: Video,
-        pendingVideo: Video
+    private suspend fun addVideoToPlaylists(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        videoId: Long,
+        playlistArray: LongArray
     ) {
-        val updatedPlaylist = checkVideoDuplication(newVideo.videoId, newVideo.domain)
-            ?.let { duplicatedId ->
-                repository.delete(pendingVideo)
-                playlistArray?.let { repository.getPlaylistFromIdsSync(it.toList()) }
-                    ?.deleteVideo(newVideo.id)
-                    ?.map { playlist ->
-                        val videoSet = playlist.videos.toMutableSet()
-                        videoSet += duplicatedId
-                        var newPlaylist = playlist.copy(videos = videoSet.toList())
-                        if (newPlaylist.thumbnail is Playlist.Thumbnail.Drawable) {
-                            newPlaylist.updateThumbnail()?.let {
-                                newPlaylist = it
-                            }
-                        }
-                        val currentVideos = repository.getVideoFromIdsSync(newPlaylist.videos)
-                        if (!currentVideos.hasUpdatingVideo) {
-                            newPlaylist = newPlaylist.copy(type = Playlist.Type.Original)
-                        }
-                        newPlaylist
-                    }
-            } ?: kotlin.run {
-            val importedVideo = newVideo.copy(id = pendingVideo.id)
-            repository.update(importedVideo)
-            playlistArray?.let {
-                repository.getPlaylistFromIdsSync(it.toList())
-            }?.map { pl ->
-                var playlist = pl
-                var shouldUpdate = false
-                val containsVideos = repository.getVideoFromIdsSync(playlist.videos)
-                if (!containsVideos.hasUpdatingVideo) {
-                    playlist = playlist.copy(type = Playlist.Type.Original)
-                    shouldUpdate = true
-                }
-                if (playlist.thumbnail is Playlist.Thumbnail.Drawable) {
-                    playlist.updateThumbnail()?.also {
-                        playlist = it
-                        shouldUpdate = true
-                    }
-                }
-                playlist.takeIf { shouldUpdate }
-            }
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        val updatedPlaylists = playlists.map { playlist ->
+            val newVideos = playlist.videos.toMutableSet().apply { add(videoId) }.toList()
+            updatePlaylistWithThumbnail(useCaseContainer, playlist, newVideos)
         }
-
-        updatedPlaylist?.filterNotNull()
-            .takeIf { !it.isNullOrEmpty() }
-            ?.let {
-                repository.update(it)
-            }
+        useCaseContainer.updateAllPlaylists(updatedPlaylists)
     }
 
-    private suspend fun insertCloudPlaylist(
-        playlistArray: LongArray?,
-        videos: List<Video>,
-        deletedVideoId: Long,
-        type: Type.Playlist
+    private suspend fun replaceVideoInPlaylists(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        oldVideoId: Long,
+        newVideoId: Long,
+        playlistArray: LongArray
     ) {
-        val targetIds = mutableListOf<Long>()
-        val newVideos = videos.filter {
-            checkVideoDuplication(it.videoId, it.domain)
-                ?.also { duplicatedId -> targetIds += duplicatedId }
-                .let { duplicatedId -> duplicatedId == null }
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        val updatedPlaylists = playlists.map { playlist ->
+            val newVideos = playlist.videos.map { if (it == oldVideoId) newVideoId else it }
+            updatePlaylistWithThumbnail(useCaseContainer, playlist, newVideos)
         }
-        targetIds += repository.insert(newVideos)
+        useCaseContainer.updateAllPlaylists(updatedPlaylists)
+    }
 
-        playlistArray?.let { _ ->
-            var playlists = repository.getPlaylistFromIdsSync(playlistArray.toList())
-            playlists = playlists.deleteVideo(deletedVideoId)
-            playlists = checkPlaylistSyncRule(playlists, targetIds)
-            playlists = playlists.insertVideos(targetIds)
+    private suspend fun removeVideoFromPlaylists(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        videoId: Long,
+        playlistArray: LongArray?
+    ) {
+        if (playlistArray == null || playlistArray.isEmpty()) return
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        val updatedPlaylists = playlists.map { playlist ->
+            playlist.copy(videos = playlist.videos.filter { it != videoId })
+        }
+        useCaseContainer.updateAllPlaylists(updatedPlaylists)
+    }
 
-            var playlistType = Playlist.Type.CloudPlaylist(type.url, id)
-            playlists = playlists.map { playlist ->
-                if (playlist.type is Playlist.Type.CloudPlaylist) {
-                    playlistType = playlistType.copy(syncRule = playlist.type.syncRule)
+    private suspend fun addCloudPlaylistVideosToPlaylists(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        videoIds: List<Long>,
+        playlistArray: LongArray
+    ) {
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        val updatedPlaylists = playlists.map { playlist ->
+            val newVideos = (playlist.videos + videoIds).distinct()
+            updatePlaylistWithThumbnail(useCaseContainer, playlist, newVideos)
+        }
+        useCaseContainer.updateAllPlaylists(updatedPlaylists)
+    }
+
+    private suspend fun finalizePlaylistAfterImport(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        playlistArray: LongArray
+    ) {
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        val updatedPlaylists = playlists.mapNotNull { playlist ->
+            if (playlist.type !is Playlist.Type.Importing) return@mapNotNull null
+
+            // プレイリスト内の全動画が更新中でないかチェック
+            val videos = useCaseContainer.getVideosByIdsSync(playlist.videos)
+            val hasUpdating = videos.any { it.state.isUpdating() }
+            if (hasUpdating) return@mapNotNull null
+
+            var updated = playlist.copy(type = Playlist.Type.Original)
+            // サムネイルがNoneの場合、最初のInformation動画のサムネイルに更新
+            if (updated.thumbnail == Playlist.Thumbnail.None) {
+                val firstReady = videos.firstOrNull { it.state is Video.State.Information }
+                if (firstReady != null) {
+                    updated = updated.copy(thumbnail = Playlist.Thumbnail.Video(firstReady.id))
                 }
-                var newPlaylist = playlist.copy(type = playlistType, title = type.title)
-                if (newPlaylist.thumbnail is Playlist.Thumbnail.Drawable) {
-                    newPlaylist.updateThumbnail()?.let {
-                        newPlaylist = it
-                    }
-                }
-                newPlaylist
             }
-            repository.update(playlists)
+            updated
+        }
+        if (updatedPlaylists.isNotEmpty()) {
+            useCaseContainer.updateAllPlaylists(updatedPlaylists)
         }
     }
 
-    private fun checkPlaylistSyncRule(
-        playlists: List<Playlist>,
-        targetIds: List<Long>
-    ): List<Playlist> = playlists.map { immutablePlaylist ->
-        var playlist = immutablePlaylist
-        val playlistType = playlist.type
-        val expectedRule = Playlist.SyncRule.DELETE_IF_NOT_EXIST
-        if (playlistType is Playlist.Type.CloudPlaylist && playlistType.syncRule == expectedRule) {
-            val currentVideos = playlist.videos
-            val removeTarget = currentVideos.filterNot { targetIds.contains(it) }
-            val thumbnail = playlist.thumbnail
-            if (thumbnail is Playlist.Thumbnail.Video && removeTarget.contains(thumbnail.id)) {
-                val newThumbnail = targetIds.firstOrNull()?.let {
-                    Playlist.Thumbnail.Video(it)
-                } ?: run {
-                    val noImage = R.drawable.ic_no_image
-                    Playlist.Thumbnail.Drawable(noImage)
-                }
-                playlist = playlist.copy(thumbnail = newThumbnail)
+    private suspend fun updatePlaylistWithThumbnail(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        playlist: Playlist,
+        newVideos: List<Long>
+    ): Playlist {
+        var updated = playlist.copy(videos = newVideos)
+
+        // サムネイルがNoneの場合、最初の動画のサムネイルに更新する
+        if (updated.thumbnail == Playlist.Thumbnail.None && newVideos.isNotEmpty()) {
+            val firstVideo = useCaseContainer.getVideoByIdSync(newVideos.first())
+            if (firstVideo != null && firstVideo.state is Video.State.Information) {
+                updated = updated.copy(thumbnail = Playlist.Thumbnail.Video(firstVideo.id))
             }
-            playlist = playlist.copy(videos = emptyList())
         }
-        playlist
+
+        return updated
     }
 
-    private suspend fun LongArray.insertVideoInPlaylists(video: Video) = map {
-        val playlist =
-            if (it == 0L) {
-                createImportingPlaylist()
-            } else {
-                repository.getPlaylistFromIdSync(it) ?: return@map null
-            }
-        val newList = playlist.videos.toMutableSet().apply { add(video.id) }.toList()
-        val newPlaylist = playlist.copy(videos = newList)
-        if (it == 0L) {
-            repository.insert(newPlaylist)
-        } else {
-            repository.update(newPlaylist)
-            it
-        }
-    }.filterNotNull().toLongArray()
-
-    private suspend fun checkVideoDuplication(videoId: String, domain: String): Long? =
-        repository.getVideoFromVideoIdSync(videoId)?.let {
-            if (it.domain == domain) {
-                it.id
-            } else {
-                null
-            }
-        }
-
-    private suspend fun doSyncWork(targetUrl: String, playlistId: Long): Result {
-        val playlist = repository.getPlaylistFromIdSync(playlistId)
+    private suspend fun doSyncWork(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        targetUrl: String,
+        playlistId: Long
+    ): Result {
+        val playlist = useCaseContainer.getPlaylistByIdSync(playlistId)
             ?: return Result.failure()
 
-        val playlistType = playlist.type as? Playlist.Type.CloudPlaylist
-            ?: return Result.failure()
-
-        val (videos, type) = download(targetUrl)
-            ?: return Result.failure()
-
-        if (type !is Type.Playlist) {
+        if (playlist.type !is Playlist.Type.CloudPlaylist) {
             return Result.failure()
         }
 
-        syncCloudPlaylist(playlist, playlistType, videos)
-        return Result.success()
-    }
+        // プレイリスト情報を取得
+        val playlistInfoResult = useCaseContainer.fetchPlaylistInfoForSync(targetUrl)
 
-    private suspend fun syncCloudPlaylist(
-        playlist: Playlist,
-        playlistType: Playlist.Type.CloudPlaylist,
-        newVideos: List<Video>
-    ) {
-        val targetIds = mutableListOf<Long>()
-        val videosToInsert = newVideos.filter { video ->
-            checkVideoDuplication(video.videoId, video.domain)
-                ?.also { duplicatedId -> targetIds += duplicatedId }
-                .let { it == null }
-        }
-        targetIds += repository.insert(videosToInsert)
-
-        var updatedPlaylist = playlist
-
-        when (playlistType.syncRule) {
-            Playlist.SyncRule.ALWAYS_ADD -> {
-                val currentVideos = playlist.videos.toMutableSet()
-                currentVideos.addAll(targetIds)
-                updatedPlaylist = updatedPlaylist.copy(videos = currentVideos.toList())
+        return playlistInfoResult.fold(
+            ifLeft = { error ->
+                Log.e(WORKER_ID, "Sync failed. Url: $targetUrl, error: $error")
+                Result.failure()
+            },
+            ifRight = { videoInfoList ->
+                useCaseContainer.syncCloudPlaylist(playlist, videoInfoList)
+                Result.success()
             }
-
-            Playlist.SyncRule.DELETE_IF_NOT_EXIST -> {
-                val thumbnail = playlist.thumbnail
-                val newThumbnail = if (thumbnail is Playlist.Thumbnail.Video &&
-                    !targetIds.contains(thumbnail.id)
-                ) {
-                    targetIds.firstOrNull()?.let { Playlist.Thumbnail.Video(it) }
-                        ?: Playlist.Thumbnail.Drawable(R.drawable.ic_no_image)
-                } else {
-                    thumbnail
-                }
-                updatedPlaylist = updatedPlaylist.copy(
-                    videos = targetIds,
-                    thumbnail = newThumbnail
-                )
-            }
-        }
-
-        val updatedType = playlistType.copy(workerId = id)
-        updatedPlaylist = updatedPlaylist.copy(
-            type = updatedType,
-            lastUpdated = java.util.Calendar.getInstance()
         )
-
-        repository.update(updatedPlaylist)
-    }
-
-    private sealed interface Type {
-        object Video : Type
-
-        data class Playlist(val title: String, val url: String) : Type
     }
 
     companion object {

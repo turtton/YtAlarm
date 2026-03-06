@@ -479,8 +479,8 @@ private fun AlarmEditBottomSheetContent(
                 SwitchSettingItem(
                     title = stringResource(R.string.setting_enabled),
                     description = null,
-                    checked = alarm.isEnable,
-                    onCheckedChange = { onAlarmChange(alarm.copy(isEnable = it)) }
+                    checked = alarm.isEnabled,
+                    onCheckedChange = { onAlarmChange(alarm.copy(isEnabled = it)) }
                 )
             }
 

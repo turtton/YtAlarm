@@ -38,27 +38,105 @@ See @.github/CONTRIBUTING.md
 
 ## アーキテクチャ
 
-### MVVM + Repository パターン
-- **ViewModel**: `AlarmViewModel`, `PlaylistViewModel`, `VideoViewModel`
-- **Repository**: `DataRepository` でデータアクセスを抽象化
-- **Database**: Room Database (`AppDatabase`) を使用
-- **UI**: Fragment + Navigation Component
+### Clean Architecture（マルチモジュール）
+
+4モジュール構成で、依存方向は Kernel → DataSource → UseCase → App:
+
+```
+:kernel       ← 依存なし（純粋Kotlin + kotlinx.coroutines, serialization, datetime, Arrow）
+:datasource   ← :kernel（+ Room, YoutubeDL）
+:usecase      ← :kernel
+:app          ← :kernel, :usecase, :datasource
+```
+
+#### Kernel層 (:kernel)
+- ドメインEntity（`Alarm`, `Video`, `Playlist`）— 全フィールドimmutable、kotlinx.datetime使用
+- Repository<Executor>インターフェース（`AlarmRepository`, `VideoRepository`, `PlaylistRepository`, `VideoInfoRepository`）
+- DI基盤（`DataSource<Executor>`, `DependsOn*`）
+- プラットフォームPort（`AlarmSchedulerPort`）
+- ドメインロジック（`AlarmScheduling.kt` — toNextFireTime, pickNearestTime等）
+
+#### DataSource層 (:datasource)
+- Room Entity（`AlarmEntity`, `VideoEntity`, `PlaylistEntity`）+ ドメイン↔Roomマッパー
+- Room DAO実装
+- Repository実装（`RoomAlarmRepository`等、Executor = `AppDatabase`）
+- `YtDlpVideoInfoRepository`（Executor = `YtDlpExecutor`）
+- Room Migration v1→v2（BLOB列のCBOR構造変更）
+
+#### UseCase層 (:usecase)
+- 4つのUseCaseインターフェース（where句 + defaultメソッド）:
+  - `AlarmUseCase` — アラーム操作・スケジュール管理
+  - `PlaylistUseCase` — プレイリスト操作・サムネイル管理
+  - `VideoUseCase` — 動画操作・GC
+  - `ImportUseCase` — 動画/プレイリストインポート・同期
+- `LocalDataSourceContainer`, `RemoteDataSourceContainer` — データソース依存グルーピング
+- `UseCaseContainer` — 全UseCase合成インターフェース
+
+#### App層 (:app)
+- `DataContainerProvider` + `DefaultDataContainerProvider`（DI配線、`YtApplication`に保持）
+- ViewModel（`UseCaseContainer<*, *, *, *>`で型消去して受け取り）
+- Worker（`CoroutineWorker`直接継承、`DataContainerProvider`経由でUseCase取得）
+- `AndroidAlarmScheduler`（`AlarmSchedulerPort`実装）
+- UI表示マッピング（`RepeatType.getDisplay()`, `DayOfWeek.getDisplay()`, `Thumbnail.toDrawableRes()`）
+
+### DIパターン（Executorパターン）
+- Repositoryメソッドに毎回Executor型パラメータを渡す
+- ローカルExecutor: `AppDatabase`、リモートExecutor: `YtDlpExecutor`
+- `DependsOn*`インターフェースで依存を型として表現
+- `DataContainerProvider`だけが具象型を知る（単一配線点）
+
+### 移行状態の注意
+- 旧`database.structure.*`、旧`database.dao.*`、旧`database.AppDatabase`はUI層から多数参照されており残存
+- 新コードは`kernel.entity.*`を使用。旧型は段階的に除去予定
+
+### モジュール別テスト・ビルドコマンド
+```bash
+./gradlew :kernel:build        # Kernel層ビルド+テスト
+./gradlew :datasource:build    # DataSource層ビルド+テスト
+./gradlew :usecase:build       # UseCase層ビルド+テスト
+```
 
 ### 主要コンポーネント構造
 ```
+kernel/src/main/kotlin/net/turtton/ytalarm/kernel/
+├── entity/        # ドメインEntity (Alarm, Video, Playlist, AlarmScheduling)
+├── dto/           # VideoInformation DTO
+├── error/         # VideoInfoError, StreamError
+├── repository/    # Repository<Executor>インターフェース
+├── di/            # DataSource, DependsOn*
+└── port/          # AlarmSchedulerPort
+
+datasource/src/main/kotlin/net/turtton/ytalarm/datasource/
+├── entity/        # Room Entity (AlarmEntity, VideoEntity, PlaylistEntity)
+├── mapper/        # ドメイン↔Roomマッパー
+├── dao/           # Room DAO
+├── repository/    # Repository実装
+├── converter/     # TypeConverters
+├── serializer/    # CBOR/JSON Serializer
+├── local/         # RoomDataSource, AppDatabase, Migration
+└── remote/        # YtDlpExecutor, YtDlpDataSource
+
+usecase/src/main/kotlin/net/turtton/ytalarm/usecase/
+├── AlarmUseCase.kt, PlaylistUseCase.kt, VideoUseCase.kt, ImportUseCase.kt
+├── LocalDataSourceContainer.kt, RemoteDataSourceContainer.kt  # DI Containers
+└── UseCaseContainer.kt
+
 app/src/main/kotlin/net/turtton/ytalarm/
-├── activity/          # AlarmActivity, MainActivity
-├── database/          # Room entities, DAOs, converters
-├── ui/               # Fragments, Adapters, Dialogs
-├── util/             # Extensions, Utils, Order classes
-├── viewmodel/        # ViewModels
-└── worker/           # Background workers (WorkManager)
+├── activity/      # AlarmActivity, MainActivity
+├── di/            # DataContainerProvider
+├── platform/      # AndroidAlarmScheduler
+├── database/      # [旧] Room entities, DAOs, converters (段階的に除去予定)
+├── ui/            # Compose Screens, Dialogs
+├── util/          # Extensions (RepeatTypeDisplay, ThumbnailDisplay等), Order classes
+├── viewmodel/     # ViewModels (UseCaseContainer経由)
+└── worker/        # Workers (DataContainerProvider経由)
 ```
 
 ### データベース設計
-- **Entities**: `Alarm`, `Video`, `Playlist`
-- **DAOs**: `AlarmDao`, `VideoDao`, `PlaylistDao`
-- **Type Converters**: 複雑な型をDB用に変換 (List, Enum, Calendar等)
+- **ドメインEntity**: `kernel.entity.Alarm`, `kernel.entity.Video`, `kernel.entity.Playlist`
+- **Room Entity**: `datasource.entity.AlarmEntity`, `VideoEntity`, `PlaylistEntity`
+- **DAOs**: `datasource.dao.AlarmDao`, `VideoDao`, `PlaylistDao`
+- **Room DB Version**: 2（Migration v1→v2でBLOB列のCBOR構造変更）
 
 ## 重要な技術仕様
 
@@ -74,6 +152,9 @@ app/src/main/kotlin/net/turtton/ytalarm/
 - **WorkManager**: バックグラウンド処理
 - **Glide**: 画像読み込み
 - **Material Design Components**: UI
+- **kotlinx.datetime**: 日時処理（Kernel層）
+- **kotlinx.serialization**: シリアライゼーション（CBOR/JSON）
+- **Arrow**: 関数型エラーハンドリング（Either）
 
 ### テスト構成
 - **Unit Tests**: Kotest (JUnit5スタイル) + Mockito

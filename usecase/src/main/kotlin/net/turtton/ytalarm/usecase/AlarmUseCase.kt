@@ -1,0 +1,205 @@
+package net.turtton.ytalarm.usecase
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
+import net.turtton.ytalarm.kernel.di.DependsOnAlarmRepository
+import net.turtton.ytalarm.kernel.di.DependsOnDataSource
+import net.turtton.ytalarm.kernel.entity.Alarm
+import net.turtton.ytalarm.kernel.port.AlarmSchedulerPort
+
+/**
+ * アラームに関するビジネスロジックを定義するUseCaseインターフェース。
+ *
+ * @param LExec ローカルデータソースのExecutor型
+ * @param LDS DependsOnAlarmRepositoryおよびDependsOnDataSourceを実装したローカルデータソース型
+ */
+interface AlarmUseCase<LExec, LDS>
+    where LDS : DependsOnAlarmRepository<LExec>,
+          LDS : DependsOnDataSource<LExec> {
+    val localDataSource: LDS
+    val alarmScheduler: AlarmSchedulerPort
+
+    /**
+     * 全アラームをFlowとして返す。
+     * ViewModelのLiveDataに変換するために使用する。
+     */
+    fun getAllAlarmsFlow(): Flow<List<Alarm>> {
+        val executor = localDataSource.dataSource.createExecutor()
+        return localDataSource.alarmRepository.getAll(executor)
+    }
+
+    /**
+     * 全アラームを同期的に返す。
+     */
+    suspend fun getAllAlarmsSync(): List<Alarm> {
+        val executor = localDataSource.dataSource.createExecutor()
+        return localDataSource.alarmRepository.getAllSync(executor)
+    }
+
+    /**
+     * IDでアラームを取得する。
+     */
+    suspend fun getAlarmById(id: Long): Alarm? {
+        val executor = localDataSource.dataSource.createExecutor()
+        return localDataSource.alarmRepository.getFromId(executor, id)
+    }
+
+    /**
+     * repeatTypeに一致するアラームを取得する。
+     */
+    suspend fun getMatchedAlarms(repeatType: Alarm.RepeatType): List<Alarm> {
+        val executor = localDataSource.dataSource.createExecutor()
+        return localDataSource.alarmRepository.getMatched(executor, repeatType)
+    }
+
+    /**
+     * アラームを挿入してIDを返す。
+     */
+    suspend fun insertAlarm(alarm: Alarm): Long {
+        val executor = localDataSource.dataSource.createExecutor()
+        return localDataSource.alarmRepository.insert(executor, alarm)
+    }
+
+    /**
+     * アラームを更新する。
+     */
+    suspend fun updateAlarm(alarm: Alarm) {
+        val executor = localDataSource.dataSource.createExecutor()
+        localDataSource.alarmRepository.update(executor, alarm)
+    }
+
+    /**
+     * アラームを削除する。
+     */
+    suspend fun deleteAlarm(alarm: Alarm) {
+        val executor = localDataSource.dataSource.createExecutor()
+        localDataSource.alarmRepository.delete(executor, alarm)
+    }
+
+    /**
+     * アラーム発火後の状態遷移を処理する。
+     * - Once/Date型: isEnabled=falseに設定
+     * - Everyday/Days型: そのまま更新（スケジュール維持）
+     * - Snooze型: アラームを削除
+     */
+    suspend fun processAfterFiring(alarm: Alarm) {
+        val executor = localDataSource.dataSource.createExecutor()
+        when (alarm.repeatType) {
+            is Alarm.RepeatType.Once,
+            is Alarm.RepeatType.Date -> {
+                localDataSource.alarmRepository.update(
+                    executor,
+                    alarm.copy(repeatType = Alarm.RepeatType.Once, isEnabled = false)
+                )
+            }
+
+            is Alarm.RepeatType.Everyday,
+            is Alarm.RepeatType.Days -> {
+                localDataSource.alarmRepository.update(executor, alarm)
+            }
+
+            is Alarm.RepeatType.Snooze -> {
+                localDataSource.alarmRepository.delete(executor, alarm)
+            }
+        }
+
+        val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
+        alarmScheduler.scheduleNextAlarm(allAlarms)
+    }
+
+    /**
+     * スヌーズアラームを作成する。
+     * 既存のスヌーズアラームを全て削除してから、新しいスヌーズアラームを作成する。
+     *
+     * @param originalAlarm 元のアラーム
+     * @param clock 時刻取得用のClock（テスト可能にするためパラメータ化）
+     * @return 作成されたスヌーズアラーム
+     */
+    suspend fun createSnoozeAlarm(originalAlarm: Alarm, clock: Clock = Clock.System): Alarm {
+        val executor = localDataSource.dataSource.createExecutor()
+
+        // 既存のスヌーズアラームを削除
+        val existingSnoozes =
+            localDataSource.alarmRepository.getMatched(executor, Alarm.RepeatType.Snooze)
+        existingSnoozes.forEach { localDataSource.alarmRepository.delete(executor, it) }
+
+        // 現在時刻にsnoozeMinuteを加算してスヌーズ時刻を計算
+        val tz = TimeZone.currentSystemDefault()
+        val now = clock.now()
+        val snoozeTime = now.plus(originalAlarm.snoozeMinute, DateTimeUnit.MINUTE, tz)
+        val localSnoozeTime = snoozeTime.toLocalDateTime(tz)
+
+        val snoozeAlarm = originalAlarm.copy(
+            id = 0L,
+            hour = localSnoozeTime.hour,
+            minute = localSnoozeTime.minute,
+            repeatType = Alarm.RepeatType.Snooze,
+            isEnabled = true
+        )
+        val newId = localDataSource.alarmRepository.insert(executor, snoozeAlarm)
+        val result = snoozeAlarm.copy(id = newId)
+
+        val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
+        alarmScheduler.scheduleNextAlarm(allAlarms)
+
+        return result
+    }
+
+    /**
+     * アラームのON/OFFを切り替える。
+     * 有効化・無効化どちらの場合もスケジュールを再設定する。
+     *
+     * @param alarmId 対象アラームのID
+     * @param enabled 有効にする場合はtrue
+     */
+    suspend fun toggleAlarm(alarmId: Long, enabled: Boolean) {
+        val executor = localDataSource.dataSource.createExecutor()
+        val alarm = localDataSource.alarmRepository.getFromId(executor, alarmId) ?: return
+        localDataSource.alarmRepository.update(executor, alarm.copy(isEnabled = enabled))
+        val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
+        alarmScheduler.scheduleNextAlarm(allAlarms)
+    }
+
+    /**
+     * アラームを保存してスケジュールを更新する。
+     * id=0Lの場合は新規挿入、それ以外は更新。
+     *
+     * @param alarm 保存するアラーム
+     */
+    suspend fun saveAlarmAndSchedule(alarm: Alarm) {
+        val executor = localDataSource.dataSource.createExecutor()
+        if (alarm.id == 0L) {
+            localDataSource.alarmRepository.insert(executor, alarm)
+        } else {
+            localDataSource.alarmRepository.update(executor, alarm)
+        }
+        val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
+        alarmScheduler.scheduleNextAlarm(allAlarms)
+    }
+
+    /**
+     * アラームを削除してスケジュールを再設定する。
+     *
+     * @param alarm 削除するアラーム
+     */
+    suspend fun deleteAlarmAndReschedule(alarm: Alarm) {
+        val executor = localDataSource.dataSource.createExecutor()
+        localDataSource.alarmRepository.delete(executor, alarm)
+        val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
+        alarmScheduler.scheduleNextAlarm(allAlarms)
+    }
+
+    /**
+     * 有効なアラーム一覧を返す。
+     *
+     * @return isEnabled=trueのアラームリスト
+     */
+    suspend fun getEnabledAlarms(): List<Alarm> {
+        val executor = localDataSource.dataSource.createExecutor()
+        return localDataSource.alarmRepository.getAllSync(executor).filter { it.isEnabled }
+    }
+}

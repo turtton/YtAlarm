@@ -110,7 +110,6 @@
     <string name="snackbar_error_failed_to_access_clipboard">Failed to access clipboard system.</string>
     <string name="snackbar_error_failed_to_access_settings_data">Failed to access settings data.</string>
     <string name="snackbar_error_empty_video">Video is Empty</string>
-    <string name="snackbar_start_download">Download is in progress. See notification.</string>
     <string name="snackbar_sync_started">Sync started</string>
     <string name="snackbar_detect_playlist_usage">Some playlists are used by alarms.</string>
     <string name="snackbar_copied">Copied</string>
@@ -187,8 +186,6 @@
     <string name="message_reimport_failed">Failed to update video information</string>
     <string name="message_reimport_error_parse">Failed to update: Parse error</string>
     <string name="message_reimport_error_network">Failed to update: Network error</string>
-    <string name="message_reimport_error_io">Failed to update: IO error</string>
-    <string name="message_reimport_error_downloader">Failed to update: Downloader error</string>
     <string name="message_playlist_renamed">Playlist renamed</string>
     <string name="message_videos_added">Videos added to playlist</string>
     <string name="message_operation_failed">Operation failed</string>
