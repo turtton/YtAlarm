@@ -23,14 +23,13 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.kernel.entity.Alarm
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
-import net.turtton.ytalarm.util.extensions.getDisplay
+import net.turtton.ytalarm.ui.model.AlarmUiModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AlarmItem(
-    alarm: Alarm,
+    alarm: AlarmUiModel,
     playlistTitle: String,
     thumbnailUrl: Any?,
     onToggle: (Boolean) -> Unit,
@@ -38,7 +37,6 @@ fun AlarmItem(
     onLongClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -54,7 +52,7 @@ fun AlarmItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(context)
+                model = ImageRequest.Builder(LocalContext.current)
                     .data(thumbnailUrl ?: R.drawable.ic_no_image)
                     .crossfade(true)
                     .build(),
@@ -67,18 +65,13 @@ fun AlarmItem(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = String.format(
-                        java.util.Locale.getDefault(),
-                        "%02d:%02d",
-                        alarm.hour,
-                        alarm.minute
-                    ),
+                    text = alarm.timeDisplay,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = alarm.repeatType.getDisplay(context),
+                    text = alarm.repeatTypeDisplay,
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -102,13 +95,7 @@ fun AlarmItem(
 private fun AlarmItemPreview() {
     AppTheme {
         AlarmItem(
-            alarm = Alarm(
-                id = 1L,
-                hour = 7,
-                minute = 30,
-                repeatType = Alarm.RepeatType.Everyday,
-                isEnabled = true
-            ),
+            alarm = AlarmUiModel.preview(),
             playlistTitle = "Morning Playlist",
             thumbnailUrl = null,
             onToggle = {},

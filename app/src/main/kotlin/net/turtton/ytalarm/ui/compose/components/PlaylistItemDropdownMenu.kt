@@ -9,15 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.kernel.entity.Playlist
 
 @Composable
 fun PlaylistItemDropdownMenu(
-    playlist: Playlist,
     expanded: Boolean,
     onDismiss: () -> Unit,
-    onRename: (Playlist) -> Unit,
-    onDelete: (Playlist) -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier,
     isDeleteEnabled: Boolean = true
 ) {
@@ -30,7 +28,7 @@ fun PlaylistItemDropdownMenu(
         DropdownMenuItem(
             text = { Text(stringResource(R.string.menu_playlist_option_rename)) },
             onClick = {
-                onRename(playlist)
+                onRename()
                 onDismiss()
             }
         )
@@ -51,7 +49,7 @@ fun PlaylistItemDropdownMenu(
                 )
             },
             onClick = {
-                onDelete(playlist)
+                onDelete()
                 onDismiss()
             }
         )
