@@ -99,13 +99,20 @@ interface AlarmUseCase<LExec, LDS>
             is Alarm.RepeatType.Date -> {
                 localDataSource.alarmRepository.update(
                     executor,
-                    alarm.copy(repeatType = Alarm.RepeatType.Once, isEnabled = false)
+                    alarm.copy(
+                        repeatType = Alarm.RepeatType.Once,
+                        isEnabled = false,
+                        lastUpdated = Clock.System.now()
+                    )
                 )
             }
 
             is Alarm.RepeatType.Everyday,
             is Alarm.RepeatType.Days -> {
-                localDataSource.alarmRepository.update(executor, alarm)
+                localDataSource.alarmRepository.update(
+                    executor,
+                    alarm.copy(lastUpdated = Clock.System.now())
+                )
             }
 
             is Alarm.RepeatType.Snooze -> {
@@ -167,7 +174,10 @@ interface AlarmUseCase<LExec, LDS>
         val executor = localDataSource.dataSource.createExecutor()
         val alarm = localDataSource.alarmRepository.getFromId(executor, alarmId)
             ?: return Either.Right(Unit)
-        localDataSource.alarmRepository.update(executor, alarm.copy(isEnabled = enabled))
+        localDataSource.alarmRepository.update(
+            executor,
+            alarm.copy(isEnabled = enabled, lastUpdated = Clock.System.now())
+        )
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
         return alarmScheduler.scheduleNextAlarm(allAlarms)
     }
@@ -180,10 +190,11 @@ interface AlarmUseCase<LExec, LDS>
      */
     suspend fun saveAlarmAndSchedule(alarm: Alarm): Either<AlarmScheduleError, Unit> {
         val executor = localDataSource.dataSource.createExecutor()
-        if (alarm.id == 0L) {
-            localDataSource.alarmRepository.insert(executor, alarm)
+        val alarmWithTimestamp = alarm.copy(lastUpdated = Clock.System.now())
+        if (alarmWithTimestamp.id == 0L) {
+            localDataSource.alarmRepository.insert(executor, alarmWithTimestamp)
         } else {
-            localDataSource.alarmRepository.update(executor, alarm)
+            localDataSource.alarmRepository.update(executor, alarmWithTimestamp)
         }
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
         return alarmScheduler.scheduleNextAlarm(allAlarms)

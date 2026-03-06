@@ -80,6 +80,7 @@ import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.kernel.port.AlarmScheduleError
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -714,18 +715,6 @@ private suspend fun playVideo(
             onError()
         }
     }
-}
-
-/**
- * ContextからActivityを取得
- */
-private fun Context.findActivity(): android.app.Activity? {
-    var context = this
-    while (context is android.content.ContextWrapper) {
-        if (context is android.app.Activity) return context
-        context = context.baseContext
-    }
-    return null
 }
 
 private val VIBRATION_MILLIS = 1.5.seconds.toLong(DurationUnit.MILLISECONDS)

@@ -374,7 +374,7 @@ fun AlarmListScreen(
         val filtered: List<Alarm> = allAlarms.filter { it.repeatType !is Alarm.RepeatType.Snooze }
         val mutableList: MutableList<Alarm> = filtered.toMutableList()
         when (orderRule) {
-            AlarmOrder.TIME -> mutableList.sortBy { "${it.hour}${it.minute}".toInt() }
+            AlarmOrder.TIME -> mutableList.sortBy { it.hour * 60 + it.minute }
             AlarmOrder.CREATION_DATE -> mutableList.sortBy { it.creationDate }
             AlarmOrder.LAST_UPDATED -> mutableList.sortBy { it.lastUpdated }
         }
