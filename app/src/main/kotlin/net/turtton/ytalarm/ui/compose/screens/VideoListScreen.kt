@@ -750,7 +750,7 @@ fun VideoListScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun VideoListScreenPreview() {
+private fun VideoListScreenPreview() {
     AppTheme {
         // ダミーデータを作成
         val dummyVideos = listOf(

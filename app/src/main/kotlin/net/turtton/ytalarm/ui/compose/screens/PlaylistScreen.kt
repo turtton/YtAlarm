@@ -13,7 +13,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -578,7 +577,7 @@ fun PlaylistScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun PlaylistScreenPreview() {
+private fun PlaylistScreenPreview() {
     AppTheme {
         // ダミーデータを作成
         val dummyPlaylists = listOf(
