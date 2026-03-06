@@ -79,6 +79,7 @@
     <string name="dialog_repeat_days_ok">Confirm</string>
     <string name="dialog_shared_text_should_be_url_title">Error</string>
     <string name="dialog_shared_text_should_be_url_description">The shared text should start \"http..\"</string>
+    <string name="dialog_shared_url_new_playlist">Create New Playlist</string>
 
     <string name="dialog_vibration_waring_title">Attention</string>
     <string name="dialog_vibration_waring_message">Vibration system may not work in Android12.</string>

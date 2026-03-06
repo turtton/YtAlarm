@@ -10,8 +10,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
 import com.yausername.youtubedl_android.YoutubeDL
 import kotlinx.coroutines.Dispatchers
@@ -28,7 +28,6 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
-import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 import net.turtton.ytalarm.worker.YTDLP_UPDATE_NOTIFICATION
 import net.turtton.ytalarm.worker.YtDlpUpdateWorker
 
@@ -37,6 +36,8 @@ class MainActivity :
     VideoPlayerLoadingResourceContainer {
 
     override val videoPlayerLoadingResourceController = VideoPlayerLoadingResourceController()
+
+    private val sharedUrlState = mutableStateOf<String?>(null)
 
     val playlistViewModel: PlaylistViewModel by viewModels {
         PlaylistViewModelFactory(application.dataContainerProvider.getUseCaseContainer())
@@ -54,14 +55,16 @@ class MainActivity :
             MainScreen(
                 playlistViewModel = playlistViewModel,
                 videoViewModel = videoViewModel,
-                videoPlayerResourceContainer = this
+                videoPlayerResourceContainer = this,
+                sharedUrl = sharedUrlState.value,
+                onSharedUrlConsumed = { sharedUrlState.value = null }
             )
         }
 
         // 既存の初期化処理
         initYtDL()
         createNotificationChannel()
-        checkUrlShare(intent)
+        extractSharedUrl(intent)
     }
 
     /**
@@ -89,28 +92,13 @@ class MainActivity :
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        checkUrlShare(intent)
+        extractSharedUrl(intent)
     }
 
-    private fun checkUrlShare(intent: Intent?) {
+    private fun extractSharedUrl(intent: Intent?) {
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             intent.getStringExtra(Intent.EXTRA_TEXT)?.let { url ->
-                lifecycleScope.launch {
-                    if (!url.startsWith("http")) {
-                        AlertDialog.Builder(this@MainActivity)
-                            .setTitle(R.string.dialog_shared_text_should_be_url_title)
-                            .setMessage(R.string.dialog_shared_text_should_be_url_description)
-                            .setPositiveButton(R.string.ok, null)
-                            .show()
-                        return@launch
-                    }
-
-                    VideoInfoDownloadWorker.registerWorker(
-                        applicationContext,
-                        url,
-                        longArrayOf()
-                    )
-                }
+                sharedUrlState.value = url
             }
         }
     }
