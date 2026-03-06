@@ -240,7 +240,7 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
     suspend fun collectGarbageVideos(
         videoIds: List<Long>,
         threshold: Duration,
-        clock: kotlinx.datetime.Clock = kotlinx.datetime.Clock.System
+        clock: kotlin.time.Clock = kotlin.time.Clock.System
     ) {
         val executor = localDataSource.dataSource.createExecutor()
         val now = clock.now()

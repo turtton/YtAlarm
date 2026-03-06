@@ -1,7 +1,7 @@
 package net.turtton.ytalarm.util.extensions
 
-import kotlinx.datetime.Clock
 import net.turtton.ytalarm.kernel.entity.Playlist
+import kotlin.time.Clock
 
 fun createImportingPlaylist() = Playlist(
     type = Playlist.Type.Importing,

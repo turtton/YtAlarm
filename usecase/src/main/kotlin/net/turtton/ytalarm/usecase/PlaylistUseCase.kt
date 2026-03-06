@@ -1,7 +1,6 @@
 package net.turtton.ytalarm.usecase
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Clock
 import net.turtton.ytalarm.kernel.di.DependsOnAlarmRepository
 import net.turtton.ytalarm.kernel.di.DependsOnDataSource
 import net.turtton.ytalarm.kernel.di.DependsOnPlaylistRepository
@@ -9,6 +8,7 @@ import net.turtton.ytalarm.kernel.di.DependsOnVideoRepository
 import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.kernel.entity.Video
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Clock
 
 /**
  * プレイリストに関するビジネスロジックを定義するUseCaseインターフェース。

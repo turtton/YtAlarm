@@ -1,9 +1,9 @@
 package net.turtton.ytalarm.kernel.entity
 
-import kotlinx.datetime.Clock
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlin.time.Clock
 
 data class Alarm(
     val id: Long = 0L,

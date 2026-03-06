@@ -1,6 +1,6 @@
 [versions]
 # Android
-agp = "9.0.1"
+agp = "9.1.0"
 compileSdk = "36"
 minSdk = "24"
 targetSdk = "36"
@@ -29,7 +29,7 @@ androidx-test-runner = "1.7.0"
 androidx-test-espresso = "3.7.0"
 
 # Compose
-compose-bom = "2026.02.00"
+compose-bom = "2026.02.01"
 androidx-compose-compiler = "1.5.15"
 
 # Material Design
@@ -38,13 +38,13 @@ material = "1.13.0"
 # Kotlinx
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.10.0"
-kotlinx-datetime = "0.6.2"
+kotlinx-datetime = "0.7.1"
 
 # Third party
 youtubedl-android = "0.18.1"
 media3 = "1.9.2"
 coil = "2.7.0"
-arrow = "2.2.1.1"
+arrow = "2.2.2"
 ktlint = "1.8.0"
 
 # Testing
