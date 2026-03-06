@@ -140,19 +140,25 @@ fun MainScreen(
             onConfirm = { selectedPlaylistIds ->
                 val url = pendingSharedUrl ?: return@SharedUrlPlaylistSelectDialog
                 scope.launch(Dispatchers.IO) {
-                    val targetPlaylistIds = selectedPlaylistIds.mapNotNull { id ->
-                        if (id == CREATE_NEW_PLAYLIST_ID) {
-                            val newPlaylist = createImportingPlaylist()
-                            playlistViewModel.insertAsync(newPlaylist).await()
-                        } else {
-                            id
-                        }
-                    }.toLongArray()
-                    VideoInfoDownloadWorker.registerWorker(
-                        context,
-                        url,
-                        targetPlaylistIds
-                    )
+                    try {
+                        val targetPlaylistIds = selectedPlaylistIds.mapNotNull { id ->
+                            if (id == CREATE_NEW_PLAYLIST_ID) {
+                                val newPlaylist = createImportingPlaylist()
+                                playlistViewModel.insertAsync(newPlaylist).await()
+                            } else {
+                                id
+                            }
+                        }.toLongArray()
+                        VideoInfoDownloadWorker.registerWorker(
+                            context,
+                            url,
+                            targetPlaylistIds
+                        )
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                        Log.e("MainScreen", "Failed to import shared URL", e)
+                    }
                 }
                 showPlaylistSelectDialog = false
                 pendingSharedUrl = null
@@ -385,7 +391,6 @@ private fun SharedUrlPlaylistSelectDialog(
     }
 
     if (displayDataList.isNotEmpty()) {
-        // タイトル付きのMultiChoiceVideoDialogを表示
         MultiChoiceVideoDialog(
             displayDataList = displayDataList,
             onConfirm = onConfirm,
