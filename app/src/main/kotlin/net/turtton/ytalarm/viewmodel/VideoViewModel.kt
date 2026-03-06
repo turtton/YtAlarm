@@ -7,73 +7,64 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.usecase.UseCaseContainer
-import net.turtton.ytalarm.util.extensions.toDomain
-import net.turtton.ytalarm.util.extensions.toLegacy
 import net.turtton.ytalarm.usecase.ReimportResult as UseCaseReimportResult
 
 class VideoViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>) : ViewModel() {
     val allVideos: LiveData<List<Video>> by lazy {
-        useCaseContainer.getAllVideosFlow()
-            .map { list -> list.map { it.toLegacy() } }
-            .asLiveData()
+        useCaseContainer.getAllVideosFlow().asLiveData()
     }
 
     fun getFromIdAsync(id: Long): Deferred<Video?> = viewModelScope.async {
-        useCaseContainer.getVideoByIdSync(id)?.toLegacy()
+        useCaseContainer.getVideoByIdSync(id)
     }
 
     fun getFromIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
-        useCaseContainer.getVideosByIdsSync(ids).map { it.toLegacy() }
+        useCaseContainer.getVideosByIdsSync(ids)
     }
 
     fun getFromIds(ids: List<Long>): LiveData<List<Video>> =
-        useCaseContainer.getVideosByIdsFlow(ids)
-            .map { list -> list.map { it.toLegacy() } }
-            .asLiveData()
+        useCaseContainer.getVideosByIdsFlow(ids).asLiveData()
 
     fun getExceptIdsAsync(ids: List<Long>): Deferred<List<Video>> = viewModelScope.async {
-        useCaseContainer.getVideosExceptIdsSync(ids).map { it.toLegacy() }
+        useCaseContainer.getVideosExceptIdsSync(ids)
     }
 
     fun getFromVideoIds(ids: List<String>): LiveData<List<Video>> =
-        useCaseContainer.getVideosByVideoIdsFlow(ids)
-            .map { list -> list.map { it.toLegacy() } }
-            .asLiveData()
+        useCaseContainer.getVideosByVideoIdsFlow(ids).asLiveData()
 
     fun getFromVideoIdAsync(id: String): Deferred<Video?> = viewModelScope.async {
-        useCaseContainer.getVideoByVideoIdSync(id)?.toLegacy()
+        useCaseContainer.getVideoByVideoIdSync(id)
     }
 
     fun getFromVideoIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
-        useCaseContainer.getVideosByVideoIdsSync(ids).map { it.toLegacy() }
+        useCaseContainer.getVideosByVideoIdsSync(ids)
     }
 
     fun getExceptVideoIdsAsync(ids: List<String>): Deferred<List<Video>> = viewModelScope.async {
-        useCaseContainer.getVideosExceptVideoIdsSync(ids).map { it.toLegacy() }
+        useCaseContainer.getVideosExceptVideoIdsSync(ids)
     }
 
     fun update(video: Video) = viewModelScope.launch {
-        useCaseContainer.updateVideo(video.toDomain())
+        useCaseContainer.updateVideo(video)
     }
 
     fun insertAsync(video: Video): Deferred<Long> = viewModelScope.async {
-        useCaseContainer.insertVideo(video.toDomain())
+        useCaseContainer.insertVideo(video)
     }
 
     fun insert(videos: List<Video>) = viewModelScope.launch {
-        useCaseContainer.insertAllVideos(videos.map { it.toDomain() })
+        useCaseContainer.insertAllVideos(videos)
     }
 
     fun delete(video: Video) = viewModelScope.launch {
-        useCaseContainer.deleteVideo(video.toDomain())
+        useCaseContainer.deleteVideo(video)
     }
 
     fun delete(videos: List<Video>) = viewModelScope.launch {
-        useCaseContainer.deleteAllVideos(videos.map { it.toDomain() })
+        useCaseContainer.deleteAllVideos(videos)
     }
 
     /**
@@ -81,7 +72,7 @@ class VideoViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>)
      * UseCaseの[UseCaseReimportResult]をUI向けの[ReimportResult]に変換して返す。
      */
     suspend fun reimportVideo(video: Video): ReimportResult =
-        when (useCaseContainer.reimportVideo(video.toDomain())) {
+        when (useCaseContainer.reimportVideo(video)) {
             is UseCaseReimportResult.Success -> {
                 val updated = getFromIdAsync(video.id).await() ?: video
                 ReimportResult.Success(updated)

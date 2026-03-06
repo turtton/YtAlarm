@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
-import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.util.extensions.findActivity

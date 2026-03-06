@@ -65,7 +65,6 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import arrow.core.Either
 import coil.compose.AsyncImage
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
@@ -76,12 +75,12 @@ import net.turtton.ytalarm.BuildConfig
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
-import net.turtton.ytalarm.database.structure.Alarm
-import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.kernel.entity.Alarm
+import net.turtton.ytalarm.kernel.entity.Video
+import net.turtton.ytalarm.kernel.port.AlarmScheduleError
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
-import net.turtton.ytalarm.util.AlarmScheduleError
-import net.turtton.ytalarm.util.updateAlarmSchedule
+import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
@@ -123,6 +122,7 @@ fun VideoPlayerScreen(
     val errorEmptyVideo = stringResource(R.string.snackbar_error_empty_video)
     val errorFailedToGetVideo = stringResource(R.string.snackbar_error_failed_to_get_video)
     val errorNoAlarmManager = stringResource(R.string.error_no_alarm_manager)
+    val errorNoAlarmPermission = stringResource(R.string.snackbar_error_no_alarm_permission)
 
     // テスト用IdlingResource（AlarmActivityからCompositionLocalで提供される場合のみ有効）
     val resourceContainer = LocalVideoPlayerResourceContainer.current
@@ -378,18 +378,12 @@ fun VideoPlayerScreen(
                                 // cachedAlarmを使用（スヌーズアラームは発火後に削除されるため）
                                 val alarm = cachedAlarm
                                 if (alarm != null) {
-                                    // スヌーズアラーム作成（ViewModel）
-                                    alarmViewModel.createSnoozeAlarm(alarm)
-
-                                    // スケジュール更新（UI層）
-                                    val enabledAlarms = alarmViewModel.getEnabledAlarmsSync()
-                                    val scheduleResult = updateAlarmSchedule(context, enabledAlarms)
-
-                                    when (scheduleResult) {
-                                        is Either.Left -> {
+                                    // スヌーズアラーム作成（UseCase内でスケジュール済み）
+                                    alarmViewModel.createSnoozeAlarm(alarm).fold(
+                                        ifLeft = { error ->
                                             Log.e(
                                                 LOG_TAG,
-                                                "Failed to schedule snooze: ${scheduleResult.value}"
+                                                "Failed to schedule snooze: $error"
                                             )
                                             withContext(Dispatchers.Main) {
                                                 snackbarHostState.showSnackbar(
@@ -397,15 +391,14 @@ fun VideoPlayerScreen(
                                                 )
                                                 onDismiss()
                                             }
-                                        }
-
-                                        is Either.Right -> {
+                                        },
+                                        ifRight = {
                                             UpdateSnoozeNotifyWorker.registerWorker(context)
                                             withContext(Dispatchers.Main) {
                                                 onDismiss()
                                             }
                                         }
-                                    }
+                                    )
                                 }
                             }
                         },
@@ -457,16 +450,12 @@ fun VideoPlayerScreen(
             // スヌーズボタン用にアラーム情報を保持（削除後も参照可能にする）
             cachedAlarm = alarm
 
-            // アラーム発火後の処理（ViewModel）
-            alarmViewModel.processAfterFiring(alarm)
-
-            // スケジュール再登録（UI層）
-            val enabledAlarms = alarmViewModel.getEnabledAlarmsSync()
+            // アラーム発火後の処理（UseCase内でスケジュール再登録も実行）
             // Toastを使用する理由: アラームが即時停止されても
             // エラー内容がユーザーに確実に見えるようにするため
-            updateAlarmSchedule(context, enabledAlarms).onLeft { error ->
+            alarmViewModel.processAfterFiring(alarm).onLeft { error ->
                 val message = when (error) {
-                    is AlarmScheduleError.PermissionDenied -> error.message
+                    is AlarmScheduleError.PermissionDenied -> errorNoAlarmPermission
                     AlarmScheduleError.NoAlarmManager -> errorNoAlarmManager
                     AlarmScheduleError.NoEnabledAlarm -> null
                 }
@@ -484,11 +473,11 @@ fun VideoPlayerScreen(
             }
 
             // プレイリストから動画リストを取得
-            val playlist = playlistViewModel.getFromIdsAsync(alarm.playListId).await()
+            val playlist = playlistViewModel.getFromIdsAsync(alarm.playlistIds).await()
             val videos = playlist.flatMap { it.videos }
                 .distinct()
                 .let { videoViewModel.getFromIdsAsync(it).await() }
-                .filter { it.stateData is Video.State.Information }
+                .filter { it.state is Video.State.Information }
 
             if (videos.isEmpty()) {
                 snackbarHostState.showSnackbar(errorEmptyVideo)
@@ -726,18 +715,6 @@ private suspend fun playVideo(
             onError()
         }
     }
-}
-
-/**
- * ContextからActivityを取得
- */
-private fun Context.findActivity(): android.app.Activity? {
-    var context = this
-    while (context is android.content.ContextWrapper) {
-        if (context is android.app.Activity) return context
-        context = context.baseContext
-    }
-    return null
 }
 
 private val VIBRATION_MILLIS = 1.5.seconds.toLong(DurationUnit.MILLISECONDS)

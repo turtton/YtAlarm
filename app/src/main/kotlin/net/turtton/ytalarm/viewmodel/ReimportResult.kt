@@ -1,6 +1,6 @@
 package net.turtton.ytalarm.viewmodel
 
-import net.turtton.ytalarm.database.structure.Video
+import net.turtton.ytalarm.kernel.entity.Video
 
 sealed class ReimportResult {
     data class Success(val video: Video) : ReimportResult()

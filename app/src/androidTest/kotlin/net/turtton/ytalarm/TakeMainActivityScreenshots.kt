@@ -14,6 +14,7 @@ import androidx.test.filters.LargeTest
 import coil.Coil
 import kotlinx.coroutines.runBlocking
 import net.turtton.ytalarm.activity.MainActivity
+import net.turtton.ytalarm.datasource.local.RoomDataSource
 import net.turtton.ytalarm.idling.CoilIdlingResource
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResource
 import net.turtton.ytalarm.util.TestDataHelper
@@ -68,7 +69,7 @@ class TakeMainActivityScreenshots {
         // テストデータを挿入
         composeTestRule.activityRule.scenario.onActivity { activity ->
             runBlocking {
-                val database = (activity.application as YtApplication).database
+                val database = RoomDataSource(activity.application).createExecutor()
                 TestDataHelper.insertAllTestData(
                     database.videoDao(),
                     database.playlistDao(),
@@ -94,7 +95,7 @@ class TakeMainActivityScreenshots {
         // テストデータをクリーンアップ
         composeTestRule.activityRule.scenario.onActivity { activity ->
             runBlocking {
-                val database = (activity.application as YtApplication).database
+                val database = RoomDataSource(activity.application).createExecutor()
                 database.alarmDao().deleteAll()
                 database.playlistDao().deleteAll()
                 database.videoDao().deleteAll()

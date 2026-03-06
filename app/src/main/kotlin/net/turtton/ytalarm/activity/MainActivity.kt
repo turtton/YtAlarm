@@ -19,13 +19,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
-import net.turtton.ytalarm.database.structure.Playlist
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
 import net.turtton.ytalarm.ui.MainScreen
-import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.addNewPlaylist
-import net.turtton.ytalarm.ui.adapter.MultiChoiceVideoListAdapter.DisplayData.Companion.toDisplayData
-import net.turtton.ytalarm.ui.dialog.DialogMultiChoiceVideo
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
@@ -106,23 +102,14 @@ class MainActivity :
                             .setMessage(R.string.dialog_shared_text_should_be_url_description)
                             .setPositiveButton(R.string.ok, null)
                             .show()
+                        return@launch
                     }
 
-                    val playlists = playlistViewModel.allPlaylistsAsync.await()
-                        .filter { it.type is Playlist.Type.Original }
-                        .map { it.toDisplayData(videoViewModel) }
-                        .toMutableList()
-                        .addNewPlaylist()
-
-                    DialogMultiChoiceVideo(playlists) { _, id ->
-                        lifecycleScope.launch {
-                            VideoInfoDownloadWorker.registerWorker(
-                                applicationContext,
-                                url,
-                                id.toLongArray()
-                            )
-                        }
-                    }.show(supportFragmentManager, "SelectTargetPlaylist")
+                    VideoInfoDownloadWorker.registerWorker(
+                        applicationContext,
+                        url,
+                        longArrayOf()
+                    )
                 }
             }
         }

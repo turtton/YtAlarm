@@ -1,12 +1,12 @@
 package net.turtton.ytalarm.util
 
-import net.turtton.ytalarm.database.dao.AlarmDao
-import net.turtton.ytalarm.database.dao.PlaylistDao
-import net.turtton.ytalarm.database.dao.VideoDao
-import net.turtton.ytalarm.database.structure.Alarm
-import net.turtton.ytalarm.database.structure.Playlist
-import net.turtton.ytalarm.database.structure.Video
-import java.util.UUID
+import net.turtton.ytalarm.datasource.dao.AlarmDao
+import net.turtton.ytalarm.datasource.dao.PlaylistDao
+import net.turtton.ytalarm.datasource.dao.VideoDao
+import net.turtton.ytalarm.datasource.entity.AlarmEntity
+import net.turtton.ytalarm.datasource.entity.PlaylistEntity
+import net.turtton.ytalarm.datasource.entity.VideoEntity
+import java.util.Calendar
 
 /**
  * スクリーンショットテスト用のテストデータヘルパー
@@ -28,28 +28,28 @@ object TestDataHelper {
         ),
         TrackInfo(
             videoId = "2231400578",
-            title = "B4LLooN - ⠀",
+            title = "B4LLooN - \u2800",
             thumbnailUrl = "https://i1.sndcdn.com/artworks-idsxjqvK6cjedLNx-pad9OA-original.png",
             videoUrl = "https://soundcloud.com/noah_b4lloon/c4b08f0d-936b-4ec0-a47a-16e3d3b4c69a",
             domain = "soundcloud.com"
         ),
         TrackInfo(
             videoId = "2200041203",
-            title = "XxKOYUKIxX - ☆。.:＊・゜ @koy #jc",
+            title = "XxKOYUKIxX - \u2606\u3002.:\uff0a\u30fb\u309c @koy #jc",
             thumbnailUrl = "https://i1.sndcdn.com/artworks-4j1WxaU8yrZNklBR-yYFOQw-original.png",
             videoUrl = "https://soundcloud.com/koyuki214/koy-jc",
             domain = "soundcloud.com"
         ),
         TrackInfo(
             videoId = "2140727487",
-            title = "AИBY - DON'T YOU WAИT ICECREAM???",
+            title = "A\u0418BY - DON'T YOU WA\u0418T ICECREAM???",
             thumbnailUrl = "https://i1.sndcdn.com/artworks-zVhzHLHiKd4IIhyO-5FDqKg-original.png",
             videoUrl = "https://soundcloud.com/anbyflip/dont-you-want-icecream",
             domain = "soundcloud.com"
         ),
         TrackInfo(
             videoId = "3UJZ8CndI8Y",
-            title = "ariiol - typing（ft.歌愛ユキ）",
+            title = "ariiol - typing\uff08ft.\u6b4c\u611b\u30e6\u30ad\uff09",
             thumbnailUrl = "https://i.ytimg.com/vi/3UJZ8CndI8Y/sddefault.jpg",
             videoUrl = "https://www.youtube.com/watch?v=3UJZ8CndI8Y",
             domain = "www.youtube.com"
@@ -60,7 +60,8 @@ object TestDataHelper {
     private val BANDCAMP_TRACKS = listOf(
         TrackInfo(
             videoId = "2314350106",
-            title = "𝚂𝚎𝚛𝚒𝚗𝚊 - Because I can relief you!",
+            title = "\ud835\udE82\ud835\udE8e\ud835\udE9b\ud835\udE92\ud835\udea0\ud835\udE8a" +
+                " - Because I can relief you!",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
             videoUrl = "https://memoryscape.bandcamp.com/track/because-i-can-relief-you",
             domain = "memoryscape.bandcamp.com"
@@ -88,14 +89,14 @@ object TestDataHelper {
         ),
         TrackInfo(
             videoId = "3361629336",
-            title = "DJ藤田ことね - i just wanna dance like this!",
+            title = "DJ\u85e4\u7530\u3053\u3068\u306d - i just wanna dance like this!",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
             videoUrl = "https://memoryscape.bandcamp.com/track/i-just-wanna-dance-like-this",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "3936001422",
-            title = "Yutori(Natsu) - ⋆˙⟡HÊŁP✧_｡",
+            title = "Yutori(Natsu) - \u22c6\u02d9\u27e1H\u00caLP\u2727_\uff61",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
             videoUrl = "https://memoryscape.bandcamp.com/track/h-p",
             domain = "memoryscape.bandcamp.com"
@@ -109,7 +110,8 @@ object TestDataHelper {
         ),
         TrackInfo(
             videoId = "2977873267",
-            title = "~𝓦𝓸𝓷𝓭𝓮𝓻 𝓐𝓬𝓾𝓽𝓮~ - Ain't nobody that can do it like you",
+            title = "~\ud835\udcee\ud835\udcf8\ud835\udcf7\ud835\udced\ud835\udcee\ud835\udcfb " +
+                "\ud835\udcd0\ud835\udcec\ud835\udcfe\ud835\udcfd\ud835\udcee~ - Ain't nobody that can do it like you",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
             videoUrl = "https://memoryscape.bandcamp.com/track/aint-nobody-that-can-do-it-like-you",
             domain = "memoryscape.bandcamp.com"
@@ -144,7 +146,7 @@ object TestDataHelper {
         ),
         TrackInfo(
             videoId = "2921878164",
-            title = "ウおおああ - v^~^v",
+            title = "\u30a6\u304a\u304a\u3042\u3042 - v^~^v",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
             videoUrl = "https://memoryscape.bandcamp.com/track/v-v",
             domain = "memoryscape.bandcamp.com"
@@ -158,7 +160,7 @@ object TestDataHelper {
         ),
         TrackInfo(
             videoId = "2964798734",
-            title = "FAILchan - Don't you want NRG？",
+            title = "FAILchan - Don't you want NRG\uff1f",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
             videoUrl = "https://memoryscape.bandcamp.com/track/dont-you-want-nrg",
             domain = "memoryscape.bandcamp.com"
@@ -190,14 +192,14 @@ object TestDataHelper {
         val videoIds = mutableListOf<Long>()
         tracks.forEach { track ->
             val videoId = videoDao.insert(
-                Video(
+                VideoEntity(
                     id = 0,
                     videoId = track.videoId,
                     title = track.title,
                     thumbnailUrl = track.thumbnailUrl,
                     videoUrl = track.videoUrl,
                     domain = track.domain,
-                    stateData = Video.State.Information()
+                    stateData = VideoEntity.State.Information()
                 )
             )
             videoIds.add(videoId)
@@ -229,16 +231,16 @@ object TestDataHelper {
      */
     suspend fun insertMixedPlaylist(playlistDao: PlaylistDao, videoIds: List<Long>): Long =
         playlistDao.insert(
-            Playlist(
+            PlaylistEntity(
                 id = 0,
                 title = "Mixed Tracks",
                 thumbnail = if (videoIds.isNotEmpty()) {
-                    Playlist.Thumbnail.Video(videoIds.first())
+                    PlaylistEntity.Thumbnail.Video(videoIds.first())
                 } else {
-                    Playlist.Thumbnail.Drawable(net.turtton.ytalarm.R.drawable.ic_no_image)
+                    PlaylistEntity.Thumbnail.None
                 },
                 videos = videoIds,
-                type = Playlist.Type.Original
+                type = PlaylistEntity.Type.Original
             )
         )
 
@@ -250,19 +252,18 @@ object TestDataHelper {
      */
     suspend fun insertBandcampPlaylist(playlistDao: PlaylistDao, videoIds: List<Long>): Long =
         playlistDao.insert(
-            Playlist(
+            PlaylistEntity(
                 id = 0,
                 title = "Hyped_Garage 01",
                 thumbnail = if (videoIds.isNotEmpty()) {
-                    Playlist.Thumbnail.Video(videoIds.first())
+                    PlaylistEntity.Thumbnail.Video(videoIds.first())
                 } else {
-                    Playlist.Thumbnail.Drawable(net.turtton.ytalarm.R.drawable.ic_no_image)
+                    PlaylistEntity.Thumbnail.None
                 },
                 videos = videoIds,
-                type = Playlist.Type.CloudPlaylist(
+                type = PlaylistEntity.Type.CloudPlaylist(
                     url = "https://memoryscape.bandcamp.com/album/hyped-garage-01",
-                    workerId = UUID.randomUUID(),
-                    syncRule = Playlist.SyncRule.ALWAYS_ADD
+                    syncRule = PlaylistEntity.SyncRule.ALWAYS_ADD
                 )
             )
         )
@@ -276,17 +277,17 @@ object TestDataHelper {
     suspend fun insertTestAlarms(alarmDao: AlarmDao, playlistIds: List<Long>): Long {
         // 追加のアラーム1: 7:30 有効
         val firstAlarmId = alarmDao.insert(
-            Alarm(
+            AlarmEntity(
                 id = 0,
                 hour = 7,
                 minute = 30,
-                repeatType = Alarm.RepeatType.Days(
+                repeatType = AlarmEntity.RepeatType.Days(
                     listOf(
-                        DayOfWeekCompat.MONDAY,
-                        DayOfWeekCompat.TUESDAY,
-                        DayOfWeekCompat.WEDNESDAY,
-                        DayOfWeekCompat.THURSDAY,
-                        DayOfWeekCompat.FRIDAY
+                        Calendar.MONDAY,
+                        Calendar.TUESDAY,
+                        Calendar.WEDNESDAY,
+                        Calendar.THURSDAY,
+                        Calendar.FRIDAY
                     )
                 ),
                 playListId = if (playlistIds.isNotEmpty()) {
@@ -302,11 +303,11 @@ object TestDataHelper {
 
         // 追加のアラーム2: 18:45 無効
         alarmDao.insert(
-            Alarm(
+            AlarmEntity(
                 id = 0,
                 hour = 18,
                 minute = 45,
-                repeatType = Alarm.RepeatType.Everyday,
+                repeatType = AlarmEntity.RepeatType.Everyday,
                 playListId = if (playlistIds.size > 1) listOf(playlistIds[1]) else playlistIds,
                 isEnabled = false
             )

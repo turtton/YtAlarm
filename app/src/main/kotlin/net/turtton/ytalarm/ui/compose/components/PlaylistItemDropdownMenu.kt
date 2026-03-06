@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.kernel.entity.Playlist
 
 @Composable
 fun PlaylistItemDropdownMenu(

@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 
 @Suppress("UnusedParameter")

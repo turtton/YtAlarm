@@ -7,7 +7,6 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
-import net.turtton.ytalarm.database.AppDatabase
 import net.turtton.ytalarm.di.DataContainerProvider
 import net.turtton.ytalarm.di.DefaultDataContainerProvider
 import net.turtton.ytalarm.idling.CoilIdlingResourceContainer
@@ -19,9 +18,7 @@ class YtApplication :
     ImageLoaderFactory,
     CoilIdlingResourceContainer {
     val appCoroutineScope = CoroutineScope(SupervisorJob())
-    val database by lazy { AppDatabase.getDataBase(this, appCoroutineScope) }
 
-    // DataContainerProvider: Clean Architecture 移行用
     val dataContainerProvider: DataContainerProvider by lazy { DefaultDataContainerProvider(this) }
 
     override val coilIdlingResourceController = CoilIdlingResourceController()

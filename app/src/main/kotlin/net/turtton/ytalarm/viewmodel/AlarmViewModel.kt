@@ -5,39 +5,35 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import arrow.core.Either
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.kernel.entity.Alarm
+import net.turtton.ytalarm.kernel.port.AlarmScheduleError
 import net.turtton.ytalarm.usecase.UseCaseContainer
-import net.turtton.ytalarm.util.extensions.toDomain
-import net.turtton.ytalarm.util.extensions.toLegacy
-import net.turtton.ytalarm.util.extensions.updateDate
 
 class AlarmViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>) : ViewModel() {
     val allAlarms: LiveData<List<Alarm>> by lazy {
-        useCaseContainer.getAllAlarmsFlow()
-            .map { list -> list.map { it.toLegacy() } }
-            .asLiveData()
+        useCaseContainer.getAllAlarmsFlow().asLiveData()
     }
 
     fun getAllAlarmsAsync(): Deferred<List<Alarm>> = viewModelScope.async {
-        useCaseContainer.getAllAlarmsSync().map { it.toLegacy() }
+        useCaseContainer.getAllAlarmsSync()
     }
 
     fun getFromIdAsync(id: Long): Deferred<Alarm?> = viewModelScope.async {
-        useCaseContainer.getAlarmById(id)?.toLegacy()
+        useCaseContainer.getAlarmById(id)
     }
 
     fun getMatchedAsync(repeatType: Alarm.RepeatType) = viewModelScope.async {
-        useCaseContainer.getMatchedAlarms(repeatType.toDomain()).map { it.toLegacy() }
+        useCaseContainer.getMatchedAlarms(repeatType)
     }
 
-    suspend fun insert(alarm: Alarm): Long = useCaseContainer.insertAlarm(alarm.toDomain())
+    suspend fun insert(alarm: Alarm): Long = useCaseContainer.insertAlarm(alarm)
 
     suspend fun update(alarm: Alarm) {
-        useCaseContainer.updateAlarm(alarm.updateDate().toDomain())
+        useCaseContainer.updateAlarm(alarm)
     }
 
     /**
@@ -57,44 +53,25 @@ class AlarmViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>)
      * suspend関数内からの呼び出し用。
      */
     suspend fun deleteSync(alarm: Alarm) {
-        useCaseContainer.deleteAlarm(alarm.toDomain())
+        useCaseContainer.deleteAlarm(alarm)
     }
 
-    /**
-     * アラーム発火後の状態遷移を処理する
-     *
-     * - Once/Date型: isEnabled=falseに設定
-     * - Everyday/Days型: そのまま更新
-     * - Snooze型: アラームを削除
-     */
-    suspend fun processAfterFiring(alarm: Alarm) {
-        useCaseContainer.processAfterFiring(alarm.toDomain())
-    }
+    suspend fun saveAlarmAndSchedule(alarm: Alarm): Either<AlarmScheduleError, Unit> =
+        useCaseContainer.saveAlarmAndSchedule(alarm)
 
-    /**
-     * スヌーズアラームを作成する
-     *
-     * 1. 既存のスヌーズアラームを全て削除
-     * 2. 新しいスヌーズアラームを作成・保存
-     *
-     * @param originalAlarm 元のアラーム
-     * @return 作成されたスヌーズアラーム
-     */
-    suspend fun createSnoozeAlarm(originalAlarm: Alarm): Alarm =
-        useCaseContainer.createSnoozeAlarm(originalAlarm.toDomain()).toLegacy()
+    suspend fun deleteAlarmAndReschedule(alarm: Alarm): Either<AlarmScheduleError, Unit> =
+        useCaseContainer.deleteAlarmAndReschedule(alarm)
 
-    /**
-     * 有効なアラームリストを取得する
-     *
-     * この関数はsuspend関数であり、呼び出し元のコルーチンスコープ内で
-     * 処理完了まで待機する。Syncサフィックスは[getAllAlarmsAsync]のような
-     * Deferred返却パターンとの区別のために使用している。
-     *
-     * @return 有効なアラームのリスト
-     */
-    suspend fun getEnabledAlarmsSync(): List<Alarm> = useCaseContainer.getEnabledAlarms().map {
-        it.toLegacy()
-    }
+    suspend fun toggleAlarm(alarmId: Long, enabled: Boolean): Either<AlarmScheduleError, Unit> =
+        useCaseContainer.toggleAlarm(alarmId, enabled)
+
+    suspend fun processAfterFiring(alarm: Alarm): Either<AlarmScheduleError, Unit> =
+        useCaseContainer.processAfterFiring(alarm)
+
+    suspend fun createSnoozeAlarm(originalAlarm: Alarm): Either<AlarmScheduleError, Alarm> =
+        useCaseContainer.createSnoozeAlarm(originalAlarm)
+
+    suspend fun getEnabledAlarmsSync(): List<Alarm> = useCaseContainer.getEnabledAlarms()
 }
 
 class AlarmViewModelFactory(private val useCaseContainer: UseCaseContainer<*, *, *, *>) :

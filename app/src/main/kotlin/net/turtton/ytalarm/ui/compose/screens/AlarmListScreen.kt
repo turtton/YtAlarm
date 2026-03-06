@@ -1,8 +1,5 @@
 package net.turtton.ytalarm.ui.compose.screens
 
-import android.app.AlarmManager
-import android.content.Context
-import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
@@ -52,29 +49,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.DayOfWeek
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
-import net.turtton.ytalarm.database.structure.Alarm
-import net.turtton.ytalarm.database.structure.Playlist
+import net.turtton.ytalarm.kernel.entity.Alarm
+import net.turtton.ytalarm.kernel.entity.Playlist
+import net.turtton.ytalarm.kernel.port.AlarmScheduleError
 import net.turtton.ytalarm.ui.compose.components.AlarmEditBottomSheet
 import net.turtton.ytalarm.ui.compose.components.AlarmItem
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.ui.compose.theme.Dimensions
-import net.turtton.ytalarm.util.AlarmScheduleError
 import net.turtton.ytalarm.util.extensions.alarmOrderRule
 import net.turtton.ytalarm.util.extensions.alarmOrderUp
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
+import net.turtton.ytalarm.util.extensions.toDrawableRes
 import net.turtton.ytalarm.util.order.AlarmOrder
-import net.turtton.ytalarm.util.updateAlarmSchedule
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
 import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
-import java.util.Calendar
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -171,14 +168,14 @@ fun AlarmListScreenContent(
                         key = { it.id }
                     ) { alarm ->
                         // プレイリスト名とサムネイルを非同期で取得
-                        val playlists = remember(alarm.playListId) {
+                        val playlists = remember(alarm.playlistIds) {
                             mutableStateOf<List<Playlist>>(
                                 emptyList()
                             )
                         }
 
-                        LaunchedEffect(alarm.playListId) {
-                            playlistViewModel?.getFromIdsAsync(alarm.playListId)?.let { deferred ->
+                        LaunchedEffect(alarm.playlistIds) {
+                            playlistViewModel?.getFromIdsAsync(alarm.playlistIds)?.let { deferred ->
                                 playlists.value = withContext(Dispatchers.IO) {
                                     deferred.await()
                                 }
@@ -208,8 +205,8 @@ fun AlarmListScreenContent(
                                     }
                                 }
 
-                                is Playlist.Thumbnail.Drawable -> {
-                                    thumbnailUrl.value = thumbnail.id
+                                is Playlist.Thumbnail.None -> {
+                                    thumbnailUrl.value = thumbnail.toDrawableRes()
                                 }
                             }
                         }
@@ -377,7 +374,7 @@ fun AlarmListScreen(
         val filtered: List<Alarm> = allAlarms.filter { it.repeatType !is Alarm.RepeatType.Snooze }
         val mutableList: MutableList<Alarm> = filtered.toMutableList()
         when (orderRule) {
-            AlarmOrder.TIME -> mutableList.sortBy { "${it.hour}${it.minute}".toInt() }
+            AlarmOrder.TIME -> mutableList.sortBy { it.hour * 60 + it.minute }
             AlarmOrder.CREATION_DATE -> mutableList.sortBy { it.creationDate }
             AlarmOrder.LAST_UPDATED -> mutableList.sortBy { it.lastUpdated }
         }
@@ -395,36 +392,15 @@ fun AlarmListScreen(
         snackbarHostState = snackbarHostState,
         onAlarmToggle = { alarm, isEnabled ->
             scope.launch(Dispatchers.IO) {
-                // 有効化時のみ権限チェック
-                if (isEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    val alarmManager =
-                        context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-                    if (!alarmManager.canScheduleExactAlarms()) {
-                        withContext(Dispatchers.Main) {
-                            snackbarHostState.showSnackbar(errorNoAlarmPermission)
-                        }
-                        return@launch // トグルを更新しない
-                    }
-                }
-
-                val updatedAlarm = alarm.copy(isEnabled = isEnabled)
-                alarmViewModel.update(updatedAlarm)
-
-                // 全アラームを取得して、同一IDのデータを更新済みのものに差し替え
-                val currentAlarms = alarmViewModel.getAllAlarmsAsync().await()
-                val updatedList = currentAlarms.map {
-                    if (it.id == alarm.id) updatedAlarm else it
-                }.filter { it.isEnabled }
-
-                updateAlarmSchedule(context, updatedList).onLeft { error ->
+                alarmViewModel.toggleAlarm(alarm.id, isEnabled).onLeft { error ->
                     val message = when (error) {
-                        is AlarmScheduleError.PermissionDenied -> error.message
+                        is AlarmScheduleError.PermissionDenied -> errorNoAlarmPermission
                         AlarmScheduleError.NoAlarmManager -> errorNoAlarmManager
                         AlarmScheduleError.NoEnabledAlarm -> null
                     }
                     message?.let {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                            snackbarHostState.showSnackbar(it)
                         }
                     }
                 }
@@ -465,19 +441,13 @@ fun AlarmListScreen(
                         scope.launch(Dispatchers.IO) {
                             try {
                                 ensureActive()
-                                // DB削除（完了を待つ）
-                                alarmViewModel.delete(alarm).join()
-                                ensureActive()
-
-                                // 残りの有効なアラームでスケジュール更新
-                                val remainingAlarms = alarmViewModel.getAllAlarmsAsync().await()
-                                    .filter { it.isEnabled }
-                                ensureActive()
-
-                                updateAlarmSchedule(context, remainingAlarms).onLeft { error ->
+                                alarmViewModel.deleteAlarmAndReschedule(alarm).onLeft { error ->
                                     val message = when (error) {
-                                        is AlarmScheduleError.PermissionDenied -> error.message
+                                        is AlarmScheduleError.PermissionDenied ->
+                                            errorNoAlarmPermission
+
                                         AlarmScheduleError.NoAlarmManager -> errorNoAlarmManager
+
                                         AlarmScheduleError.NoEnabledAlarm -> null
                                     }
                                     message?.let { msg ->
@@ -541,40 +511,22 @@ fun AlarmListScreen(
             onSaveRequest = {
                 scope.launch(Dispatchers.IO) {
                     try {
-                        // insertSync/updateSyncで完了を待ってからスケジュール更新
-                        val savedAlarmId = if (currentAlarm.id == 0L) {
-                            alarmViewModel.insert(currentAlarm)
-                        } else {
-                            alarmViewModel.update(currentAlarm)
-                            currentAlarm.id
-                        }
+                        val result = alarmViewModel.saveAlarmAndSchedule(currentAlarm)
 
-                        // AlarmManagerにアラームを登録
-                        val scheduledAlarms = alarmViewModel.getAllAlarmsAsync().await()
-                            .filter { it.isEnabled }
-                        val scheduleResult = updateAlarmSchedule(context, scheduledAlarms)
-
-                        val scheduleError = when (scheduleResult) {
-                            is arrow.core.Either.Left -> {
-                                val error = scheduleResult.value
-                                // NoEnabledAlarmはエラーではなく正常なケース
+                        val scheduleError = result.fold(
+                            ifLeft = { error ->
                                 if (error != AlarmScheduleError.NoEnabledAlarm) {
                                     Log.e(
                                         "AlarmListScreen",
                                         "Failed to schedule alarm: $error"
                                     )
-                                    // isEnabledをfalseにして再更新
-                                    val disabledAlarm =
-                                        currentAlarm.copy(id = savedAlarmId, isEnabled = false)
-                                    alarmViewModel.update(disabledAlarm)
                                     errorFailedToSchedule
                                 } else {
                                     null
                                 }
-                            }
-
-                            is arrow.core.Either.Right -> null
-                        }
+                            },
+                            ifRight = { null }
+                        )
 
                         withContext(Dispatchers.Main) {
                             editState = AlarmEditState.Hidden
@@ -614,11 +566,10 @@ fun AlarmListScreen(
 private fun createDefaultAlarm(): Alarm = Alarm(
     hour = 7,
     minute = 0,
-    repeatType = Alarm.RepeatType.Once,
-    creationDate = Calendar.getInstance(),
-    lastUpdated = Calendar.getInstance()
+    repeatType = Alarm.RepeatType.Once
 )
 
+@Suppress("NewApi")
 @Preview(showBackground = true)
 @Composable
 private fun AlarmListScreenPreview() {
@@ -631,37 +582,31 @@ private fun AlarmListScreenPreview() {
                 minute = 30,
                 repeatType = Alarm.RepeatType.Days(
                     listOf(
-                        net.turtton.ytalarm.util.DayOfWeekCompat.MONDAY,
-                        net.turtton.ytalarm.util.DayOfWeekCompat.TUESDAY,
-                        net.turtton.ytalarm.util.DayOfWeekCompat.WEDNESDAY,
-                        net.turtton.ytalarm.util.DayOfWeekCompat.THURSDAY,
-                        net.turtton.ytalarm.util.DayOfWeekCompat.FRIDAY
+                        DayOfWeek.MONDAY,
+                        DayOfWeek.TUESDAY,
+                        DayOfWeek.WEDNESDAY,
+                        DayOfWeek.THURSDAY,
+                        DayOfWeek.FRIDAY
                     )
                 ),
-                playListId = listOf(1L),
-                isEnabled = true,
-                creationDate = java.util.Calendar.getInstance(),
-                lastUpdated = java.util.Calendar.getInstance()
+                playlistIds = listOf(1L),
+                isEnabled = true
             ),
             Alarm(
                 id = 2L,
                 hour = 9,
                 minute = 0,
                 repeatType = Alarm.RepeatType.Everyday,
-                playListId = listOf(2L),
-                isEnabled = false,
-                creationDate = java.util.Calendar.getInstance(),
-                lastUpdated = java.util.Calendar.getInstance()
+                playlistIds = listOf(2L),
+                isEnabled = false
             ),
             Alarm(
                 id = 3L,
                 hour = 18,
                 minute = 45,
                 repeatType = Alarm.RepeatType.Once,
-                playListId = listOf(3L),
-                isEnabled = true,
-                creationDate = java.util.Calendar.getInstance(),
-                lastUpdated = java.util.Calendar.getInstance()
+                playlistIds = listOf(3L),
+                isEnabled = true
             )
         )
 

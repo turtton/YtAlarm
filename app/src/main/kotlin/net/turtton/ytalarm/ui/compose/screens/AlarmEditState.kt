@@ -1,6 +1,6 @@
 package net.turtton.ytalarm.ui.compose.screens
 
-import net.turtton.ytalarm.database.structure.Alarm
+import net.turtton.ytalarm.kernel.entity.Alarm
 
 /**
  * アラーム編集状態を表すsealed class
