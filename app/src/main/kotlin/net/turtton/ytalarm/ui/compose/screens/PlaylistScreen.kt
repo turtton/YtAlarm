@@ -497,7 +497,10 @@ fun PlaylistScreen(
 
     // リネームダイアログ
     playlistToRenameId?.let { id ->
-        val playlist = playlistMap[id] ?: return@let
+        val playlist = playlistMap[id] ?: run {
+            playlistToRenameId = null
+            return@let
+        }
         RenamePlaylistDialog(
             currentTitle = playlist.title,
             onConfirm = { newName ->
@@ -513,7 +516,10 @@ fun PlaylistScreen(
 
     // 削除確認ダイアログ
     playlistToDeleteId?.let { id ->
-        val playlist = playlistMap[id] ?: return@let
+        val playlist = playlistMap[id] ?: run {
+            playlistToDeleteId = null
+            return@let
+        }
         AlertDialog(
             onDismissRequest = { playlistToDeleteId = null },
             title = { Text(stringResource(R.string.dialog_delete_playlist_title)) },

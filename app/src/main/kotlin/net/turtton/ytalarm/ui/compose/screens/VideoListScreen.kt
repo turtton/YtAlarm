@@ -706,7 +706,10 @@ fun VideoListScreen(
 
     // 削除確認ダイアログ
     videoToDeleteId?.let { id ->
-        val video = videoMap[id] ?: return@let
+        val video = videoMap[id] ?: run {
+            videoToDeleteId = null
+            return@let
+        }
         DeleteVideoDialog(
             videoTitle = video.title,
             onConfirm = {
@@ -722,7 +725,10 @@ fun VideoListScreen(
 
     // 再インポートダイアログ
     videoToReimportId?.let { id ->
-        val video = videoMap[id] ?: return@let
+        val video = videoMap[id] ?: run {
+            videoToReimportId = null
+            return@let
+        }
         VideoReimportDialog(
             videoTitle = video.title,
             onConfirm = {

@@ -39,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -387,7 +388,8 @@ fun AlarmListScreen(
 
     val alarmMap = remember(allAlarms) { allAlarms.associateBy { it.id } }
 
-    val alarmUiModels = remember(sortedAlarms) {
+    val configuration = LocalConfiguration.current
+    val alarmUiModels = remember(sortedAlarms, configuration) {
         sortedAlarms.map { it.toUiModel(context) }
     }
 
@@ -436,7 +438,10 @@ fun AlarmListScreen(
 
     // 削除確認ダイアログ
     alarmToDeleteId?.let { id ->
-        val alarm = alarmMap[id] ?: return@let
+        val alarm = alarmMap[id] ?: run {
+            alarmToDeleteId = null
+            return@let
+        }
         AlertDialog(
             onDismissRequest = { alarmToDeleteId = null },
             title = { Text(stringResource(R.string.dialog_delete_alarm_title)) },
