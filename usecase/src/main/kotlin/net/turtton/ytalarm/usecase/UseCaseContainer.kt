@@ -21,7 +21,7 @@ interface LocalDataSourceContainer<Executor> :
 
 /**
  * リモートデータソースの依存をまとめるコンテナインターフェース。
- * VideoInfoRepositoryとそのExecutorを束ねる。
+ * VideoInfoRepository、VideoDownloadRepositoryとそのExecutorを束ねる。
  */
 interface RemoteDataSourceContainer<Executor> :
     DependsOnVideoInfoRepository<Executor>,

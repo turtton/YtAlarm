@@ -18,6 +18,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -78,8 +79,11 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
     val useCaseContainer = remember {
         (context.applicationContext as? YtApplication)?.dataContainerProvider?.getUseCaseContainer()
     }
-    var totalDownloadSize by remember {
-        mutableLongStateOf(useCaseContainer?.getTotalDownloadSize() ?: 0L)
+    var totalDownloadSize by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(useCaseContainer) {
+        totalDownloadSize = withContext(Dispatchers.IO) {
+            useCaseContainer?.getTotalDownloadSize() ?: 0L
+        }
     }
 
     // ダイアログ表示状態
@@ -235,11 +239,11 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
 }
 
 private val STORAGE_LIMIT_OPTIONS = listOf(
-    512L * 1024 * 1024 to "512 MB",
-    1L * 1024 * 1024 * 1024 to "1 GB",
-    2L * 1024 * 1024 * 1024 to "2 GB",
-    5L * 1024 * 1024 * 1024 to "5 GB",
-    10L * 1024 * 1024 * 1024 to "10 GB"
+    512L * 1024 * 1024,
+    1L * 1024 * 1024 * 1024,
+    2L * 1024 * 1024 * 1024,
+    5L * 1024 * 1024 * 1024,
+    10L * 1024 * 1024 * 1024
 )
 
 @Composable
@@ -253,7 +257,7 @@ private fun StorageLimitDialog(
         title = { Text(stringResource(R.string.settings_download_storage_limit)) },
         text = {
             Column {
-                STORAGE_LIMIT_OPTIONS.forEach { (bytes, label) ->
+                STORAGE_LIMIT_OPTIONS.forEach { bytes ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -266,7 +270,7 @@ private fun StorageLimitDialog(
                             onClick = { onLimitSelected(bytes) }
                         )
                         Text(
-                            text = label,
+                            text = formatBytes(bytes),
                             modifier = Modifier.padding(start = 8.dp)
                         )
                     }
@@ -285,9 +289,9 @@ private fun StorageLimitDialog(
 private fun formatBytes(bytes: Long): String {
     val mb = bytes / (1024.0 * 1024.0)
     return if (mb >= 1024.0) {
-        String.format(java.util.Locale.US, "%.1f GB", mb / 1024.0)
+        String.format(java.util.Locale.getDefault(), "%.1f GB", mb / 1024.0)
     } else {
-        String.format(java.util.Locale.US, "%.0f MB", mb)
+        String.format(java.util.Locale.getDefault(), "%.0f MB", mb)
     }
 }
 

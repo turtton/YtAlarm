@@ -8,6 +8,8 @@ import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.kernel.error.DownloadError
 import net.turtton.ytalarm.kernel.error.DownloadResult
 import net.turtton.ytalarm.kernel.port.FileStoragePort
+import java.io.File
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * 動画ファイルダウンロードに関するビジネスロジックを定義するUseCaseインターフェース。
@@ -51,10 +53,12 @@ interface DownloadUseCase<LExec, RExec, LDS, RDS>
 
         val isStreamable = when (val state = video.state) {
             is Video.State.Information -> state.isStreamable
-            is Video.State.Downloaded -> return null
-            is Video.State.Downloading -> return null
+
+            is Video.State.Downloaded,
+            is Video.State.Downloading,
             is Video.State.Importing -> return null
-            is Video.State.Failed -> true
+
+            is Video.State.Failed -> false
         }
 
         localDataSource.videoRepository.update(
@@ -62,24 +66,30 @@ interface DownloadUseCase<LExec, RExec, LDS, RDS>
             video.copy(state = Video.State.Downloading)
         )
 
-        val downloadDir = fileStorage.getDownloadDir()
-        if (!downloadDir.exists()) {
-            downloadDir.mkdirs()
-        }
+        val downloadDir = fileStorage.getDownloadDir().also { if (!it.exists()) it.mkdirs() }
         val outputPath = "${downloadDir.absolutePath}/${video.id}.%(ext)s"
 
-        val result = remoteDataSource.videoDownloadRepository.downloadVideo(
-            executor = rExecutor,
-            videoUrl = video.videoUrl,
-            outputPath = outputPath,
-            formatSelector = DEFAULT_FORMAT_SELECTOR,
-            onProgress = onProgress
-        )
+        val result = try {
+            remoteDataSource.videoDownloadRepository.downloadVideo(
+                executor = rExecutor,
+                videoUrl = video.videoUrl,
+                outputPath = outputPath,
+                formatSelector = DEFAULT_FORMAT_SELECTOR,
+                onProgress = onProgress
+            )
+        } catch (e: CancellationException) {
+            localDataSource.videoRepository.update(
+                lExecutor,
+                video.copy(state = Video.State.Information(isStreamable = isStreamable))
+            )
+            throw e
+        }
 
         when (result) {
             is Either.Right -> {
                 val dlResult = result.value
-                val relativePath = "downloads/${dlResult.filePath.substringAfterLast('/')}"
+                val fileName = File(dlResult.filePath).name
+                val relativePath = "downloads/$fileName"
                 localDataSource.videoRepository.update(
                     lExecutor,
                     video.copy(
@@ -104,7 +114,7 @@ interface DownloadUseCase<LExec, RExec, LDS, RDS>
     }
 
     /**
-     * 追加のバイト数をダウンロードできるか上限チェックする。
+     * 現在のダウンロード合計サイズが上限未満かチェックする。
      *
      * @param storageLimitBytes ストレージ上限（バイト）
      * @return ダウンロード可能ならtrue
@@ -121,6 +131,9 @@ interface DownloadUseCase<LExec, RExec, LDS, RDS>
      */
     suspend fun deleteAllDownloads(): Long {
         val lExecutor = localDataSource.dataSource.createExecutor()
+
+        val deletedCount = fileStorage.deleteAllDownloads()
+
         val allVideos = localDataSource.videoRepository.getExceptIdsSync(lExecutor, emptyList())
         val downloadedVideos = allVideos.filter { it.state is Video.State.Downloaded }
 
@@ -134,7 +147,7 @@ interface DownloadUseCase<LExec, RExec, LDS, RDS>
             )
         }
 
-        return fileStorage.deleteAllDownloads()
+        return deletedCount
     }
 
     /**

@@ -88,8 +88,8 @@ class DownloadUseCaseTest :
                     videoUrl = "http://example.com/video",
                     state = Video.State.Information(isStreamable = true)
                 )
-                val downloadDir = File("/tmp/test-downloads")
-                val dlResult = DownloadResult("/tmp/test-downloads/1.mp4", 5000L)
+                val downloadDir = File(System.getProperty("java.io.tmpdir"), "test-downloads")
+                val dlResult = DownloadResult("${downloadDir.absolutePath}/1.mp4", 5000L)
 
                 whenever(mockVideoRepo.getFromIdSync(any(), eq(1L))).thenReturn(video)
                 whenever(mockFileStorage.getDownloadDir()).thenReturn(downloadDir)
@@ -126,7 +126,7 @@ class DownloadUseCaseTest :
                     videoUrl = "http://example.com/video",
                     state = Video.State.Information(isStreamable = false)
                 )
-                val downloadDir = File("/tmp/test-downloads")
+                val downloadDir = File(System.getProperty("java.io.tmpdir"), "test-downloads")
                 val error = DownloadError.NetworkError(RuntimeException("timeout"))
 
                 whenever(mockVideoRepo.getFromIdSync(any(), eq(1L))).thenReturn(video)
