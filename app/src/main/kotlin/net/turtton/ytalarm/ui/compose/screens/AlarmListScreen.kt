@@ -375,7 +375,7 @@ fun AlarmListScreen(
 
                 val videoIds = playlists.mapNotNull { playlist ->
                     (playlist.thumbnail as? Playlist.Thumbnail.Video)?.id
-                }
+                }.distinct()
                 val videoMap = if (videoIds.isEmpty()) {
                     emptyMap()
                 } else {

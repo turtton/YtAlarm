@@ -386,7 +386,7 @@ fun AlarmEditBottomSheet(
             displayDataList = withContext(Dispatchers.IO) {
                 val videoThumbnailIds = allPlaylists.mapNotNull { playlist ->
                     (playlist.thumbnail as? Playlist.Thumbnail.Video)?.id
-                }
+                }.distinct()
                 val videoMap = if (videoThumbnailIds.isEmpty()) {
                     emptyMap()
                 } else {

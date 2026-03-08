@@ -354,7 +354,7 @@ fun PlaylistScreen(
                 val importingPlaylists = currentPlaylists.filter {
                     it.type is Playlist.Type.Importing
                 }
-                val videoIds = importingPlaylists.mapNotNull { it.videos.firstOrNull() }
+                val videoIds = importingPlaylists.mapNotNull { it.videos.firstOrNull() }.distinct()
                 val videoMap = if (videoIds.isEmpty()) {
                     emptyMap()
                 } else {
@@ -401,7 +401,7 @@ fun PlaylistScreen(
     LaunchedEffect(playlists) {
         val videoIds = playlists.mapNotNull { playlist ->
             (playlist.thumbnail as? Playlist.Thumbnail.Video)?.id
-        }
+        }.distinct()
         thumbnailUrlMap = if (videoIds.isEmpty()) {
             emptyMap()
         } else {
