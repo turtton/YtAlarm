@@ -8,9 +8,6 @@
 <a href="https://github.com/turtton/YtAlarm/actions/workflows/check_code.yml">
     <img src="https://img.shields.io/github/checks-status/turtton/YtAlarm/main?style=flat-square">
 </a>
-<a href="https://codecov.io/gh/turtton/YtAlarm"> 
-    <img alt="Codecov branch" src="https://img.shields.io/codecov/c/github/turtton/YtAlarm/main?style=flat-square&token=KBB10HH0TL">
-</a>
 <a href="https://app.fossa.com/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm?ref=badge_shield" alt="FOSSA Status">
     <img src="https://app.fossa.com/api/projects/custom%2B34065%2Fgithub.com%2Fturtton%2FYtAlarm.svg?type=shield"/>
 </a>
