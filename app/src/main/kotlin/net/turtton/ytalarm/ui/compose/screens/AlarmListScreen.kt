@@ -97,8 +97,8 @@ fun AlarmListScreenContent(
     onOrderUpToggle: () -> Unit,
     onCreateAlarm: () -> Unit,
     modifier: Modifier = Modifier,
-    playlistViewModel: PlaylistViewModel? = null,
-    videoViewModel: VideoViewModel? = null
+    playlistTitleMap: Map<Long, String> = emptyMap(),
+    thumbnailUrlMap: Map<Long, Any> = emptyMap()
 ) {
     var showSortDialog by remember { mutableStateOf(false) }
 
@@ -169,54 +169,18 @@ fun AlarmListScreenContent(
                         items = alarms,
                         key = { it.id }
                     ) { alarm ->
-                        // プレイリスト名とサムネイルを非同期で取得
-                        val playlists = remember(alarm.playlistIds) {
-                            mutableStateOf<List<Playlist>>(
-                                emptyList()
-                            )
-                        }
+                        val playlistTitle = alarm.playlistIds.firstOrNull()?.let {
+                            playlistTitleMap[it]
+                        } ?: ""
 
-                        LaunchedEffect(alarm.playlistIds) {
-                            playlistViewModel?.getFromIdsAsync(alarm.playlistIds)?.let { deferred ->
-                                playlists.value = withContext(Dispatchers.IO) {
-                                    deferred.await()
-                                }
-                            }
-                        }
-
-                        val playlistTitle = playlists.value.firstOrNull()?.title ?: ""
-
-                        // サムネイル取得
-                        val thumbnailUrl = remember(playlists.value.firstOrNull()?.thumbnail) {
-                            mutableStateOf<Any?>(null)
-                        }
-
-                        playlists.value.firstOrNull()?.thumbnail?.let { thumbnail ->
-                            when (thumbnail) {
-                                is Playlist.Thumbnail.Video -> {
-                                    // Video thumbnailの場合、VideoからURLを取得
-                                    LaunchedEffect(thumbnail.id) {
-                                        videoViewModel?.getFromIdAsync(
-                                            thumbnail.id
-                                        )?.let { deferred ->
-                                            val video = withContext(Dispatchers.IO) {
-                                                deferred.await()
-                                            }
-                                            thumbnailUrl.value = video?.thumbnailUrl
-                                        }
-                                    }
-                                }
-
-                                is Playlist.Thumbnail.None -> {
-                                    thumbnailUrl.value = thumbnail.toDrawableRes()
-                                }
-                            }
+                        val thumbnailUrl = alarm.playlistIds.firstOrNull()?.let {
+                            thumbnailUrlMap[it]
                         }
 
                         AlarmItem(
                             alarm = alarm,
                             playlistTitle = playlistTitle,
-                            thumbnailUrl = thumbnailUrl.value,
+                            thumbnailUrl = thumbnailUrl,
                             onToggle = { isEnabled ->
                                 onAlarmToggle(alarm.id, isEnabled)
                             },
@@ -393,6 +357,50 @@ fun AlarmListScreen(
         sortedAlarms.map { it.toUiModel(context) }
     }
 
+    // プレイリスト情報とサムネイルURL一括取得
+    var playlistTitleMap by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    var thumbnailUrlMap by remember { mutableStateOf<Map<Long, Any>>(emptyMap()) }
+
+    LaunchedEffect(allAlarms) {
+        val allPlaylistIds = allAlarms.flatMap { it.playlistIds }.distinct()
+        if (allPlaylistIds.isEmpty()) {
+            playlistTitleMap = emptyMap()
+            thumbnailUrlMap = emptyMap()
+            return@LaunchedEffect
+        }
+        withContext(Dispatchers.IO) {
+            try {
+                val playlists = playlistViewModel.getFromIdsAsync(allPlaylistIds).await()
+                playlistTitleMap = playlists.associate { it.id to it.title }
+
+                val videoIds = playlists.mapNotNull { playlist ->
+                    (playlist.thumbnail as? Playlist.Thumbnail.Video)?.id
+                }
+                val videoMap = if (videoIds.isEmpty()) {
+                    emptyMap()
+                } else {
+                    videoViewModel.getFromIdsAsync(videoIds).await()
+                        .filter { it.thumbnailUrl.isNotEmpty() }
+                        .associate { it.id to it.thumbnailUrl }
+                }
+                // playlistId -> thumbnailUrl (Any) のマップを構築
+                thumbnailUrlMap = playlists.mapNotNull { playlist ->
+                    val thumb: Any? = when (val thumbnail = playlist.thumbnail) {
+                        is Playlist.Thumbnail.Video ->
+                            videoMap[thumbnail.id]
+
+                        is Playlist.Thumbnail.None -> thumbnail.toDrawableRes()
+                    }
+                    thumb?.let { playlist.id to it }
+                }.toMap()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                Log.w("AlarmListScreen", "Failed to batch fetch playlist data", e)
+            }
+        }
+    }
+
     // AlarmListScreenContentを呼び出す
     AlarmListScreenContent(
         alarms = alarmUiModels,
@@ -432,8 +440,8 @@ fun AlarmListScreen(
             editState = AlarmEditState.CreatingNew(createDefaultAlarm())
         },
         modifier = modifier,
-        playlistViewModel = playlistViewModel,
-        videoViewModel = videoViewModel
+        playlistTitleMap = playlistTitleMap,
+        thumbnailUrlMap = thumbnailUrlMap
     )
 
     // 削除確認ダイアログ

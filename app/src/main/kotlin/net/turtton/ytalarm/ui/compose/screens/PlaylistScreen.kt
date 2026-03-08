@@ -101,7 +101,7 @@ fun PlaylistScreenContent(
     onCreatePlaylist: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
-    videoViewModel: VideoViewModel? = null
+    thumbnailUrlMap: Map<Long, String> = emptyMap()
 ) {
     var showSortDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -179,36 +179,13 @@ fun PlaylistScreenContent(
                         items = playlists,
                         key = { it.id }
                     ) { playlist ->
-                        // サムネイル取得
-                        val thumbnailSource = remember(playlist.thumbnailVideoId) {
-                            mutableStateOf<ThumbnailSource>(
-                                ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
-                            )
-                        }
-
-                        // thumbnailVideoIdがある場合のみ非同期でサムネイルURLを取得
-                        val thumbnailVideoId = playlist.thumbnailVideoId
-                        if (thumbnailVideoId != null) {
-                            LaunchedEffect(thumbnailVideoId) {
-                                val url = videoViewModel?.let { vm ->
-                                    withContext(Dispatchers.IO) {
-                                        vm.getFromIdAsync(thumbnailVideoId).await()?.thumbnailUrl
-                                    }
-                                }
-                                thumbnailSource.value = if (url != null) {
-                                    ThumbnailSource.Url(url)
-                                } else {
-                                    ThumbnailSource.DrawableRes(R.drawable.ic_no_image)
-                                }
-                            }
+                        val thumbnailUrl = playlist.thumbnailVideoId?.let {
+                            thumbnailUrlMap[it]
                         }
 
                         PlaylistItem(
                             playlist = playlist,
-                            thumbnailUrl = when (val source = thumbnailSource.value) {
-                                is ThumbnailSource.Url -> source.url
-                                is ThumbnailSource.DrawableRes -> source.resId
-                            },
+                            thumbnailUrl = thumbnailUrl ?: R.drawable.ic_no_image,
                             videoCount = playlist.videoCount,
                             isSelected = selectedItems.contains(playlist.id),
                             onToggleSelection = {
@@ -373,14 +350,19 @@ fun PlaylistScreen(
             try {
                 // 最新のplaylistsを取得
                 val currentPlaylists = playlistViewModel.allPlaylistsAsync.await()
-                val garbage = currentPlaylists.filter { playlist ->
-                    if (playlist.type !is Playlist.Type.Importing) return@filter false
+                val importingPlaylists = currentPlaylists.filter {
+                    it.type is Playlist.Type.Importing
+                }
+                val videoIds = importingPlaylists.mapNotNull { it.videos.firstOrNull() }
+                val videoMap = if (videoIds.isEmpty()) {
+                    emptyMap()
+                } else {
+                    videoViewModel.getFromIdsAsync(videoIds).await()
+                        .associateBy { it.id }
+                }
+                val garbage = importingPlaylists.filter { playlist ->
                     val videoId = playlist.videos.firstOrNull() ?: return@filter false
-                    val video = videoViewModel.getFromIdAsync(
-                        videoId
-                    ).await() ?: return@filter false
-                    // Importing状態はまだ処理中なので除外、Failed状態はガベージ対象
-                    video.state is Video.State.Failed
+                    videoMap[videoId]?.state is Video.State.Failed
                 }
                 if (garbage.isNotEmpty()) {
                     playlistViewModel.delete(garbage)
@@ -412,6 +394,28 @@ fun PlaylistScreen(
 
     val playlistMap = remember(playlists) { playlists.associateBy { it.id } }
     val playlistUiModels = remember(sortedPlaylists) { sortedPlaylists.map { it.toUiModel() } }
+
+    // サムネイルURL一括取得
+    var thumbnailUrlMap by remember { mutableStateOf<Map<Long, String>>(emptyMap()) }
+    LaunchedEffect(playlists) {
+        val videoIds = playlists.mapNotNull { playlist ->
+            (playlist.thumbnail as? Playlist.Thumbnail.Video)?.id
+        }
+        if (videoIds.isNotEmpty()) {
+            thumbnailUrlMap = withContext(Dispatchers.IO) {
+                try {
+                    videoViewModel.getFromIdsAsync(videoIds).await()
+                        .filter { it.thumbnailUrl.isNotEmpty() }
+                        .associate { it.id to it.thumbnailUrl }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                    android.util.Log.w("PlaylistScreen", "Failed to get video thumbnails", e)
+                    emptyMap()
+                }
+            }
+        }
+    }
 
     // PlaylistScreenContentを呼び出す
     PlaylistScreenContent(
@@ -492,7 +496,7 @@ fun PlaylistScreen(
         },
         snackbarHostState = snackbarHostState,
         modifier = modifier,
-        videoViewModel = videoViewModel
+        thumbnailUrlMap = thumbnailUrlMap
     )
 
     // リネームダイアログ
@@ -626,13 +630,4 @@ private fun PlaylistScreenPreview() {
             snackbarHostState = snackbarHostState
         )
     }
-}
-
-/**
- * サムネイル画像のソースを表すsealed class
- * 型安全性を確保するため、Any?の代わりに使用
- */
-private sealed class ThumbnailSource {
-    data class Url(val url: String) : ThumbnailSource()
-    data class DrawableRes(val resId: Int) : ThumbnailSource()
 }
