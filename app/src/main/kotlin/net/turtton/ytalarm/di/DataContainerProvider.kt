@@ -8,8 +8,10 @@ import net.turtton.ytalarm.datasource.remote.YtDlpExecutor
 import net.turtton.ytalarm.datasource.repository.RoomAlarmRepository
 import net.turtton.ytalarm.datasource.repository.RoomPlaylistRepository
 import net.turtton.ytalarm.datasource.repository.RoomVideoRepository
+import net.turtton.ytalarm.datasource.repository.YtDlpVideoDownloadRepository
 import net.turtton.ytalarm.datasource.repository.YtDlpVideoInfoRepository
 import net.turtton.ytalarm.platform.AndroidAlarmScheduler
+import net.turtton.ytalarm.platform.AndroidFileStorageAdapter
 import net.turtton.ytalarm.usecase.LocalDataSourceContainer
 import net.turtton.ytalarm.usecase.RemoteDataSourceContainer
 import net.turtton.ytalarm.usecase.UseCaseContainer
@@ -39,9 +41,11 @@ class DefaultDataContainerProvider(private val context: Context) : DataContainer
     private val remoteContainer = object : RemoteDataSourceContainer<YtDlpExecutor> {
         override val dataSource = YtDlpDataSource()
         override val videoInfoRepository = YtDlpVideoInfoRepository()
+        override val videoDownloadRepository = YtDlpVideoDownloadRepository()
     }
 
     private val alarmScheduler = AndroidAlarmScheduler(context)
+    private val fileStorage = AndroidFileStorageAdapter(context)
 
     private val useCaseContainer by lazy {
         object : UseCaseContainer<
@@ -53,6 +57,7 @@ class DefaultDataContainerProvider(private val context: Context) : DataContainer
             override val localDataSource = localContainer
             override val remoteDataSource = remoteContainer
             override val alarmScheduler = this@DefaultDataContainerProvider.alarmScheduler
+            override val fileStorage = this@DefaultDataContainerProvider.fileStorage
         }
     }
 

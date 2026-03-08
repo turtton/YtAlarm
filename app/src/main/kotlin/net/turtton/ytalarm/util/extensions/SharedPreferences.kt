@@ -59,3 +59,15 @@ private const val YTDLP_UPDATE_CHANNEL = "YtDlpUpdateChannel"
 var SharedPreferences.ytDlpUpdateChannel: String
     get() = getString(YTDLP_UPDATE_CHANNEL, "STABLE") ?: "STABLE"
     set(value) = edit { putString(YTDLP_UPDATE_CHANNEL, value) }
+
+private const val DOWNLOAD_WIFI_ONLY = "DownloadWifiOnly"
+var SharedPreferences.downloadWifiOnly: Boolean
+    get() = getBoolean(DOWNLOAD_WIFI_ONLY, true)
+    set(value) = edit { putBoolean(DOWNLOAD_WIFI_ONLY, value) }
+
+private const val DOWNLOAD_STORAGE_LIMIT = "DownloadStorageLimit"
+private const val DEFAULT_STORAGE_LIMIT_BYTES = 1_073_741_824L // 1GB
+
+var SharedPreferences.downloadStorageLimitBytes: Long
+    get() = getLong(DOWNLOAD_STORAGE_LIMIT, DEFAULT_STORAGE_LIMIT_BYTES)
+    set(value) = edit { putLong(DOWNLOAD_STORAGE_LIMIT, value) }

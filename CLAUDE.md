@@ -101,10 +101,10 @@ See @.github/CONTRIBUTING.md
 kernel/src/main/kotlin/net/turtton/ytalarm/kernel/
 ├── entity/        # ドメインEntity (Alarm, Video, Playlist, AlarmScheduling)
 ├── dto/           # VideoInformation DTO
-├── error/         # VideoInfoError, StreamError
-├── repository/    # Repository<Executor>インターフェース
+├── error/         # VideoInfoError, StreamError, DownloadError
+├── repository/    # Repository<Executor>インターフェース (VideoDownloadRepository含む)
 ├── di/            # DataSource, DependsOn*
-└── port/          # AlarmSchedulerPort
+└── port/          # AlarmSchedulerPort, FileStoragePort
 
 datasource/src/main/kotlin/net/turtton/ytalarm/datasource/
 ├── entity/        # Room Entity (AlarmEntity, VideoEntity, PlaylistEntity)
@@ -117,14 +117,14 @@ datasource/src/main/kotlin/net/turtton/ytalarm/datasource/
 └── remote/        # YtDlpExecutor, YtDlpDataSource
 
 usecase/src/main/kotlin/net/turtton/ytalarm/usecase/
-├── AlarmUseCase.kt, PlaylistUseCase.kt, VideoUseCase.kt, ImportUseCase.kt
+├── AlarmUseCase.kt, PlaylistUseCase.kt, VideoUseCase.kt, ImportUseCase.kt, DownloadUseCase.kt
 ├── LocalDataSourceContainer.kt, RemoteDataSourceContainer.kt  # DI Containers
 └── UseCaseContainer.kt
 
 app/src/main/kotlin/net/turtton/ytalarm/
 ├── activity/      # AlarmActivity, MainActivity
 ├── di/            # DataContainerProvider
-├── platform/      # AndroidAlarmScheduler
+├── platform/      # AndroidAlarmScheduler, AndroidFileStorageAdapter
 ├── database/      # [旧] Room entities, DAOs, converters (段階的に除去予定)
 ├── ui/            # Compose Screens, Dialogs
 ├── util/          # Extensions (RepeatTypeDisplay, ThumbnailDisplay等), Order classes
@@ -191,5 +191,5 @@ app/src/main/kotlin/net/turtton/ytalarm/
 
 ### メディア管理
 - プレイリストインポート機能
-- ストリーミング再生 (ダウンロード機能は開発中)
+- ダウンロード機能（手動DL、プレイリスト一括DL、ローカル再生、ストレージ管理）
 - 複数の動画サービス対応 (yt-dlp ベース)

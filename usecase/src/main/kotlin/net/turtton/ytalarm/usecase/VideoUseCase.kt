@@ -227,7 +227,9 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
         val executor = localDataSource.dataSource.createExecutor()
         val videoIds = alarm.playlistIds.flatMap { playlistVideoMap[it] ?: emptyList() }
         val videos = localDataSource.videoRepository.getFromIdsSync(executor, videoIds)
-        return videos.filter { it.state is Video.State.Information }
+        return videos.filter {
+            it.state is Video.State.Information || it.state is Video.State.Downloaded
+        }
     }
 
     /**

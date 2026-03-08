@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
+import android.os.Environment
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -88,6 +89,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.UpdateSnoozeNotifyWorker
+import java.io.File
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
@@ -477,7 +479,9 @@ fun VideoPlayerScreen(
             val videos = playlist.flatMap { it.videos }
                 .distinct()
                 .let { videoViewModel.getFromIdsAsync(it).await() }
-                .filter { it.state is Video.State.Information }
+                .filter {
+                    it.state is Video.State.Information || it.state is Video.State.Downloaded
+                }
 
             if (videos.isEmpty()) {
                 snackbarHostState.showSnackbar(errorEmptyVideo)
@@ -512,6 +516,7 @@ fun VideoPlayerScreen(
                 }
                 scope.launch {
                     playVideo(
+                        context = context,
                         exoPlayer = exoPlayer,
                         video = queue.next(),
                         onLoading = { isLoading = it },
@@ -529,6 +534,7 @@ fun VideoPlayerScreen(
 
             // 最初の動画を再生
             playVideo(
+                context = context,
                 exoPlayer = exoPlayer,
                 video = queue.next(),
                 onLoading = { isLoading = it },
@@ -551,6 +557,7 @@ fun VideoPlayerScreen(
                 return@LaunchedEffect
             }
             playVideo(
+                context = context,
                 exoPlayer = exoPlayer,
                 video = video,
                 onLoading = { isLoading = it },
@@ -660,6 +667,7 @@ private fun startVibration(context: Context): Vibrator? {
  */
 @Suppress("LongParameterList")
 private suspend fun playVideo(
+    context: Context,
     exoPlayer: ExoPlayer,
     video: Video,
     onLoading: (Boolean) -> Unit,
@@ -680,7 +688,31 @@ private suspend fun playVideo(
         Log.d(LOG_TAG, "Setting thumbnail URL: ${video.thumbnailUrl}")
     }
 
-    // 動画情報を取得
+    // Downloaded状態の場合、ローカルファイルを優先再生
+    val downloadedState = video.state as? Video.State.Downloaded
+    if (downloadedState != null) {
+        val localFile = withContext(Dispatchers.IO) {
+            val moviesDir = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES)
+            val file = File(moviesDir, downloadedState.internalLink)
+            if (file.exists()) file else null
+        }
+        if (localFile != null) {
+            withContext(Dispatchers.Main) {
+                onLoading(false)
+                val mediaItem = MediaItem.fromUri(localFile.toUri())
+                exoPlayer.stop()
+                exoPlayer.clearMediaItems()
+                exoPlayer.setMediaItem(mediaItem)
+                exoPlayer.prepare()
+                exoPlayer.play()
+            }
+            return
+        }
+        // ファイルが消失している場合、ストリーミングにフォールバック
+        Log.w(LOG_TAG, "Local file missing for video ${video.id}: ${downloadedState.internalLink}")
+    }
+
+    // 動画情報を取得（ストリーミング再生）
     val url = video.videoUrl
     val infoResult = withContext(Dispatchers.IO) {
         val request = YoutubeDLRequest(url)

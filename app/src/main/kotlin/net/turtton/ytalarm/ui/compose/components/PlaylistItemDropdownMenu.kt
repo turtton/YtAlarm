@@ -15,6 +15,7 @@ fun PlaylistItemDropdownMenu(
     expanded: Boolean,
     onDismiss: () -> Unit,
     onRename: () -> Unit,
+    onDownloadAll: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
     isDeleteEnabled: Boolean = true
@@ -29,6 +30,15 @@ fun PlaylistItemDropdownMenu(
             text = { Text(stringResource(R.string.menu_playlist_option_rename)) },
             onClick = {
                 onRename()
+                onDismiss()
+            }
+        )
+
+        // 全動画ダウンロード
+        DropdownMenuItem(
+            text = { Text(stringResource(R.string.menu_playlist_option_download_all)) },
+            onClick = {
+                onDownloadAll()
                 onDismiss()
             }
         )

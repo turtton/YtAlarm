@@ -90,6 +90,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.ReimportResult
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
+import net.turtton.ytalarm.worker.VideoFileDownloadWorker
 import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
 // Sync回転アニメーション設定
@@ -508,7 +509,6 @@ fun VideoListScreen(
 
     // Pre-fetch string resources for use in lambdas
     val msgThumbnailSet = stringResource(R.string.message_thumbnail_set)
-    val msgDownloadNotImpl = stringResource(R.string.message_download_not_implemented)
     val msgReimportSuccess = stringResource(R.string.message_reimport_success)
     val msgReimportFailed = stringResource(R.string.message_reimport_failed)
     val msgSyncStarted = stringResource(R.string.snackbar_sync_started)
@@ -625,10 +625,8 @@ fun VideoListScreen(
                     snackbarHostState.showSnackbar(msgThumbnailSet)
                 }
             },
-            onDownload = { _ ->
-                scope.launch {
-                    snackbarHostState.showSnackbar(msgDownloadNotImpl)
-                }
+            onDownload = { videoId ->
+                VideoFileDownloadWorker.registerWorker(context, videoId)
             },
             onReimport = { videoId ->
                 videoToReimportId = videoId
