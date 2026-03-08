@@ -85,11 +85,13 @@ fun MainScreen(
 
     // 権限画面を表示
     if (showPermissionScreen) {
-        PermissionScreen(
-            onContinue = {
-                showPermissionScreen = false
-            }
-        )
+        AppTheme {
+            PermissionScreen(
+                onContinue = {
+                    showPermissionScreen = false
+                }
+            )
+        }
         return
     }
 
