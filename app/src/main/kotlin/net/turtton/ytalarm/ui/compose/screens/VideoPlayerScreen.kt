@@ -693,6 +693,7 @@ private suspend fun playVideo(
     if (downloadedState != null) {
         val localFile = withContext(Dispatchers.IO) {
             val moviesDir = context.getExternalFilesDir(Environment.DIRECTORY_MOVIES)
+                ?: return@withContext null
             val file = File(moviesDir, downloadedState.internalLink)
             if (file.exists()) file else null
         }

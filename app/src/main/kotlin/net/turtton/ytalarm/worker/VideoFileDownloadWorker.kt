@@ -44,18 +44,25 @@ class VideoFileDownloadWorker(appContext: Context, workerParams: WorkerParameter
             return Result.failure()
         }
 
+        setForeground(createForegroundInfo(0))
+
         val result = useCaseContainer.downloadVideo(videoId) { progress ->
+            val progressInt = progress.toInt().coerceIn(0, PROGRESS_MAX)
             setProgressAsync(
                 Data.Builder()
-                    .putInt(KEY_PROGRESS, progress.toInt().coerceIn(0, PROGRESS_MAX))
+                    .putInt(KEY_PROGRESS, progressInt)
                     .build()
             )
+            setForegroundAsync(createForegroundInfo(progressInt))
         }
 
         return when {
             result == null -> {
-                Log.w(WORKER_TAG, "Video $videoId not found or not downloadable")
-                Result.failure()
+                Log.w(
+                    WORKER_TAG,
+                    "Video $videoId not found or already handled (no download performed)"
+                )
+                Result.success()
             }
 
             result is Either.Left -> {
@@ -81,13 +88,12 @@ class VideoFileDownloadWorker(appContext: Context, workerParams: WorkerParameter
         )
     }
 
-    override suspend fun getForegroundInfo(): ForegroundInfo {
+    private fun createForegroundInfo(progress: Int): ForegroundInfo {
         val title =
             applicationContext.getString(R.string.notification_download_video_file_title)
         val cancel = applicationContext.getString(R.string.cancel)
         val cancelIntent = WorkManager.getInstance(applicationContext)
             .createCancelPendingIntent(id)
-        val progress = inputData.getInt(KEY_PROGRESS, 0)
         val notification =
             NotificationCompat.Builder(applicationContext, VIDEO_FILE_DOWNLOAD_NOTIFICATION)
                 .setSmallIcon(R.drawable.ic_download)
@@ -98,6 +104,8 @@ class VideoFileDownloadWorker(appContext: Context, workerParams: WorkerParameter
 
         return ForegroundInfo(NOTIFICATION_ID, notification.build())
     }
+
+    override suspend fun getForegroundInfo(): ForegroundInfo = createForegroundInfo(0)
 
     companion object {
         private const val WORKER_TAG = "VideoFileDownloadWorker"

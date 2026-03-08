@@ -5,7 +5,11 @@ import io.kotest.matchers.shouldBe
 import net.turtton.ytalarm.kernel.port.FileStoragePort
 import java.io.File
 
-class AndroidFileStorageAdapterTest :
+/**
+ * FileStoragePortの契約テスト。
+ * AndroidFileStorageAdapterと同じロジックをJVM上で検証する。
+ */
+class FileStoragePortContractTest :
     FunSpec({
         lateinit var tempDir: File
         lateinit var fileStorage: FileStoragePort

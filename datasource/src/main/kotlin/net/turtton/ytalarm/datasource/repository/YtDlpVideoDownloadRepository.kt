@@ -35,11 +35,18 @@ class YtDlpVideoDownloadRepository : VideoDownloadRepository<YtDlpExecutor> {
             }
         }.fold(
             onSuccess = {
-                val file = File(outputPath)
-                if (file.exists()) {
+                // outputPathはyt-dlpテンプレート（例: /path/1.%(ext)s）なので、
+                // DL後に実ファイルを親ディレクトリから探す
+                val templateFile = File(outputPath)
+                val parentDir = templateFile.parentFile
+                val baseName = templateFile.name.substringBefore(".%(ext)s")
+                val actualFile = parentDir?.listFiles()
+                    ?.firstOrNull { it.name.startsWith("$baseName.") && it.isFile }
+
+                if (actualFile != null && actualFile.exists()) {
                     DownloadResult(
-                        filePath = outputPath,
-                        fileSize = file.length()
+                        filePath = actualFile.absolutePath,
+                        fileSize = actualFile.length()
                     ).right()
                 } else {
                     DownloadError.FormatNotAvailable(

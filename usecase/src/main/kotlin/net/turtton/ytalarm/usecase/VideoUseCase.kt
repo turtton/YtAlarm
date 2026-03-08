@@ -214,7 +214,7 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
 
     /**
      * アラームで再生可能な動画リストを返す。
-     * Information状態の動画のみを対象とする。
+     * InformationまたはDownloaded状態の動画を対象とする。
      *
      * @param alarm 対象アラーム
      * @param playlistVideoMap プレイリストIDと動画IDリストのマップ

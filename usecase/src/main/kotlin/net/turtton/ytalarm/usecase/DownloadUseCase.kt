@@ -32,7 +32,8 @@ interface DownloadUseCase<LExec, RExec, LDS, RDS>
 
     /**
      * 動画をダウンロードしてローカルに保存する。
-     * DB状態遷移: Information → Downloading → Downloaded / Failed
+     * DB状態遷移: Information → Downloading → Downloaded / Information
+     * （Failed への遷移は本メソッド外（Worker側のリトライ制御）で行われる）
      *
      * @param videoId 対象動画のDB ID
      * @param onProgress ダウンロード進捗コールバック（0.0〜100.0）

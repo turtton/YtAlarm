@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.ui.compose.components.ClickableSettingItem
@@ -176,7 +177,10 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
                     onClick = {
                         scope.launch(Dispatchers.IO) {
                             useCaseContainer?.deleteAllDownloads()
-                            totalDownloadSize = useCaseContainer?.getTotalDownloadSize() ?: 0L
+                            val newSize = useCaseContainer?.getTotalDownloadSize() ?: 0L
+                            withContext(Dispatchers.Main) {
+                                totalDownloadSize = newSize
+                            }
                         }
                     }
                 )
@@ -231,7 +235,7 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
 }
 
 private val STORAGE_LIMIT_OPTIONS = listOf(
-    512L * 1024 * 1024 to "500 MB",
+    512L * 1024 * 1024 to "512 MB",
     1L * 1024 * 1024 * 1024 to "1 GB",
     2L * 1024 * 1024 * 1024 to "2 GB",
     5L * 1024 * 1024 * 1024 to "5 GB",
