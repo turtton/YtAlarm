@@ -354,20 +354,29 @@ private fun SharedUrlPlaylistSelectDialog(
 
     LaunchedEffect(allPlaylists, newPlaylistTitle) {
         displayDataList = kotlinx.coroutines.withContext(Dispatchers.IO) {
+            val videoThumbnailIds = allPlaylists.mapNotNull { playlist ->
+                (playlist.thumbnail as? Playlist.Thumbnail.Video)?.id
+            }.distinct()
+            val videoMap = if (videoThumbnailIds.isEmpty()) {
+                emptyMap()
+            } else {
+                try {
+                    videoViewModel.getFromIdsAsync(videoThumbnailIds).await()
+                        .associateBy { it.id }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    throw e
+                } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                    Log.w("MainScreen", "Failed to get video thumbnails", e)
+                    emptyMap()
+                }
+            }
             val playlistItems = allPlaylists.map { playlist ->
                 val thumbnailUrl = when (val thumbnail = playlist.thumbnail) {
                     is Playlist.Thumbnail.Video -> {
-                        try {
-                            val video = videoViewModel.getFromIdAsync(thumbnail.id).await()
-                            video?.thumbnailUrl?.let {
-                                DisplayDataThumbnail.Url(it)
-                            } ?: DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
-                        } catch (e: kotlinx.coroutines.CancellationException) {
-                            throw e
-                        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                            Log.w("MainScreen", "Failed to get video thumbnail: ${thumbnail.id}", e)
-                            DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
-                        }
+                        videoMap[thumbnail.id]?.thumbnailUrl
+                            ?.takeIf { it.isNotEmpty() }
+                            ?.let { DisplayDataThumbnail.Url(it) }
+                            ?: DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
                     }
 
                     is Playlist.Thumbnail.None -> {
