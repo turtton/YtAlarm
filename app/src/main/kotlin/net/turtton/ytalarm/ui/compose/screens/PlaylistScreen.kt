@@ -402,8 +402,10 @@ fun PlaylistScreen(
         val videoIds = playlists.mapNotNull { playlist ->
             (playlist.thumbnail as? Playlist.Thumbnail.Video)?.id
         }
-        if (videoIds.isNotEmpty()) {
-            thumbnailUrlMap = withContext(Dispatchers.IO) {
+        thumbnailUrlMap = if (videoIds.isEmpty()) {
+            emptyMap()
+        } else {
+            withContext(Dispatchers.IO) {
                 try {
                     videoViewModel.getFromIdsAsync(videoIds).await()
                         .filter { it.thumbnailUrl.isNotEmpty() }

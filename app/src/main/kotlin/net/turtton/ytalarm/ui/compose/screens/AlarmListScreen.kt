@@ -368,10 +368,10 @@ fun AlarmListScreen(
             thumbnailUrlMap = emptyMap()
             return@LaunchedEffect
         }
-        withContext(Dispatchers.IO) {
+        val (newTitleMap, newThumbnailMap) = withContext(Dispatchers.IO) {
             try {
                 val playlists = playlistViewModel.getFromIdsAsync(allPlaylistIds).await()
-                playlistTitleMap = playlists.associate { it.id to it.title }
+                val titles = playlists.associate { it.id to it.title }
 
                 val videoIds = playlists.mapNotNull { playlist ->
                     (playlist.thumbnail as? Playlist.Thumbnail.Video)?.id
@@ -383,8 +383,7 @@ fun AlarmListScreen(
                         .filter { it.thumbnailUrl.isNotEmpty() }
                         .associate { it.id to it.thumbnailUrl }
                 }
-                // playlistId -> thumbnailUrl (Any) のマップを構築
-                thumbnailUrlMap = playlists.mapNotNull { playlist ->
+                val thumbnails = playlists.mapNotNull { playlist ->
                     val thumb: Any? = when (val thumbnail = playlist.thumbnail) {
                         is Playlist.Thumbnail.Video ->
                             videoMap[thumbnail.id]
@@ -393,12 +392,16 @@ fun AlarmListScreen(
                     }
                     thumb?.let { playlist.id to it }
                 }.toMap()
+                titles to thumbnails
             } catch (e: CancellationException) {
                 throw e
             } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Log.w("AlarmListScreen", "Failed to batch fetch playlist data", e)
+                emptyMap<Long, String>() to emptyMap<Long, Any>()
             }
         }
+        playlistTitleMap = newTitleMap
+        thumbnailUrlMap = newThumbnailMap
     }
 
     // AlarmListScreenContentを呼び出す

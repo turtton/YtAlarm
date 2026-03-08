@@ -373,9 +373,10 @@ private fun SharedUrlPlaylistSelectDialog(
             val playlistItems = allPlaylists.map { playlist ->
                 val thumbnailUrl = when (val thumbnail = playlist.thumbnail) {
                     is Playlist.Thumbnail.Video -> {
-                        videoMap[thumbnail.id]?.thumbnailUrl?.let {
-                            DisplayDataThumbnail.Url(it)
-                        } ?: DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
+                        videoMap[thumbnail.id]?.thumbnailUrl
+                            ?.takeIf { it.isNotEmpty() }
+                            ?.let { DisplayDataThumbnail.Url(it) }
+                            ?: DisplayDataThumbnail.Drawable(R.drawable.ic_no_image)
                     }
 
                     is Playlist.Thumbnail.None -> {
