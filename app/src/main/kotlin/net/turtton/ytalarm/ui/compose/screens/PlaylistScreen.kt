@@ -290,6 +290,7 @@ fun PlaylistScreenContent(
  * - 削除機能（アラームで使用中のプレイリストは削除不可）
  * - 新規プレイリスト作成（FAB）
  */
+@Suppress("ThrowsCount") // CancellationException rethrows for proper coroutine handling
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlaylistScreen(
