@@ -2,6 +2,7 @@ package net.turtton.ytalarm.kernel.di
 
 import net.turtton.ytalarm.kernel.repository.AlarmRepository
 import net.turtton.ytalarm.kernel.repository.PlaylistRepository
+import net.turtton.ytalarm.kernel.repository.VideoDownloadRepository
 import net.turtton.ytalarm.kernel.repository.VideoInfoRepository
 import net.turtton.ytalarm.kernel.repository.VideoRepository
 
@@ -23,4 +24,8 @@ interface DependsOnPlaylistRepository<Executor> {
 
 interface DependsOnVideoInfoRepository<Executor> {
     val videoInfoRepository: VideoInfoRepository<Executor>
+}
+
+interface DependsOnVideoDownloadRepository<Executor> {
+    val videoDownloadRepository: VideoDownloadRepository<Executor>
 }

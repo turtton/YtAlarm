@@ -72,6 +72,7 @@ import net.turtton.ytalarm.viewmodel.PlaylistViewModel
 import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
+import net.turtton.ytalarm.worker.VideoFileDownloadWorker
 
 /**
  * プレイリスト一覧画面のコンテンツ（プレビュー可能）
@@ -92,6 +93,7 @@ fun PlaylistScreenContent(
     onMenuClick: (Long) -> Unit,
     onMenuDismiss: (Long) -> Unit,
     onRename: (Long) -> Unit,
+    onDownloadAll: (Long) -> Unit,
     onDelete: (Long) -> Unit,
     playlistsInUse: Set<Long>,
     onOpenDrawer: () -> Unit,
@@ -208,6 +210,7 @@ fun PlaylistScreenContent(
                                     expanded = expandedMenus[playlist.id] ?: false,
                                     onDismiss = { onMenuDismiss(playlist.id) },
                                     onRename = { onRename(playlist.id) },
+                                    onDownloadAll = { onDownloadAll(playlist.id) },
                                     onDelete = { onDelete(playlist.id) },
                                     isDeleteEnabled = !playlistsInUse.contains(playlist.id)
                                 )
@@ -444,6 +447,12 @@ fun PlaylistScreen(
         onRename = { playlistId ->
             playlistToRenameId = playlistId
         },
+        onDownloadAll = { playlistId ->
+            val playlist = playlistMap[playlistId]
+            if (playlist != null && playlist.videos.isNotEmpty()) {
+                VideoFileDownloadWorker.registerWorkers(context, playlist.videos)
+            }
+        },
         onDelete = { playlistId ->
             // アラームで使用中の場合はSnackbarを表示
             if (playlistsInUse.contains(playlistId)) {
@@ -623,6 +632,7 @@ private fun PlaylistScreenPreview() {
             onMenuClick = { },
             onMenuDismiss = { },
             onRename = { },
+            onDownloadAll = { },
             onDelete = { },
             playlistsInUse = emptySet(),
             onOpenDrawer = { },

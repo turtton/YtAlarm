@@ -28,6 +28,7 @@ import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
+import net.turtton.ytalarm.worker.VIDEO_FILE_DOWNLOAD_NOTIFICATION
 import net.turtton.ytalarm.worker.YTDLP_UPDATE_NOTIFICATION
 import net.turtton.ytalarm.worker.YtDlpUpdateWorker
 
@@ -121,6 +122,16 @@ class MainActivity :
                 NotificationChannel(VIDEO_DOWNLOAD_NOTIFICATION, name, importance)
             videoInfoChannel.description = videoInfoDescription
             notificationManager.createNotificationChannel(videoInfoChannel)
+
+            val videoFileDescription =
+                getString(R.string.notification_download_video_file_channel_description)
+            val videoFileChannel = NotificationChannel(
+                VIDEO_FILE_DOWNLOAD_NOTIFICATION,
+                name,
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            videoFileChannel.description = videoFileDescription
+            notificationManager.createNotificationChannel(videoFileChannel)
 
             // yt-dlp更新通知チャンネル
             val ytdlpUpdateDescription =

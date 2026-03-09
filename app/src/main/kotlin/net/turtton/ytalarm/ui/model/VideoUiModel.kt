@@ -12,6 +12,7 @@ data class VideoUiModel(
     val domain: String,
     val isFailed: Boolean,
     val isUpdating: Boolean,
+    val isDownloaded: Boolean,
     val creationDate: Instant
 ) {
     companion object {
@@ -22,7 +23,8 @@ data class VideoUiModel(
             thumbnailUrl: String = "",
             domain: String = "youtube.com",
             isFailed: Boolean = false,
-            isUpdating: Boolean = false
+            isUpdating: Boolean = false,
+            isDownloaded: Boolean = false
         ) = VideoUiModel(
             id,
             videoId,
@@ -31,6 +33,7 @@ data class VideoUiModel(
             domain,
             isFailed,
             isUpdating,
+            isDownloaded,
             Clock.System.now()
         )
     }
@@ -44,5 +47,6 @@ fun Video.toUiModel(): VideoUiModel = VideoUiModel(
     domain = domain,
     isFailed = state is Video.State.Failed,
     isUpdating = state.isUpdating(),
+    isDownloaded = state is Video.State.Downloaded,
     creationDate = creationDate
 )

@@ -3,9 +3,11 @@ package net.turtton.ytalarm.usecase
 import net.turtton.ytalarm.kernel.di.DependsOnAlarmRepository
 import net.turtton.ytalarm.kernel.di.DependsOnDataSource
 import net.turtton.ytalarm.kernel.di.DependsOnPlaylistRepository
+import net.turtton.ytalarm.kernel.di.DependsOnVideoDownloadRepository
 import net.turtton.ytalarm.kernel.di.DependsOnVideoInfoRepository
 import net.turtton.ytalarm.kernel.di.DependsOnVideoRepository
 import net.turtton.ytalarm.kernel.port.AlarmSchedulerPort
+import net.turtton.ytalarm.kernel.port.FileStoragePort
 
 /**
  * ローカルデータソースの依存をまとめるコンテナインターフェース。
@@ -19,10 +21,11 @@ interface LocalDataSourceContainer<Executor> :
 
 /**
  * リモートデータソースの依存をまとめるコンテナインターフェース。
- * VideoInfoRepositoryとそのExecutorを束ねる。
+ * VideoInfoRepository、VideoDownloadRepositoryとそのExecutorを束ねる。
  */
 interface RemoteDataSourceContainer<Executor> :
     DependsOnVideoInfoRepository<Executor>,
+    DependsOnVideoDownloadRepository<Executor>,
     DependsOnDataSource<Executor>
 
 /**
@@ -38,10 +41,12 @@ interface UseCaseContainer<LExec, RExec, LDS, RDS> :
     AlarmUseCase<LExec, LDS>,
     PlaylistUseCase<LExec, LDS>,
     VideoUseCase<LExec, RExec, LDS, RDS>,
-    ImportUseCase<LExec, RExec, LDS, RDS>
+    ImportUseCase<LExec, RExec, LDS, RDS>,
+    DownloadUseCase<LExec, RExec, LDS, RDS>
     where LDS : LocalDataSourceContainer<LExec>,
           RDS : RemoteDataSourceContainer<RExec> {
     override val localDataSource: LDS
     override val remoteDataSource: RDS
     override val alarmScheduler: AlarmSchedulerPort
+    override val fileStorage: FileStoragePort
 }

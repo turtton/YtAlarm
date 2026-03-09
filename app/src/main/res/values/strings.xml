@@ -130,6 +130,8 @@
     <string name="notification_snooze_remain_soon">Alarm will start soon</string>
     <string name="notification_download_video_info_channel_description" translatable="false">Video Information download channel</string>
     <string name="notification_download_video_info_title">Downloading Video Information…</string>
+    <string name="notification_download_video_file_channel_description" translatable="false">Video File download channel</string>
+    <string name="notification_download_video_file_title">Downloading Video…</string>
     <string name="menu_playlist_option_rename">Rename</string>
     <string name="menu_playlist_option_delete">Delete</string>
     <string name="dialog_delete_playlist_title">Delete Playlist</string>
@@ -180,7 +182,6 @@
 
     <!-- Snackbar messages -->
     <string name="message_thumbnail_set">Thumbnail has been set</string>
-    <string name="message_download_not_implemented">Download feature is under development</string>
     <string name="message_video_deleted">Video deleted</string>
     <string name="message_reimport_started">Updating video information…</string>
     <string name="message_reimport_success">Video information updated successfully</string>
@@ -223,6 +224,14 @@
         <item>Stable</item>
         <item>Nightly</item>
     </string-array>
+    <string name="menu_playlist_option_download_all">Download All Videos</string>
+    <string name="settings_download_section">Download</string>
+    <string name="settings_download_wifi_only">Wi-Fi Only</string>
+    <string name="settings_download_wifi_only_description">Download only when connected to Wi-Fi</string>
+    <string name="settings_download_storage_limit">Storage Limit</string>
+    <string name="settings_download_total_size">Total Download Size</string>
+    <string name="settings_download_delete_all">Delete All Downloads</string>
+    <string name="settings_download_delete_all_description">Remove all downloaded video files</string>
     <string name="notification_ytdlp_update_channel_description" translatable="false">yt-dlp update notification channel</string>
     <string name="notification_ytdlp_update_failed_title">yt-dlp Update Failed</string>
     <string name="notification_ytdlp_update_failed_description">Could not update yt-dlp. Check your network connection.</string>

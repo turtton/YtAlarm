@@ -214,7 +214,7 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
 
     /**
      * アラームで再生可能な動画リストを返す。
-     * Information状態の動画のみを対象とする。
+     * InformationまたはDownloaded状態の動画を対象とする。
      *
      * @param alarm 対象アラーム
      * @param playlistVideoMap プレイリストIDと動画IDリストのマップ
@@ -227,7 +227,9 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
         val executor = localDataSource.dataSource.createExecutor()
         val videoIds = alarm.playlistIds.flatMap { playlistVideoMap[it] ?: emptyList() }
         val videos = localDataSource.videoRepository.getFromIdsSync(executor, videoIds)
-        return videos.filter { it.state is Video.State.Information }
+        return videos.filter {
+            it.state is Video.State.Information || it.state is Video.State.Downloaded
+        }
     }
 
     /**

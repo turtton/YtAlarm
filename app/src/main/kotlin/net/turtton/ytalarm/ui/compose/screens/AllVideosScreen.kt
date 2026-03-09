@@ -35,6 +35,7 @@ import net.turtton.ytalarm.util.extensions.videoOrderUp
 import net.turtton.ytalarm.viewmodel.ReimportResult
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
+import net.turtton.ytalarm.worker.VideoFileDownloadWorker
 
 /**
  * 全動画一覧画面（Compose版）
@@ -123,7 +124,9 @@ fun AllVideosScreen(
                 expandedMenus.remove(videoId)
             },
             onSetThumbnail = { /* Not applicable for all videos mode */ },
-            onDownload = { /* Not implemented yet */ },
+            onDownload = { videoId ->
+                VideoFileDownloadWorker.registerWorker(context, videoId)
+            },
             onReimport = { videoId ->
                 videoToReimportId = videoId
             },

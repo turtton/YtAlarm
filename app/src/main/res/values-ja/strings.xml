@@ -84,6 +84,7 @@
     <string name="error_invalid_alarm_id">無効なアラームIDです</string>
     <string name="notification_snooze_title">スヌーズが有効です</string>
     <string name="notification_download_video_info_title">ビデオ情報を取得しています</string>
+    <string name="notification_download_video_file_title">動画をダウンロードしています</string>
     <string name="menu_playlist_option_rename">名称変更</string>
     <string name="menu_playlist_option_delete">削除</string>
     <string name="dialog_delete_playlist_title">プレイリストの削除</string>
@@ -125,7 +126,6 @@
 
     <!-- Snackbar messages -->
     <string name="message_thumbnail_set">サムネイルを設定しました</string>
-    <string name="message_download_not_implemented">ダウンロード機能は開発中です</string>
     <string name="message_video_deleted">動画を削除しました</string>
     <string name="message_reimport_started">動画情報を更新中…</string>
     <string name="message_reimport_success">動画情報を更新しました</string>
@@ -167,6 +167,14 @@
         <item>安定版</item>
         <item>開発版</item>
     </string-array>
+    <string name="menu_playlist_option_download_all">全動画をダウンロード</string>
+    <string name="settings_download_section">ダウンロード</string>
+    <string name="settings_download_wifi_only">Wi-Fiのみ</string>
+    <string name="settings_download_wifi_only_description">Wi-Fi接続時のみダウンロードします</string>
+    <string name="settings_download_storage_limit">容量上限</string>
+    <string name="settings_download_total_size">合計ダウンロード容量</string>
+    <string name="settings_download_delete_all">ダウンロードを全て削除</string>
+    <string name="settings_download_delete_all_description">ダウンロード済みの動画ファイルを全て削除します</string>
     <string name="notification_ytdlp_update_failed_title">yt-dlpの更新失敗</string>
     <string name="notification_ytdlp_update_failed_description">yt-dlpを更新できませんでした。ネットワーク接続を確認してください。</string>
 
