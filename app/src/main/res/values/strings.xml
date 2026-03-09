@@ -175,6 +175,10 @@
     <string name="dialog_reimport_confirm">Update</string>
     <string name="dialog_delete_video_title">Delete Video</string>
     <string name="dialog_delete_video_message">Delete \"%1$s\"?</string>
+    <string name="dialog_remove_or_delete_video_title">Remove or Delete Video</string>
+    <string name="dialog_remove_or_delete_video_message">What would you like to do with \"%1$s\"?</string>
+    <string name="dialog_remove_or_delete_video_remove">Remove from playlist</string>
+    <string name="dialog_remove_or_delete_video_delete">Delete video</string>
 
     <!-- Form labels -->
     <string name="playlist_name_label">Playlist Name</string>
@@ -183,6 +187,7 @@
     <!-- Snackbar messages -->
     <string name="message_thumbnail_set">Thumbnail has been set</string>
     <string name="message_video_deleted">Video deleted</string>
+    <string name="message_video_removed_from_playlist">Removed from playlist</string>
     <string name="message_reimport_started">Updating video information…</string>
     <string name="message_reimport_success">Video information updated successfully</string>
     <string name="message_reimport_failed">Failed to update video information</string>

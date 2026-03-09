@@ -66,6 +66,10 @@ class PlaylistViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, 
         useCaseContainer.deleteAllPlaylists(playlists)
     }
 
+    fun removeVideosFromPlaylist(playlist: Playlist, videoIds: List<Long>) = viewModelScope.launch {
+        useCaseContainer.removeVideosFromPlaylist(playlist, videoIds)
+    }
+
     companion object {
         private const val TAG = "PlaylistViewModel"
         private const val THUMBNAIL_VALIDATION_DELAY_MS = 500L
