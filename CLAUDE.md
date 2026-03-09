@@ -12,8 +12,8 @@ See @.github/CONTRIBUTING.md
 
 ### 必要環境
 - JDK 17
-- Android SDK (API 24-34)
-- minSdk 24, targetSdk 34, compileSdk 34
+- Android SDK (API 24-36)
+- minSdk 24, targetSdk 36, compileSdk 36
 
 ### 主要開発コマンド
 
@@ -30,8 +30,8 @@ See @.github/CONTRIBUTING.md
 ./gradlew :koverXmlReport        # カバレッジレポート生成
 
 # コード品質チェック
-./gradlew ktlintCheck           # Kotlinコードスタイルチェック
-./gradlew ktlintFormat          # Kotlinコードフォーマット
+./gradlew lintKotlin            # Kotlinコードスタイルチェック
+./gradlew formatKotlin          # Kotlinコードフォーマット
 ./gradlew detekt               # 静的解析実行
 ./gradlew lintDebug            # Android lint実行
 ```
@@ -64,11 +64,12 @@ See @.github/CONTRIBUTING.md
 - Room Migration v1→v2（BLOB列のCBOR構造変更）
 
 #### UseCase層 (:usecase)
-- 4つのUseCaseインターフェース（where句 + defaultメソッド）:
+- 5つのUseCaseインターフェース（where句 + defaultメソッド）:
   - `AlarmUseCase` — アラーム操作・スケジュール管理
   - `PlaylistUseCase` — プレイリスト操作・サムネイル管理
   - `VideoUseCase` — 動画操作・GC
   - `ImportUseCase` — 動画/プレイリストインポート・同期
+  - `DownloadUseCase` — 動画ダウンロード・ストレージ管理
 - `LocalDataSourceContainer`, `RemoteDataSourceContainer` — データソース依存グルーピング
 - `UseCaseContainer` — 全UseCase合成インターフェース
 
@@ -84,10 +85,6 @@ See @.github/CONTRIBUTING.md
 - ローカルExecutor: `AppDatabase`、リモートExecutor: `YtDlpExecutor`
 - `DependsOn*`インターフェースで依存を型として表現
 - `DataContainerProvider`だけが具象型を知る（単一配線点）
-
-### 移行状態の注意
-- 旧`database.structure.*`、旧`database.dao.*`、旧`database.AppDatabase`はUI層から多数参照されており残存
-- 新コードは`kernel.entity.*`を使用。旧型は段階的に除去予定
 
 ### モジュール別テスト・ビルドコマンド
 ```bash
@@ -125,7 +122,6 @@ app/src/main/kotlin/net/turtton/ytalarm/
 ├── activity/      # AlarmActivity, MainActivity
 ├── di/            # DataContainerProvider
 ├── platform/      # AndroidAlarmScheduler, AndroidFileStorageAdapter
-├── database/      # [旧] Room entities, DAOs, converters (段階的に除去予定)
 ├── ui/            # Compose Screens, Dialogs
 ├── util/          # Extensions (RepeatTypeDisplay, ThumbnailDisplay等), Order classes
 ├── viewmodel/     # ViewModels (UseCaseContainer経由)
@@ -150,7 +146,7 @@ app/src/main/kotlin/net/turtton/ytalarm/
 - **Room**: データベース
 - **Navigation Component**: 画面遷移
 - **WorkManager**: バックグラウンド処理
-- **Glide**: 画像読み込み
+- **Coil**: 画像読み込み（Compose対応）
 - **Material Design Components**: UI
 - **kotlinx.datetime**: 日時処理（Kernel層）
 - **kotlinx.serialization**: シリアライゼーション（CBOR/JSON）
