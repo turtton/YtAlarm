@@ -68,17 +68,34 @@ class DownloadUseCaseTest :
                 verify(mockVideoRepo, never()).update(any(), any())
             }
 
-            test("returns null for Downloading video") {
+            test("retries download for stuck Downloading video") {
                 val video = Video(
                     id = 1L,
                     videoId = "v1",
+                    videoUrl = "http://example.com/video",
                     state = Video.State.Downloading
                 )
+                val downloadDir =
+                    File(System.getProperty("java.io.tmpdir"), "test-downloads")
+                val dlResult =
+                    DownloadResult("${downloadDir.absolutePath}/1.mp4", 3000L)
+
                 whenever(mockVideoRepo.getFromIdSync(any(), eq(1L))).thenReturn(video)
+                whenever(mockFileStorage.getDownloadDir()).thenReturn(downloadDir)
+                whenever(
+                    mockDownloadRepo.downloadVideo(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                    )
+                ).thenReturn(Either.Right(dlResult))
 
                 val result = useCase.downloadVideo(1L)
 
-                result shouldBe null
+                result.shouldBeInstanceOf<Either.Right<DownloadResult>>()
+                result.getOrNull()?.fileSize shouldBe 3000L
             }
 
             test("successful download transitions Information to Downloaded") {

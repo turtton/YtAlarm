@@ -18,7 +18,8 @@ fun VideoItemDropdownMenu(
     onDownload: () -> Unit,
     onReimport: () -> Unit,
     onDelete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isDownloaded: Boolean = false
 ) {
     DropdownMenu(
         expanded = expanded,
@@ -36,11 +37,23 @@ fun VideoItemDropdownMenu(
 
         // ダウンロード
         DropdownMenuItem(
-            text = { Text(stringResource(R.string.menu_video_list_item_option_download)) },
+            text = {
+                Text(
+                    stringResource(R.string.menu_video_list_item_option_download),
+                    color = if (isDownloaded) {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    }
+                )
+            },
             onClick = {
-                onDownload()
-                onDismiss()
-            }
+                if (!isDownloaded) {
+                    onDownload()
+                    onDismiss()
+                }
+            },
+            enabled = !isDownloaded
         )
 
         // 再インポート

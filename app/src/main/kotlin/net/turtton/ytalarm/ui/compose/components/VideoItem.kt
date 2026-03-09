@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Checkbox
@@ -47,6 +48,7 @@ fun VideoItem(
     menuContent: (@Composable () -> Unit)? = null
 ) {
     val isFailed = video.isFailed
+    val isDownloaded = video.isDownloaded
 
     Row(
         modifier = modifier
@@ -74,6 +76,16 @@ fun VideoItem(
                         contentDescription = "Import failed",
                         tint = MaterialTheme.colorScheme.error,
                         modifier = Modifier.align(Alignment.Center).size(32.dp)
+                    )
+                }
+                if (isDownloaded) {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = "Downloaded",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(20.dp)
                     )
                 }
             }

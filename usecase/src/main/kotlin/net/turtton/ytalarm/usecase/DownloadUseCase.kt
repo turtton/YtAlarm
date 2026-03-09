@@ -53,11 +53,8 @@ interface DownloadUseCase<LExec, RExec, LDS, RDS>
 
         val isStreamable = when (val state = video.state) {
             is Video.State.Information -> state.isStreamable
-
-            is Video.State.Downloaded,
-            is Video.State.Downloading,
-            is Video.State.Importing -> return null
-
+            is Video.State.Downloading -> false
+            is Video.State.Downloaded, is Video.State.Importing -> return null
             is Video.State.Failed -> false
         }
 

@@ -371,7 +371,8 @@ fun VideoListScreenContent(
                                     onSetThumbnail = { onSetThumbnail(video.id) },
                                     onDownload = { onDownload(video.id) },
                                     onReimport = { onReimport(video.id) },
-                                    onDelete = { onDeleteSingleVideo(video.id) }
+                                    onDelete = { onDeleteSingleVideo(video.id) },
+                                    isDownloaded = video.isDownloaded
                                 )
                             }
                         )
