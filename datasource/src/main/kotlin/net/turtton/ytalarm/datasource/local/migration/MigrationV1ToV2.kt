@@ -127,7 +127,7 @@ object MigrationV1ToV2 : Migration(1, 2) {
             @SerialName("internal_link")
             val internalLink: String,
             @SerialName("file_size")
-            val fileSize: Int,
+            val fileSize: Long,
             @SerialName("is_streamable")
             val isStreamable: Boolean
         ) : NewVideoState
@@ -370,7 +370,7 @@ object MigrationV1ToV2 : Migration(1, 2) {
 
         is OldVideoState.Downloaded -> NewVideoState.Downloaded(
             internalLink = old.internalLink,
-            fileSize = old.fileSize,
+            fileSize = old.fileSize.toLong(),
             isStreamable = old.isStreamable
         )
     }
