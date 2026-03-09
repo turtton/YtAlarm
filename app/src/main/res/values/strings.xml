@@ -187,6 +187,7 @@
     <!-- Snackbar messages -->
     <string name="message_thumbnail_set">Thumbnail has been set</string>
     <string name="message_video_deleted">Video deleted</string>
+    <string name="message_video_removed_from_playlist">Removed from playlist</string>
     <string name="message_reimport_started">Updating video information…</string>
     <string name="message_reimport_success">Video information updated successfully</string>
     <string name="message_reimport_failed">Failed to update video information</string>
