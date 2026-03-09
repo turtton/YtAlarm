@@ -33,15 +33,19 @@ data class AlarmEntity(
     @Serializable
     sealed interface RepeatType {
         @Serializable
+        @SerialName("Once")
         data object Once : RepeatType
 
         @Serializable
+        @SerialName("Everyday")
         data object Everyday : RepeatType
 
         @Serializable
+        @SerialName("Snooze")
         data object Snooze : RepeatType
 
         @Serializable
+        @SerialName("Days")
         data class Days(val days: List<Int>) : RepeatType {
             init {
                 require(days.isNotEmpty()) { "Days list must not be empty" }
@@ -52,6 +56,7 @@ data class AlarmEntity(
         }
 
         @Serializable
+        @SerialName("Date")
         data class Date(
             @Serializable(DateSerializer::class)
             @SerialName("target_date")
