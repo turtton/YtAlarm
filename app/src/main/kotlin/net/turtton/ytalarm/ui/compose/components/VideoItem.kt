@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Checkbox
@@ -80,7 +81,7 @@ fun VideoItem(
                 }
                 if (isDownloaded) {
                     Icon(
-                        imageVector = Icons.Default.Download,
+                        imageVector = Icons.Default.DownloadDone,
                         contentDescription = "Downloaded",
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier
