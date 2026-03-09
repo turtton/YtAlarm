@@ -214,7 +214,10 @@ interface PlaylistUseCase<LExec, LDS>
     suspend fun removeVideosFromPlaylist(playlist: Playlist, videoIds: List<Long>) {
         val executor = localDataSource.dataSource.createExecutor()
         val remainingVideoIds = playlist.videos.filter { !videoIds.contains(it) }
-        var updatedPlaylist = playlist.copy(videos = remainingVideoIds)
+        var updatedPlaylist = playlist.copy(
+            videos = remainingVideoIds,
+            lastUpdated = Clock.System.now()
+        )
 
         // サムネイルが削除対象動画の場合、更新する
         val currentThumbnail = playlist.thumbnail

@@ -724,6 +724,9 @@ fun VideoListScreen(
                 }
             },
             onDeleteVideo = {
+                playlist?.let { pl ->
+                    playlistViewModel.removeVideosFromPlaylist(pl, listOf(id))
+                }
                 videoViewModel.delete(video)
                 videoToDeleteId = null
                 scope.launch {
