@@ -170,7 +170,7 @@ class MigrationV1ToV2Test {
             @SerialName("internal_link")
             val internalLink: String,
             @SerialName("file_size")
-            val fileSize: Int,
+            val fileSize: Long,
             @SerialName("is_streamable")
             val isStreamable: Boolean
         ) : V2VideoState

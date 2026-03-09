@@ -26,21 +26,26 @@ data class PlaylistEntity(
     @Serializable
     sealed interface Thumbnail {
         @Serializable
+        @SerialName("Video")
         data class Video(val id: Long) : Thumbnail
 
         @Serializable
+        @SerialName("None")
         data object None : Thumbnail
     }
 
     @Serializable
     sealed interface Type {
         @Serializable
+        @SerialName("Importing")
         data object Importing : Type
 
         @Serializable
+        @SerialName("Original")
         data object Original : Type
 
         @Serializable
+        @SerialName("CloudPlaylist")
         data class CloudPlaylist(
             val url: String,
             @SerialName("sync_rule")

@@ -27,18 +27,22 @@ data class VideoEntity(
     @Serializable
     sealed interface State {
         @Serializable
+        @SerialName("Importing")
         data object Importing : State
 
         @Serializable
+        @SerialName("Information")
         data class Information(
             @SerialName("is_streamable")
             val isStreamable: Boolean = true
         ) : State
 
         @Serializable
+        @SerialName("Downloading")
         data object Downloading : State
 
         @Serializable
+        @SerialName("Downloaded")
         data class Downloaded(
             @SerialName("internal_link")
             val internalLink: String,
@@ -49,6 +53,7 @@ data class VideoEntity(
         ) : State
 
         @Serializable
+        @SerialName("Failed")
         data class Failed(
             @SerialName("source_url")
             val sourceUrl: String
