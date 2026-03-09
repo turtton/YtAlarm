@@ -119,6 +119,10 @@
     <string name="dialog_reimport_confirm">更新</string>
     <string name="dialog_delete_video_title">動画を削除</string>
     <string name="dialog_delete_video_message">「%1$s」を削除しますか？</string>
+    <string name="dialog_remove_or_delete_video_title">動画の削除方法</string>
+    <string name="dialog_remove_or_delete_video_message">「%1$s」をどうしますか？</string>
+    <string name="dialog_remove_or_delete_video_remove">プレイリストから外す</string>
+    <string name="dialog_remove_or_delete_video_delete">動画を削除する</string>
 
     <!-- Form labels -->
     <string name="playlist_name_label">プレイリスト名</string>

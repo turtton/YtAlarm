@@ -73,7 +73,7 @@ import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.components.VideoItem
 import net.turtton.ytalarm.ui.compose.components.VideoItemDropdownMenu
-import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
+import net.turtton.ytalarm.ui.compose.dialogs.RemoveOrDeleteVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.ui.compose.theme.Dimensions
@@ -703,15 +703,21 @@ fun VideoListScreen(
         )
     }
 
-    // 削除確認ダイアログ
+    // 削除確認ダイアログ（プレイリストから外す or 動画を削除する）
     videoToDeleteId?.let { id ->
         val video = videoMap[id] ?: run {
             videoToDeleteId = null
             return@let
         }
-        DeleteVideoDialog(
+        RemoveOrDeleteVideoDialog(
             videoTitle = video.title,
-            onConfirm = {
+            onRemoveFromPlaylist = {
+                playlist?.let { pl ->
+                    playlistViewModel.removeVideosFromPlaylist(pl, listOf(id))
+                }
+                videoToDeleteId = null
+            },
+            onDeleteVideo = {
                 videoViewModel.delete(video)
                 videoToDeleteId = null
                 scope.launch {

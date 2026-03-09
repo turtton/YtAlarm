@@ -175,6 +175,10 @@
     <string name="dialog_reimport_confirm">Update</string>
     <string name="dialog_delete_video_title">Delete Video</string>
     <string name="dialog_delete_video_message">Delete \"%1$s\"?</string>
+    <string name="dialog_remove_or_delete_video_title">Remove or Delete Video</string>
+    <string name="dialog_remove_or_delete_video_message">What would you like to do with \"%1$s\"?</string>
+    <string name="dialog_remove_or_delete_video_remove">Remove from playlist</string>
+    <string name="dialog_remove_or_delete_video_delete">Delete video</string>
 
     <!-- Form labels -->
     <string name="playlist_name_label">Playlist Name</string>
