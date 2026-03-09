@@ -1,6 +1,8 @@
 package net.turtton.ytalarm.worker
 
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.BackoffPolicy
@@ -102,7 +104,15 @@ class VideoFileDownloadWorker(appContext: Context, workerParams: WorkerParameter
                 .addAction(R.drawable.ic_cancel, cancel, cancelIntent)
                 .setSilent(true)
 
-        return ForegroundInfo(NOTIFICATION_ID, notification.build())
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(
+                NOTIFICATION_ID,
+                notification.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        } else {
+            ForegroundInfo(NOTIFICATION_ID, notification.build())
+        }
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo = createForegroundInfo(0)
