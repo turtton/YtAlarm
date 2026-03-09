@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.datasource.local.migration
 
+import android.util.Log
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -27,6 +28,7 @@ import kotlinx.serialization.encodeToByteArray
 @OptIn(ExperimentalSerializationApi::class)
 object MigrationV1ToV2 : Migration(1, 2) {
 
+    private const val TAG = "MigrationV1ToV2"
     private val cbor = Cbor
 
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -349,6 +351,8 @@ object MigrationV1ToV2 : Migration(1, 2) {
         val oldState: OldVideoState = cbor.decodeFromByteArray(blob)
         val newState: NewVideoState = convertVideoState(oldState)
         cbor.encodeToByteArray(newState)
+    }.onFailure {
+        Log.e(TAG, "Failed to convert video state blob", it)
     }.getOrNull()
 
     private fun convertVideoState(old: OldVideoState): NewVideoState = when (old) {
@@ -384,6 +388,8 @@ object MigrationV1ToV2 : Migration(1, 2) {
                         val oldType: OldPlaylistType = cbor.decodeFromByteArray(blob)
                         val newType: NewPlaylistType = convertPlaylistType(oldType)
                         cbor.encodeToByteArray(newType)
+                    }.onFailure {
+                        Log.e(TAG, "Failed to convert playlist type blob (id=$id)", it)
                     }.getOrNull()
                 }
 
@@ -392,6 +398,8 @@ object MigrationV1ToV2 : Migration(1, 2) {
                         val oldThumbnail: OldPlaylistThumbnail = cbor.decodeFromByteArray(blob)
                         val newThumbnail: NewPlaylistThumbnail = convertThumbnail(oldThumbnail)
                         cbor.encodeToByteArray(newThumbnail)
+                    }.onFailure {
+                        Log.e(TAG, "Failed to convert playlist thumbnail blob (id=$id)", it)
                     }.getOrNull()
                 }
 
@@ -445,6 +453,8 @@ object MigrationV1ToV2 : Migration(1, 2) {
         val oldRepeatType: OldRepeatType = cbor.decodeFromByteArray(blob)
         val newRepeatType: NewRepeatType = convertRepeatType(oldRepeatType)
         cbor.encodeToByteArray(newRepeatType)
+    }.onFailure {
+        Log.e(TAG, "Failed to convert alarm repeatType blob", it)
     }.getOrNull()
 
     private fun convertRepeatType(old: OldRepeatType): NewRepeatType = when (old) {
