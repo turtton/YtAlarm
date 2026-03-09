@@ -36,22 +36,22 @@ class MigrationV1ToV2Test {
     @Serializable
     private sealed interface V1VideoState {
         @Serializable
-        @SerialName("Importing")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.State.Importing")
         data class Importing(val state: V1WorkerState) : V1VideoState
 
         @Serializable
-        @SerialName("Information")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.State.Information")
         data class Information(
             @SerialName("is_streamable")
             val isStreamable: Boolean = true
         ) : V1VideoState
 
         @Serializable
-        @SerialName("Downloading")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.State.Downloading")
         data class Downloading(val state: V1WorkerState) : V1VideoState
 
         @Serializable
-        @SerialName("Downloaded")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.State.Downloaded")
         data class Downloaded(
             @SerialName("internal_link")
             val internalLink: String,
@@ -65,11 +65,11 @@ class MigrationV1ToV2Test {
     @Serializable
     private sealed interface V1WorkerState {
         @Serializable
-        @SerialName("Failed")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.WorkerState.Failed")
         data class Failed(val url: String) : V1WorkerState
 
         @Serializable
-        @SerialName("Working")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.WorkerState.Working")
         data class Working(
             @SerialName("worker_id")
             val workerId: String
@@ -79,15 +79,15 @@ class MigrationV1ToV2Test {
     @Serializable
     private sealed interface V1PlaylistType {
         @Serializable
-        @SerialName("Importing")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Type.Importing")
         data object Importing : V1PlaylistType
 
         @Serializable
-        @SerialName("Original")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Type.Original")
         data object Original : V1PlaylistType
 
         @Serializable
-        @SerialName("CloudPlaylist")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Type.CloudPlaylist")
         data class CloudPlaylist(
             val url: String,
             @SerialName("worker_id")
@@ -100,34 +100,34 @@ class MigrationV1ToV2Test {
     @Serializable
     private sealed interface V1PlaylistThumbnail {
         @Serializable
-        @SerialName("Video")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Video")
         data class Video(val id: Long) : V1PlaylistThumbnail
 
         @Serializable
-        @SerialName("Drawable")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Drawable")
         data class Drawable(val id: Int) : V1PlaylistThumbnail
     }
 
     @Serializable
     private sealed interface V1RepeatType {
         @Serializable
-        @SerialName("Once")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Once")
         data object Once : V1RepeatType
 
         @Serializable
-        @SerialName("Everyday")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Everyday")
         data object Everyday : V1RepeatType
 
         @Serializable
-        @SerialName("Snooze")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Snooze")
         data object Snooze : V1RepeatType
 
         @Serializable
-        @SerialName("Days")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Days")
         data class Days(val days: List<V1DayOfWeekCompat>) : V1RepeatType
 
         @Serializable
-        @SerialName("Date")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Date")
         data class Date(
             @SerialName("target_date")
             val targetDate: String

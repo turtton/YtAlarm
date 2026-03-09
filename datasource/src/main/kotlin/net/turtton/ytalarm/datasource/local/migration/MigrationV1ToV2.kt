@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.datasource.local.migration
 
+import android.util.Log
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -27,6 +28,7 @@ import kotlinx.serialization.encodeToByteArray
 @OptIn(ExperimentalSerializationApi::class)
 object MigrationV1ToV2 : Migration(1, 2) {
 
+    private const val TAG = "MigrationV1ToV2"
     private val cbor = Cbor
 
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -47,22 +49,22 @@ object MigrationV1ToV2 : Migration(1, 2) {
     @Serializable
     private sealed interface OldVideoState {
         @Serializable
-        @SerialName("Importing")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.State.Importing")
         data class Importing(val state: OldWorkerState) : OldVideoState
 
         @Serializable
-        @SerialName("Information")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.State.Information")
         data class Information(
             @SerialName("is_streamable")
             val isStreamable: Boolean = true
         ) : OldVideoState
 
         @Serializable
-        @SerialName("Downloading")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.State.Downloading")
         data class Downloading(val state: OldWorkerState) : OldVideoState
 
         @Serializable
-        @SerialName("Downloaded")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.State.Downloaded")
         data class Downloaded(
             @SerialName("internal_link")
             val internalLink: String,
@@ -81,11 +83,11 @@ object MigrationV1ToV2 : Migration(1, 2) {
     @Serializable
     private sealed interface OldWorkerState {
         @Serializable
-        @SerialName("Failed")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.WorkerState.Failed")
         data class Failed(val url: String) : OldWorkerState
 
         @Serializable
-        @SerialName("Working")
+        @SerialName("net.turtton.ytalarm.database.structure.Video.WorkerState.Working")
         data class Working(
             @SerialName("worker_id")
             val workerId: String
@@ -147,15 +149,15 @@ object MigrationV1ToV2 : Migration(1, 2) {
     @Serializable
     private sealed interface OldPlaylistType {
         @Serializable
-        @SerialName("Importing")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Type.Importing")
         data object Importing : OldPlaylistType
 
         @Serializable
-        @SerialName("Original")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Type.Original")
         data object Original : OldPlaylistType
 
         @Serializable
-        @SerialName("CloudPlaylist")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Type.CloudPlaylist")
         data class CloudPlaylist(
             val url: String,
             @SerialName("worker_id")
@@ -198,11 +200,11 @@ object MigrationV1ToV2 : Migration(1, 2) {
     @Serializable
     private sealed interface OldPlaylistThumbnail {
         @Serializable
-        @SerialName("Video")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Video")
         data class Video(val id: Long) : OldPlaylistThumbnail
 
         @Serializable
-        @SerialName("Drawable")
+        @SerialName("net.turtton.ytalarm.database.structure.Playlist.Thumbnail.Drawable")
         data class Drawable(val id: Int) : OldPlaylistThumbnail
     }
 
@@ -233,23 +235,23 @@ object MigrationV1ToV2 : Migration(1, 2) {
     @Serializable
     private sealed interface OldRepeatType {
         @Serializable
-        @SerialName("Once")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Once")
         data object Once : OldRepeatType
 
         @Serializable
-        @SerialName("Everyday")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Everyday")
         data object Everyday : OldRepeatType
 
         @Serializable
-        @SerialName("Snooze")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Snooze")
         data object Snooze : OldRepeatType
 
         @Serializable
-        @SerialName("Days")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Days")
         data class Days(val days: List<OldDayOfWeekCompat>) : OldRepeatType
 
         @Serializable
-        @SerialName("Date")
+        @SerialName("net.turtton.ytalarm.database.structure.Alarm.RepeatType.Date")
         data class Date(
             @SerialName("target_date")
             val targetDate: String
@@ -349,6 +351,8 @@ object MigrationV1ToV2 : Migration(1, 2) {
         val oldState: OldVideoState = cbor.decodeFromByteArray(blob)
         val newState: NewVideoState = convertVideoState(oldState)
         cbor.encodeToByteArray(newState)
+    }.onFailure {
+        Log.e(TAG, "Failed to convert video state blob", it)
     }.getOrNull()
 
     private fun convertVideoState(old: OldVideoState): NewVideoState = when (old) {
@@ -384,6 +388,8 @@ object MigrationV1ToV2 : Migration(1, 2) {
                         val oldType: OldPlaylistType = cbor.decodeFromByteArray(blob)
                         val newType: NewPlaylistType = convertPlaylistType(oldType)
                         cbor.encodeToByteArray(newType)
+                    }.onFailure {
+                        Log.e(TAG, "Failed to convert playlist type blob (id=$id)", it)
                     }.getOrNull()
                 }
 
@@ -392,6 +398,8 @@ object MigrationV1ToV2 : Migration(1, 2) {
                         val oldThumbnail: OldPlaylistThumbnail = cbor.decodeFromByteArray(blob)
                         val newThumbnail: NewPlaylistThumbnail = convertThumbnail(oldThumbnail)
                         cbor.encodeToByteArray(newThumbnail)
+                    }.onFailure {
+                        Log.e(TAG, "Failed to convert playlist thumbnail blob (id=$id)", it)
                     }.getOrNull()
                 }
 
@@ -445,6 +453,8 @@ object MigrationV1ToV2 : Migration(1, 2) {
         val oldRepeatType: OldRepeatType = cbor.decodeFromByteArray(blob)
         val newRepeatType: NewRepeatType = convertRepeatType(oldRepeatType)
         cbor.encodeToByteArray(newRepeatType)
+    }.onFailure {
+        Log.e(TAG, "Failed to convert alarm repeatType blob", it)
     }.getOrNull()
 
     private fun convertRepeatType(old: OldRepeatType): NewRepeatType = when (old) {
