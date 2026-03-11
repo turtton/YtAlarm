@@ -1,0 +1,20 @@
+v1.0.0
+
+New features:
+- Video download support with storage management
+- Re-register alarms after device reboot
+- Playlist selection dialog when sharing URL
+- Option to remove video from playlist without deleting
+
+Improvements:
+- Clean Architecture multi-module migration
+- Batch thumbnail queries for better performance
+- Improved alarm edit bottom sheet layout
+- Migrated yt-dlp update to CoroutineWorker
+
+Bug fixes:
+- Fixed alarm list not displaying all playlist names
+- Fixed disabled alarm being re-enabled on save
+- Fixed screen staying on during video playback
+- Fixed database migration (v1 to v2) issues
+- Fixed PermissionScreen theme inconsistency
