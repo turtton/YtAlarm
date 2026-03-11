@@ -17,12 +17,12 @@ kotlin {
 }
 
 // This versioning probably follows semver.org
-val major = 0
-val minor = 1
+val major = 1
+val minor = 0
 // Max:19
 // Patch always calculated at five times in versionName and also adds abiFilter numberings in versionCode.
 // Please see actualPatchVer.
-val patch = 3
+val patch = 0
 
 val hasNoSplits = hasProperty("noSplits")
 
