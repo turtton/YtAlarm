@@ -202,8 +202,10 @@ interface AlarmUseCase<LExec, LDS>
             alarmWithTimestamp.id
         }
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        return alarmScheduler.scheduleNextAlarm(allAlarms).onLeft {
-            // スケジュール失敗時はDB変更をロールバック
+        return alarmScheduler.scheduleNextAlarm(allAlarms).onLeft { error ->
+            // 有効なアラームがない場合はDB保存自体は成功しているためロールバック不要
+            if (error == AlarmScheduleError.NoEnabledAlarm) return@onLeft
+            // それ以外のスケジュール失敗時はDB変更をロールバック
             if (isNew) {
                 val inserted = alarmWithTimestamp.copy(id = insertedId)
                 localDataSource.alarmRepository.delete(executor, inserted)
