@@ -169,9 +169,9 @@ fun AlarmListScreenContent(
                         items = alarms,
                         key = { it.id }
                     ) { alarm ->
-                        val playlistTitle = alarm.playlistIds.firstOrNull()?.let {
-                            playlistTitleMap[it]
-                        } ?: ""
+                        val playlistTitle = alarm.playlistIds
+                            .mapNotNull { playlistTitleMap[it] }
+                            .joinToString(", ")
 
                         val thumbnailUrl = alarm.playlistIds.firstOrNull()?.let {
                             thumbnailUrlMap[it]

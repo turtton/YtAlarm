@@ -166,8 +166,8 @@
     <string name="item_aboutpage_title_tirdpartylicenses">Third-party Licenses</string>
     <string name="item_aboutpage_liberapay_title" translatable="false">Liberapay</string>
     <string name="item_aboutpage_liberapay_details">Click to open</string>
-    <string name="item_aboutpage_bitcoin_title" translatable="false">Bitcoin</string>
-    <string name="item_aboutpage_bitcoin_address" translatable="false">3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t</string>
+    <string name="item_aboutpage_ethereum_title" translatable="false">Ethereum</string>
+    <string name="item_aboutpage_ethereum_address" translatable="false">0xcE7772EcFc76354c688AE9Ba14470791C8AF6555</string>
 
     <!-- Dialog strings for menu actions -->
     <string name="dialog_reimport_title">Reimport Video</string>

@@ -77,12 +77,10 @@ private val AboutItems: List<AboutPageData> = listOf(
         url = "https://liberapay.com/turtton/donate"
     ),
     AboutPageData.CopyableData(
-        thumbnail = AboutPageThumbnail.Url(
-            "https://camo.githubusercontent.com/d8f6d0e0aeafda23077ad6fdccd927fff87e1fff516534465269ebd9cffdaf4b/68747470733a2f2f656e2e626974636f696e2e69742f772f696d616765732f656e2f322f32392f42435f4c6f676f5f2e706e67"
-        ),
-        title = R.string.item_aboutpage_bitcoin_title,
-        details = R.string.item_aboutpage_bitcoin_address,
-        clipData = "3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t"
+        thumbnail = AboutPageThumbnail.Drawable(R.drawable.ic_ethereum),
+        title = R.string.item_aboutpage_ethereum_title,
+        details = R.string.item_aboutpage_ethereum_address,
+        clipData = "0xcE7772EcFc76354c688AE9Ba14470791C8AF6555"
     )
 )
 

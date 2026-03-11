@@ -63,9 +63,9 @@ If you like YtAlarm, you're welcome to send a donation.
         <td><a href="https://liberapay.com/turtton/donate"><img alt="Donate using Liberapay" src="https://liberapay.com/assets/widgets/donate.svg" width="50%" height="50%"></a></td>
     </tr>
     <tr>
-        <td><p align="center"><img src="https://bitcoin.org/img/icons/logotop.svg"></p></td>
-        <td><p align="center"><img src="https://bitflyer.com/ex/qr?text=3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t" width="33%" height="33%"></p></td>
-        <td>3C3aj9pXf6xSm5im4ZMtmS3HeoGpBNtD7t  </td>
+        <td><p align="center"><img src="https://ethereum.org/images/assets/svgs/eth-diamond-purple.svg" height="50"></p></td>
+        <td><p align="center"><img src="../qr/qr_ethereum.png" width="33%" height="33%"></p></td>
+        <td>0xcE7772EcFc76354c688AE9Ba14470791C8AF6555  </td>
     </tr>
 </table>
 
