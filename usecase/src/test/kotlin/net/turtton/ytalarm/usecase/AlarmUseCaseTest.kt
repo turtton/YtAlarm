@@ -11,12 +11,14 @@ import net.turtton.ytalarm.kernel.di.DataSource
 import net.turtton.ytalarm.kernel.di.DependsOnAlarmRepository
 import net.turtton.ytalarm.kernel.di.DependsOnDataSource
 import net.turtton.ytalarm.kernel.entity.Alarm
+import net.turtton.ytalarm.kernel.port.AlarmScheduleError
 import net.turtton.ytalarm.kernel.port.AlarmSchedulerPort
 import net.turtton.ytalarm.kernel.repository.AlarmRepository
 import org.mockito.kotlin.any
 import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.never
+import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 
@@ -77,6 +79,55 @@ class AlarmUseCaseTest :
 
                 verify(mockAlarmRepo, never()).update(any(), any())
                 verify(mockScheduler, never()).scheduleNextAlarm(any())
+            }
+
+            test("disable last alarm: NoEnabledAlarm should not rollback") {
+                val alarm = Alarm(id = 1L, isEnabled = true)
+                whenever(mockAlarmRepo.getFromId(Unit, 1L)).thenReturn(alarm)
+                whenever(mockAlarmRepo.getAllSync(Unit))
+                    .thenReturn(listOf(alarm.copy(isEnabled = false)))
+                whenever(mockScheduler.scheduleNextAlarm(any()))
+                    .thenReturn(Either.Left(AlarmScheduleError.NoEnabledAlarm))
+
+                val result = useCase.toggleAlarm(1L, false)
+
+                result.shouldBeInstanceOf<Either.Left<AlarmScheduleError.NoEnabledAlarm>>()
+                val captor = argumentCaptor<Alarm>()
+                verify(mockAlarmRepo, times(1)).update(any(), captor.capture())
+                captor.firstValue.isEnabled shouldBe false
+            }
+
+            test("schedule error other than NoEnabledAlarm: should rollback") {
+                val alarm = Alarm(id = 1L, isEnabled = true)
+                whenever(mockAlarmRepo.getFromId(Unit, 1L)).thenReturn(alarm)
+                whenever(mockAlarmRepo.getAllSync(Unit))
+                    .thenReturn(listOf(alarm.copy(isEnabled = false)))
+                whenever(mockScheduler.scheduleNextAlarm(any()))
+                    .thenReturn(Either.Left(AlarmScheduleError.PermissionDenied))
+
+                val result = useCase.toggleAlarm(1L, false)
+
+                result.shouldBeInstanceOf<Either.Left<AlarmScheduleError.PermissionDenied>>()
+                val captor = argumentCaptor<Alarm>()
+                verify(mockAlarmRepo, times(2)).update(any(), captor.capture())
+                captor.allValues[0].isEnabled shouldBe false
+                captor.allValues[1] shouldBe alarm
+            }
+
+            test("disable one of multiple alarms: others remain enabled") {
+                val alarm = Alarm(id = 1L, isEnabled = true)
+                val otherAlarm = Alarm(id = 2L, isEnabled = true)
+                whenever(mockAlarmRepo.getFromId(Unit, 1L)).thenReturn(alarm)
+                whenever(mockAlarmRepo.getAllSync(Unit))
+                    .thenReturn(listOf(alarm.copy(isEnabled = false), otherAlarm))
+
+                val result = useCase.toggleAlarm(1L, false)
+
+                result.shouldBeInstanceOf<Either.Right<Unit>>()
+                val captor = argumentCaptor<Alarm>()
+                verify(mockAlarmRepo, times(1)).update(any(), captor.capture())
+                captor.firstValue.isEnabled shouldBe false
+                verify(mockScheduler).scheduleNextAlarm(any())
             }
         }
 
