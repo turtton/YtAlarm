@@ -179,8 +179,10 @@ interface AlarmUseCase<LExec, LDS>
         val updated = alarm.copy(isEnabled = enabled, lastUpdated = Clock.System.now())
         localDataSource.alarmRepository.update(executor, updated)
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
-        return alarmScheduler.scheduleNextAlarm(allAlarms).onLeft {
-            // スケジュール失敗時はDB状態をロールバック
+        return alarmScheduler.scheduleNextAlarm(allAlarms).onLeft { error ->
+            // NoEnabledAlarmはスケジュール対象なしを表すため、状態変更はロールバックしない
+            if (error == AlarmScheduleError.NoEnabledAlarm) return@onLeft
+            // それ以外のスケジュール失敗時はDB状態をロールバック
             localDataSource.alarmRepository.update(executor, alarm)
         }
     }
@@ -203,7 +205,7 @@ interface AlarmUseCase<LExec, LDS>
         }
         val allAlarms = localDataSource.alarmRepository.getAllSync(executor)
         return alarmScheduler.scheduleNextAlarm(allAlarms).onLeft { error ->
-            // 有効なアラームがない場合はDB保存自体は成功しているためロールバック不要
+            // NoEnabledAlarmはスケジュール対象なしを表すため、状態変更はロールバックしない
             if (error == AlarmScheduleError.NoEnabledAlarm) return@onLeft
             // それ以外のスケジュール失敗時はDB変更をロールバック
             if (isNew) {
