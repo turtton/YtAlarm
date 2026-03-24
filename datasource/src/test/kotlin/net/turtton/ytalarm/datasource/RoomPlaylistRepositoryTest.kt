@@ -5,12 +5,12 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.datetime.Instant
 import net.turtton.ytalarm.datasource.dao.PlaylistDao
 import net.turtton.ytalarm.datasource.entity.PlaylistEntity
 import net.turtton.ytalarm.datasource.repository.RoomPlaylistRepository
 import net.turtton.ytalarm.kernel.entity.Playlist
 import java.util.Calendar
+import kotlin.time.Instant
 
 private class FakePlaylistDao(
     private val playlists: MutableList<PlaylistEntity> = mutableListOf()
