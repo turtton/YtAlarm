@@ -3,7 +3,6 @@
 package net.turtton.ytalarm.datasource.mapper
 
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -12,6 +11,7 @@ import net.turtton.ytalarm.datasource.entity.AlarmEntity
 import net.turtton.ytalarm.kernel.entity.Alarm
 import java.util.Calendar
 import java.util.Date
+import kotlin.time.Instant
 
 fun AlarmEntity.toDomain(): Alarm = Alarm(
     id = id,

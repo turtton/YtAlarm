@@ -1,7 +1,7 @@
 package net.turtton.ytalarm.kernel.entity
 
-import kotlinx.datetime.Instant
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 data class Playlist(
     val id: Long = 0L,

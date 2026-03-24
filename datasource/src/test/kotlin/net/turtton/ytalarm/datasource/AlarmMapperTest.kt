@@ -3,13 +3,13 @@ package net.turtton.ytalarm.datasource
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.datetime.DayOfWeek
-import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import net.turtton.ytalarm.datasource.entity.AlarmEntity
 import net.turtton.ytalarm.datasource.mapper.toDomain
 import net.turtton.ytalarm.datasource.mapper.toEntity
 import net.turtton.ytalarm.kernel.entity.Alarm
 import java.util.Calendar
+import kotlin.time.Instant
 
 class AlarmMapperTest :
     FunSpec({

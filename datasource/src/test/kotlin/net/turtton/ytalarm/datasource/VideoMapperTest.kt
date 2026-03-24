@@ -2,12 +2,12 @@ package net.turtton.ytalarm.datasource
 
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import kotlinx.datetime.Instant
 import net.turtton.ytalarm.datasource.entity.VideoEntity
 import net.turtton.ytalarm.datasource.mapper.toDomain
 import net.turtton.ytalarm.datasource.mapper.toEntity
 import net.turtton.ytalarm.kernel.entity.Video
 import java.util.Calendar
+import kotlin.time.Instant
 
 class VideoMapperTest :
     FunSpec({
