@@ -180,6 +180,7 @@
     <string name="settings_download_total_size">合計ダウンロード容量</string>
     <string name="settings_download_delete_all">ダウンロードを全て削除</string>
     <string name="settings_download_delete_all_description">ダウンロード済みの動画ファイルを全て削除します</string>
+    <string name="notification_ytdlp_updating_title">yt-dlpを更新中…</string>
     <string name="notification_ytdlp_update_failed_title">yt-dlpの更新失敗</string>
     <string name="notification_ytdlp_update_failed_description">yt-dlpを更新できませんでした。ネットワーク接続を確認してください。</string>
 
