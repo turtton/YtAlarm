@@ -2,6 +2,8 @@ package net.turtton.ytalarm.worker
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
@@ -31,6 +33,7 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         val useCaseContainer = (applicationContext as YtApplication).dataContainerProvider
             .getUseCaseContainer()
         val targetUrl = inputData.getString(KEY_URL) ?: return Result.failure()
+        setForeground(createForegroundInfo())
         val isSyncMode = inputData.getBoolean(KEY_SYNC_MODE, false)
         val syncPlaylistId = inputData.getLong(KEY_SYNC_PLAYLIST_ID, 0L)
 
@@ -131,7 +134,9 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         )
     }
 
-    override suspend fun getForegroundInfo(): ForegroundInfo {
+    override suspend fun getForegroundInfo(): ForegroundInfo = createForegroundInfo()
+
+    private fun createForegroundInfo(): ForegroundInfo {
         val title = applicationContext.getString(R.string.notification_download_video_info_title)
         val cancel = applicationContext.getString(R.string.cancel)
         val cancelIntent = WorkManager.getInstance(applicationContext)
@@ -140,11 +145,21 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
             NotificationCompat.Builder(applicationContext, VIDEO_DOWNLOAD_NOTIFICATION)
                 .setSmallIcon(R.drawable.ic_download)
                 .setContentTitle(title)
-                .setProgress(1, 1, true)
+                .setProgress(0, 0, true)
                 .addAction(R.drawable.ic_cancel, cancel, cancelIntent)
                 .setSilent(true)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
 
-        return ForegroundInfo(NOTIFICATION_ID, notification.build())
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(
+                NOTIFICATION_ID,
+                notification.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        } else {
+            ForegroundInfo(NOTIFICATION_ID, notification.build())
+        }
     }
 
     private suspend fun addVideoToPlaylists(
