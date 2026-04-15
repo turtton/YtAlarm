@@ -238,6 +238,7 @@
     <string name="settings_download_delete_all">Delete All Downloads</string>
     <string name="settings_download_delete_all_description">Remove all downloaded video files</string>
     <string name="notification_ytdlp_update_channel_description" translatable="false">yt-dlp update notification channel</string>
+    <string name="notification_ytdlp_updating_title">Updating yt-dlp…</string>
     <string name="notification_ytdlp_update_failed_title">yt-dlp Update Failed</string>
     <string name="notification_ytdlp_update_failed_description">Could not update yt-dlp. Check your network connection.</string>
 </resources>

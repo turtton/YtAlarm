@@ -1,12 +1,15 @@
 package net.turtton.ytalarm.worker
 
 import android.content.Context
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
+import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
@@ -28,6 +31,7 @@ class YtDlpUpdateWorker(appContext: Context, workerParams: WorkerParameters) :
 
     @Suppress("TooGenericExceptionCaught")
     override suspend fun doWork(): Result = try {
+        setForeground(createForegroundInfo())
         withContext(Dispatchers.IO) {
             YoutubeDL.getInstance().init(applicationContext)
             val channelName = applicationContext.appSettings.ytDlpUpdateChannel
@@ -39,6 +43,8 @@ class YtDlpUpdateWorker(appContext: Context, workerParams: WorkerParameters) :
                 .updateYoutubeDL(applicationContext, channel)
             Log.i(TAG, "YtDL update status: $status")
         }
+        NotificationManagerCompat.from(applicationContext)
+            .cancel(FAILURE_NOTIFICATION_ID)
         Result.success()
     } catch (e: CancellationException) {
         throw e
@@ -47,6 +53,31 @@ class YtDlpUpdateWorker(appContext: Context, workerParams: WorkerParameters) :
         showUpdateFailedNotification()
         Result.failure()
     }
+
+    private fun createForegroundInfo(): ForegroundInfo {
+        val title =
+            applicationContext.getString(R.string.notification_ytdlp_updating_title)
+        val notification =
+            NotificationCompat.Builder(applicationContext, YTDLP_UPDATE_NOTIFICATION)
+                .setSmallIcon(R.drawable.ic_download)
+                .setContentTitle(title)
+                .setProgress(0, 0, true)
+                .setSilent(true)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ForegroundInfo(
+                FOREGROUND_NOTIFICATION_ID,
+                notification.build(),
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+            )
+        } else {
+            ForegroundInfo(FOREGROUND_NOTIFICATION_ID, notification.build())
+        }
+    }
+
+    override suspend fun getForegroundInfo(): ForegroundInfo = createForegroundInfo()
 
     private fun showUpdateFailedNotification() {
         val notificationManager = NotificationManagerCompat.from(applicationContext)
@@ -77,13 +108,14 @@ class YtDlpUpdateWorker(appContext: Context, workerParams: WorkerParameters) :
                 .setAutoCancel(true)
                 .build()
 
-        notificationManager.notify(NOTIFICATION_ID, notification)
+        notificationManager.notify(FAILURE_NOTIFICATION_ID, notification)
     }
 
     companion object {
         private const val TAG = "YtDlpUpdateWorker"
         private const val WORKER_ID = "YtDlpUpdateWorker"
-        private const val NOTIFICATION_ID = 1001
+        private const val FOREGROUND_NOTIFICATION_ID = 1001
+        private const val FAILURE_NOTIFICATION_ID = 1002
 
         fun registerWorker(context: Context): Operation {
             val constraints = Constraints.Builder()
