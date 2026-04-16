@@ -7,161 +7,120 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.LocalDate
-import net.turtton.ytalarm.kernel.di.DataSource
-import net.turtton.ytalarm.kernel.di.DependsOnAlarmRepository
-import net.turtton.ytalarm.kernel.di.DependsOnDataSource
 import net.turtton.ytalarm.kernel.entity.Alarm
+import net.turtton.ytalarm.kernel.fake.FakeAlarmRepository
+import net.turtton.ytalarm.kernel.fake.FakeAlarmSchedulerPort
 import net.turtton.ytalarm.kernel.port.AlarmScheduleError
 import net.turtton.ytalarm.kernel.port.AlarmSchedulerPort
-import net.turtton.ytalarm.kernel.repository.AlarmRepository
-import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
-import org.mockito.kotlin.times
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
+import net.turtton.ytalarm.usecase.fake.FakeLocalDataSourceContainer
 
 class AlarmUseCaseTest :
     FunSpec({
-        // テスト用のUnitExecutorを使った実装
-        lateinit var mockAlarmRepo: AlarmRepository<Unit>
-        lateinit var mockScheduler: AlarmSchedulerPort
-        lateinit var useCase: AlarmUseCase<Unit, TestAlarmLocalDS>
+        // テスト用のFake実装
+        lateinit var fakeAlarmRepo: FakeAlarmRepository
+        lateinit var fakeScheduler: FakeAlarmSchedulerPort
+        lateinit var useCase: AlarmUseCase<Unit, FakeLocalDataSourceContainer>
 
         beforeEach {
-            mockAlarmRepo = mock()
-            mockScheduler = mock()
-            whenever(mockScheduler.scheduleNextAlarm(any())).thenReturn(Either.Right(Unit))
-
-            val ds = TestAlarmLocalDS(mockAlarmRepo)
-            useCase = object : AlarmUseCase<Unit, TestAlarmLocalDS> {
-                override val localDataSource: TestAlarmLocalDS = ds
-                override val alarmScheduler: AlarmSchedulerPort = mockScheduler
+            fakeAlarmRepo = FakeAlarmRepository()
+            fakeScheduler = FakeAlarmSchedulerPort()
+            val ds = FakeLocalDataSourceContainer(alarmRepository = fakeAlarmRepo)
+            useCase = object : AlarmUseCase<Unit, FakeLocalDataSourceContainer> {
+                override val localDataSource: FakeLocalDataSourceContainer = ds
+                override val alarmScheduler: AlarmSchedulerPort = fakeScheduler
             }
         }
 
         context("toggleAlarm") {
             test("disable alarm: update and reschedule") {
                 val alarm = Alarm(id = 1L, isEnabled = true)
-                whenever(mockAlarmRepo.getFromId(Unit, 1L)).thenReturn(alarm)
-                whenever(
-                    mockAlarmRepo.getAllSync(Unit)
-                ).thenReturn(listOf(alarm.copy(isEnabled = false)))
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.toggleAlarm(1L, false)
 
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo).update(any(), captor.capture())
-                captor.firstValue.isEnabled shouldBe false
-                verify(mockScheduler).scheduleNextAlarm(any())
+                fakeAlarmRepo.currentData.first { it.id == 1L }.isEnabled shouldBe false
+                fakeScheduler.scheduledCalls shouldHaveSize 1
             }
 
             test("enable alarm: update and reschedule") {
                 val alarm = Alarm(id = 1L, isEnabled = false)
-                whenever(mockAlarmRepo.getFromId(Unit, 1L)).thenReturn(alarm)
-                whenever(
-                    mockAlarmRepo.getAllSync(Unit)
-                ).thenReturn(listOf(alarm.copy(isEnabled = true)))
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.toggleAlarm(1L, true)
 
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo).update(any(), captor.capture())
-                captor.firstValue.isEnabled shouldBe true
-                verify(mockScheduler).scheduleNextAlarm(any())
+                fakeAlarmRepo.currentData.first { it.id == 1L }.isEnabled shouldBe true
+                fakeScheduler.scheduledCalls shouldHaveSize 1
             }
 
             test("alarm not found: do nothing") {
-                whenever(mockAlarmRepo.getFromId(Unit, 99L)).thenReturn(null)
-
                 useCase.toggleAlarm(99L, true)
 
-                verify(mockAlarmRepo, never()).update(any(), any())
-                verify(mockScheduler, never()).scheduleNextAlarm(any())
+                fakeAlarmRepo.currentData shouldBe emptyList()
+                fakeScheduler.scheduledCalls shouldHaveSize 0
             }
 
             test("disable last alarm: NoEnabledAlarm should not rollback") {
                 val alarm = Alarm(id = 1L, isEnabled = true)
-                whenever(mockAlarmRepo.getFromId(Unit, 1L)).thenReturn(alarm)
-                whenever(mockAlarmRepo.getAllSync(Unit))
-                    .thenReturn(listOf(alarm.copy(isEnabled = false)))
-                whenever(mockScheduler.scheduleNextAlarm(any()))
-                    .thenReturn(Either.Left(AlarmScheduleError.NoEnabledAlarm))
+                fakeAlarmRepo.seed(alarm)
+                fakeScheduler.scheduleResult = Either.Left(AlarmScheduleError.NoEnabledAlarm)
 
                 val result = useCase.toggleAlarm(1L, false)
 
                 result.shouldBeInstanceOf<Either.Left<AlarmScheduleError.NoEnabledAlarm>>()
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo, times(1)).update(any(), captor.capture())
-                captor.firstValue.isEnabled shouldBe false
+                fakeAlarmRepo.currentData.first { it.id == 1L }.isEnabled shouldBe false
             }
 
             test("schedule error other than NoEnabledAlarm: should rollback") {
                 val alarm = Alarm(id = 1L, isEnabled = true)
-                whenever(mockAlarmRepo.getFromId(Unit, 1L)).thenReturn(alarm)
-                whenever(mockAlarmRepo.getAllSync(Unit))
-                    .thenReturn(listOf(alarm.copy(isEnabled = false)))
-                whenever(mockScheduler.scheduleNextAlarm(any()))
-                    .thenReturn(Either.Left(AlarmScheduleError.PermissionDenied))
+                fakeAlarmRepo.seed(alarm)
+                fakeScheduler.scheduleResult = Either.Left(AlarmScheduleError.PermissionDenied)
 
                 val result = useCase.toggleAlarm(1L, false)
 
                 result.shouldBeInstanceOf<Either.Left<AlarmScheduleError.PermissionDenied>>()
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo, times(2)).update(any(), captor.capture())
-                captor.allValues[0].isEnabled shouldBe false
-                captor.allValues[1] shouldBe alarm
+                fakeAlarmRepo.currentData.first { it.id == 1L } shouldBe alarm
             }
 
             test("disable one of multiple alarms: others remain enabled") {
                 val alarm = Alarm(id = 1L, isEnabled = true)
                 val otherAlarm = Alarm(id = 2L, isEnabled = true)
-                whenever(mockAlarmRepo.getFromId(Unit, 1L)).thenReturn(alarm)
-                whenever(mockAlarmRepo.getAllSync(Unit))
-                    .thenReturn(listOf(alarm.copy(isEnabled = false), otherAlarm))
+                fakeAlarmRepo.seed(alarm, otherAlarm)
 
                 val result = useCase.toggleAlarm(1L, false)
 
                 result.shouldBeInstanceOf<Either.Right<Unit>>()
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo, times(1)).update(any(), captor.capture())
-                captor.firstValue.isEnabled shouldBe false
-                verify(mockScheduler).scheduleNextAlarm(any())
+                fakeAlarmRepo.currentData.first { it.id == 1L }.isEnabled shouldBe false
+                fakeAlarmRepo.currentData.first { it.id == 2L }.isEnabled shouldBe true
+                fakeScheduler.scheduledCalls shouldHaveSize 1
             }
         }
 
         context("processAfterFiring") {
             test("Once: disable alarm") {
                 val alarm = Alarm(id = 1L, repeatType = Alarm.RepeatType.Once, isEnabled = true)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.processAfterFiring(alarm)
 
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo).update(any(), captor.capture())
-                captor.firstValue.isEnabled shouldBe false
+                fakeAlarmRepo.currentData.first { it.id == 1L }.isEnabled shouldBe false
             }
 
             test("Everyday: keep enabled") {
                 val alarm = Alarm(id = 1L, repeatType = Alarm.RepeatType.Everyday, isEnabled = true)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(listOf(alarm))
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.processAfterFiring(alarm)
 
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo).update(any(), captor.capture())
-                captor.firstValue.isEnabled shouldBe true
+                fakeAlarmRepo.currentData.first { it.id == 1L }.isEnabled shouldBe true
             }
 
             test("Snooze: delete alarm") {
                 val alarm = Alarm(id = 1L, repeatType = Alarm.RepeatType.Snooze, isEnabled = true)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.processAfterFiring(alarm)
 
-                verify(mockAlarmRepo).delete(any(), any())
-                verify(mockAlarmRepo, never()).update(any(), any())
+                fakeAlarmRepo.currentData.none { it.id == 1L } shouldBe true
             }
 
             test("Date: convert to Once and disable") {
@@ -171,14 +130,13 @@ class AlarmUseCaseTest :
                     repeatType = Alarm.RepeatType.Date(targetDate),
                     isEnabled = true
                 )
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.processAfterFiring(alarm)
 
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo).update(any(), captor.capture())
-                captor.firstValue.isEnabled shouldBe false
-                captor.firstValue.repeatType shouldBe Alarm.RepeatType.Once
+                val updated = fakeAlarmRepo.currentData.first { it.id == 1L }
+                updated.isEnabled shouldBe false
+                updated.repeatType shouldBe Alarm.RepeatType.Once
             }
 
             test("Days: keep enabled") {
@@ -188,14 +146,13 @@ class AlarmUseCaseTest :
                     repeatType = Alarm.RepeatType.Days(days),
                     isEnabled = true
                 )
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(listOf(alarm))
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.processAfterFiring(alarm)
 
-                val captor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo).update(any(), captor.capture())
-                captor.firstValue.isEnabled shouldBe true
-                captor.firstValue.repeatType shouldBe Alarm.RepeatType.Days(days)
+                val updated = fakeAlarmRepo.currentData.first { it.id == 1L }
+                updated.isEnabled shouldBe true
+                updated.repeatType shouldBe Alarm.RepeatType.Days(days)
             }
         }
 
@@ -208,11 +165,7 @@ class AlarmUseCaseTest :
                     snoozeMinute = 10,
                     isEnabled = true
                 )
-                // 既存スヌーズなし
-                whenever(mockAlarmRepo.getMatched(Unit, Alarm.RepeatType.Snooze))
-                    .thenReturn(emptyList())
-                whenever(mockAlarmRepo.insert(any(), any())).thenReturn(100L)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
+                fakeAlarmRepo.seed(originalAlarm)
 
                 val either = useCase.createSnoozeAlarm(originalAlarm)
 
@@ -220,55 +173,49 @@ class AlarmUseCaseTest :
                 val result = either.value
                 result.repeatType shouldBe Alarm.RepeatType.Snooze
                 result.isEnabled shouldBe true
-                result.id shouldBe 100L
+                result.id shouldBe 2L
             }
 
             test("deletes existing snooze alarms before creating new one") {
                 val existingSnooze = Alarm(id = 99L, repeatType = Alarm.RepeatType.Snooze)
-                whenever(mockAlarmRepo.getMatched(Unit, Alarm.RepeatType.Snooze))
-                    .thenReturn(listOf(existingSnooze))
-                whenever(mockAlarmRepo.insert(any(), any())).thenReturn(100L)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
-
                 val originalAlarm = Alarm(id = 1L, snoozeMinute = 5)
+                fakeAlarmRepo.seed(existingSnooze, originalAlarm)
+
                 useCase.createSnoozeAlarm(originalAlarm)
 
-                verify(mockAlarmRepo).delete(any(), any())
+                fakeAlarmRepo.currentData.none { it.id == 99L } shouldBe true
             }
         }
 
         context("saveAlarmAndSchedule") {
             test("inserts new alarm and schedules") {
                 val alarm = Alarm(id = 0L)
-                whenever(mockAlarmRepo.insert(any(), any())).thenReturn(1L)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(listOf(alarm.copy(id = 1L)))
 
                 useCase.saveAlarmAndSchedule(alarm)
 
-                verify(mockAlarmRepo).insert(any(), any())
-                verify(mockScheduler).scheduleNextAlarm(any())
+                fakeAlarmRepo.currentData shouldHaveSize 1
+                fakeScheduler.scheduledCalls shouldHaveSize 1
             }
 
             test("updates existing alarm and schedules") {
                 val alarm = Alarm(id = 5L)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(listOf(alarm))
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.saveAlarmAndSchedule(alarm)
 
-                verify(mockAlarmRepo).update(any(), any())
-                verify(mockScheduler).scheduleNextAlarm(any())
+                fakeScheduler.scheduledCalls shouldHaveSize 1
             }
         }
 
         context("deleteAlarmAndReschedule") {
             test("deletes alarm and reschedules") {
                 val alarm = Alarm(id = 1L)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
+                fakeAlarmRepo.seed(alarm)
 
                 useCase.deleteAlarmAndReschedule(alarm)
 
-                verify(mockAlarmRepo).delete(any(), any())
-                verify(mockScheduler).scheduleNextAlarm(any())
+                fakeAlarmRepo.currentData.none { it.id == 1L } shouldBe true
+                fakeScheduler.scheduledCalls shouldHaveSize 1
             }
         }
 
@@ -276,7 +223,7 @@ class AlarmUseCaseTest :
             test("returns only enabled alarms") {
                 val enabled = Alarm(id = 1L, isEnabled = true)
                 val disabled = Alarm(id = 2L, isEnabled = false)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(listOf(enabled, disabled))
+                fakeAlarmRepo.seed(enabled, disabled)
 
                 val result = useCase.getEnabledAlarms()
 
@@ -285,12 +232,3 @@ class AlarmUseCaseTest :
             }
         }
     })
-
-// テスト用のLocalDataSource実装
-class TestAlarmLocalDS(override val alarmRepository: AlarmRepository<Unit>) :
-    DependsOnAlarmRepository<Unit>,
-    DependsOnDataSource<Unit> {
-    override val dataSource: DataSource<Unit> = object : DataSource<Unit> {
-        override fun createExecutor(): Unit = Unit
-    }
-}

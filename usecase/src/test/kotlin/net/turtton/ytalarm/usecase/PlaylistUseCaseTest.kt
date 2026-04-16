@@ -1,46 +1,33 @@
 package net.turtton.ytalarm.usecase
 
-import arrow.core.Either
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import net.turtton.ytalarm.kernel.di.DataSource
-import net.turtton.ytalarm.kernel.di.DependsOnAlarmRepository
-import net.turtton.ytalarm.kernel.di.DependsOnDataSource
-import net.turtton.ytalarm.kernel.di.DependsOnPlaylistRepository
-import net.turtton.ytalarm.kernel.di.DependsOnVideoRepository
 import net.turtton.ytalarm.kernel.entity.Alarm
 import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.kernel.entity.Video
-import net.turtton.ytalarm.kernel.port.AlarmSchedulerPort
-import net.turtton.ytalarm.kernel.repository.AlarmRepository
-import net.turtton.ytalarm.kernel.repository.PlaylistRepository
-import net.turtton.ytalarm.kernel.repository.VideoRepository
-import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
+import net.turtton.ytalarm.kernel.fake.FakeAlarmRepository
+import net.turtton.ytalarm.kernel.fake.FakePlaylistRepository
+import net.turtton.ytalarm.kernel.fake.FakeVideoRepository
+import net.turtton.ytalarm.usecase.fake.FakeLocalDataSourceContainer
 
 class PlaylistUseCaseTest :
     FunSpec({
-        lateinit var mockPlaylistRepo: PlaylistRepository<Unit>
-        lateinit var mockVideoRepo: VideoRepository<Unit>
-        lateinit var mockAlarmRepo: AlarmRepository<Unit>
-        lateinit var mockScheduler: AlarmSchedulerPort
-        lateinit var useCase: PlaylistUseCase<Unit, TestPlaylistLocalDS>
+        lateinit var fakePlaylistRepo: FakePlaylistRepository
+        lateinit var fakeVideoRepo: FakeVideoRepository
+        lateinit var fakeAlarmRepo: FakeAlarmRepository
+        lateinit var useCase: PlaylistUseCase<Unit, FakeLocalDataSourceContainer>
 
         beforeEach {
-            mockPlaylistRepo = mock()
-            mockVideoRepo = mock()
-            mockAlarmRepo = mock()
-            mockScheduler = mock()
-            whenever(mockScheduler.scheduleNextAlarm(any())).thenReturn(Either.Right(Unit))
-
-            val ds = TestPlaylistLocalDS(mockPlaylistRepo, mockVideoRepo, mockAlarmRepo)
-            useCase = object : PlaylistUseCase<Unit, TestPlaylistLocalDS> {
-                override val localDataSource: TestPlaylistLocalDS = ds
+            fakePlaylistRepo = FakePlaylistRepository()
+            fakeVideoRepo = FakeVideoRepository()
+            fakeAlarmRepo = FakeAlarmRepository()
+            val ds = FakeLocalDataSourceContainer(
+                alarmRepository = fakeAlarmRepo,
+                videoRepository = fakeVideoRepo,
+                playlistRepository = fakePlaylistRepo
+            )
+            useCase = object : PlaylistUseCase<Unit, FakeLocalDataSourceContainer> {
+                override val localDataSource: FakeLocalDataSourceContainer = ds
             }
         }
 
@@ -56,12 +43,12 @@ class PlaylistUseCaseTest :
                     thumbnail = Playlist.Thumbnail.Video(1L),
                     videos = listOf(1L)
                 )
-                whenever(mockPlaylistRepo.getAllSync(Unit)).thenReturn(listOf(playlist))
-                whenever(mockVideoRepo.getFromIdSync(Unit, 1L)).thenReturn(video)
+                fakeVideoRepo.seed(video)
+                fakePlaylistRepo.seed(playlist)
 
                 useCase.validateAndUpdateThumbnails()
 
-                verify(mockPlaylistRepo, never()).update(any(), any())
+                fakePlaylistRepo.currentData.first().thumbnail shouldBe Playlist.Thumbnail.Video(1L)
             }
 
             test("invalid thumbnail (video missing): update to None") {
@@ -70,15 +57,11 @@ class PlaylistUseCaseTest :
                     thumbnail = Playlist.Thumbnail.Video(99L),
                     videos = listOf(99L)
                 )
-                whenever(mockPlaylistRepo.getAllSync(Unit)).thenReturn(listOf(playlist))
-                whenever(mockVideoRepo.getFromIdSync(Unit, 99L)).thenReturn(null)
-                whenever(mockVideoRepo.getFromIdsSync(Unit, emptyList())).thenReturn(emptyList())
+                fakePlaylistRepo.seed(playlist)
 
                 useCase.validateAndUpdateThumbnails()
 
-                val captor = argumentCaptor<Playlist>()
-                verify(mockPlaylistRepo).update(any(), captor.capture())
-                captor.firstValue.thumbnail shouldBe Playlist.Thumbnail.None
+                fakePlaylistRepo.currentData.first().thumbnail shouldBe Playlist.Thumbnail.None
             }
 
             test("thumbnail video not in Information state: update to fallback") {
@@ -97,17 +80,12 @@ class PlaylistUseCaseTest :
                     thumbnail = Playlist.Thumbnail.Video(1L),
                     videos = listOf(1L, 2L)
                 )
-                whenever(mockPlaylistRepo.getAllSync(Unit)).thenReturn(listOf(playlist))
-                whenever(mockVideoRepo.getFromIdSync(Unit, 1L)).thenReturn(failedVideo)
-                whenever(
-                    mockVideoRepo.getFromIdsSync(Unit, listOf(2L))
-                ).thenReturn(listOf(goodVideo))
+                fakeVideoRepo.seed(failedVideo, goodVideo)
+                fakePlaylistRepo.seed(playlist)
 
                 useCase.validateAndUpdateThumbnails()
 
-                val captor = argumentCaptor<Playlist>()
-                verify(mockPlaylistRepo).update(any(), captor.capture())
-                captor.firstValue.thumbnail shouldBe Playlist.Thumbnail.Video(2L)
+                fakePlaylistRepo.currentData.first().thumbnail shouldBe Playlist.Thumbnail.Video(2L)
             }
         }
 
@@ -115,24 +93,23 @@ class PlaylistUseCaseTest :
             test("deletes playlist and removes reference from alarms") {
                 val playlist = Playlist(id = 1L)
                 val alarm = Alarm(id = 10L, playlistIds = listOf(1L, 2L))
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(listOf(alarm))
+                fakeAlarmRepo.seed(alarm)
+                fakePlaylistRepo.seed(playlist)
 
                 useCase.safeDeletePlaylist(playlist)
 
-                verify(mockPlaylistRepo).delete(any(), any())
-                val alarmCaptor = argumentCaptor<Alarm>()
-                verify(mockAlarmRepo).update(any(), alarmCaptor.capture())
-                alarmCaptor.firstValue.playlistIds shouldBe listOf(2L)
+                fakePlaylistRepo.currentData shouldBe emptyList()
+                fakeAlarmRepo.currentData.first().playlistIds shouldBe listOf(2L)
             }
 
             test("deletes playlist with no alarm references") {
                 val playlist = Playlist(id = 1L)
-                whenever(mockAlarmRepo.getAllSync(Unit)).thenReturn(emptyList())
+                fakePlaylistRepo.seed(playlist)
 
                 useCase.safeDeletePlaylist(playlist)
 
-                verify(mockPlaylistRepo).delete(any(), any())
-                verify(mockAlarmRepo, never()).update(any(), any())
+                fakePlaylistRepo.currentData shouldBe emptyList()
+                fakeAlarmRepo.currentData shouldBe emptyList()
             }
         }
 
@@ -145,29 +122,27 @@ class PlaylistUseCaseTest :
                     videos = listOf(1L, 2L),
                     thumbnail = Playlist.Thumbnail.Video(1L)
                 )
-                whenever(mockVideoRepo.getFromIdSync(Unit, 1L)).thenReturn(video1)
-                whenever(mockVideoRepo.getFromIdSync(Unit, 2L)).thenReturn(video2)
-                whenever(mockVideoRepo.getFromIdsSync(Unit, listOf(2L))).thenReturn(listOf(video2))
+                fakeVideoRepo.seed(video1)
+                fakeVideoRepo.seed(video2)
+                fakePlaylistRepo.seed(playlist)
 
                 useCase.removeVideosFromPlaylist(playlist, listOf(1L))
 
-                val captor = argumentCaptor<Playlist>()
-                verify(mockPlaylistRepo).update(any(), captor.capture())
-                captor.firstValue.videos shouldBe listOf(2L)
-                // サムネイルが削除された動画なので更新される
-                captor.firstValue.thumbnail shouldBe Playlist.Thumbnail.Video(2L)
+                val updatedPlaylist = fakePlaylistRepo.currentData.first()
+                updatedPlaylist.videos shouldBe listOf(2L)
+                updatedPlaylist.thumbnail shouldBe Playlist.Thumbnail.Video(2L)
             }
         }
 
         context("setPlaylistThumbnail") {
             test("sets thumbnail to specified video") {
                 val playlist = Playlist(id = 1L)
+                fakePlaylistRepo.seed(playlist)
 
                 useCase.setPlaylistThumbnail(playlist, Playlist.Thumbnail.Video(5L))
 
-                val captor = argumentCaptor<Playlist>()
-                verify(mockPlaylistRepo).update(any(), captor.capture())
-                captor.firstValue.thumbnail shouldBe Playlist.Thumbnail.Video(5L)
+                val updatedPlaylist = fakePlaylistRepo.currentData.first()
+                updatedPlaylist.thumbnail shouldBe Playlist.Thumbnail.Video(5L)
             }
         }
 
@@ -180,35 +155,24 @@ class PlaylistUseCaseTest :
                         Playlist.SyncRule.ALWAYS_ADD
                     )
                 )
+                fakePlaylistRepo.seed(cloudPlaylist)
 
                 useCase.updateSyncRule(cloudPlaylist, Playlist.SyncRule.DELETE_IF_NOT_EXIST)
 
-                val captor = argumentCaptor<Playlist>()
-                verify(mockPlaylistRepo).update(any(), captor.capture())
-                val updatedType = captor.firstValue.type as Playlist.Type.CloudPlaylist
+                val updatedPlaylist = fakePlaylistRepo.currentData.first()
+                val updatedType = updatedPlaylist.type as Playlist.Type.CloudPlaylist
                 updatedType.syncRule shouldBe Playlist.SyncRule.DELETE_IF_NOT_EXIST
             }
 
             test("does nothing if not CloudPlaylist type") {
                 val originalPlaylist = Playlist(id = 1L, type = Playlist.Type.Original)
+                fakePlaylistRepo.seed(originalPlaylist)
+                val originalThumbnail = originalPlaylist.thumbnail
 
                 useCase.updateSyncRule(originalPlaylist, Playlist.SyncRule.ALWAYS_ADD)
 
-                verify(mockPlaylistRepo, never()).update(any(), any())
+                fakePlaylistRepo.currentData.first().type shouldBe Playlist.Type.Original
+                fakePlaylistRepo.currentData.first().thumbnail shouldBe originalThumbnail
             }
         }
     })
-
-// テスト用のLocalDataSource実装
-class TestPlaylistLocalDS(
-    override val playlistRepository: PlaylistRepository<Unit>,
-    override val videoRepository: VideoRepository<Unit>,
-    override val alarmRepository: AlarmRepository<Unit>
-) : DependsOnPlaylistRepository<Unit>,
-    DependsOnVideoRepository<Unit>,
-    DependsOnAlarmRepository<Unit>,
-    DependsOnDataSource<Unit> {
-    override val dataSource: DataSource<Unit> = object : DataSource<Unit> {
-        override fun createExecutor(): Unit = Unit
-    }
-}

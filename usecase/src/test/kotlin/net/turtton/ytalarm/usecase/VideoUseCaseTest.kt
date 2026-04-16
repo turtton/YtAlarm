@@ -4,40 +4,45 @@ import arrow.core.Either
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import net.turtton.ytalarm.kernel.di.DataSource
-import net.turtton.ytalarm.kernel.di.DependsOnDataSource
-import net.turtton.ytalarm.kernel.di.DependsOnVideoInfoRepository
-import net.turtton.ytalarm.kernel.di.DependsOnVideoRepository
 import net.turtton.ytalarm.kernel.dto.VideoInformation
 import net.turtton.ytalarm.kernel.entity.Alarm
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.kernel.error.VideoInfoError
-import net.turtton.ytalarm.kernel.repository.VideoInfoRepository
-import net.turtton.ytalarm.kernel.repository.VideoRepository
-import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
+import net.turtton.ytalarm.kernel.fake.FakeVideoInfoRepository
+import net.turtton.ytalarm.kernel.fake.FakeVideoRepository
+import net.turtton.ytalarm.usecase.fake.FakeLocalDataSourceContainer
+import net.turtton.ytalarm.usecase.fake.FakeRemoteDataSourceContainer
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 
 class VideoUseCaseTest :
     FunSpec({
-        lateinit var mockVideoRepo: VideoRepository<Unit>
-        lateinit var mockVideoInfoRepo: VideoInfoRepository<Unit>
-        lateinit var useCase: VideoUseCase<Unit, Unit, TestVideoLocalDS, TestVideoRemoteDS>
+        lateinit var fakeVideoRepo: FakeVideoRepository
+        lateinit var fakeVideoInfoRepo: FakeVideoInfoRepository
+        lateinit var useCase: VideoUseCase<
+            Unit,
+            Unit,
+            FakeLocalDataSourceContainer,
+            FakeRemoteDataSourceContainer
+            >
 
         beforeEach {
-            mockVideoRepo = mock()
-            mockVideoInfoRepo = mock()
-
-            val localDs = TestVideoLocalDS(mockVideoRepo)
-            val remoteDs = TestVideoRemoteDS(mockVideoInfoRepo)
-            useCase = object : VideoUseCase<Unit, Unit, TestVideoLocalDS, TestVideoRemoteDS> {
-                override val localDataSource: TestVideoLocalDS = localDs
-                override val remoteDataSource: TestVideoRemoteDS = remoteDs
+            fakeVideoRepo = FakeVideoRepository()
+            fakeVideoInfoRepo = FakeVideoInfoRepository()
+            val localDs = FakeLocalDataSourceContainer(
+                videoRepository = fakeVideoRepo
+            )
+            val remoteDs = FakeRemoteDataSourceContainer(
+                videoInfoRepository = fakeVideoInfoRepo
+            )
+            useCase = object : VideoUseCase<
+                Unit,
+                Unit,
+                FakeLocalDataSourceContainer,
+                FakeRemoteDataSourceContainer
+                > {
+                override val localDataSource: FakeLocalDataSourceContainer = localDs
+                override val remoteDataSource: FakeRemoteDataSourceContainer = remoteDs
             }
         }
 
@@ -59,17 +64,14 @@ class VideoUseCaseTest :
                         videoUrl = "http://example.com/video.mp4"
                     )
                 )
-                whenever(
-                    mockVideoInfoRepo.fetchVideoInfo(Unit, "http://example.com/video")
-                ).thenReturn(Either.Right(fetchedInfo))
+                fakeVideoRepo.seed(failedVideo)
+                fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
+                    Either.Right(fetchedInfo)
 
                 val result = useCase.reimportVideo(failedVideo)
 
                 result shouldBe ReimportResult.Success
-                val captor = argumentCaptor<Video>()
-                verify(mockVideoRepo).update(any(), captor.capture())
-                captor.firstValue.id shouldBe 1L
-                captor.firstValue.videoId shouldBe "newId"
+                fakeVideoRepo.currentData.first { it.id == 1L }.videoId shouldBe "newId"
             }
 
             test("reimport with no url: returns NoUrl error") {
@@ -78,11 +80,13 @@ class VideoUseCaseTest :
                     videoId = "vid1",
                     state = Video.State.Importing
                 )
+                fakeVideoRepo.seed(importingVideo)
 
                 val result = useCase.reimportVideo(importingVideo)
 
                 result shouldBe ReimportResult.Error.NoUrl
-                verify(mockVideoRepo, never()).update(any(), any())
+                fakeVideoRepo.currentData.first { it.id == 1L }.state shouldBe
+                    Video.State.Importing
             }
 
             test("reimport network error: returns Network error") {
@@ -91,16 +95,15 @@ class VideoUseCaseTest :
                     videoId = "vid1",
                     state = Video.State.Failed("http://example.com/video")
                 )
-                whenever(
-                    mockVideoInfoRepo.fetchVideoInfo(Unit, "http://example.com/video")
-                ).thenReturn(
+                fakeVideoRepo.seed(failedVideo)
+                fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
                     Either.Left(VideoInfoError.NetworkError(RuntimeException("network error")))
-                )
 
                 val result = useCase.reimportVideo(failedVideo)
 
                 result shouldBe ReimportResult.Error.Network
-                verify(mockVideoRepo, never()).update(any(), any())
+                fakeVideoRepo.currentData.first { it.id == 1L }.state shouldBe
+                    Video.State.Failed("http://example.com/video")
             }
         }
 
@@ -122,9 +125,7 @@ class VideoUseCaseTest :
                     videoId = "v3",
                     state = Video.State.Importing
                 )
-                whenever(
-                    mockVideoRepo.getFromIdsSync(Unit, listOf(10L, 11L, 12L))
-                ).thenReturn(listOf(playableVideo, failedVideo, importingVideo))
+                fakeVideoRepo.seed(playableVideo, failedVideo, importingVideo)
 
                 val result = useCase.getPlayableVideosForAlarm(
                     alarm,
@@ -143,7 +144,6 @@ class VideoUseCaseTest :
                     id = 1L,
                     videoId = "old",
                     state = Video.State.Importing,
-                    // 作成日時を古くするために creationDate を手動で設定
                     creationDate = Clock.System.now() - 2.hours
                 )
                 val newImporting = Video(
@@ -152,33 +152,17 @@ class VideoUseCaseTest :
                     state = Video.State.Importing,
                     creationDate = Clock.System.now()
                 )
-                whenever(mockVideoRepo.getFromIdsSync(any(), any())).thenReturn(
-                    listOf(oldImporting, newImporting)
+                fakeVideoRepo.seed(oldImporting, newImporting)
+
+                useCase.collectGarbageVideos(
+                    listOf(oldImporting.id, newImporting.id),
+                    threshold
                 )
 
-                useCase.collectGarbageVideos(listOf(oldImporting.id, newImporting.id), threshold)
-
-                val captor = argumentCaptor<Video>()
-                verify(mockVideoRepo).update(any(), captor.capture())
-                captor.firstValue.id shouldBe 1L
-                captor.firstValue.state shouldBe Video.State.Failed("")
+                fakeVideoRepo.currentData.first { it.id == 1L }.state shouldBe
+                    Video.State.Failed("")
+                fakeVideoRepo.currentData.first { it.id == 2L }.state shouldBe
+                    Video.State.Importing
             }
         }
     })
-
-// テスト用DataSource実装
-class TestVideoLocalDS(override val videoRepository: VideoRepository<Unit>) :
-    DependsOnVideoRepository<Unit>,
-    DependsOnDataSource<Unit> {
-    override val dataSource: DataSource<Unit> = object : DataSource<Unit> {
-        override fun createExecutor(): Unit = Unit
-    }
-}
-
-class TestVideoRemoteDS(override val videoInfoRepository: VideoInfoRepository<Unit>) :
-    DependsOnVideoInfoRepository<Unit>,
-    DependsOnDataSource<Unit> {
-    override val dataSource: DataSource<Unit> = object : DataSource<Unit> {
-        override fun createExecutor(): Unit = Unit
-    }
-}

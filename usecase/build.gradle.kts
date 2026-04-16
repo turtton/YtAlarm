@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    `java-test-fixtures`
     alias(libs.plugins.kotlinter)
     alias(libs.plugins.detekt)
     alias(libs.plugins.kover)
@@ -23,8 +24,12 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.bundles.arrow)
 
+    testFixturesImplementation(project(":kernel"))
+    testFixturesImplementation(testFixtures(project(":kernel")))
+
     testImplementation(libs.bundles.kotest)
-    testImplementation(libs.mockito.kotlin)
+    testImplementation(testFixtures(project(":kernel")))
+    testImplementation(testFixtures(project(":usecase")))
     testImplementation(libs.kotlinx.coroutines.test)
 }
 
