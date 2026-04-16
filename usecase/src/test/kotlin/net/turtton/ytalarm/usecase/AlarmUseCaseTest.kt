@@ -34,7 +34,7 @@ class AlarmUseCaseTest :
         context("toggleAlarm") {
             test("disable alarm: update and reschedule") {
                 val alarm = Alarm(id = 1L, isEnabled = true)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.toggleAlarm(1L, false)
 
@@ -44,7 +44,7 @@ class AlarmUseCaseTest :
 
             test("enable alarm: update and reschedule") {
                 val alarm = Alarm(id = 1L, isEnabled = false)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.toggleAlarm(1L, true)
 
@@ -61,7 +61,7 @@ class AlarmUseCaseTest :
 
             test("disable last alarm: NoEnabledAlarm should not rollback") {
                 val alarm = Alarm(id = 1L, isEnabled = true)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
                 fakeScheduler.scheduleResult = Either.Left(AlarmScheduleError.NoEnabledAlarm)
 
                 val result = useCase.toggleAlarm(1L, false)
@@ -72,7 +72,7 @@ class AlarmUseCaseTest :
 
             test("schedule error other than NoEnabledAlarm: should rollback") {
                 val alarm = Alarm(id = 1L, isEnabled = true)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
                 fakeScheduler.scheduleResult = Either.Left(AlarmScheduleError.PermissionDenied)
 
                 val result = useCase.toggleAlarm(1L, false)
@@ -84,7 +84,7 @@ class AlarmUseCaseTest :
             test("disable one of multiple alarms: others remain enabled") {
                 val alarm = Alarm(id = 1L, isEnabled = true)
                 val otherAlarm = Alarm(id = 2L, isEnabled = true)
-                fakeAlarmRepo.seed(alarm, otherAlarm)
+                fakeAlarmRepo.resetWith(alarm, otherAlarm)
 
                 val result = useCase.toggleAlarm(1L, false)
 
@@ -98,7 +98,7 @@ class AlarmUseCaseTest :
         context("processAfterFiring") {
             test("Once: disable alarm") {
                 val alarm = Alarm(id = 1L, repeatType = Alarm.RepeatType.Once, isEnabled = true)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.processAfterFiring(alarm)
 
@@ -107,7 +107,7 @@ class AlarmUseCaseTest :
 
             test("Everyday: keep enabled") {
                 val alarm = Alarm(id = 1L, repeatType = Alarm.RepeatType.Everyday, isEnabled = true)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.processAfterFiring(alarm)
 
@@ -116,7 +116,7 @@ class AlarmUseCaseTest :
 
             test("Snooze: delete alarm") {
                 val alarm = Alarm(id = 1L, repeatType = Alarm.RepeatType.Snooze, isEnabled = true)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.processAfterFiring(alarm)
 
@@ -130,7 +130,7 @@ class AlarmUseCaseTest :
                     repeatType = Alarm.RepeatType.Date(targetDate),
                     isEnabled = true
                 )
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.processAfterFiring(alarm)
 
@@ -146,7 +146,7 @@ class AlarmUseCaseTest :
                     repeatType = Alarm.RepeatType.Days(days),
                     isEnabled = true
                 )
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.processAfterFiring(alarm)
 
@@ -165,7 +165,7 @@ class AlarmUseCaseTest :
                     snoozeMinute = 10,
                     isEnabled = true
                 )
-                fakeAlarmRepo.seed(originalAlarm)
+                fakeAlarmRepo.resetWith(originalAlarm)
 
                 val either = useCase.createSnoozeAlarm(originalAlarm)
 
@@ -179,7 +179,7 @@ class AlarmUseCaseTest :
             test("deletes existing snooze alarms before creating new one") {
                 val existingSnooze = Alarm(id = 99L, repeatType = Alarm.RepeatType.Snooze)
                 val originalAlarm = Alarm(id = 1L, snoozeMinute = 5)
-                fakeAlarmRepo.seed(existingSnooze, originalAlarm)
+                fakeAlarmRepo.resetWith(existingSnooze, originalAlarm)
 
                 useCase.createSnoozeAlarm(originalAlarm)
 
@@ -199,7 +199,7 @@ class AlarmUseCaseTest :
 
             test("updates existing alarm and schedules") {
                 val alarm = Alarm(id = 5L)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.saveAlarmAndSchedule(alarm)
 
@@ -210,7 +210,7 @@ class AlarmUseCaseTest :
         context("deleteAlarmAndReschedule") {
             test("deletes alarm and reschedules") {
                 val alarm = Alarm(id = 1L)
-                fakeAlarmRepo.seed(alarm)
+                fakeAlarmRepo.resetWith(alarm)
 
                 useCase.deleteAlarmAndReschedule(alarm)
 
@@ -223,7 +223,7 @@ class AlarmUseCaseTest :
             test("returns only enabled alarms") {
                 val enabled = Alarm(id = 1L, isEnabled = true)
                 val disabled = Alarm(id = 2L, isEnabled = false)
-                fakeAlarmRepo.seed(enabled, disabled)
+                fakeAlarmRepo.resetWith(enabled, disabled)
 
                 val result = useCase.getEnabledAlarms()
 

@@ -9,7 +9,6 @@ import net.turtton.ytalarm.kernel.repository.VideoDownloadRepository
 class FakeVideoDownloadRepository : VideoDownloadRepository<Unit> {
     var downloadResponses: MutableMap<String, Either<DownloadError, DownloadResult>> =
         mutableMapOf()
-    val downloadedUrls: MutableList<String> = mutableListOf()
     val downloadRequests: MutableList<DownloadRequest> = mutableListOf()
 
     data class DownloadRequest(
@@ -25,7 +24,6 @@ class FakeVideoDownloadRepository : VideoDownloadRepository<Unit> {
         formatSelector: String,
         onProgress: (Float) -> Unit
     ): Either<DownloadError, DownloadResult> {
-        downloadedUrls.add(videoUrl)
         downloadRequests.add(DownloadRequest(videoUrl, outputPath, formatSelector))
         onProgress(1.0f)
         return downloadResponses[videoUrl]

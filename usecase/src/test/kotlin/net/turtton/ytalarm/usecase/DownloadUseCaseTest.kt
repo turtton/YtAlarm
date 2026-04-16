@@ -57,7 +57,7 @@ class DownloadUseCaseTest :
                     videoId = "v1",
                     state = Video.State.Downloaded("downloads/1.mp4", 1000L, true)
                 )
-                fakeVideoRepo.seed(video)
+                fakeVideoRepo.resetWith(video)
 
                 val result = useCase.downloadVideo(1L)
 
@@ -73,7 +73,7 @@ class DownloadUseCaseTest :
                     videoUrl = "http://example.com/video",
                     state = Video.State.Downloading
                 )
-                fakeVideoRepo.seed(video)
+                fakeVideoRepo.resetWith(video)
                 fakeDownloadRepo.downloadResponses["http://example.com/video"] =
                     Either.Right(
                         DownloadResult(
@@ -95,7 +95,7 @@ class DownloadUseCaseTest :
                     videoUrl = "http://example.com/video",
                     state = Video.State.Information(isStreamable = true)
                 )
-                fakeVideoRepo.seed(video)
+                fakeVideoRepo.resetWith(video)
                 fakeDownloadRepo.downloadResponses["http://example.com/video"] =
                     Either.Right(
                         DownloadResult(
@@ -133,7 +133,7 @@ class DownloadUseCaseTest :
                     videoUrl = "http://example.com/video",
                     state = Video.State.Information(isStreamable = false)
                 )
-                fakeVideoRepo.seed(video)
+                fakeVideoRepo.resetWith(video)
                 fakeDownloadRepo.downloadResponses["http://example.com/video"] =
                     Either.Left(DownloadError.NetworkError(RuntimeException("timeout")))
 
@@ -175,7 +175,7 @@ class DownloadUseCaseTest :
                     videoId = "v2",
                     state = Video.State.Information(isStreamable = true)
                 )
-                fakeVideoRepo.seed(downloadedVideo, infoVideo)
+                fakeVideoRepo.resetWith(downloadedVideo, infoVideo)
                 fakeFileStorage.existingFiles.add("downloads/1.mp4")
                 fakeFileStorage.totalSize = 5000L
 

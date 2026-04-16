@@ -6,16 +6,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import net.turtton.ytalarm.kernel.entity.Alarm
 import net.turtton.ytalarm.kernel.repository.AlarmRepository
+import java.util.concurrent.atomic.AtomicLong
 
 class FakeAlarmRepository : AlarmRepository<Unit> {
     private val store = MutableStateFlow<List<Alarm>>(emptyList())
-    private var nextId = 1L
+    private val nextId = AtomicLong(1L)
 
     val currentData: List<Alarm> get() = store.value
+    val updateHistory: MutableList<Alarm> = mutableListOf()
 
-    fun seed(vararg alarms: Alarm) {
+    fun resetWith(vararg alarms: Alarm) {
         store.value = alarms.toList()
-        nextId = (alarms.maxOfOrNull { it.id } ?: 0L) + 1
+        nextId.set((alarms.maxOfOrNull { it.id } ?: 0L) + 1)
+        updateHistory.clear()
     }
 
     override fun getAll(executor: Unit): Flow<List<Alarm>> = store
@@ -29,13 +32,14 @@ class FakeAlarmRepository : AlarmRepository<Unit> {
         store.value.filter { it.repeatType == repeatType }
 
     override suspend fun insert(executor: Unit, alarm: Alarm): Long {
-        val id = nextId++
+        val id = nextId.getAndIncrement()
         val stored = alarm.copy(id = id)
         store.update { it + stored }
         return id
     }
 
     override suspend fun update(executor: Unit, alarm: Alarm) {
+        updateHistory.add(alarm)
         store.update { list -> list.map { if (it.id == alarm.id) alarm else it } }
     }
 

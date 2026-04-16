@@ -6,16 +6,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.kernel.repository.PlaylistRepository
+import java.util.concurrent.atomic.AtomicLong
 
 class FakePlaylistRepository : PlaylistRepository<Unit> {
     private val store = MutableStateFlow<List<Playlist>>(emptyList())
-    private var nextId = 1L
+    private val nextId = AtomicLong(1L)
 
     val currentData: List<Playlist> get() = store.value
+    val updateHistory: MutableList<Playlist> = mutableListOf()
 
-    fun seed(vararg playlists: Playlist) {
+    fun resetWith(vararg playlists: Playlist) {
         store.value = playlists.toList()
-        nextId = (playlists.maxOfOrNull { it.id } ?: 0L) + 1
+        nextId.set((playlists.maxOfOrNull { it.id } ?: 0L) + 1)
+        updateHistory.clear()
     }
 
     override fun getAll(executor: Unit): Flow<List<Playlist>> = store
@@ -32,16 +35,20 @@ class FakePlaylistRepository : PlaylistRepository<Unit> {
         store.value.filter { it.id in ids }
 
     override suspend fun update(executor: Unit, playlist: Playlist) {
+        updateHistory.add(playlist)
         store.update { list -> list.map { if (it.id == playlist.id) playlist else it } }
     }
 
     override suspend fun updateAll(executor: Unit, playlists: List<Playlist>) {
-        val updateMap = playlists.associateBy { it.id }
-        store.update { list -> list.map { updateMap[it.id] ?: it } }
+        updateHistory.addAll(playlists)
+        store.update { list ->
+            val updateMap = playlists.associateBy { it.id }
+            list.map { updateMap[it.id] ?: it }
+        }
     }
 
     override suspend fun insert(executor: Unit, playlist: Playlist): Long {
-        val id = nextId++
+        val id = nextId.getAndIncrement()
         store.update { it + playlist.copy(id = id) }
         return id
     }

@@ -53,7 +53,7 @@ class ImportUseCaseTest :
                         domain = "example.com",
                         state = Video.State.Information()
                     )
-                fakeVideoRepo.seed(existingVideo)
+                fakeVideoRepo.resetWith(existingVideo)
 
                 val result = useCase.checkVideoDuplication("vid1", "example.com")
 
@@ -68,7 +68,7 @@ class ImportUseCaseTest :
                         domain = "other.com",
                         state = Video.State.Information()
                     )
-                fakeVideoRepo.seed(existingVideo)
+                fakeVideoRepo.resetWith(existingVideo)
 
                 val result = useCase.checkVideoDuplication("vid1", "example.com")
 
@@ -122,7 +122,7 @@ class ImportUseCaseTest :
                     domain = "example.com",
                     state = Video.State.Information()
                 )
-                fakeVideoRepo.seed(existingVideo)
+                fakeVideoRepo.resetWith(existingVideo)
                 fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
                     Either.Right(videoInfo)
 
@@ -152,8 +152,8 @@ class ImportUseCaseTest :
                         Playlist.SyncRule.ALWAYS_ADD
                     )
                 )
-                fakePlaylistRepo.seed(playlist)
-                fakeVideoRepo.seed(
+                fakePlaylistRepo.resetWith(playlist)
+                fakeVideoRepo.resetWith(
                     Video(id = 1L, videoId = "existing1", state = Video.State.Information()),
                     Video(id = 2L, videoId = "existing2", state = Video.State.Information())
                 )
@@ -180,8 +180,8 @@ class ImportUseCaseTest :
                     ),
                     thumbnail = Playlist.Thumbnail.Video(1L)
                 )
-                fakePlaylistRepo.seed(playlist)
-                fakeVideoRepo.seed(
+                fakePlaylistRepo.resetWith(playlist)
+                fakeVideoRepo.resetWith(
                     Video(id = 1L, videoId = "existing1", state = Video.State.Information()),
                     Video(id = 2L, videoId = "existing2", state = Video.State.Information())
                 )

@@ -64,7 +64,7 @@ class VideoUseCaseTest :
                         videoUrl = "http://example.com/video.mp4"
                     )
                 )
-                fakeVideoRepo.seed(failedVideo)
+                fakeVideoRepo.resetWith(failedVideo)
                 fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
                     Either.Right(fetchedInfo)
 
@@ -80,7 +80,7 @@ class VideoUseCaseTest :
                     videoId = "vid1",
                     state = Video.State.Importing
                 )
-                fakeVideoRepo.seed(importingVideo)
+                fakeVideoRepo.resetWith(importingVideo)
 
                 val result = useCase.reimportVideo(importingVideo)
 
@@ -95,7 +95,7 @@ class VideoUseCaseTest :
                     videoId = "vid1",
                     state = Video.State.Failed("http://example.com/video")
                 )
-                fakeVideoRepo.seed(failedVideo)
+                fakeVideoRepo.resetWith(failedVideo)
                 fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
                     Either.Left(VideoInfoError.NetworkError(RuntimeException("network error")))
 
@@ -125,7 +125,7 @@ class VideoUseCaseTest :
                     videoId = "v3",
                     state = Video.State.Importing
                 )
-                fakeVideoRepo.seed(playableVideo, failedVideo, importingVideo)
+                fakeVideoRepo.resetWith(playableVideo, failedVideo, importingVideo)
 
                 val result = useCase.getPlayableVideosForAlarm(
                     alarm,
@@ -152,7 +152,7 @@ class VideoUseCaseTest :
                     state = Video.State.Importing,
                     creationDate = Clock.System.now()
                 )
-                fakeVideoRepo.seed(oldImporting, newImporting)
+                fakeVideoRepo.resetWith(oldImporting, newImporting)
 
                 useCase.collectGarbageVideos(
                     listOf(oldImporting.id, newImporting.id),

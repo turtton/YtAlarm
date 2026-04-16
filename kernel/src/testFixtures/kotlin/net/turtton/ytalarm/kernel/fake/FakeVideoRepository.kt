@@ -6,17 +6,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.kernel.repository.VideoRepository
+import java.util.concurrent.atomic.AtomicLong
 
 class FakeVideoRepository : VideoRepository<Unit> {
     private val store = MutableStateFlow<List<Video>>(emptyList())
-    private var nextId = 1L
+    private val nextId = AtomicLong(1L)
 
     val currentData: List<Video> get() = store.value
     val updateHistory: MutableList<Video> = mutableListOf()
 
-    fun seed(vararg videos: Video) {
+    fun resetWith(vararg videos: Video) {
         store.value = videos.toList()
-        nextId = (videos.maxOfOrNull { it.id } ?: 0L) + 1
+        nextId.set((videos.maxOfOrNull { it.id } ?: 0L) + 1)
         updateHistory.clear()
     }
 
@@ -52,13 +53,13 @@ class FakeVideoRepository : VideoRepository<Unit> {
     }
 
     override suspend fun insert(executor: Unit, video: Video): Long {
-        val id = nextId++
+        val id = nextId.getAndIncrement()
         store.update { it + video.copy(id = id) }
         return id
     }
 
     override suspend fun insertAll(executor: Unit, videos: List<Video>): List<Long> {
-        val ids = videos.map { nextId++ }
+        val ids = videos.map { nextId.getAndIncrement() }
         val stored = videos.zip(ids) { v, id -> v.copy(id = id) }
         store.update { it + stored }
         return ids

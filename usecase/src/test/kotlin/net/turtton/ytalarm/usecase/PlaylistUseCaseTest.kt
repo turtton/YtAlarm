@@ -43,8 +43,8 @@ class PlaylistUseCaseTest :
                     thumbnail = Playlist.Thumbnail.Video(1L),
                     videos = listOf(1L)
                 )
-                fakeVideoRepo.seed(video)
-                fakePlaylistRepo.seed(playlist)
+                fakeVideoRepo.resetWith(video)
+                fakePlaylistRepo.resetWith(playlist)
 
                 useCase.validateAndUpdateThumbnails()
 
@@ -57,7 +57,7 @@ class PlaylistUseCaseTest :
                     thumbnail = Playlist.Thumbnail.Video(99L),
                     videos = listOf(99L)
                 )
-                fakePlaylistRepo.seed(playlist)
+                fakePlaylistRepo.resetWith(playlist)
 
                 useCase.validateAndUpdateThumbnails()
 
@@ -80,8 +80,8 @@ class PlaylistUseCaseTest :
                     thumbnail = Playlist.Thumbnail.Video(1L),
                     videos = listOf(1L, 2L)
                 )
-                fakeVideoRepo.seed(failedVideo, goodVideo)
-                fakePlaylistRepo.seed(playlist)
+                fakeVideoRepo.resetWith(failedVideo, goodVideo)
+                fakePlaylistRepo.resetWith(playlist)
 
                 useCase.validateAndUpdateThumbnails()
 
@@ -93,8 +93,8 @@ class PlaylistUseCaseTest :
             test("deletes playlist and removes reference from alarms") {
                 val playlist = Playlist(id = 1L)
                 val alarm = Alarm(id = 10L, playlistIds = listOf(1L, 2L))
-                fakeAlarmRepo.seed(alarm)
-                fakePlaylistRepo.seed(playlist)
+                fakeAlarmRepo.resetWith(alarm)
+                fakePlaylistRepo.resetWith(playlist)
 
                 useCase.safeDeletePlaylist(playlist)
 
@@ -104,7 +104,7 @@ class PlaylistUseCaseTest :
 
             test("deletes playlist with no alarm references") {
                 val playlist = Playlist(id = 1L)
-                fakePlaylistRepo.seed(playlist)
+                fakePlaylistRepo.resetWith(playlist)
 
                 useCase.safeDeletePlaylist(playlist)
 
@@ -122,9 +122,9 @@ class PlaylistUseCaseTest :
                     videos = listOf(1L, 2L),
                     thumbnail = Playlist.Thumbnail.Video(1L)
                 )
-                fakeVideoRepo.seed(video1)
-                fakeVideoRepo.seed(video2)
-                fakePlaylistRepo.seed(playlist)
+                fakeVideoRepo.resetWith(video1)
+                fakeVideoRepo.resetWith(video2)
+                fakePlaylistRepo.resetWith(playlist)
 
                 useCase.removeVideosFromPlaylist(playlist, listOf(1L))
 
@@ -137,7 +137,7 @@ class PlaylistUseCaseTest :
         context("setPlaylistThumbnail") {
             test("sets thumbnail to specified video") {
                 val playlist = Playlist(id = 1L)
-                fakePlaylistRepo.seed(playlist)
+                fakePlaylistRepo.resetWith(playlist)
 
                 useCase.setPlaylistThumbnail(playlist, Playlist.Thumbnail.Video(5L))
 
@@ -155,7 +155,7 @@ class PlaylistUseCaseTest :
                         Playlist.SyncRule.ALWAYS_ADD
                     )
                 )
-                fakePlaylistRepo.seed(cloudPlaylist)
+                fakePlaylistRepo.resetWith(cloudPlaylist)
 
                 useCase.updateSyncRule(cloudPlaylist, Playlist.SyncRule.DELETE_IF_NOT_EXIST)
 
@@ -166,7 +166,7 @@ class PlaylistUseCaseTest :
 
             test("does nothing if not CloudPlaylist type") {
                 val originalPlaylist = Playlist(id = 1L, type = Playlist.Type.Original)
-                fakePlaylistRepo.seed(originalPlaylist)
+                fakePlaylistRepo.resetWith(originalPlaylist)
                 val originalThumbnail = originalPlaylist.thumbnail
 
                 useCase.updateSyncRule(originalPlaylist, Playlist.SyncRule.ALWAYS_ADD)
