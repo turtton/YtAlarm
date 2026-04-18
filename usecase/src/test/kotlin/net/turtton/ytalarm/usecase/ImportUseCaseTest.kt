@@ -3,43 +3,45 @@ package net.turtton.ytalarm.usecase
 import arrow.core.Either
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import net.turtton.ytalarm.kernel.di.DataSource
-import net.turtton.ytalarm.kernel.di.DependsOnDataSource
-import net.turtton.ytalarm.kernel.di.DependsOnPlaylistRepository
-import net.turtton.ytalarm.kernel.di.DependsOnVideoInfoRepository
-import net.turtton.ytalarm.kernel.di.DependsOnVideoRepository
 import net.turtton.ytalarm.kernel.dto.VideoInformation
 import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.kernel.error.VideoInfoError
-import net.turtton.ytalarm.kernel.repository.PlaylistRepository
-import net.turtton.ytalarm.kernel.repository.VideoInfoRepository
-import net.turtton.ytalarm.kernel.repository.VideoRepository
-import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
+import net.turtton.ytalarm.kernel.fake.FakePlaylistRepository
+import net.turtton.ytalarm.kernel.fake.FakeVideoInfoRepository
+import net.turtton.ytalarm.kernel.fake.FakeVideoRepository
+import net.turtton.ytalarm.usecase.fake.FakeLocalDataSourceContainer
+import net.turtton.ytalarm.usecase.fake.FakeRemoteDataSourceContainer
 
 class ImportUseCaseTest :
     FunSpec({
-        lateinit var mockVideoRepo: VideoRepository<Unit>
-        lateinit var mockPlaylistRepo: PlaylistRepository<Unit>
-        lateinit var mockVideoInfoRepo: VideoInfoRepository<Unit>
-        lateinit var useCase: ImportUseCase<Unit, Unit, TestImportLocalDS, TestImportRemoteDS>
+        lateinit var fakeVideoRepo: FakeVideoRepository
+        lateinit var fakePlaylistRepo: FakePlaylistRepository
+        lateinit var fakeVideoInfoRepo: FakeVideoInfoRepository
+        lateinit var useCase:
+            ImportUseCase<Unit, Unit, FakeLocalDataSourceContainer, FakeRemoteDataSourceContainer>
 
         beforeEach {
-            mockVideoRepo = mock()
-            mockPlaylistRepo = mock()
-            mockVideoInfoRepo = mock()
-
-            val localDs = TestImportLocalDS(mockVideoRepo, mockPlaylistRepo)
-            val remoteDs = TestImportRemoteDS(mockVideoInfoRepo)
-            useCase = object : ImportUseCase<Unit, Unit, TestImportLocalDS, TestImportRemoteDS> {
-                override val localDataSource: TestImportLocalDS = localDs
-                override val remoteDataSource: TestImportRemoteDS = remoteDs
-            }
+            fakeVideoRepo = FakeVideoRepository()
+            fakePlaylistRepo = FakePlaylistRepository()
+            fakeVideoInfoRepo = FakeVideoInfoRepository()
+            val localDs = FakeLocalDataSourceContainer(
+                videoRepository = fakeVideoRepo,
+                playlistRepository = fakePlaylistRepo
+            )
+            val remoteDs =
+                FakeRemoteDataSourceContainer(videoInfoRepository = fakeVideoInfoRepo)
+            useCase =
+                object :
+                    ImportUseCase<
+                        Unit,
+                        Unit,
+                        FakeLocalDataSourceContainer,
+                        FakeRemoteDataSourceContainer
+                        > {
+                    override val localDataSource: FakeLocalDataSourceContainer = localDs
+                    override val remoteDataSource: FakeRemoteDataSourceContainer = remoteDs
+                }
         }
 
         context("checkVideoDuplication") {
@@ -51,7 +53,7 @@ class ImportUseCaseTest :
                         domain = "example.com",
                         state = Video.State.Information()
                     )
-                whenever(mockVideoRepo.getFromVideoIdSync(Unit, "vid1")).thenReturn(existingVideo)
+                fakeVideoRepo.resetWith(existingVideo)
 
                 val result = useCase.checkVideoDuplication("vid1", "example.com")
 
@@ -66,7 +68,7 @@ class ImportUseCaseTest :
                         domain = "other.com",
                         state = Video.State.Information()
                     )
-                whenever(mockVideoRepo.getFromVideoIdSync(Unit, "vid1")).thenReturn(existingVideo)
+                fakeVideoRepo.resetWith(existingVideo)
 
                 val result = useCase.checkVideoDuplication("vid1", "example.com")
 
@@ -74,8 +76,6 @@ class ImportUseCaseTest :
             }
 
             test("no existing video: returns null") {
-                whenever(mockVideoRepo.getFromVideoIdSync(Unit, "vid1")).thenReturn(null)
-
                 val result = useCase.checkVideoDuplication("vid1", "example.com")
 
                 result shouldBe null
@@ -95,16 +95,13 @@ class ImportUseCaseTest :
                         videoUrl = "http://example.com/video.mp4"
                     )
                 )
-                whenever(
-                    mockVideoInfoRepo.fetchVideoInfo(Unit, "http://example.com/video")
-                ).thenReturn(Either.Right(videoInfo))
-                whenever(mockVideoRepo.getFromVideoIdSync(Unit, "vid1")).thenReturn(null)
-                whenever(mockVideoRepo.insert(any(), any())).thenReturn(1L)
+                fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
+                    Either.Right(videoInfo)
 
                 val result = useCase.fetchAndImportVideo("http://example.com/video")
 
                 result shouldBe ImportResult.Success(1L)
-                verify(mockVideoRepo).insert(any(), any())
+                fakeVideoRepo.currentData.size shouldBe 1
             }
 
             test("duplicate video: returns existing id") {
@@ -125,23 +122,19 @@ class ImportUseCaseTest :
                     domain = "example.com",
                     state = Video.State.Information()
                 )
-                whenever(
-                    mockVideoInfoRepo.fetchVideoInfo(Unit, "http://example.com/video")
-                ).thenReturn(Either.Right(videoInfo))
-                whenever(mockVideoRepo.getFromVideoIdSync(Unit, "vid1")).thenReturn(existingVideo)
+                fakeVideoRepo.resetWith(existingVideo)
+                fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
+                    Either.Right(videoInfo)
 
                 val result = useCase.fetchAndImportVideo("http://example.com/video")
 
                 result shouldBe ImportResult.Duplicate(42L)
-                verify(mockVideoRepo, never()).insert(any(), any())
+                fakeVideoRepo.currentData.size shouldBe 1
             }
 
             test("network error: returns failure") {
-                whenever(
-                    mockVideoInfoRepo.fetchVideoInfo(Unit, "http://example.com/video")
-                ).thenReturn(
+                fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
                     Either.Left(VideoInfoError.NetworkError(RuntimeException("network error")))
-                )
 
                 val result = useCase.fetchAndImportVideo("http://example.com/video")
 
@@ -159,21 +152,22 @@ class ImportUseCaseTest :
                         Playlist.SyncRule.ALWAYS_ADD
                     )
                 )
+                fakePlaylistRepo.resetWith(playlist)
+                fakeVideoRepo.resetWith(
+                    Video(id = 1L, videoId = "existing1", state = Video.State.Information()),
+                    Video(id = 2L, videoId = "existing2", state = Video.State.Information())
+                )
                 val newVideo1 = VideoInformation(
                     id = "vid3",
                     url = "http://example.com/vid3",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video("V3", "", "")
                 )
-                whenever(mockVideoRepo.getFromVideoIdSync(Unit, "vid3")).thenReturn(null)
-                whenever(mockVideoRepo.insert(any(), any())).thenReturn(3L)
 
                 useCase.syncCloudPlaylist(playlist, listOf(newVideo1))
 
-                val captor = argumentCaptor<Playlist>()
-                verify(mockPlaylistRepo).update(any(), captor.capture())
-                // videos should include existing (1L, 2L) + new (3L)
-                captor.firstValue.videos.containsAll(listOf(1L, 2L, 3L)) shouldBe true
+                val updatedPlaylist = fakePlaylistRepo.currentData.find { it.id == 1L }
+                updatedPlaylist?.videos?.containsAll(listOf(1L, 2L, 3L)) shouldBe true
             }
 
             test("DELETE_IF_NOT_EXIST: replaces videos with new set") {
@@ -186,43 +180,23 @@ class ImportUseCaseTest :
                     ),
                     thumbnail = Playlist.Thumbnail.Video(1L)
                 )
+                fakePlaylistRepo.resetWith(playlist)
+                fakeVideoRepo.resetWith(
+                    Video(id = 1L, videoId = "existing1", state = Video.State.Information()),
+                    Video(id = 2L, videoId = "existing2", state = Video.State.Information())
+                )
                 val newVideo = VideoInformation(
                     id = "vid3",
                     url = "http://example.com/vid3",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video("V3", "", "")
                 )
-                whenever(mockVideoRepo.getFromVideoIdSync(Unit, "vid3")).thenReturn(null)
-                whenever(mockVideoRepo.insert(any(), any())).thenReturn(3L)
 
                 useCase.syncCloudPlaylist(playlist, listOf(newVideo))
 
-                val captor = argumentCaptor<Playlist>()
-                verify(mockPlaylistRepo).update(any(), captor.capture())
-                // Should only have the new video
-                captor.firstValue.videos shouldBe listOf(3L)
-                // Thumbnail should be updated since old thumbnail (vid 1) no longer exists
-                captor.firstValue.thumbnail shouldBe Playlist.Thumbnail.Video(3L)
+                val updatedPlaylist = fakePlaylistRepo.currentData.find { it.id == 1L }
+                updatedPlaylist?.videos shouldBe listOf(3L)
+                updatedPlaylist?.thumbnail shouldBe Playlist.Thumbnail.Video(3L)
             }
         }
     })
-
-// テスト用DataSource実装
-class TestImportLocalDS(
-    override val videoRepository: VideoRepository<Unit>,
-    override val playlistRepository: PlaylistRepository<Unit>
-) : DependsOnVideoRepository<Unit>,
-    DependsOnPlaylistRepository<Unit>,
-    DependsOnDataSource<Unit> {
-    override val dataSource: DataSource<Unit> = object : DataSource<Unit> {
-        override fun createExecutor(): Unit = Unit
-    }
-}
-
-class TestImportRemoteDS(override val videoInfoRepository: VideoInfoRepository<Unit>) :
-    DependsOnVideoInfoRepository<Unit>,
-    DependsOnDataSource<Unit> {
-    override val dataSource: DataSource<Unit> = object : DataSource<Unit> {
-        override fun createExecutor(): Unit = Unit
-    }
-}

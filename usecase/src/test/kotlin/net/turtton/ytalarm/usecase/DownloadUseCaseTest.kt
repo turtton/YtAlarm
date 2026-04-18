@@ -4,51 +4,48 @@ import arrow.core.Either
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
-import net.turtton.ytalarm.kernel.di.DataSource
-import net.turtton.ytalarm.kernel.di.DependsOnDataSource
-import net.turtton.ytalarm.kernel.di.DependsOnVideoDownloadRepository
-import net.turtton.ytalarm.kernel.di.DependsOnVideoRepository
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.kernel.error.DownloadError
 import net.turtton.ytalarm.kernel.error.DownloadResult
+import net.turtton.ytalarm.kernel.fake.FakeFileStoragePort
+import net.turtton.ytalarm.kernel.fake.FakeVideoDownloadRepository
+import net.turtton.ytalarm.kernel.fake.FakeVideoDownloadRepository.DownloadRequest
+import net.turtton.ytalarm.kernel.fake.FakeVideoRepository
 import net.turtton.ytalarm.kernel.port.FileStoragePort
-import net.turtton.ytalarm.kernel.repository.VideoDownloadRepository
-import net.turtton.ytalarm.kernel.repository.VideoRepository
-import org.mockito.kotlin.any
-import org.mockito.kotlin.argumentCaptor
-import org.mockito.kotlin.eq
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.never
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.whenever
+import net.turtton.ytalarm.usecase.fake.FakeLocalDataSourceContainer
+import net.turtton.ytalarm.usecase.fake.FakeRemoteDataSourceContainer
 import java.io.File
 
 class DownloadUseCaseTest :
     FunSpec({
-        lateinit var mockVideoRepo: VideoRepository<Unit>
-        lateinit var mockDownloadRepo: VideoDownloadRepository<Unit>
-        lateinit var mockFileStorage: FileStoragePort
-        lateinit var useCase: DownloadUseCase<Unit, Unit, TestDlLocalDS, TestDlRemoteDS>
+        lateinit var fakeVideoRepo: FakeVideoRepository
+        lateinit var fakeDownloadRepo: FakeVideoDownloadRepository
+        lateinit var fakeFileStorage: FakeFileStoragePort
+        lateinit var useCase:
+            DownloadUseCase<Unit, Unit, FakeLocalDataSourceContainer, FakeRemoteDataSourceContainer>
 
         beforeEach {
-            mockVideoRepo = mock()
-            mockDownloadRepo = mock()
-            mockFileStorage = mock()
-
-            val localDs = TestDlLocalDS(mockVideoRepo)
-            val remoteDs = TestDlRemoteDS(mockDownloadRepo)
+            fakeVideoRepo = FakeVideoRepository()
+            fakeDownloadRepo = FakeVideoDownloadRepository()
+            fakeFileStorage = FakeFileStoragePort()
+            val localDs = FakeLocalDataSourceContainer(videoRepository = fakeVideoRepo)
+            val remoteDs = FakeRemoteDataSourceContainer(videoDownloadRepository = fakeDownloadRepo)
             useCase =
-                object : DownloadUseCase<Unit, Unit, TestDlLocalDS, TestDlRemoteDS> {
-                    override val localDataSource: TestDlLocalDS = localDs
-                    override val remoteDataSource: TestDlRemoteDS = remoteDs
-                    override val fileStorage: FileStoragePort = mockFileStorage
+                object :
+                    DownloadUseCase<
+                        Unit,
+                        Unit,
+                        FakeLocalDataSourceContainer,
+                        FakeRemoteDataSourceContainer
+                        > {
+                    override val localDataSource: FakeLocalDataSourceContainer = localDs
+                    override val remoteDataSource: FakeRemoteDataSourceContainer = remoteDs
+                    override val fileStorage: FileStoragePort = fakeFileStorage
                 }
         }
 
         context("downloadVideo") {
             test("returns null when video not found") {
-                whenever(mockVideoRepo.getFromIdSync(any(), eq(999L))).thenReturn(null)
-
                 val result = useCase.downloadVideo(999L)
 
                 result shouldBe null
@@ -60,12 +57,13 @@ class DownloadUseCaseTest :
                     videoId = "v1",
                     state = Video.State.Downloaded("downloads/1.mp4", 1000L, true)
                 )
-                whenever(mockVideoRepo.getFromIdSync(any(), eq(1L))).thenReturn(video)
+                fakeVideoRepo.resetWith(video)
 
                 val result = useCase.downloadVideo(1L)
 
                 result shouldBe null
-                verify(mockVideoRepo, never()).update(any(), any())
+                fakeVideoRepo.currentData.find { it.id == 1L }?.state shouldBe
+                    Video.State.Downloaded("downloads/1.mp4", 1000L, true)
             }
 
             test("retries download for stuck Downloading video") {
@@ -75,22 +73,14 @@ class DownloadUseCaseTest :
                     videoUrl = "http://example.com/video",
                     state = Video.State.Downloading
                 )
-                val downloadDir =
-                    File(System.getProperty("java.io.tmpdir"), "test-downloads")
-                val dlResult =
-                    DownloadResult("${downloadDir.absolutePath}/1.mp4", 3000L)
-
-                whenever(mockVideoRepo.getFromIdSync(any(), eq(1L))).thenReturn(video)
-                whenever(mockFileStorage.getDownloadDir()).thenReturn(downloadDir)
-                whenever(
-                    mockDownloadRepo.downloadVideo(
-                        any(),
-                        any(),
-                        any(),
-                        any(),
-                        any()
+                fakeVideoRepo.resetWith(video)
+                fakeDownloadRepo.downloadResponses["http://example.com/video"] =
+                    Either.Right(
+                        DownloadResult(
+                            "${fakeFileStorage.getDownloadDir().absolutePath}/1.mp4",
+                            3000L
+                        )
                     )
-                ).thenReturn(Either.Right(dlResult))
 
                 val result = useCase.downloadVideo(1L)
 
@@ -105,35 +95,35 @@ class DownloadUseCaseTest :
                     videoUrl = "http://example.com/video",
                     state = Video.State.Information(isStreamable = true)
                 )
-                val downloadDir = File(System.getProperty("java.io.tmpdir"), "test-downloads")
-                val dlResult = DownloadResult("${downloadDir.absolutePath}/1.mp4", 5000L)
-
-                whenever(mockVideoRepo.getFromIdSync(any(), eq(1L))).thenReturn(video)
-                whenever(mockFileStorage.getDownloadDir()).thenReturn(downloadDir)
-                whenever(
-                    mockDownloadRepo.downloadVideo(
-                        any(),
-                        eq("http://example.com/video"),
-                        eq("${downloadDir.absolutePath}/1.%(ext)s"),
-                        eq(DownloadUseCase.DEFAULT_FORMAT_SELECTOR),
-                        any()
+                fakeVideoRepo.resetWith(video)
+                fakeDownloadRepo.downloadResponses["http://example.com/video"] =
+                    Either.Right(
+                        DownloadResult(
+                            "${fakeFileStorage.getDownloadDir().absolutePath}/1.mp4",
+                            5000L
+                        )
                     )
-                ).thenReturn(Either.Right(dlResult))
 
                 val result = useCase.downloadVideo(1L)
 
                 result.shouldBeInstanceOf<Either.Right<DownloadResult>>()
                 result.getOrNull()?.fileSize shouldBe 5000L
 
-                val captor = argumentCaptor<Video>()
-                // 2回のupdate: Downloading状態への遷移 + Downloaded状態への遷移
-                verify(mockVideoRepo, org.mockito.kotlin.times(2)).update(any(), captor.capture())
-                captor.firstValue.state shouldBe Video.State.Downloading
-                captor.secondValue.state shouldBe Video.State.Downloaded(
-                    "downloads/1.mp4",
-                    5000L,
-                    true
+                fakeVideoRepo.updateHistory.size shouldBe 2
+                fakeVideoRepo.updateHistory[0].state shouldBe Video.State.Downloading
+
+                fakeDownloadRepo.downloadRequests.size shouldBe 1
+                val req = fakeDownloadRepo.downloadRequests.first()
+                req shouldBe DownloadRequest(
+                    videoUrl = "http://example.com/video",
+                    outputPath =
+                        "${fakeFileStorage.getDownloadDir().absolutePath}/1.%(ext)s",
+                    formatSelector = DownloadUseCase.DEFAULT_FORMAT_SELECTOR
                 )
+
+                val updatedVideo = fakeVideoRepo.currentData.find { it.id == 1L }
+                updatedVideo?.state shouldBe
+                    Video.State.Downloaded("downloads/1.mp4", 5000L, true)
             }
 
             test("failed download reverts to Information") {
@@ -143,39 +133,32 @@ class DownloadUseCaseTest :
                     videoUrl = "http://example.com/video",
                     state = Video.State.Information(isStreamable = false)
                 )
-                val downloadDir = File(System.getProperty("java.io.tmpdir"), "test-downloads")
-                val error = DownloadError.NetworkError(RuntimeException("timeout"))
-
-                whenever(mockVideoRepo.getFromIdSync(any(), eq(1L))).thenReturn(video)
-                whenever(mockFileStorage.getDownloadDir()).thenReturn(downloadDir)
-                whenever(
-                    mockDownloadRepo.downloadVideo(any(), any(), any(), any(), any())
-                ).thenReturn(Either.Left(error))
+                fakeVideoRepo.resetWith(video)
+                fakeDownloadRepo.downloadResponses["http://example.com/video"] =
+                    Either.Left(DownloadError.NetworkError(RuntimeException("timeout")))
 
                 val result = useCase.downloadVideo(1L)
 
                 result.shouldBeInstanceOf<Either.Left<DownloadError>>()
 
-                val captor = argumentCaptor<Video>()
-                verify(mockVideoRepo, org.mockito.kotlin.times(2)).update(any(), captor.capture())
-                captor.firstValue.state shouldBe Video.State.Downloading
-                captor.secondValue.state shouldBe Video.State.Information(isStreamable = false)
+                val updatedVideo = fakeVideoRepo.currentData.find { it.id == 1L }
+                updatedVideo?.state shouldBe Video.State.Information(isStreamable = false)
             }
         }
 
         context("canDownload") {
             test("returns true when under limit") {
-                whenever(mockFileStorage.getTotalDownloadSize()).thenReturn(500L)
+                fakeFileStorage.totalSize = 500L
                 useCase.canDownload(1000L) shouldBe true
             }
 
             test("returns false when at limit") {
-                whenever(mockFileStorage.getTotalDownloadSize()).thenReturn(1000L)
+                fakeFileStorage.totalSize = 1000L
                 useCase.canDownload(1000L) shouldBe false
             }
 
             test("returns false when over limit") {
-                whenever(mockFileStorage.getTotalDownloadSize()).thenReturn(1500L)
+                fakeFileStorage.totalSize = 1500L
                 useCase.canDownload(1000L) shouldBe false
             }
         }
@@ -192,41 +175,24 @@ class DownloadUseCaseTest :
                     videoId = "v2",
                     state = Video.State.Information(isStreamable = true)
                 )
-                whenever(mockVideoRepo.getExceptIdsSync(any(), eq(emptyList()))).thenReturn(
-                    listOf(downloadedVideo, infoVideo)
-                )
-                whenever(mockFileStorage.deleteAllDownloads()).thenReturn(1L)
+                fakeVideoRepo.resetWith(downloadedVideo, infoVideo)
+                fakeFileStorage.existingFiles.add("downloads/1.mp4")
+                fakeFileStorage.totalSize = 5000L
 
                 val deletedCount = useCase.deleteAllDownloads()
 
                 deletedCount shouldBe 1L
-                val captor = argumentCaptor<Video>()
-                verify(mockVideoRepo).update(any(), captor.capture())
-                captor.firstValue.id shouldBe 1L
-                captor.firstValue.state shouldBe Video.State.Information(isStreamable = true)
+                val updatedVideo = fakeVideoRepo.currentData.find { it.id == 1L }
+                updatedVideo?.state shouldBe Video.State.Information(isStreamable = true)
+                val unchangedVideo = fakeVideoRepo.currentData.find { it.id == 2L }
+                unchangedVideo?.state shouldBe Video.State.Information(isStreamable = true)
             }
         }
 
         context("getTotalDownloadSize") {
             test("delegates to fileStorage") {
-                whenever(mockFileStorage.getTotalDownloadSize()).thenReturn(42L)
+                fakeFileStorage.totalSize = 42L
                 useCase.getTotalDownloadSize() shouldBe 42L
             }
         }
     })
-
-class TestDlLocalDS(override val videoRepository: VideoRepository<Unit>) :
-    DependsOnVideoRepository<Unit>,
-    DependsOnDataSource<Unit> {
-    override val dataSource: DataSource<Unit> = object : DataSource<Unit> {
-        override fun createExecutor(): Unit = Unit
-    }
-}
-
-class TestDlRemoteDS(override val videoDownloadRepository: VideoDownloadRepository<Unit>) :
-    DependsOnVideoDownloadRepository<Unit>,
-    DependsOnDataSource<Unit> {
-    override val dataSource: DataSource<Unit> = object : DataSource<Unit> {
-        override fun createExecutor(): Unit = Unit
-    }
-}

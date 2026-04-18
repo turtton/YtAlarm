@@ -262,5 +262,336 @@ class AlarmSchedulingTest :
                 val nowAt1230 = makeNow(hour = 12, minute = 30)
                 nowAt1230.isPrevOrSameTime(12, 50, tz) shouldBe false
             }
+            test("midnight boundary: now=00:00, alarm=00:00") {
+                val midnight = makeNow(hour = 0, minute = 0)
+                midnight.isPrevOrSameTime(0, 0, tz) shouldBe true
+            }
+            test("midnight boundary: now=00:00, alarm=00:01") {
+                val midnight = makeNow(hour = 0, minute = 0)
+                midnight.isPrevOrSameTime(0, 1, tz) shouldBe false
+            }
+            test("end of day: now=23:59, alarm=23:59") {
+                val endOfDay = makeNow(hour = 23, minute = 59)
+                endOfDay.isPrevOrSameTime(23, 59, tz) shouldBe true
+            }
+            test("end of day: now=23:59, alarm=0:00") {
+                val endOfDay = makeNow(hour = 23, minute = 59)
+                endOfDay.isPrevOrSameTime(0, 0, tz) shouldBe true
+            }
+        }
+
+        context("toNextFireTime — midnight boundary (00:00)") {
+            test("Once: alarm at 00:00, now=23:59 → next day") {
+                val now2359 = makeNow(hour = 23, minute = 59)
+                val alarm = Alarm(hour = 0, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(now2359, tz)
+                val expected = makeNow(dayOfMonth = 2, hour = 0, minute = 0)
+                target shouldBe expected
+            }
+
+            test("Once: alarm at 00:00, now=00:00 → fires next day") {
+                val nowMidnight = makeNow(hour = 0, minute = 0)
+                val alarm = Alarm(hour = 0, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(nowMidnight, tz)
+                val expected = makeNow(dayOfMonth = 2, hour = 0, minute = 0)
+                target shouldBe expected
+            }
+
+            test("Everyday: alarm at 23:59, now=23:58 → fires same day") {
+                val now2358 = makeNow(hour = 23, minute = 58)
+                val alarm = Alarm(hour = 23, minute = 59, repeatType = Alarm.RepeatType.Everyday)
+                val target = alarm.toNextFireTime(now2358, tz)
+                val expected = makeNow(hour = 23, minute = 59)
+                target shouldBe expected
+            }
+
+            test("Everyday: alarm at 23:59, now=23:59 → fires next day") {
+                val now2359 = makeNow(hour = 23, minute = 59)
+                val alarm = Alarm(hour = 23, minute = 59, repeatType = Alarm.RepeatType.Everyday)
+                val target = alarm.toNextFireTime(now2359, tz)
+                val expected = makeNow(dayOfMonth = 2, hour = 23, minute = 59)
+                target shouldBe expected
+            }
+        }
+
+        context("toNextFireTime — month-end crossing") {
+            test("Once: July 31st, time passed → August 1st") {
+                val july31 = makeNow(dayOfMonth = 31, hour = 12, minute = 0)
+                val alarm = Alarm(hour = 11, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(july31, tz)
+                val expected = LocalDateTime(2022, 8, 1, 11, 0, 0).toInstant(tz)
+                target shouldBe expected
+            }
+
+            test("Everyday: month with 30 days — June 30th next day → July 1st") {
+                val june30 = LocalDateTime(2022, 6, 30, 18, 0, 0).toInstant(tz)
+                val alarm = Alarm(hour = 8, minute = 0, repeatType = Alarm.RepeatType.Everyday)
+                val target = alarm.toNextFireTime(june30, tz)
+                val expected = LocalDateTime(2022, 7, 1, 8, 0, 0).toInstant(tz)
+                target shouldBe expected
+            }
+        }
+
+        context("toNextFireTime — year-end crossing") {
+            test("Once: December 31st next day → January 1st next year") {
+                val dec31 = LocalDateTime(2022, 12, 31, 20, 0, 0).toInstant(tz)
+                val alarm = Alarm(hour = 6, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(dec31, tz)
+                val expected = LocalDateTime(2023, 1, 1, 6, 0, 0).toInstant(tz)
+                target shouldBe expected
+            }
+        }
+
+        context("toNextFireTime — leap year") {
+            test("Once: Feb 28 in leap year → Feb 29") {
+                val feb28 = LocalDateTime(2024, 2, 28, 20, 0, 0).toInstant(tz)
+                val alarm = Alarm(hour = 7, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(feb28, tz)
+                val expected = LocalDateTime(2024, 2, 29, 7, 0, 0).toInstant(tz)
+                target shouldBe expected
+            }
+
+            test("Once: Feb 28 in non-leap year → March 1") {
+                val feb28 = LocalDateTime(2023, 2, 28, 20, 0, 0).toInstant(tz)
+                val alarm = Alarm(hour = 7, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(feb28, tz)
+                val expected = LocalDateTime(2023, 3, 1, 7, 0, 0).toInstant(tz)
+                target shouldBe expected
+            }
+
+            test("Once: Feb 29 in leap year → March 1") {
+                val feb29 = LocalDateTime(2024, 2, 29, 20, 0, 0).toInstant(tz)
+                val alarm = Alarm(hour = 7, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(feb29, tz)
+                val expected = LocalDateTime(2024, 3, 1, 7, 0, 0).toInstant(tz)
+                target shouldBe expected
+            }
+
+            test("Date: Feb 29 in leap year — exact date used") {
+                val alarm = Alarm(
+                    hour = 8,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Date(LocalDate(2024, 2, 29))
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                val expected = LocalDateTime(2024, 2, 29, 8, 0, 0).toInstant(tz)
+                target shouldBe expected
+            }
+        }
+
+        context("toNextFireTime — RepeatType.Date edge cases") {
+            test("Date: past date returns past instant") {
+                val pastDate = LocalDate(2020, 1, 1)
+                val alarm = Alarm(
+                    hour = 9,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Date(pastDate)
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                val expected = LocalDateTime(2020, 1, 1, 9, 0, 0).toInstant(tz)
+                target shouldBe expected
+                (target < now) shouldBe true
+            }
+
+            test("Date: today's date with future time") {
+                val todayDate = LocalDate(2022, 7, 1)
+                val alarm = Alarm(
+                    hour = 15,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Date(todayDate)
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                val expected = makeNow(hour = 15, minute = 0)
+                target shouldBe expected
+            }
+
+            test("Date: today's date with past time still returns today") {
+                val todayDate = LocalDate(2022, 7, 1)
+                val alarm = Alarm(
+                    hour = 8,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Date(todayDate)
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                // Date type does NOT auto-advance to next day
+                val expected = makeNow(hour = 8, minute = 0)
+                target shouldBe expected
+            }
+        }
+
+        context("toNextFireTime — RepeatType.Days edge cases") {
+            test("all 7 days, time in future → fires same day") {
+                val allDays = DayOfWeek.entries.toList()
+                val alarm = Alarm(
+                    hour = 18,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Days(allDays)
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                val expected = makeNow(hour = 18, minute = 0)
+                target shouldBe expected
+            }
+
+            test("all 7 days, time passed → fires next day") {
+                val allDays = DayOfWeek.entries.toList()
+                val alarm = Alarm(
+                    hour = 8,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Days(allDays)
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                val expected = makeNow(dayOfMonth = 2, hour = 8, minute = 0)
+                target shouldBe expected
+            }
+
+            test("two days (Mon, Thu), now is Fri past time → skips to Mon") {
+                val alarm = Alarm(
+                    hour = 8,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Days(
+                        listOf(DayOfWeek.MONDAY, DayOfWeek.THURSDAY)
+                    )
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                val expected = makeNow(dayOfMonth = 4, hour = 8, minute = 0)
+                target shouldBe expected
+            }
+
+            test("two days (Fri, Sun), now is Fri time passed → fires Sun") {
+                val alarm = Alarm(
+                    hour = 8,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Days(
+                        listOf(DayOfWeek.FRIDAY, DayOfWeek.SUNDAY)
+                    )
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                val expected = makeNow(dayOfMonth = 3, hour = 8, minute = 0)
+                target shouldBe expected
+            }
+
+            test("Saturday only, now is Friday → fires next day (Saturday)") {
+                val alarm = Alarm(
+                    hour = 6,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Days(listOf(DayOfWeek.SATURDAY))
+                )
+                val target = alarm.toNextFireTime(now, tz)
+                val expected = makeNow(dayOfMonth = 2, hour = 6, minute = 0)
+                target shouldBe expected
+            }
+        }
+
+        context("pickNearestTime — additional cases") {
+            test("single alarm in list") {
+                val alarm = Alarm(hour = 15, minute = 0)
+                val result = listOf(alarm).pickNearestTime(now, tz)
+                result?.first shouldBe alarm
+                result?.second shouldBe makeNow(hour = 15, minute = 0)
+            }
+
+            test("mixed RepeatTypes: nearest is selected correctly") {
+                val onceAlarm = Alarm(hour = 14, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val everydayAlarm = Alarm(
+                    hour = 13,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Everyday
+                )
+                val daysAlarm = Alarm(
+                    hour = 15,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Days(listOf(DayOfWeek.FRIDAY))
+                )
+                // now is Fri 12:00
+                // Once 14:00 today, Everyday 13:00 today, Days(Fri) 15:00 today
+                // nearest = Everyday 13:00
+                val result = listOf(onceAlarm, everydayAlarm, daysAlarm)
+                    .pickNearestTime(now, tz)
+                result?.first shouldBe everydayAlarm
+            }
+
+            test("all alarms have Date in past: returns earliest past alarm") {
+                val alarm1 = Alarm(
+                    hour = 9,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Date(LocalDate(2021, 6, 1))
+                )
+                val alarm2 = Alarm(
+                    hour = 9,
+                    minute = 0,
+                    repeatType = Alarm.RepeatType.Date(LocalDate(2022, 1, 1))
+                )
+                val result = listOf(alarm1, alarm2).pickNearestTime(now, tz)
+                result?.first shouldBe alarm1
+            }
+        }
+
+        context("getNearestDayOfWeekOrNull — additional cases") {
+            test("empty list returns null") {
+                emptyList<DayOfWeek>().getNearestDayOfWeekOrNull(DayOfWeek.MONDAY) shouldBe null
+            }
+
+            test("single day, same as from") {
+                val days = listOf(DayOfWeek.WEDNESDAY)
+                days.getNearestDayOfWeekOrNull(DayOfWeek.WEDNESDAY) shouldBe DayOfWeek.WEDNESDAY
+            }
+
+            test("single day, before from → wraps to next week") {
+                val days = listOf(DayOfWeek.MONDAY)
+                days.getNearestDayOfWeekOrNull(DayOfWeek.FRIDAY) shouldBe DayOfWeek.MONDAY
+            }
+
+            test("all 7 days → returns from itself") {
+                val allDays = DayOfWeek.entries.toList()
+                allDays.getNearestDayOfWeekOrNull(DayOfWeek.THURSDAY) shouldBe DayOfWeek.THURSDAY
+            }
+
+            test("from=SUNDAY, list has MON and WED → wraps to MONDAY") {
+                val days = listOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY)
+                // SUNDAY iso=7, no days >= 7 in list → wraps → min = MONDAY
+                days.getNearestDayOfWeekOrNull(DayOfWeek.SUNDAY) shouldBe DayOfWeek.MONDAY
+            }
+
+            test("from=MONDAY, list has SUN only → returns SUN (wrap)") {
+                val days = listOf(DayOfWeek.SUNDAY)
+                // SUNDAY iso=7 >= MONDAY iso=1 → same week, returns SUNDAY
+                days.getNearestDayOfWeekOrNull(DayOfWeek.MONDAY) shouldBe DayOfWeek.SUNDAY
+            }
+        }
+
+        context("isSameDate — timezone boundary") {
+            test("same instant, different timezone can yield different dates") {
+                // 2022-07-01 23:30 UTC = 2022-07-02 08:30 JST
+                val instant = LocalDateTime(2022, 7, 1, 23, 30, 0).toInstant(tz)
+                val jst = TimeZone.of("Asia/Tokyo")
+                // In UTC it's July 1, in JST it's July 2
+                val july1Noon = makeNow() // 2022-07-01 12:00 UTC
+                instant.isSameDate(july1Noon, tz) shouldBe true
+                instant.isSameDate(july1Noon, jst) shouldBe false
+            }
+        }
+
+        context("toNextFireTime — non-UTC timezone") {
+            test("alarm in JST respects timezone offset") {
+                val jst = TimeZone.of("Asia/Tokyo") // UTC+9
+                // 2022-07-01 21:00 JST = 2022-07-01 12:00 UTC
+                val nowJst = LocalDateTime(2022, 7, 1, 21, 0, 0).toInstant(jst)
+                val alarm = Alarm(hour = 22, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(nowJst, jst)
+                // 22:00 JST same day
+                val expected = LocalDateTime(2022, 7, 1, 22, 0, 0).toInstant(jst)
+                target shouldBe expected
+            }
+
+            test("alarm in JST crosses day differently than UTC") {
+                val jst = TimeZone.of("Asia/Tokyo")
+                // 2022-07-01 23:30 JST
+                val nowJst = LocalDateTime(2022, 7, 1, 23, 30, 0).toInstant(jst)
+                val alarm = Alarm(hour = 6, minute = 0, repeatType = Alarm.RepeatType.Once)
+                val target = alarm.toNextFireTime(nowJst, jst)
+                // 06:00 < 23:30 → next day in JST = July 2 06:00 JST
+                val expected = LocalDateTime(2022, 7, 2, 6, 0, 0).toInstant(jst)
+                target shouldBe expected
+            }
         }
     })
