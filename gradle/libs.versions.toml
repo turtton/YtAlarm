@@ -1,13 +1,13 @@
 [versions]
 # Android
-agp = "9.1.1"
+agp = "9.2.0"
 compileSdk = "36"
 minSdk = "24"
 targetSdk = "36"
 
 # Kotlin
-kotlin = "2.3.20"
-ksp = "2.3.6"
+kotlin = "2.3.21"
+ksp = "2.3.7"
 kotlinter = "5.4.2"
 detekt = "1.23.8"
 
@@ -15,7 +15,7 @@ detekt = "1.23.8"
 androidx-core = "1.18.0"
 androidx-appcompat = "1.7.1"
 androidx-constraintlayout = "2.2.1"
-androidx-navigation = "2.9.7"
+androidx-navigation = "2.9.8"
 androidx-recyclerview = "1.4.0"
 androidx-recyclerview-selection = "1.2.0"
 androidx-room = "2.8.4"
@@ -29,7 +29,7 @@ androidx-test-runner = "1.7.0"
 androidx-test-espresso = "3.7.0"
 
 # Compose
-compose-bom = "2026.03.01"
+compose-bom = "2026.04.01"
 androidx-compose-compiler = "1.5.15"
 
 # Material Design
