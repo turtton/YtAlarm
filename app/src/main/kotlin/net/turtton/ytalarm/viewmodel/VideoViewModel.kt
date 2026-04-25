@@ -1,13 +1,14 @@
 package net.turtton.ytalarm.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.usecase.UseCaseContainer
 import net.turtton.ytalarm.usecase.ReimportResult as UseCaseReimportResult
@@ -47,24 +48,48 @@ class VideoViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>)
         useCaseContainer.getVideosExceptVideoIdsSync(ids)
     }
 
-    fun update(video: Video) = viewModelScope.launch {
+    suspend fun update(video: Video): Result<Unit> = try {
         useCaseContainer.updateVideo(video)
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        Log.e(TAG, "Failed to update video: ${video.id}", e)
+        Result.failure(e)
     }
 
     fun insertAsync(video: Video): Deferred<Long> = viewModelScope.async {
         useCaseContainer.insertVideo(video)
     }
 
-    fun insert(videos: List<Video>) = viewModelScope.launch {
+    suspend fun insert(videos: List<Video>): Result<Unit> = try {
         useCaseContainer.insertAllVideos(videos)
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        Log.e(TAG, "Failed to insert videos", e)
+        Result.failure(e)
     }
 
-    fun delete(video: Video) = viewModelScope.launch {
+    suspend fun delete(video: Video): Result<Unit> = try {
         useCaseContainer.deleteVideo(video)
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        Log.e(TAG, "Failed to delete video: ${video.id}", e)
+        Result.failure(e)
     }
 
-    fun delete(videos: List<Video>) = viewModelScope.launch {
+    suspend fun delete(videos: List<Video>): Result<Unit> = try {
         useCaseContainer.deleteAllVideos(videos)
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        Log.e(TAG, "Failed to delete videos", e)
+        Result.failure(e)
     }
 
     /**
@@ -84,6 +109,10 @@ class VideoViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>)
 
             is UseCaseReimportResult.Error.Parse -> ReimportResult.Error.Parse
         }
+
+    companion object {
+        private const val TAG = "VideoViewModel"
+    }
 }
 
 class VideoViewModelFactory(private val useCaseContainer: UseCaseContainer<*, *, *, *>) :

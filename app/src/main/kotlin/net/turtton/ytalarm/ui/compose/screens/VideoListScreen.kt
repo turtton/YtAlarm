@@ -1,5 +1,6 @@
 package net.turtton.ytalarm.ui.compose.screens
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
@@ -7,6 +8,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +30,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.SnackbarHost
@@ -73,15 +76,21 @@ import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.components.VideoItem
 import net.turtton.ytalarm.ui.compose.components.VideoItemDropdownMenu
+import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
+import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
+import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
 import net.turtton.ytalarm.ui.compose.dialogs.RemoveOrDeleteVideoDialog
+import net.turtton.ytalarm.ui.compose.dialogs.UrlInputDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.ui.compose.theme.Dimensions
 import net.turtton.ytalarm.ui.model.VideoUiModel
 import net.turtton.ytalarm.ui.model.toUiModel
+import net.turtton.ytalarm.util.extensions.createImportingPlaylist
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.util.extensions.privatePreferences
 import net.turtton.ytalarm.util.extensions.sorted
+import net.turtton.ytalarm.util.extensions.updateThumbnail
 import net.turtton.ytalarm.util.extensions.videoOrderRule
 import net.turtton.ytalarm.util.extensions.videoOrderUp
 import net.turtton.ytalarm.util.order.VideoOrder
@@ -391,17 +400,21 @@ fun VideoListScreenContent(
             text = {
                 Column {
                     sortOptions.forEachIndexed { index, option ->
-                        androidx.compose.material3.RadioButton(
-                            selected = orderRule.ordinal == index,
-                            onClick = {
-                                onSortRuleChange(VideoOrder.entries[index])
-                                showSortDialog = false
-                            }
-                        )
-                        Text(
-                            text = option,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = orderRule.ordinal == index,
+                                onClick = {
+                                    onSortRuleChange(VideoOrder.entries[index])
+                                    showSortDialog = false
+                                }
+                            )
+                            Text(
+                                text = option,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
                     }
                 }
             },
@@ -447,17 +460,21 @@ fun VideoListScreenContent(
             text = {
                 Column {
                     syncRuleOptions.forEachIndexed { index, option ->
-                        androidx.compose.material3.RadioButton(
-                            selected = currentRule?.ordinal == index,
-                            onClick = {
-                                onSyncRuleChange(Playlist.SyncRule.entries[index])
-                                showSyncRuleDialog = false
-                            }
-                        )
-                        Text(
-                            text = option,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = currentRule?.ordinal == index,
+                                onClick = {
+                                    onSyncRuleChange(Playlist.SyncRule.entries[index])
+                                    showSyncRuleDialog = false
+                                }
+                            )
+                            Text(
+                                text = option,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
                     }
                 }
             },
@@ -488,8 +505,7 @@ fun VideoListScreen(
     playlistId: Long,
     onNavigateBack: () -> Unit,
     onNavigateToVideoPlayer: (String) -> Unit,
-    onShowUrlInputDialog: (Long) -> Unit,
-    onShowMultiChoiceDialog: (Long) -> Unit,
+    onNavigateToVideoList: (Long) -> Unit,
     modifier: Modifier = Modifier,
     videoViewModel: VideoViewModel = viewModel(
         factory = VideoViewModelFactory(
@@ -518,6 +534,8 @@ fun VideoListScreen(
     val msgReimportStarted = stringResource(R.string.message_reimport_started)
     val msgReimportErrorParse = stringResource(R.string.message_reimport_error_parse)
     val msgReimportErrorNetwork = stringResource(R.string.message_reimport_error_network)
+    val msgVideosAdded = stringResource(R.string.message_videos_added)
+    val msgOperationFailed = stringResource(R.string.message_operation_failed)
 
     val currentId by remember { mutableLongStateOf(playlistId) }
     // playlistId == 0の場合は新規プレイリスト作成モード（空のリスト）
@@ -535,6 +553,8 @@ fun VideoListScreen(
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
     var videoToDeleteId by remember { mutableStateOf<Long?>(null) }
     var videoToReimportId by remember { mutableStateOf<Long?>(null) }
+    var showUrlInputDialog by remember { mutableStateOf(false) }
+    var showMultiChoiceDialog by remember { mutableStateOf(false) }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -619,12 +639,18 @@ fun VideoListScreen(
             },
             onSetThumbnail = { videoId ->
                 playlist?.let { pl ->
-                    playlistViewModel.update(
-                        pl.copy(thumbnail = Playlist.Thumbnail.Video(videoId))
-                    )
-                }
-                scope.launch {
-                    snackbarHostState.showSnackbar(msgThumbnailSet)
+                    scope.launch(Dispatchers.IO) {
+                        val result = playlistViewModel.update(
+                            pl.copy(thumbnail = Playlist.Thumbnail.Video(videoId))
+                        )
+                        withContext(Dispatchers.Main) {
+                            if (result.isSuccess) {
+                                snackbarHostState.showSnackbar(msgThumbnailSet)
+                            } else {
+                                snackbarHostState.showSnackbar(msgOperationFailed)
+                            }
+                        }
+                    }
                 }
             },
             onDownload = { videoId ->
@@ -642,10 +668,15 @@ fun VideoListScreen(
                     // 選択された動画をプレイリストから削除
                     val currentPlaylist = playlistViewModel.getFromIdAsync(currentId).await()
                     currentPlaylist?.let { pl ->
-                        playlistViewModel.removeVideosFromPlaylist(
+                        val result = playlistViewModel.removeVideosFromPlaylist(
                             pl,
                             selectedItems.toList()
                         )
+                        if (result.isFailure) {
+                            withContext(Dispatchers.Main) {
+                                snackbarHostState.showSnackbar(msgOperationFailed)
+                            }
+                        }
                     }
 
                     withContext(Dispatchers.Main) {
@@ -665,7 +696,12 @@ fun VideoListScreen(
                     val type = pl?.type as? Playlist.Type.CloudPlaylist
                     if (pl != null && type != null) {
                         val updatedType = type.copy(syncRule = rule)
-                        playlistViewModel.update(pl.copy(type = updatedType))
+                        val result = playlistViewModel.update(pl.copy(type = updatedType))
+                        if (result.isFailure) {
+                            withContext(Dispatchers.Main) {
+                                snackbarHostState.showSnackbar(msgOperationFailed)
+                            }
+                        }
                     }
                 }
             },
@@ -690,11 +726,11 @@ fun VideoListScreen(
             },
             onFabUrlClick = {
                 isFabExpanded = false
-                onShowUrlInputDialog(currentId)
+                showUrlInputDialog = true
             },
             onFabMultiChoiceClick = {
                 isFabExpanded = false
-                onShowMultiChoiceDialog(currentId)
+                showMultiChoiceDialog = true
             },
             modifier = Modifier.fillMaxSize()
         )
@@ -715,22 +751,41 @@ fun VideoListScreen(
         RemoveOrDeleteVideoDialog(
             videoTitle = video.title,
             onRemoveFromPlaylist = {
-                playlist?.let { pl ->
-                    playlistViewModel.removeVideosFromPlaylist(pl, listOf(id))
-                }
-                videoToDeleteId = null
-                scope.launch {
-                    snackbarHostState.showSnackbar(msgVideoRemovedFromPlaylist)
+                scope.launch(Dispatchers.IO) {
+                    val result = playlist?.let { pl ->
+                        playlistViewModel.removeVideosFromPlaylist(pl, listOf(id))
+                    }
+                    withContext(Dispatchers.Main) {
+                        videoToDeleteId = null
+                        if (result?.isFailure == true) {
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        } else {
+                            snackbarHostState.showSnackbar(msgVideoRemovedFromPlaylist)
+                        }
+                    }
                 }
             },
             onDeleteVideo = {
-                playlist?.let { pl ->
-                    playlistViewModel.removeVideosFromPlaylist(pl, listOf(id))
-                }
-                videoViewModel.delete(video)
-                videoToDeleteId = null
-                scope.launch {
-                    snackbarHostState.showSnackbar(msgVideoDeleted)
+                scope.launch(Dispatchers.IO) {
+                    val removeResult = playlist?.let { pl ->
+                        playlistViewModel.removeVideosFromPlaylist(pl, listOf(id))
+                    }
+                    if (removeResult?.isFailure == true) {
+                        withContext(Dispatchers.Main) {
+                            videoToDeleteId = null
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
+                        return@launch
+                    }
+                    val result = videoViewModel.delete(video)
+                    withContext(Dispatchers.Main) {
+                        videoToDeleteId = null
+                        if (result.isSuccess) {
+                            snackbarHostState.showSnackbar(msgVideoDeleted)
+                        } else {
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
+                    }
                 }
             },
             onDismiss = { videoToDeleteId = null }
@@ -766,7 +821,120 @@ fun VideoListScreen(
             onDismiss = { videoToReimportId = null }
         )
     }
+
+    if (showUrlInputDialog) {
+        UrlInputDialog(
+            onConfirm = { url ->
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        val targetPlaylistId = if (currentId != 0L) {
+                            currentId
+                        } else {
+                            val newPlaylist = createImportingPlaylist()
+                            playlistViewModel.insertAsync(newPlaylist).await()
+                        }
+                        VideoInfoDownloadWorker.registerWorker(
+                            context,
+                            url,
+                            longArrayOf(targetPlaylistId)
+                        )
+                        withContext(Dispatchers.Main) {
+                            showUrlInputDialog = false
+                            if (currentId == 0L) {
+                                onNavigateToVideoList(targetPlaylistId)
+                            }
+                        }
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                        Log.e(TAG, "Failed to create playlist for URL import", e)
+                        withContext(Dispatchers.Main) {
+                            showUrlInputDialog = false
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
+                    }
+                }
+            },
+            onDismiss = { showUrlInputDialog = false }
+        )
+    }
+
+    if (showMultiChoiceDialog) {
+        val allVideos by videoViewModel.allVideos.observeAsState(emptyList())
+        val existingVideoIds = playlist?.videos?.toSet() ?: emptySet()
+
+        MultiChoiceVideoDialog(
+            displayDataList = allVideos
+                .filter { it.id !in existingVideoIds }
+                .map { video ->
+                    DisplayData(
+                        id = video.id,
+                        title = video.title,
+                        thumbnailUrl = video.thumbnailUrl.takeIf {
+                            it.isNotEmpty()
+                        }?.let { DisplayDataThumbnail.Url(it) }
+                    )
+                },
+            onConfirm = { selectedIds ->
+                scope.launch(Dispatchers.IO) {
+                    try {
+                        if (currentId == 0L) {
+                            var newPlaylist = Playlist(videos = selectedIds.toList())
+                            newPlaylist.updateThumbnail()?.let { newPlaylist = it }
+                            val newId = playlistViewModel.insertAsync(newPlaylist).await()
+                            withContext(Dispatchers.Main) {
+                                showMultiChoiceDialog = false
+                                onNavigateToVideoList(newId)
+                                snackbarHostState.showSnackbar(msgVideosAdded)
+                            }
+                        } else {
+                            val targetPlaylist = playlistViewModel
+                                .getFromIdAsync(currentId)
+                                .await()
+                            if (targetPlaylist != null) {
+                                val updatedVideos =
+                                    (targetPlaylist.videos + selectedIds).distinct()
+                                val updateResult = playlistViewModel.update(
+                                    targetPlaylist.copy(videos = updatedVideos)
+                                )
+                                withContext(Dispatchers.Main) {
+                                    showMultiChoiceDialog = false
+                                    if (updateResult.isSuccess) {
+                                        snackbarHostState.showSnackbar(msgVideosAdded)
+                                    } else {
+                                        snackbarHostState.showSnackbar(msgOperationFailed)
+                                    }
+                                }
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    showMultiChoiceDialog = false
+                                    snackbarHostState.showSnackbar(msgOperationFailed)
+                                }
+                            }
+                        }
+                    } catch (e: kotlinx.coroutines.CancellationException) {
+                        throw e
+                    } catch (e: android.database.sqlite.SQLiteException) {
+                        Log.e(TAG, "Database error adding videos to playlist", e)
+                        withContext(Dispatchers.Main) {
+                            showMultiChoiceDialog = false
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
+                    } catch (e: IllegalStateException) {
+                        Log.e(TAG, "Failed to add videos to playlist", e)
+                        withContext(Dispatchers.Main) {
+                            showMultiChoiceDialog = false
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
+                    }
+                }
+            },
+            onDismiss = { showMultiChoiceDialog = false }
+        )
+    }
 }
+
+private const val TAG = "VideoListScreen"
 
 @Preview(showBackground = true)
 @Composable

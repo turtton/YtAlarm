@@ -2,20 +2,10 @@
 
 package net.turtton.ytalarm.navigation
 
-import android.util.Log
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -23,17 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
-import net.turtton.ytalarm.YtApplication
-import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
-import net.turtton.ytalarm.kernel.entity.Playlist
-import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
-import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
-import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
-import net.turtton.ytalarm.ui.compose.dialogs.UrlInputDialog
 import net.turtton.ytalarm.ui.compose.screens.AboutPageScreen
 import net.turtton.ytalarm.ui.compose.screens.AlarmListScreen
 import net.turtton.ytalarm.ui.compose.screens.AllVideosScreen
@@ -41,13 +21,6 @@ import net.turtton.ytalarm.ui.compose.screens.PlaylistScreen
 import net.turtton.ytalarm.ui.compose.screens.SettingsScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoListScreen
 import net.turtton.ytalarm.ui.compose.screens.VideoPlayerScreen
-import net.turtton.ytalarm.util.extensions.createImportingPlaylist
-import net.turtton.ytalarm.util.extensions.updateThumbnail
-import net.turtton.ytalarm.viewmodel.PlaylistViewModel
-import net.turtton.ytalarm.viewmodel.PlaylistViewModelFactory
-import net.turtton.ytalarm.viewmodel.VideoViewModel
-import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
-import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
 /**
  * YtAlarmアプリのNavigation Graph
@@ -157,7 +130,6 @@ private fun NavGraphBuilder.playlistScreen(
 /**
  * 動画一覧画面のルート定義
  */
-@Suppress("LongMethod", "CyclomaticComplexMethod")
 private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
     composable(
         route = YtAlarmDestination.VIDEO_LIST,
@@ -169,31 +141,6 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         )
     ) { backStackEntry ->
         val playlistId = backStackEntry.arguments?.getLong("playlistId") ?: 0L
-        val context = LocalContext.current
-        val scope = rememberCoroutineScope()
-        val snackbarHostState = remember { SnackbarHostState() }
-
-        // Pre-fetch string resources for use in lambdas
-        val msgVideosAdded = stringResource(R.string.message_videos_added)
-        val msgOperationFailed = stringResource(R.string.message_operation_failed)
-
-        // ViewModels
-        val ytApp = context.applicationContext as YtApplication
-        val videoViewModel: VideoViewModel = viewModel(
-            factory = VideoViewModelFactory(
-                ytApp.dataContainerProvider.getUseCaseContainer()
-            )
-        )
-        val playlistViewModel: PlaylistViewModel = viewModel(
-            factory = PlaylistViewModelFactory(
-                ytApp.dataContainerProvider.getUseCaseContainer()
-            )
-        )
-
-        // ダイアログ状態管理
-        var showUrlInputDialog by remember { mutableStateOf(false) }
-        var showMultiChoiceDialog by remember { mutableStateOf(false) }
-        var currentPlaylistIdForDialog by remember { mutableLongStateOf(playlistId) }
 
         VideoListScreen(
             playlistId = playlistId,
@@ -201,138 +148,18 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
                 navController.popBackStackSafely()
             },
             onNavigateToVideoPlayer = { videoId ->
-                navController.navigate(YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false))
+                navController.navigate(
+                    YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false)
+                )
             },
-            onShowUrlInputDialog = { plId ->
-                currentPlaylistIdForDialog = plId
-                showUrlInputDialog = true
-            },
-            onShowMultiChoiceDialog = { plId ->
-                currentPlaylistIdForDialog = plId
-                showMultiChoiceDialog = true
+            onNavigateToVideoList = { newPlaylistId ->
+                navController.navigate(YtAlarmDestination.videoList(newPlaylistId)) {
+                    popUpTo(YtAlarmDestination.videoList(0L)) {
+                        inclusive = true
+                    }
+                }
             }
         )
-
-        // UrlInputDialog: URLから動画/プレイリストを追加
-        if (showUrlInputDialog) {
-            UrlInputDialog(
-                onConfirm = { url ->
-                    scope.launch(Dispatchers.IO) {
-                        try {
-                            val targetPlaylistId = if (currentPlaylistIdForDialog != 0L) {
-                                currentPlaylistIdForDialog
-                            } else {
-                                // 新規プレイリスト作成（Importing状態）
-                                val newPlaylist = createImportingPlaylist()
-                                playlistViewModel.insertAsync(newPlaylist).await()
-                            }
-                            // VideoInfoDownloadWorkerを使用してバックグラウンドでインポート
-                            VideoInfoDownloadWorker.registerWorker(
-                                context,
-                                url,
-                                longArrayOf(targetPlaylistId)
-                            )
-                            // 新規プレイリストの場合、新しいIDで画面を再ナビゲート
-                            if (currentPlaylistIdForDialog == 0L) {
-                                withContext(Dispatchers.Main) {
-                                    showUrlInputDialog = false
-                                    navController.navigate(
-                                        YtAlarmDestination.videoList(targetPlaylistId)
-                                    ) {
-                                        popUpTo(YtAlarmDestination.videoList(0L)) {
-                                            inclusive = true
-                                        }
-                                    }
-                                }
-                            } else {
-                                withContext(Dispatchers.Main) {
-                                    showUrlInputDialog = false
-                                }
-                            }
-                        } catch (e: kotlinx.coroutines.CancellationException) {
-                            throw e
-                        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-                            Log.e("YtAlarmNavGraph", "Failed to create playlist for URL import", e)
-                            withContext(Dispatchers.Main) {
-                                showUrlInputDialog = false
-                                snackbarHostState.showSnackbar(msgOperationFailed)
-                            }
-                        }
-                    }
-                },
-                onDismiss = { showUrlInputDialog = false }
-            )
-        }
-
-        // MultiChoiceVideoDialog: 既存動画をプレイリストに追加
-        if (showMultiChoiceDialog) {
-            val allVideos by videoViewModel.allVideos.observeAsState(emptyList())
-            val currentPlaylist by playlistViewModel
-                .getFromId(currentPlaylistIdForDialog)
-                .observeAsState()
-            val existingVideoIds = currentPlaylist?.videos?.toSet() ?: emptySet()
-
-            MultiChoiceVideoDialog(
-                displayDataList = allVideos
-                    .filter { it.id !in existingVideoIds }
-                    .map { video ->
-                        DisplayData(
-                            id = video.id,
-                            title = video.title,
-                            thumbnailUrl = video.thumbnailUrl.takeIf {
-                                it.isNotEmpty()
-                            }?.let { DisplayDataThumbnail.Url(it) }
-                        )
-                    },
-                onConfirm = { selectedIds ->
-                    scope.launch(Dispatchers.IO) {
-                        try {
-                            if (currentPlaylistIdForDialog == 0L) {
-                                // 新規プレイリスト作成（既存動画のみなのでOriginal型）
-                                var newPlaylist = Playlist(videos = selectedIds.toList())
-                                newPlaylist.updateThumbnail()?.let { newPlaylist = it }
-                                val newId = playlistViewModel.insertAsync(newPlaylist).await()
-                                // 新しいプレイリストIDで画面を再ナビゲート
-                                withContext(Dispatchers.Main) {
-                                    showMultiChoiceDialog = false
-                                    navController.navigate(YtAlarmDestination.videoList(newId)) {
-                                        popUpTo(YtAlarmDestination.videoList(0L)) {
-                                            inclusive = true
-                                        }
-                                    }
-                                    snackbarHostState.showSnackbar(msgVideosAdded)
-                                }
-                            } else {
-                                // 既存プレイリストに追加
-                                val playlist = playlistViewModel
-                                    .getFromIdAsync(currentPlaylistIdForDialog)
-                                    .await()
-                                if (playlist != null) {
-                                    val updatedVideos = (playlist.videos + selectedIds).distinct()
-                                    playlistViewModel.update(playlist.copy(videos = updatedVideos))
-                                }
-                                withContext(Dispatchers.Main) {
-                                    snackbarHostState.showSnackbar(msgVideosAdded)
-                                }
-                            }
-                        } catch (e: kotlinx.coroutines.CancellationException) {
-                            throw e
-                        } catch (e: android.database.sqlite.SQLiteException) {
-                            Log.e("YtAlarmNavGraph", "Database error adding videos to playlist", e)
-                            withContext(Dispatchers.Main) {
-                                snackbarHostState.showSnackbar(msgOperationFailed)
-                            }
-                        } catch (e: IllegalStateException) {
-                            Log.e("YtAlarmNavGraph", "Failed to add videos to playlist", e)
-                            withContext(Dispatchers.Main) {
-                                snackbarHostState.showSnackbar(msgOperationFailed)
-                            }
-                        }
-                    }
-                },
-                onDismiss = { showMultiChoiceDialog = false }
-            )
-        }
     }
 }
 
@@ -344,34 +171,14 @@ private fun NavGraphBuilder.allVideosScreen(
     onOpenDrawer: () -> Unit
 ) {
     composable(route = YtAlarmDestination.ALL_VIDEOS) {
-        val context = LocalContext.current
-        var showUrlInputDialog by remember { mutableStateOf(false) }
-
         AllVideosScreen(
             onOpenDrawer = onOpenDrawer,
             onNavigateToVideoPlayer = { videoId ->
-                navController.navigate(YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false))
-            },
-            onShowUrlInputDialog = {
-                showUrlInputDialog = true
+                navController.navigate(
+                    YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false)
+                )
             }
         )
-
-        // UrlInputDialog: URLから動画を追加
-        if (showUrlInputDialog) {
-            UrlInputDialog(
-                onConfirm = { url ->
-                    // 全動画モードでは特定のプレイリストに追加しない
-                    VideoInfoDownloadWorker.registerWorker(
-                        context,
-                        url,
-                        longArrayOf()
-                    )
-                    showUrlInputDialog = false
-                },
-                onDismiss = { showUrlInputDialog = false }
-            )
-        }
     }
 }
 

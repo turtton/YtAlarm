@@ -19,12 +19,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.dialogs.DeleteVideoDialog
+import net.turtton.ytalarm.ui.compose.dialogs.UrlInputDialog
 import net.turtton.ytalarm.ui.compose.dialogs.VideoReimportDialog
 import net.turtton.ytalarm.ui.model.toUiModel
 import net.turtton.ytalarm.util.extensions.findActivity
@@ -36,6 +39,7 @@ import net.turtton.ytalarm.viewmodel.ReimportResult
 import net.turtton.ytalarm.viewmodel.VideoViewModel
 import net.turtton.ytalarm.viewmodel.VideoViewModelFactory
 import net.turtton.ytalarm.worker.VideoFileDownloadWorker
+import net.turtton.ytalarm.worker.VideoInfoDownloadWorker
 
 /**
  * 全動画一覧画面（Compose版）
@@ -48,7 +52,6 @@ import net.turtton.ytalarm.worker.VideoFileDownloadWorker
 fun AllVideosScreen(
     onOpenDrawer: () -> Unit,
     onNavigateToVideoPlayer: (String) -> Unit,
-    onShowUrlInputDialog: () -> Unit,
     modifier: Modifier = Modifier,
     videoViewModel: VideoViewModel = viewModel(
         factory = VideoViewModelFactory(
@@ -67,11 +70,13 @@ fun AllVideosScreen(
     val msgReimportStarted = stringResource(R.string.message_reimport_started)
     val msgReimportErrorParse = stringResource(R.string.message_reimport_error_parse)
     val msgReimportErrorNetwork = stringResource(R.string.message_reimport_error_network)
+    val msgDeleteFailed = stringResource(R.string.message_operation_failed)
 
     val selectedItems = remember { mutableStateListOf<Long>() }
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
     var videoToDeleteId by remember { mutableStateOf<Long?>(null) }
     var videoToReimportId by remember { mutableStateOf<Long?>(null) }
+    var showUrlInputDialog by remember { mutableStateOf(false) }
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
@@ -145,7 +150,7 @@ fun AllVideosScreen(
             onSyncRuleChange = { /* Not applicable for all videos mode */ },
             onFabExpandToggle = { /* Not used in all videos mode */ },
             onFabMainClick = { /* Not used in all videos mode */ },
-            onFabUrlClick = onShowUrlInputDialog,
+            onFabUrlClick = { showUrlInputDialog = true },
             onFabMultiChoiceClick = { /* Not applicable for all videos mode */ },
             modifier = Modifier.fillMaxSize()
         )
@@ -166,8 +171,15 @@ fun AllVideosScreen(
         DeleteVideoDialog(
             videoTitle = video.title,
             onConfirm = {
-                videoViewModel.delete(video)
-                videoToDeleteId = null
+                scope.launch(Dispatchers.IO) {
+                    val result = videoViewModel.delete(video)
+                    withContext(Dispatchers.Main) {
+                        videoToDeleteId = null
+                        if (result.isFailure) {
+                            snackbarHostState.showSnackbar(msgDeleteFailed)
+                        }
+                    }
+                }
             },
             onDismiss = { videoToDeleteId = null }
         )
@@ -200,6 +212,20 @@ fun AllVideosScreen(
                 }
             },
             onDismiss = { videoToReimportId = null }
+        )
+    }
+
+    if (showUrlInputDialog) {
+        UrlInputDialog(
+            onConfirm = { url ->
+                VideoInfoDownloadWorker.registerWorker(
+                    context,
+                    url,
+                    longArrayOf()
+                )
+                showUrlInputDialog = false
+            },
+            onDismiss = { showUrlInputDialog = false }
         )
     }
 }
