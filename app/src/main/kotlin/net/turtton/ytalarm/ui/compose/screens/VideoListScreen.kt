@@ -42,8 +42,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -149,9 +149,9 @@ fun VideoListScreenContent(
     onFabUrlClick: () -> Unit,
     onFabMultiChoiceClick: () -> Unit,
     modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState,
     onOpenDrawer: () -> Unit = {}
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     var showSortDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
     var showSyncRuleDialog by remember { mutableStateOf(false) }
@@ -252,34 +252,34 @@ fun VideoListScreenContent(
                     // Sync中の回転アニメーション
                     val syncRotation = remember { Animatable(0f) }
                     val shouldRotate = isSyncMode && isSyncing
-                    // shouldRotateはパラメータ由来のローカル変数のため、snapshotFlowで
-                    // 変更を検知するにはrememberUpdatedStateでState化する必要がある
-                    val currentShouldRotate by rememberUpdatedState(shouldRotate)
 
-                    // LaunchedEffect(Unit)を使用する理由:
-                    // - shouldRotateがfalseになっても即座に停止せず、1周完了してから停止させたい
-                    // - LaunchedEffect(shouldRotate)だと変更時に即キャンセル→再起動され、
-                    //   回転途中から0°へアニメーションして逆回転になってしまう
-                    // - コンポーネント破棄時はCoroutineScopeがキャンセルされるため問題なし
-                    LaunchedEffect(Unit) {
-                        while (true) {
-                            // 回転許可が出るまで待機（snapshotFlowでState変更を監視）
-                            snapshotFlow { currentShouldRotate }.filter { it }.first()
-                            val startTime = System.currentTimeMillis()
-                            syncRotation.animateTo(
-                                targetValue = SYNC_ROTATION_DEGREES,
-                                animationSpec = tween(
-                                    durationMillis = SYNC_ANIMATION_DURATION_MS,
-                                    easing = LinearEasing
+                    if (isSyncMode) {
+                        val currentShouldRotate by rememberUpdatedState(shouldRotate)
+
+                        // LaunchedEffect(Unit)を使用する理由:
+                        // - shouldRotateがfalseになっても即座に停止せず、1周完了してから停止させたい
+                        // - LaunchedEffect(shouldRotate)だと変更時に即キャンセル→再起動され、
+                        //   回転途中から0°へアニメーションして逆回転になってしまう
+                        // - コンポーネント破棄時はCoroutineScopeがキャンセルされるため問題なし
+                        LaunchedEffect(Unit) {
+                            while (true) {
+                                snapshotFlow { currentShouldRotate }.filter { it }.first()
+                                val startTime = System.currentTimeMillis()
+                                syncRotation.animateTo(
+                                    targetValue = SYNC_ROTATION_DEGREES,
+                                    animationSpec = tween(
+                                        durationMillis = SYNC_ANIMATION_DURATION_MS,
+                                        easing = LinearEasing
+                                    )
                                 )
-                            )
-                            // アニメーションOFF端末ではanimateToが即座に完了するため、
-                            // 無限ループが高速回転してCPU負荷が発生する。これを防止する。
-                            val elapsedTime = System.currentTimeMillis() - startTime
-                            if (elapsedTime < ANIMATION_MIN_DURATION_MS) {
-                                delay(ANIMATION_FALLBACK_DELAY_MS)
+                                // アニメーションOFF端末ではanimateToが即座に完了するため、
+                                // 無限ループが高速回転してCPU負荷が発生する。これを防止する。
+                                val elapsedTime = System.currentTimeMillis() - startTime
+                                if (elapsedTime < ANIMATION_MIN_DURATION_MS) {
+                                    delay(ANIMATION_FALLBACK_DELAY_MS)
+                                }
+                                syncRotation.snapTo(0f)
                             }
-                            syncRotation.snapTo(0f)
                         }
                     }
 
@@ -520,6 +520,46 @@ fun VideoListScreen(
         )
     )
 ) {
+    val currentId = playlistId
+    val isNewPlaylistMode = currentId == 0L
+
+    // playlistIdが変わった場合にscreen-local stateをリセットするためkeyブロックで囲む
+    key(playlistId) {
+        VideoListScreenInner(
+            currentId = currentId,
+            isNewPlaylistMode = isNewPlaylistMode,
+            onNavigateBack = onNavigateBack,
+            onNavigateToVideoPlayer = onNavigateToVideoPlayer,
+            onNavigateToVideoList = onNavigateToVideoList,
+            modifier = modifier,
+            videoViewModel = videoViewModel,
+            playlistViewModel = playlistViewModel
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun VideoListScreenInner(
+    currentId: Long,
+    isNewPlaylistMode: Boolean,
+    onNavigateBack: () -> Unit,
+    onNavigateToVideoPlayer: (String) -> Unit,
+    onNavigateToVideoList: (Long) -> Unit,
+    modifier: Modifier = Modifier,
+    videoViewModel: VideoViewModel = viewModel(
+        factory = VideoViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
+        )
+    ),
+    playlistViewModel: PlaylistViewModel = viewModel(
+        factory = PlaylistViewModelFactory(
+            (LocalContext.current.applicationContext as YtApplication).dataContainerProvider
+                .getUseCaseContainer()
+        )
+    )
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -537,10 +577,6 @@ fun VideoListScreen(
     val msgVideosAdded = stringResource(R.string.message_videos_added)
     val msgOperationFailed = stringResource(R.string.message_operation_failed)
 
-    val currentId by remember { mutableLongStateOf(playlistId) }
-    // playlistId == 0の場合は新規プレイリスト作成モード（空のリスト）
-    // 全動画表示は AllVideosScreen で処理するため、ここでは扱わない
-    val isNewPlaylistMode = currentId == 0L
     val playlist by if (isNewPlaylistMode) {
         remember { mutableStateOf<Playlist?>(null) }
     } else {
@@ -549,7 +585,6 @@ fun VideoListScreen(
     val selectedItems = remember { mutableStateListOf<Long>() }
     var isFabExpanded by remember { mutableStateOf(false) }
 
-    // メニュー展開状態の管理
     val expandedMenus = remember { mutableStateMapOf<Long, Boolean>() }
     var videoToDeleteId by remember { mutableStateOf<Long?>(null) }
     var videoToReimportId by remember { mutableStateOf<Long?>(null) }
@@ -561,12 +596,9 @@ fun VideoListScreen(
     val orderRule = preferences.videoOrderRule
     val orderUp = preferences.videoOrderUp
 
-    // プレイリストのタイプを取得
     val playlistType = playlist?.type
-    val isOriginalMode = playlistType is Playlist.Type.Original || playlistType == null
     val isSyncMode = playlistType is Playlist.Type.CloudPlaylist
 
-    // 同期Workerの状態を監視
     val syncWorkInfo by WorkManager.getInstance(context)
         .getWorkInfosForUniqueWorkLiveData("SyncWorker_$currentId")
         .observeAsState(emptyList())
@@ -574,173 +606,153 @@ fun VideoListScreen(
         workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED
     }
 
-    // 動画リストを取得
-    // - playlistId=0 (新規プレイリスト): 空のリスト
-    // - playlistId>0 (既存プレイリスト): プレイリストの動画を取得
-    // 全動画表示は AllVideosScreen で処理
     val videos by if (isNewPlaylistMode) {
-        // 新規プレイリスト作成モード: 空のリスト
         remember { mutableStateOf(emptyList<Video>()) }
     } else {
-        // 既存プレイリストの動画を取得
         val videoIds = playlist?.videos ?: emptyList()
         videoViewModel.getFromIds(videoIds).observeAsState(emptyList())
     }
 
-    // ソート処理
     val sortedVideos = remember(videos, orderRule, orderUp) {
         videos.sorted(orderRule, orderUp)
     }
 
-    // ID→Videoマップ（ダイアログ等でVideoオブジェクトが必要な場合に使用）
     val videoMap = remember(videos) { videos.associateBy { it.id } }
 
-    // UiModel変換
     val videoUiModels = remember(sortedVideos) { sortedVideos.map { it.toUiModel() } }
 
-    // タイトルの決定: 新規プレイリストモード、既存プレイリストモード
-    // 全動画モードは AllVideosScreen で処理
     val playlistTitle = if (isNewPlaylistMode) {
         stringResource(R.string.nav_video_list_new)
     } else {
         playlist?.title ?: stringResource(R.string.nav_video_list)
     }
-
-    // VideoListScreenContentを呼び出す
     // isAllVideosMode = false: 全動画モードは AllVideosScreen で処理
-    Box(modifier = modifier.fillMaxSize()) {
-        VideoListScreenContent(
-            playlistTitle = playlistTitle,
-            isNewPlaylist = isNewPlaylistMode,
-            isAllVideosMode = false,
-            videos = videoUiModels,
-            playlistType = playlistType,
-            orderRule = orderRule,
-            orderUp = orderUp,
-            selectedItems = selectedItems.toList(),
-            isFabExpanded = isFabExpanded,
-            isSyncing = isSyncing,
-            expandedMenus = expandedMenus,
-            onItemSelect = { id, isSelected ->
-                if (isSelected) {
-                    selectedItems.add(id)
-                } else {
-                    selectedItems.remove(id)
-                }
-            },
-            onItemClick = { videoId ->
-                onNavigateToVideoPlayer(videoId)
-            },
-            onMenuClick = { videoId ->
-                expandedMenus[videoId] = true
-            },
-            onMenuDismiss = { videoId ->
-                expandedMenus.remove(videoId)
-            },
-            onSetThumbnail = { videoId ->
-                playlist?.let { pl ->
-                    scope.launch(Dispatchers.IO) {
-                        val result = playlistViewModel.update(
-                            pl.copy(thumbnail = Playlist.Thumbnail.Video(videoId))
-                        )
-                        withContext(Dispatchers.Main) {
-                            if (result.isSuccess) {
-                                snackbarHostState.showSnackbar(msgThumbnailSet)
-                            } else {
-                                snackbarHostState.showSnackbar(msgOperationFailed)
-                            }
-                        }
-                    }
-                }
-            },
-            onDownload = { videoId ->
-                VideoFileDownloadWorker.registerWorker(context, videoId)
-            },
-            onReimport = { videoId ->
-                videoToReimportId = videoId
-            },
-            onDeleteSingleVideo = { videoId ->
-                videoToDeleteId = videoId
-            },
-            onNavigateBack = onNavigateBack,
-            onDeleteVideos = {
+    VideoListScreenContent(
+        playlistTitle = playlistTitle,
+        isNewPlaylist = isNewPlaylistMode,
+        isAllVideosMode = false,
+        videos = videoUiModels,
+        playlistType = playlistType,
+        orderRule = orderRule,
+        orderUp = orderUp,
+        selectedItems = selectedItems.toList(),
+        isFabExpanded = isFabExpanded,
+        isSyncing = isSyncing,
+        expandedMenus = expandedMenus,
+        onItemSelect = { id, isSelected ->
+            if (isSelected) {
+                selectedItems.add(id)
+            } else {
+                selectedItems.remove(id)
+            }
+        },
+        onItemClick = { videoId ->
+            onNavigateToVideoPlayer(videoId)
+        },
+        onMenuClick = { videoId ->
+            expandedMenus[videoId] = true
+        },
+        onMenuDismiss = { videoId ->
+            expandedMenus.remove(videoId)
+        },
+        onSetThumbnail = { videoId ->
+            playlist?.let { pl ->
                 scope.launch(Dispatchers.IO) {
-                    // 選択された動画をプレイリストから削除
-                    val currentPlaylist = playlistViewModel.getFromIdAsync(currentId).await()
-                    currentPlaylist?.let { pl ->
-                        val result = playlistViewModel.removeVideosFromPlaylist(
-                            pl,
-                            selectedItems.toList()
-                        )
-                        if (result.isFailure) {
-                            withContext(Dispatchers.Main) {
-                                snackbarHostState.showSnackbar(msgOperationFailed)
-                            }
-                        }
-                    }
-
-                    withContext(Dispatchers.Main) {
-                        selectedItems.clear()
-                    }
-                }
-            },
-            onSortRuleChange = { rule ->
-                preferences.videoOrderRule = rule
-            },
-            onOrderUpToggle = {
-                preferences.videoOrderUp = !orderUp
-            },
-            onSyncRuleChange = { rule ->
-                scope.launch(Dispatchers.IO) {
-                    val pl = playlistViewModel.getFromIdAsync(currentId).await()
-                    val type = pl?.type as? Playlist.Type.CloudPlaylist
-                    if (pl != null && type != null) {
-                        val updatedType = type.copy(syncRule = rule)
-                        val result = playlistViewModel.update(pl.copy(type = updatedType))
-                        if (result.isFailure) {
-                            withContext(Dispatchers.Main) {
-                                snackbarHostState.showSnackbar(msgOperationFailed)
-                            }
-                        }
-                    }
-                }
-            },
-            onFabExpandToggle = {
-                isFabExpanded = !isFabExpanded
-            },
-            onFabMainClick = {
-                // Syncモード: 同期実行
-                val cloudType = playlist?.type as? Playlist.Type.CloudPlaylist
-                if (cloudType != null) {
-                    // Worker登録を先に実行（snackbarは待機するため）
-                    VideoInfoDownloadWorker.registerSyncWorker(
-                        context,
-                        currentId,
-                        cloudType.url
+                    val result = playlistViewModel.update(
+                        pl.copy(thumbnail = Playlist.Thumbnail.Video(videoId))
                     )
-                    // スナックバーは非同期で表示
-                    scope.launch {
-                        snackbarHostState.showSnackbar(msgSyncStarted)
+                    withContext(Dispatchers.Main) {
+                        if (result.isSuccess) {
+                            snackbarHostState.showSnackbar(msgThumbnailSet)
+                        } else {
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
                     }
                 }
-            },
-            onFabUrlClick = {
-                isFabExpanded = false
-                showUrlInputDialog = true
-            },
-            onFabMultiChoiceClick = {
-                isFabExpanded = false
-                showMultiChoiceDialog = true
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+            }
+        },
+        onDownload = { videoId ->
+            VideoFileDownloadWorker.registerWorker(context, videoId)
+        },
+        onReimport = { videoId ->
+            videoToReimportId = videoId
+        },
+        onDeleteSingleVideo = { videoId ->
+            videoToDeleteId = videoId
+        },
+        onNavigateBack = onNavigateBack,
+        onDeleteVideos = {
+            scope.launch(Dispatchers.IO) {
+                // 選択された動画をプレイリストから削除
+                val currentPlaylist = playlistViewModel.getFromIdAsync(currentId).await()
+                currentPlaylist?.let { pl ->
+                    val result = playlistViewModel.removeVideosFromPlaylist(
+                        pl,
+                        selectedItems.toList()
+                    )
+                    if (result.isFailure) {
+                        withContext(Dispatchers.Main) {
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
+                    }
+                }
 
-        // Snackbar用のホスト
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
-    }
+                withContext(Dispatchers.Main) {
+                    selectedItems.clear()
+                }
+            }
+        },
+        onSortRuleChange = { rule ->
+            preferences.videoOrderRule = rule
+        },
+        onOrderUpToggle = {
+            preferences.videoOrderUp = !orderUp
+        },
+        onSyncRuleChange = { rule ->
+            scope.launch(Dispatchers.IO) {
+                val pl = playlistViewModel.getFromIdAsync(currentId).await()
+                val type = pl?.type as? Playlist.Type.CloudPlaylist
+                if (pl != null && type != null) {
+                    val updatedType = type.copy(syncRule = rule)
+                    val result = playlistViewModel.update(pl.copy(type = updatedType))
+                    if (result.isFailure) {
+                        withContext(Dispatchers.Main) {
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
+                    }
+                }
+            }
+        },
+        onFabExpandToggle = {
+            isFabExpanded = !isFabExpanded
+        },
+        onFabMainClick = {
+            // Syncモード: 同期実行
+            val cloudType = playlist?.type as? Playlist.Type.CloudPlaylist
+            if (cloudType != null) {
+                // Worker登録を先に実行（snackbarは待機するため）
+                VideoInfoDownloadWorker.registerSyncWorker(
+                    context,
+                    currentId,
+                    cloudType.url
+                )
+                // スナックバーは非同期で表示
+                scope.launch {
+                    snackbarHostState.showSnackbar(msgSyncStarted)
+                }
+            }
+        },
+        onFabUrlClick = {
+            isFabExpanded = false
+            showUrlInputDialog = true
+        },
+        onFabMultiChoiceClick = {
+            isFabExpanded = false
+            showMultiChoiceDialog = true
+        },
+        modifier = modifier.fillMaxSize(),
+        snackbarHostState = snackbarHostState
+    )
 
     // 削除確認ダイアログ（プレイリストから外す or 動画を削除する）
     videoToDeleteId?.let { id ->
@@ -988,7 +1000,8 @@ private fun VideoListScreenPreview() {
             onFabExpandToggle = { },
             onFabMainClick = { },
             onFabUrlClick = { },
-            onFabMultiChoiceClick = { }
+            onFabMultiChoiceClick = { },
+            snackbarHostState = remember { SnackbarHostState() }
         )
     }
 }
