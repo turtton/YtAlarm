@@ -112,26 +112,39 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         targetUrl: String,
         playlistArray: LongArray?
     ): Result {
-        val playlistResult = useCaseContainer.importCloudPlaylist(targetUrl)
+        val importingPlaylistId = findImportingPlaylistId(useCaseContainer, playlistArray)
+        val playlistResult = useCaseContainer.importCloudPlaylist(targetUrl, importingPlaylistId)
         return playlistResult.fold(
             ifLeft = { failure ->
                 Log.e(WORKER_ID, "Import failed. Url: $targetUrl, reason: $failure")
                 Result.failure()
             },
             ifRight = { newPlaylistId ->
-                if (playlistArray != null && playlistArray.isNotEmpty()) {
+                val otherPlaylists = playlistArray
+                    ?.filter { it != importingPlaylistId }
+                    ?.toLongArray()
+                if (otherPlaylists != null && otherPlaylists.isNotEmpty()) {
                     val newPlaylist = useCaseContainer.getPlaylistByIdSync(newPlaylistId)
                     if (newPlaylist != null) {
                         addCloudPlaylistVideosToPlaylists(
                             useCaseContainer,
                             newPlaylist.videos,
-                            playlistArray
+                            otherPlaylists
                         )
                     }
                 }
                 Result.success()
             }
         )
+    }
+
+    private suspend fun findImportingPlaylistId(
+        useCaseContainer: UseCaseContainer<*, *, *, *>,
+        playlistArray: LongArray?
+    ): Long? {
+        if (playlistArray == null || playlistArray.isEmpty()) return null
+        val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
+        return playlists.firstOrNull { it.type is Playlist.Type.Importing }?.id
     }
 
     override suspend fun getForegroundInfo(): ForegroundInfo = createForegroundInfo()
@@ -220,13 +233,23 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
         playlistArray: LongArray
     ) {
         val playlists = useCaseContainer.getPlaylistsByIdsSync(playlistArray.toList())
-        val updatedPlaylists = playlists.mapNotNull { playlist ->
-            if (playlist.type !is Playlist.Type.Importing) return@mapNotNull null
+        val toUpdate = mutableListOf<Playlist>()
+        val toDelete = mutableListOf<Playlist>()
+
+        playlists.forEach { playlist ->
+            if (playlist.type !is Playlist.Type.Importing) return@forEach
 
             // プレイリスト内の全動画が更新中でないかチェック
             val videos = useCaseContainer.getVideosByIdsSync(playlist.videos)
             val hasUpdating = videos.any { it.state.isUpdating() }
-            if (hasUpdating) return@mapNotNull null
+            if (hasUpdating) return@forEach
+
+            val allFailed = videos.isEmpty() || videos.all { it.state is Video.State.Failed }
+            if (allFailed) {
+                Log.d(WORKER_ID, "Cleaning up failed importing playlist: ${playlist.id}")
+                toDelete.add(playlist)
+                return@forEach
+            }
 
             var updated = playlist.copy(type = Playlist.Type.Original)
             // サムネイルがNoneの場合、最初のInformation動画のサムネイルに更新
@@ -236,10 +259,14 @@ class VideoInfoDownloadWorker(appContext: Context, workerParams: WorkerParameter
                     updated = updated.copy(thumbnail = Playlist.Thumbnail.Video(firstReady.id))
                 }
             }
-            updated
+            toUpdate.add(updated)
         }
-        if (updatedPlaylists.isNotEmpty()) {
-            useCaseContainer.updateAllPlaylists(updatedPlaylists)
+
+        if (toUpdate.isNotEmpty()) {
+            useCaseContainer.updateAllPlaylists(toUpdate)
+        }
+        if (toDelete.isNotEmpty()) {
+            useCaseContainer.deleteAllPlaylists(toDelete)
         }
     }
 

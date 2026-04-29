@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -23,9 +24,11 @@ class PlaylistViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, 
         viewModelScope.launch {
             // アプリ起動直後のI/O負荷を軽減するため少し遅延
             delay(THUMBNAIL_VALIDATION_DELAY_MS)
-            runCatching {
+            try {
                 useCaseContainer.validateAndUpdateThumbnails()
-            }.onFailure { e ->
+            } catch (e: CancellationException) {
+                throw e
+            } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
                 Log.e(TAG, "Failed to validate thumbnails", e)
             }
         }
@@ -46,29 +49,60 @@ class PlaylistViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, 
         useCaseContainer.getPlaylistsByIdsSync(ids)
     }
 
-    fun update(playlist: Playlist) = viewModelScope.launch {
+    suspend fun update(playlist: Playlist): Result<Unit> = try {
         useCaseContainer.updatePlaylist(playlist)
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        Log.e(TAG, "Failed to update playlist: ${playlist.id}", e)
+        Result.failure(e)
     }
 
-    fun update(playlists: List<Playlist>) = viewModelScope.launch {
+    suspend fun update(playlists: List<Playlist>): Result<Unit> = try {
         useCaseContainer.updateAllPlaylists(playlists)
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        Log.e(TAG, "Failed to update playlists", e)
+        Result.failure(e)
     }
 
     fun insertAsync(playlist: Playlist): Deferred<Long> = viewModelScope.async {
         useCaseContainer.insertPlaylist(playlist)
     }
 
-    fun delete(playlist: Playlist) = viewModelScope.launch {
+    suspend fun delete(playlist: Playlist): Result<Unit> = try {
         useCaseContainer.deletePlaylist(playlist)
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        Log.e(TAG, "Failed to delete playlist: ${playlist.id}", e)
+        Result.failure(e)
     }
 
-    fun delete(playlists: List<Playlist>) = viewModelScope.launch {
+    suspend fun delete(playlists: List<Playlist>): Result<Unit> = try {
         useCaseContainer.deleteAllPlaylists(playlists)
+        Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
+    } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        Log.e(TAG, "Failed to delete playlists", e)
+        Result.failure(e)
     }
 
-    fun removeVideosFromPlaylist(playlist: Playlist, videoIds: List<Long>) = viewModelScope.launch {
-        useCaseContainer.removeVideosFromPlaylist(playlist, videoIds)
-    }
+    suspend fun removeVideosFromPlaylist(playlist: Playlist, videoIds: List<Long>): Result<Unit> =
+        try {
+            useCaseContainer.removeVideosFromPlaylist(playlist, videoIds)
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            Log.e(TAG, "Failed to remove videos from playlist: ${playlist.id}", e)
+            Result.failure(e)
+        }
 
     companion object {
         private const val TAG = "PlaylistViewModel"

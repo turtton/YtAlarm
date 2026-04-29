@@ -1,11 +1,13 @@
 package net.turtton.ytalarm.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import arrow.core.Either
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
@@ -43,7 +45,13 @@ class AlarmViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>)
      * suspend関数内からの呼び出しには[deleteSync]を使用すること。
      */
     fun delete(alarm: Alarm) = viewModelScope.launch {
-        deleteSync(alarm)
+        try {
+            deleteSync(alarm)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+            Log.e(TAG, "Failed to delete alarm: ${alarm.id}", e)
+        }
     }
 
     /**
@@ -72,6 +80,10 @@ class AlarmViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>)
         useCaseContainer.createSnoozeAlarm(originalAlarm)
 
     suspend fun getEnabledAlarmsSync(): List<Alarm> = useCaseContainer.getEnabledAlarms()
+
+    companion object {
+        private const val TAG = "AlarmViewModel"
+    }
 }
 
 class AlarmViewModelFactory(private val useCaseContainer: UseCaseContainer<*, *, *, *>) :

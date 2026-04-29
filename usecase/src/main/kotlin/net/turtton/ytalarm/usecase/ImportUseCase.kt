@@ -144,18 +144,29 @@ interface ImportUseCase<LExec, RExec, LDS, RDS>
     }
 
     /**
-     * クラウドプレイリストをインポートする。
-     * 重複チェックを行い、新規動画をDBに登録してプレイリストを作成する。
+     * URLからクラウドプレイリストをインポートする。
+     * プレイリストURLと単一動画URLの両方に対応し、重複チェックを行い、
+     * 新規動画をDBに登録してCloudPlaylistを作成する。
      *
-     * @param url プレイリストURL
+     * - プレイリストURL: プレイリスト名をタイトルに使用し、全エントリを動画として登録
+     * - 単一動画URL: 動画タイトルをプレイリスト名として1件のCloudPlaylistを作成
+     *
+     * [existingPlaylistId] が指定された場合、新規プレイリストを作成せず
+     * 既存プレイリスト（通常は[Playlist.Type.Importing]）をCloudPlaylistに変換して動画を設定する。
+     *
+     * @param url プレイリストURLまたは動画URL
+     * @param existingPlaylistId 再利用する既存プレイリストのID（nullの場合は新規作成）
      * @return インポート結果（プレイリストID or エラー）
      */
-    suspend fun importCloudPlaylist(url: String): Either<ImportResult.Failure, Long> {
+    suspend fun importCloudPlaylist(
+        url: String,
+        existingPlaylistId: Long? = null
+    ): Either<ImportResult.Failure, Long> {
         val lExecutor = localDataSource.dataSource.createExecutor()
         val rExecutor = remoteDataSource.dataSource.createExecutor()
 
         return when (
-            val result = remoteDataSource.videoInfoRepository.fetchPlaylistInfo(rExecutor, url)
+            val result = remoteDataSource.videoInfoRepository.fetchVideoInfo(rExecutor, url)
         ) {
             is Either.Left -> Either.Left(
                 when (result.value) {
@@ -167,18 +178,64 @@ interface ImportUseCase<LExec, RExec, LDS, RDS>
             )
 
             is Either.Right -> {
-                val videoInfoList = result.value
-                val videoIds = importVideoInfoList(lExecutor, videoInfoList)
+                val info = result.value
+                val typeData = info.typeData
+                val (playlistTitle, videoInfoList) = when (typeData) {
+                    is VideoInformation.Type.Playlist ->
+                        (info.title?.takeIf { it.isNotBlank() } ?: "Playlist") to
+                            typeData.entries
 
-                val playlist = Playlist(
-                    title = videoInfoList.firstOrNull()?.title ?: "Playlist",
-                    videos = videoIds,
-                    type = Playlist.Type.CloudPlaylist(url, Playlist.SyncRule.ALWAYS_ADD)
+                    is VideoInformation.Type.Video ->
+                        (
+                            info.title?.takeIf { it.isNotBlank() }
+                                ?: typeData.fullTitle
+                            ) to listOf(info)
+                }
+                val videoIds = importVideoInfoList(lExecutor, videoInfoList)
+                val type = Playlist.Type.CloudPlaylist(url, Playlist.SyncRule.ALWAYS_ADD)
+                Either.Right(
+                    upsertCloudPlaylist(
+                        lExecutor,
+                        existingPlaylistId,
+                        playlistTitle,
+                        videoIds,
+                        type
+                    )
                 )
-                val playlistId = localDataSource.playlistRepository.insert(lExecutor, playlist)
-                Either.Right(playlistId)
             }
         }
+    }
+
+    private suspend fun upsertCloudPlaylist(
+        executor: LExec,
+        existingPlaylistId: Long?,
+        title: String,
+        videoIds: List<Long>,
+        type: Playlist.Type.CloudPlaylist
+    ): Long {
+        if (existingPlaylistId != null) {
+            val existing = localDataSource.playlistRepository.getFromIdSync(
+                executor,
+                existingPlaylistId
+            )
+            if (existing != null) {
+                val thumbnail = videoIds.firstOrNull()
+                    ?.let { Playlist.Thumbnail.Video(it) }
+                    ?: Playlist.Thumbnail.None
+                localDataSource.playlistRepository.update(
+                    executor,
+                    existing.copy(
+                        title = title,
+                        videos = videoIds,
+                        type = type,
+                        thumbnail = thumbnail
+                    )
+                )
+                return existingPlaylistId
+            }
+        }
+        val playlist = Playlist(title = title, videos = videoIds, type = type)
+        return localDataSource.playlistRepository.insert(executor, playlist)
     }
 
     /**

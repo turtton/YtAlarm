@@ -2,6 +2,8 @@ package net.turtton.ytalarm.ui.compose.screens
 
 import android.util.Log
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +21,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -53,7 +56,6 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
 import net.turtton.ytalarm.kernel.entity.Playlist
-import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.ui.compose.components.PlaylistItem
 import net.turtton.ytalarm.ui.compose.components.PlaylistItemDropdownMenu
 import net.turtton.ytalarm.ui.compose.dialogs.RenamePlaylistDialog
@@ -229,18 +231,18 @@ fun PlaylistScreenContent(
             onDismissRequest = { showSortDialog = false },
             title = { Text(stringResource(R.string.menu_playlist_option_sortrule)) },
             text = {
-                androidx.compose.foundation.layout.Column {
+                Column {
                     sortOptions.forEachIndexed { index, option ->
-                        androidx.compose.material3.RadioButton(
-                            selected = orderRule.ordinal == index,
-                            onClick = {
-                                onSortRuleChange(PlaylistOrder.entries[index])
-                                showSortDialog = false
-                            }
-                        )
-                        androidx.compose.foundation.layout.Row(
+                        Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            RadioButton(
+                                selected = orderRule.ordinal == index,
+                                onClick = {
+                                    onSortRuleChange(PlaylistOrder.entries[index])
+                                    showSortDialog = false
+                                }
+                            )
                             Text(
                                 text = option,
                                 modifier = Modifier.padding(start = 8.dp)
@@ -328,6 +330,7 @@ fun PlaylistScreen(
     val msgPlaylistRenamed = stringResource(R.string.message_playlist_renamed)
     val msgPlaylistDeleted = stringResource(R.string.message_playlist_deleted)
     val msgDeleteFailed = stringResource(R.string.error_delete_playlist_failed)
+    val msgOperationFailed = stringResource(R.string.message_operation_failed)
 
     val playlists by playlistViewModel.allPlaylists.observeAsState(emptyList())
     val alarms by alarmViewModel.allAlarms.observeAsState(emptyList())
@@ -347,40 +350,6 @@ fun PlaylistScreen(
     val preferences = activity.privatePreferences
     val orderRule = preferences.playlistOrderRule
     val orderUp = preferences.playlistOrderUp
-
-    // ガベージコレクション（Importing状態で終了したプレイリストを削除）
-    LaunchedEffect(playlists) {
-        scope.launch(Dispatchers.IO) {
-            try {
-                // 最新のplaylistsを取得
-                val currentPlaylists = playlistViewModel.allPlaylistsAsync.await()
-                val importingPlaylists = currentPlaylists.filter {
-                    it.type is Playlist.Type.Importing
-                }
-                val videoIds = importingPlaylists.mapNotNull { it.videos.firstOrNull() }.distinct()
-                val videoMap = if (videoIds.isEmpty()) {
-                    emptyMap()
-                } else {
-                    videoViewModel.getFromIdsAsync(videoIds).await()
-                        .associateBy { it.id }
-                }
-                val garbage = importingPlaylists.filter { playlist ->
-                    val videoId = playlist.videos.firstOrNull() ?: return@filter false
-                    videoMap[videoId]?.state is Video.State.Failed
-                }
-                if (garbage.isNotEmpty()) {
-                    playlistViewModel.delete(garbage)
-                }
-            } catch (e: kotlinx.coroutines.CancellationException) {
-                // キャンセル例外は再スロー
-                throw e
-            } catch (e: android.database.sqlite.SQLiteException) {
-                android.util.Log.e("PlaylistScreen", "Database error during garbage collection", e)
-            } catch (e: IllegalStateException) {
-                android.util.Log.e("PlaylistScreen", "Garbage collection failed", e)
-            }
-        }
-    }
 
     // ソート処理
     val sortedPlaylists = remember(playlists, orderRule, orderUp) {
@@ -483,7 +452,12 @@ fun PlaylistScreen(
                 }
 
                 if (deletable.isNotEmpty()) {
-                    playlistViewModel.delete(deletable)
+                    val deleteResult = playlistViewModel.delete(deletable)
+                    if (deleteResult.isFailure) {
+                        withContext(Dispatchers.Main) {
+                            snackbarHostState.showSnackbar(msgDeleteFailed)
+                        }
+                    }
                 }
 
                 if (detectUsage) {
@@ -520,10 +494,16 @@ fun PlaylistScreen(
         RenamePlaylistDialog(
             currentTitle = playlist.title,
             onConfirm = { newName ->
-                playlistViewModel.update(playlist.copy(title = newName))
-                playlistToRenameId = null
-                scope.launch {
-                    snackbarHostState.showSnackbar(msgPlaylistRenamed)
+                scope.launch(Dispatchers.IO) {
+                    val result = playlistViewModel.update(playlist.copy(title = newName))
+                    withContext(Dispatchers.Main) {
+                        playlistToRenameId = null
+                        if (result.isSuccess) {
+                            snackbarHostState.showSnackbar(msgPlaylistRenamed)
+                        } else {
+                            snackbarHostState.showSnackbar(msgOperationFailed)
+                        }
+                    }
                 }
             },
             onDismiss = { playlistToRenameId = null }
@@ -566,12 +546,16 @@ fun PlaylistScreen(
                                 }
 
                                 ensureActive()
-                                playlistViewModel.delete(playlist)
+                                val deleteResult = playlistViewModel.delete(playlist)
                                 ensureActive()
 
                                 withContext(Dispatchers.Main) {
                                     playlistToDeleteId = null
-                                    snackbarHostState.showSnackbar(msgPlaylistDeleted)
+                                    if (deleteResult.isSuccess) {
+                                        snackbarHostState.showSnackbar(msgPlaylistDeleted)
+                                    } else {
+                                        snackbarHostState.showSnackbar(msgDeleteFailed)
+                                    }
                                 }
                             } catch (e: CancellationException) {
                                 throw e

@@ -142,6 +142,191 @@ class ImportUseCaseTest :
             }
         }
 
+        context("importCloudPlaylist") {
+            test("playlist URL: uses playlist title, not first video title") {
+                val playlistUrl = "http://example.com/playlist"
+                val entry1 = VideoInformation(
+                    id = "vid1",
+                    title = "First Song Title",
+                    url = "http://example.com/vid1",
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Video("First Song Title", "", "")
+                )
+                val entry2 = VideoInformation(
+                    id = "vid2",
+                    title = "Second Song Title",
+                    url = "http://example.com/vid2",
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Video("Second Song Title", "", "")
+                )
+                val playlistInfo = VideoInformation(
+                    id = "playlist1",
+                    title = "My Awesome Playlist",
+                    url = playlistUrl,
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Playlist(listOf(entry1, entry2))
+                )
+                fakeVideoInfoRepo.videoInfoResponses[playlistUrl] = Either.Right(playlistInfo)
+
+                val result = useCase.importCloudPlaylist(playlistUrl)
+
+                result.isRight() shouldBe true
+                val playlistId = result.getOrNull()!!
+                val createdPlaylist =
+                    fakePlaylistRepo.currentData.find { it.id == playlistId }
+                createdPlaylist?.title shouldBe "My Awesome Playlist"
+                fakeVideoRepo.currentData.size shouldBe 2
+            }
+
+            test("playlist URL with null title: falls back to default") {
+                val playlistUrl = "http://example.com/playlist"
+                val entry = VideoInformation(
+                    id = "vid1",
+                    title = "Song Title",
+                    url = "http://example.com/vid1",
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Video("Song Title", "", "")
+                )
+                val playlistInfo = VideoInformation(
+                    id = "playlist1",
+                    title = null,
+                    url = playlistUrl,
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Playlist(listOf(entry))
+                )
+                fakeVideoInfoRepo.videoInfoResponses[playlistUrl] = Either.Right(playlistInfo)
+
+                val result = useCase.importCloudPlaylist(playlistUrl)
+
+                result.isRight() shouldBe true
+                val playlistId = result.getOrNull()!!
+                val createdPlaylist =
+                    fakePlaylistRepo.currentData.find { it.id == playlistId }
+                createdPlaylist?.title shouldBe "Playlist"
+            }
+
+            test("single video URL: uses video title as playlist name") {
+                val videoUrl = "http://example.com/video"
+                val videoInfo = VideoInformation(
+                    id = "vid1",
+                    title = "Single Video Title",
+                    url = videoUrl,
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Video(
+                        "Single Video Title",
+                        "http://thumb.com",
+                        "http://example.com/video.mp4"
+                    )
+                )
+                fakeVideoInfoRepo.videoInfoResponses[videoUrl] = Either.Right(videoInfo)
+
+                val result = useCase.importCloudPlaylist(videoUrl)
+
+                result.isRight() shouldBe true
+                val playlistId = result.getOrNull()!!
+                val createdPlaylist =
+                    fakePlaylistRepo.currentData.find { it.id == playlistId }
+                createdPlaylist?.title shouldBe "Single Video Title"
+                createdPlaylist?.videos?.size shouldBe 1
+            }
+
+            test("network error: returns failure") {
+                fakeVideoInfoRepo.videoInfoResponses["http://example.com/playlist"] =
+                    Either.Left(VideoInfoError.NetworkError(RuntimeException("network")))
+
+                val result =
+                    useCase.importCloudPlaylist("http://example.com/playlist")
+
+                result.isLeft() shouldBe true
+                result.leftOrNull() shouldBe ImportResult.Failure.Network
+            }
+
+            test("playlist URL with blank title: falls back to default") {
+                val playlistUrl = "http://example.com/playlist"
+                val entry = VideoInformation(
+                    id = "vid1",
+                    title = "Song Title",
+                    url = "http://example.com/vid1",
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Video("Song Title", "", "")
+                )
+                val playlistInfo = VideoInformation(
+                    id = "playlist1",
+                    title = "   ",
+                    url = playlistUrl,
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Playlist(listOf(entry))
+                )
+                fakeVideoInfoRepo.videoInfoResponses[playlistUrl] = Either.Right(playlistInfo)
+
+                val result = useCase.importCloudPlaylist(playlistUrl)
+
+                result.isRight() shouldBe true
+                val playlistId = result.getOrNull()!!
+                val createdPlaylist =
+                    fakePlaylistRepo.currentData.find { it.id == playlistId }
+                createdPlaylist?.title shouldBe "Playlist"
+            }
+
+            test("single video URL with blank title: falls back to fullTitle") {
+                val videoUrl = "http://example.com/video"
+                val videoInfo = VideoInformation(
+                    id = "vid1",
+                    title = "",
+                    url = videoUrl,
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Video(
+                        "Full Title From TypeData",
+                        "http://thumb.com",
+                        "http://example.com/video.mp4"
+                    )
+                )
+                fakeVideoInfoRepo.videoInfoResponses[videoUrl] = Either.Right(videoInfo)
+
+                val result = useCase.importCloudPlaylist(videoUrl)
+
+                result.isRight() shouldBe true
+                val playlistId = result.getOrNull()!!
+                val createdPlaylist =
+                    fakePlaylistRepo.currentData.find { it.id == playlistId }
+                createdPlaylist?.title shouldBe "Full Title From TypeData"
+            }
+
+            test("existingPlaylistId: reuses existing playlist") {
+                val existingPlaylist = Playlist(
+                    id = 10L,
+                    title = "Old Title",
+                    type = Playlist.Type.Importing
+                )
+                fakePlaylistRepo.resetWith(existingPlaylist)
+
+                val playlistUrl = "http://example.com/playlist"
+                val entry = VideoInformation(
+                    id = "vid1",
+                    title = "Song",
+                    url = "http://example.com/vid1",
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Video("Song", "", "")
+                )
+                val playlistInfo = VideoInformation(
+                    id = "playlist1",
+                    title = "Correct Playlist Name",
+                    url = playlistUrl,
+                    domain = "example.com",
+                    typeData = VideoInformation.Type.Playlist(listOf(entry))
+                )
+                fakeVideoInfoRepo.videoInfoResponses[playlistUrl] = Either.Right(playlistInfo)
+
+                val result = useCase.importCloudPlaylist(playlistUrl, existingPlaylistId = 10L)
+
+                result.isRight() shouldBe true
+                result.getOrNull() shouldBe 10L
+                val updatedPlaylist = fakePlaylistRepo.currentData.find { it.id == 10L }
+                updatedPlaylist?.title shouldBe "Correct Playlist Name"
+                fakePlaylistRepo.currentData.size shouldBe 1
+            }
+        }
+
         context("syncCloudPlaylist") {
             test("ALWAYS_ADD: adds new videos to existing") {
                 val playlist = Playlist(

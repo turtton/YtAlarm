@@ -4,6 +4,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -206,17 +207,21 @@ fun AlarmListScreenContent(
             text = {
                 Column {
                     sortOptions.forEachIndexed { index, option ->
-                        RadioButton(
-                            selected = orderRule.ordinal == index,
-                            onClick = {
-                                onSortRuleChange(AlarmOrder.entries[index])
-                                showSortDialog = false
-                            }
-                        )
-                        Text(
-                            text = option,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = orderRule.ordinal == index,
+                                onClick = {
+                                    onSortRuleChange(AlarmOrder.entries[index])
+                                    showSortDialog = false
+                                }
+                            )
+                            Text(
+                                text = option,
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
                     }
                 }
             },
