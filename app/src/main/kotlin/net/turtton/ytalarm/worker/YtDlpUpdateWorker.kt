@@ -13,12 +13,14 @@ import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.Operation
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDL.UpdateChannel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.util.extensions.appSettings
@@ -127,5 +129,8 @@ class YtDlpUpdateWorker(appContext: Context, workerParams: WorkerParameters) :
             return WorkManager.getInstance(context)
                 .enqueueUniqueWork(WORKER_ID, ExistingWorkPolicy.KEEP, request)
         }
+
+        fun observeWorkInfo(context: Context): Flow<List<WorkInfo>> =
+            WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(WORKER_ID)
     }
 }

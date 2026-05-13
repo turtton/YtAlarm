@@ -6,19 +6,16 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.lifecycleScope
-import com.yausername.youtubedl_android.YoutubeDL
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
 import net.turtton.ytalarm.YtApplication.Companion.dataContainerProvider
+import net.turtton.ytalarm.YtApplication.Companion.ytDlInitJob
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
 import net.turtton.ytalarm.ui.MainScreen
@@ -30,7 +27,6 @@ import net.turtton.ytalarm.worker.SNOOZE_NOTIFICATION
 import net.turtton.ytalarm.worker.VIDEO_DOWNLOAD_NOTIFICATION
 import net.turtton.ytalarm.worker.VIDEO_FILE_DOWNLOAD_NOTIFICATION
 import net.turtton.ytalarm.worker.YTDLP_UPDATE_NOTIFICATION
-import net.turtton.ytalarm.worker.YtDlpUpdateWorker
 
 class MainActivity :
     AppCompatActivity(),
@@ -63,31 +59,18 @@ class MainActivity :
         }
 
         // 既存の初期化処理
-        initYtDL()
+        observeYtDlInit()
         createNotificationChannel()
         extractSharedUrl(intent)
     }
 
-    /**
-     * YoutubeDLライブラリの初期化
-     *
-     * YT-DL初期化をバックグラウンドで実行し、エラー時にToastを表示する。
-     * 初期化成功後にWorkerを登録してyt-dlpの更新を試みる。
-     */
-    private fun initYtDL() = lifecycleScope.launch {
-        runCatching {
-            withContext(Dispatchers.IO) {
-                YoutubeDL.getInstance().init(applicationContext)
-            }
-        }.onSuccess {
-            YtDlpUpdateWorker.registerWorker(applicationContext)
-        }.onFailure {
+    private fun observeYtDlInit() = lifecycleScope.launch {
+        application.ytDlInitJob.await().onFailure {
             Toast.makeText(
                 this@MainActivity,
                 "Internal error occurred.",
                 Toast.LENGTH_LONG
             ).show()
-            Log.e(APP_TAG, "YtDL initialization failed", it)
         }
     }
 
@@ -144,9 +127,5 @@ class MainActivity :
             ytdlpUpdateChannel.description = ytdlpUpdateDescription
             notificationManager.createNotificationChannel(ytdlpUpdateChannel)
         }
-    }
-
-    companion object {
-        const val APP_TAG = "YtAram"
     }
 }

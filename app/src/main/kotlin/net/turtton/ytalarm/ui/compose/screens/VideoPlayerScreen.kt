@@ -217,6 +217,9 @@ fun VideoPlayerScreen(
                 scope.launch {
                     snackbarHostState.showSnackbar(errorFailedToImportVideo)
                 }
+                if (isAlarmMode && fallbackMediaPlayer == null) {
+                    fallbackMediaPlayer = playFallbackAlarm(context)
+                }
             }
         }
     }
@@ -527,6 +530,9 @@ fun VideoPlayerScreen(
                             scope.launch {
                                 snackbarHostState.showSnackbar(errorFailedToImportVideo)
                             }
+                            if (fallbackMediaPlayer == null) {
+                                fallbackMediaPlayer = playFallbackAlarm(context)
+                            }
                         }
                     )
                 }
@@ -544,6 +550,9 @@ fun VideoPlayerScreen(
                 onError = {
                     scope.launch {
                         snackbarHostState.showSnackbar(errorFailedToImportVideo)
+                    }
+                    if (fallbackMediaPlayer == null) {
+                        fallbackMediaPlayer = playFallbackAlarm(context)
                     }
                 }
             )
@@ -714,24 +723,14 @@ private suspend fun playVideo(
     }
 
     // 動画情報を取得（ストリーミング再生）
-    val url = video.videoUrl
-    val infoResult = withContext(Dispatchers.IO) {
-        val request = YoutubeDLRequest(url)
-        // b[height<=720]: 720p以下の映像付きフォーマットを優先（高解像度での音声途切れ回避）
-        // b[height>0]: 720p以下がない場合は映像付きの最高品質
-        // ba[abr<=320]: 音声のみの場合、320kbps以下を選択（Bandcamp等の認証回避）
-        // ba/b: フォールバック
-        request.addOption("-f", "b[height<=720]/b[height>0]/ba[abr<=320]/ba/b")
-        runCatching {
-            YoutubeDL.getInstance().getInfo(request)
-        }
-    }
+    val infoResult = fetchStreamInfo(context, video.videoUrl)
 
     withContext(Dispatchers.Main) {
         infoResult.onSuccess { info ->
             val videoUrl = info.url
             if (videoUrl.isNullOrEmpty()) {
                 Log.e(LOG_TAG, "failed to get stream url")
+                onLoading(false)
                 onError()
             } else {
                 onLoading(false)
@@ -745,8 +744,33 @@ private suspend fun playVideo(
             }
         }.onFailure { error ->
             Log.e(LOG_TAG, "failed to get stream info", error)
+            onLoading(false)
             onError()
         }
+    }
+}
+
+private suspend fun fetchStreamInfo(
+    context: Context,
+    url: String
+): Result<com.yausername.youtubedl_android.mapper.VideoInfo> = withContext(Dispatchers.IO) {
+    // YoutubeDL.init()完了を待ってからgetInfoを呼ぶ。
+    // AlarmActivityはユーザー操作の介在無しに即playVideoに到達するため、
+    // ここでawaitしないとinit未完了のままgetInfoが呼ばれてハング/失敗する。
+    val initResult = (context.applicationContext as YtApplication).ytDlInitJob.await()
+    if (initResult.isFailure) {
+        return@withContext Result.failure(
+            initResult.exceptionOrNull() ?: IllegalStateException("YoutubeDL init failed")
+        )
+    }
+    val request = YoutubeDLRequest(url)
+    // b[height<=720]: 720p以下の映像付きフォーマットを優先（高解像度での音声途切れ回避）
+    // b[height>0]: 720p以下がない場合は映像付きの最高品質
+    // ba[abr<=320]: 音声のみの場合、320kbps以下を選択（Bandcamp等の認証回避）
+    // ba/b: フォールバック
+    request.addOption("-f", "b[height<=720]/b[height>0]/ba[abr<=320]/ba/b")
+    runCatching {
+        YoutubeDL.getInstance().getInfo(request)
     }
 }
 

@@ -8,10 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.lifecycleScope
-import com.yausername.youtubedl_android.YoutubeDL
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import net.turtton.ytalarm.YtApplication.Companion.ytDlInitJob
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
@@ -30,8 +28,7 @@ class AlarmActivity :
         // 再生中は画面をオンに保つ
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-        // YoutubeDLの初期化
-        initYtDL()
+        observeYtDlInit()
 
         val alarmId = intent.getLongExtra(EXTRA_ALARM_ID, -1)
         if (alarmId <= 0L) {
@@ -54,15 +51,8 @@ class AlarmActivity :
         }
     }
 
-    /**
-     * YoutubeDLライブラリの初期化
-     */
-    private fun initYtDL() = lifecycleScope.launch {
-        runCatching {
-            withContext(Dispatchers.IO) {
-                YoutubeDL.getInstance().init(applicationContext)
-            }
-        }.onFailure {
+    private fun observeYtDlInit() = lifecycleScope.launch {
+        application.ytDlInitJob.await().onFailure {
             Toast.makeText(
                 this@AlarmActivity,
                 "Internal error occurred.",
