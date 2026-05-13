@@ -1,0 +1,13 @@
+v1.0.5
+
+Bug fixes:
+- Fixed alarm playback hanging on the loading screen due to a yt-dlp init race condition
+- Fixed import using the wrong playlist title and creating duplicate playlists
+- Fixed the alarm toggle rolling back when disabling the last enabled alarm
+
+Improvements:
+- Centralized yt-dlp initialization in the Application so every entry point waits for it once
+- Removed automatic yt-dlp updates and added an "Update now" button in Settings
+- Falls back to the default alarm sound when stream fetch or playback fails in alarm mode
+- Show foreground notifications during URL import and yt-dlp updates
+- Various UI robustness improvements and dependency updates
