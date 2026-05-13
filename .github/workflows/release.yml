@@ -58,33 +58,42 @@ jobs:
           keyPassword: ${{ secrets.APK_KEY_PASSWORD }}
           buildToolsVersion: ${{ steps.buildTools.outputs.version }}
 
-      - name: Split signed files
-        uses: winterjung/split@d5c148c702e3aacdf08a98e33407c5af75d71e1e # v2.1.1-rc1
-        id: signed_files
-        with:
-          msg: ${{ steps.sign_app.outputs.signedFiles }}
-          separator: ':'
+      - name: Compose release body
+        id: body
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        # language=bash
+        run: |
+          version="${REF_NAME#v}"
+          IFS='.' read -r major minor patch <<< "$version"
+          # changelog filename = major*10000 + minor*100 + patch (matches versionCode of the x86_64 build minus 4).
+          changelog_id=$((major * 10000 + minor * 100 + patch))
+          changelog_path="fastlane/metadata/android/en-US/changelogs/${changelog_id}.txt"
+          {
+            echo 'body<<__BODY_EOF__'
+            if [ -f "$changelog_path" ]; then
+              cat "$changelog_path"
+              echo
+            fi
+            echo '<a href="https://f-droid.org/packages/net.turtton.ytalarm">'
+            echo '    <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png" alt="Get it on F-Droid" height="80">'
+            echo '</a>'
+            echo '__BODY_EOF__'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Upload to artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Signed app bundle
-          path: |
-            ${{ steps.signed_files.outputs._0 }}
-            ${{ steps.signed_files.outputs._1 }}
-            ${{ steps.signed_files.outputs._2 }}
-            ${{ steps.signed_files.outputs._3 }}
-            ${{ steps.signed_files.outputs._4 }}
+          path: app/build/outputs/apk/release/*-release-signed.apk
+          if-no-files-found: error
 
       - name: Create Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
-          body: '[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"alt="Get it on F-Droid"height="80">](https://f-droid.org/packages/net.turtton.ytalarm)'
+          body: ${{ steps.body.outputs.body }}
+          generate_release_notes: true
           draft: true
-          files: |
-            ${{ steps.signed_files.outputs._0 }}
-            ${{ steps.signed_files.outputs._1 }}
-            ${{ steps.signed_files.outputs._2 }}
-            ${{ steps.signed_files.outputs._3 }}
-            ${{ steps.signed_files.outputs._4 }}
+          files: app/build/outputs/apk/release/*-release-signed.apk
+          fail_on_unmatched_files: true
