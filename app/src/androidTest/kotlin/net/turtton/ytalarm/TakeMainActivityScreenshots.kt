@@ -182,6 +182,10 @@ class TakeMainActivityScreenshots {
         Espresso.pressBack()
         waitForImagesAndIdle()
 
+        takeDrawerDestinationScreenshots(context)
+    }
+
+    private fun takeDrawerDestinationScreenshots(context: android.content.Context) {
         // 09-aboutpage: About画面
         composeTestRule.onAllNodesWithContentDescription("Menu").onFirst().performClick()
         waitForImagesAndIdle()
@@ -190,6 +194,19 @@ class TakeMainActivityScreenshots {
         ).performClick()
         waitForImagesAndIdle()
         Screengrab.screenshot("09-aboutpage")
+
+        // About画面のTopAppBarはMenuの代わりにBackなのでMainに戻る
+        Espresso.pressBack()
+        waitForImagesAndIdle()
+
+        // 10-settings: 設定画面
+        composeTestRule.onAllNodesWithContentDescription("Menu").onFirst().performClick()
+        waitForImagesAndIdle()
+        composeTestRule.onNodeWithText(
+            context.getString(R.string.menu_title_settings)
+        ).performClick()
+        waitForImagesAndIdle()
+        Screengrab.screenshot("10-settings")
     }
 
     /**
