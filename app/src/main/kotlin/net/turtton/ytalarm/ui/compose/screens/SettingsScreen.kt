@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -32,7 +33,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.work.WorkInfo
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.R
@@ -46,6 +49,7 @@ import net.turtton.ytalarm.util.extensions.appSettings
 import net.turtton.ytalarm.util.extensions.downloadStorageLimitBytes
 import net.turtton.ytalarm.util.extensions.downloadWifiOnly
 import net.turtton.ytalarm.util.extensions.ytDlpUpdateChannel
+import net.turtton.ytalarm.worker.YtDlpUpdateWorker
 
 /**
  * 設定画面
@@ -90,6 +94,15 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
     var showUpdateChannelDialog by remember { mutableStateOf(false) }
     var showStorageLimitDialog by remember { mutableStateOf(false) }
 
+    val workInfos by remember(context) {
+        (context.applicationContext as? YtApplication)
+            ?.let { YtDlpUpdateWorker.observeWorkInfo(it) }
+            ?: emptyFlow()
+    }.collectAsState(initial = emptyList())
+    val isUpdating = workInfos.any {
+        it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -132,6 +145,29 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
                     title = stringResource(R.string.settings_ytdlp_update_channel),
                     description = channelDisplayName,
                     onClick = { showUpdateChannelDialog = true }
+                )
+            }
+
+            item {
+                val description = if (isUpdating) {
+                    stringResource(R.string.settings_ytdlp_updating)
+                } else {
+                    stringResource(R.string.settings_ytdlp_update_now_description)
+                }
+                ClickableSettingItem(
+                    title = stringResource(R.string.settings_ytdlp_update_now),
+                    description = description,
+                    onClick = {
+                        if (!isUpdating) {
+                            val app = context.applicationContext as? YtApplication
+                            if (app != null) {
+                                scope.launch {
+                                    app.ytDlInitJob.await()
+                                    YtDlpUpdateWorker.registerWorker(app)
+                                }
+                            }
+                        }
+                    }
                 )
             }
 

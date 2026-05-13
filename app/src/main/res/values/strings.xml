@@ -224,6 +224,9 @@
     <string name="settings_ytdlp_update_channel">Update Channel</string>
     <string name="settings_ytdlp_channel_stable">Stable</string>
     <string name="settings_ytdlp_channel_nightly">Nightly</string>
+    <string name="settings_ytdlp_update_now">Update Now</string>
+    <string name="settings_ytdlp_update_now_description">Update yt-dlp to the latest version</string>
+    <string name="settings_ytdlp_updating">Updating…</string>
     <string name="dialog_update_channel_title">Update Channel</string>
     <string-array name="dialog_update_channel_choice">
         <item>Stable</item>
