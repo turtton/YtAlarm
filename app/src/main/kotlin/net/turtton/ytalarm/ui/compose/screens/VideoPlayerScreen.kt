@@ -66,9 +66,8 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import arrow.core.Either
 import coil.compose.AsyncImage
-import com.yausername.youtubedl_android.YoutubeDL
-import com.yausername.youtubedl_android.YoutubeDLRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -520,6 +519,7 @@ fun VideoPlayerScreen(
                 scope.launch {
                     playVideo(
                         context = context,
+                        videoViewModel = videoViewModel,
                         exoPlayer = exoPlayer,
                         video = queue.next(),
                         onLoading = { isLoading = it },
@@ -541,6 +541,7 @@ fun VideoPlayerScreen(
             // 最初の動画を再生
             playVideo(
                 context = context,
+                videoViewModel = videoViewModel,
                 exoPlayer = exoPlayer,
                 video = queue.next(),
                 onLoading = { isLoading = it },
@@ -567,6 +568,7 @@ fun VideoPlayerScreen(
             }
             playVideo(
                 context = context,
+                videoViewModel = videoViewModel,
                 exoPlayer = exoPlayer,
                 video = video,
                 onLoading = { isLoading = it },
@@ -677,6 +679,7 @@ private fun startVibration(context: Context): Vibrator? {
 @Suppress("LongParameterList")
 private suspend fun playVideo(
     context: Context,
+    videoViewModel: VideoViewModel,
     exoPlayer: ExoPlayer,
     video: Video,
     onLoading: (Boolean) -> Unit,
@@ -723,54 +726,45 @@ private suspend fun playVideo(
     }
 
     // 動画情報を取得（ストリーミング再生）
-    val infoResult = fetchStreamInfo(context, video.videoUrl)
+    val streamUrlResult = fetchStreamUrl(context, videoViewModel, video.pageUrl)
 
     withContext(Dispatchers.Main) {
-        infoResult.onSuccess { info ->
-            val videoUrl = info.url
-            if (videoUrl.isNullOrEmpty()) {
-                Log.e(LOG_TAG, "failed to get stream url")
-                onLoading(false)
-                onError()
-            } else {
-                onLoading(false)
-                val mediaItem = MediaItem.fromUri(videoUrl.toUri())
-                // 前の動画をクリアしてから新しい動画を設定
-                exoPlayer.stop()
-                exoPlayer.clearMediaItems()
-                exoPlayer.setMediaItem(mediaItem)
-                exoPlayer.prepare()
-                exoPlayer.play()
-            }
+        streamUrlResult.onSuccess { streamUrl ->
+            onLoading(false)
+            val mediaItem = MediaItem.fromUri(streamUrl.toUri())
+            // 前の動画をクリアしてから新しい動画を設定
+            exoPlayer.stop()
+            exoPlayer.clearMediaItems()
+            exoPlayer.setMediaItem(mediaItem)
+            exoPlayer.prepare()
+            exoPlayer.play()
         }.onFailure { error ->
-            Log.e(LOG_TAG, "failed to get stream info", error)
+            Log.e(LOG_TAG, "failed to get stream url", error)
             onLoading(false)
             onError()
         }
     }
 }
 
-private suspend fun fetchStreamInfo(
+private suspend fun fetchStreamUrl(
     context: Context,
+    videoViewModel: VideoViewModel,
     url: String
-): Result<com.yausername.youtubedl_android.mapper.VideoInfo> = withContext(Dispatchers.IO) {
+): Result<String> = withContext(Dispatchers.IO) {
     // YoutubeDL.init()完了を待ってからgetInfoを呼ぶ。
     // AlarmActivityはユーザー操作の介在無しに即playVideoに到達するため、
     // ここでawaitしないとinit未完了のままgetInfoが呼ばれてハング/失敗する。
-    val initResult = (context.applicationContext as YtApplication).ytDlInitJob.await()
+    val application = context.applicationContext as YtApplication
+    val initResult = application.ytDlInitJob.await()
     if (initResult.isFailure) {
         return@withContext Result.failure(
             initResult.exceptionOrNull() ?: IllegalStateException("YoutubeDL init failed")
         )
     }
-    val request = YoutubeDLRequest(url)
-    // b[height<=720]: 720p以下の映像付きフォーマットを優先（高解像度での音声途切れ回避）
-    // b[height>0]: 720p以下がない場合は映像付きの最高品質
-    // ba[abr<=320]: 音声のみの場合、320kbps以下を選択（Bandcamp等の認証回避）
-    // ba/b: フォールバック
-    request.addOption("-f", "b[height<=720]/b[height>0]/ba[abr<=320]/ba/b")
-    runCatching {
-        YoutubeDL.getInstance().getInfo(request)
+
+    when (val result = videoViewModel.getStreamUrl(url, STREAM_FORMAT_SELECTOR)) {
+        is Either.Right -> Result.success(result.value)
+        is Either.Left -> Result.failure(IllegalStateException(result.value.toString()))
     }
 }
 
@@ -780,6 +774,12 @@ private val VIBRATION_TIMINGS = longArrayOf(VIBRATION_MILLIS, VIBRATION_MILLIS)
 private val VIBRATION_AMPLITUDES = intArrayOf(0, VIBRATION_STRENGTH)
 private const val VIBRATION_REPEAT_POS = 0
 private const val LOG_TAG = "VideoPlayerScreen"
+
+// b[height<=720]: 720p以下の映像付きフォーマットを優先（高解像度での音声途切れ回避）
+// b[height>0]: 720p以下がない場合は映像付きの最高品質
+// ba[abr<=320]: 音声のみの場合、320kbps以下を選択（Bandcamp等の認証回避）
+// ba/b: フォールバック
+private const val STREAM_FORMAT_SELECTOR = "b[height<=720]/b[height>0]/ba[abr<=320]/ba/b"
 
 /**
  * フォールバック用のデフォルトアラーム音を再生

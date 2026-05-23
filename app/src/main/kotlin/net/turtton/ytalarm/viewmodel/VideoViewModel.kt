@@ -6,10 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
+import arrow.core.Either
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import net.turtton.ytalarm.kernel.entity.Video
+import net.turtton.ytalarm.kernel.error.StreamError
 import net.turtton.ytalarm.usecase.UseCaseContainer
 import net.turtton.ytalarm.usecase.ReimportResult as UseCaseReimportResult
 
@@ -109,6 +111,9 @@ class VideoViewModel(private val useCaseContainer: UseCaseContainer<*, *, *, *>)
 
             is UseCaseReimportResult.Error.Parse -> ReimportResult.Error.Parse
         }
+
+    suspend fun getStreamUrl(pageUrl: String, formatSelector: String): Either<StreamError, String> =
+        useCaseContainer.getStreamUrl(pageUrl, formatSelector)
 
     companion object {
         private const val TAG = "VideoViewModel"

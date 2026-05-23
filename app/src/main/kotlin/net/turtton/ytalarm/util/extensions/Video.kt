@@ -8,7 +8,7 @@ import net.turtton.ytalarm.kernel.entity.Video
  * when the import fails, as the actual domain cannot be determined at this point.
  */
 fun Video.copyAsFailed(url: String) = copy(
-    videoUrl = url,
+    pageUrl = url,
     domain = url,
     state = Video.State.Failed(url)
 )

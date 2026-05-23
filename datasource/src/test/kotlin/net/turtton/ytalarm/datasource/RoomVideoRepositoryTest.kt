@@ -79,7 +79,7 @@ class RoomVideoRepositoryTest :
             videoId = videoId,
             title = "Title $id",
             thumbnailUrl = "",
-            videoUrl = "",
+            pageUrl = "",
             domain = "youtube.com",
             stateData = VideoEntity.State.Information(isStreamable = true),
             creationDate = calendar
@@ -180,7 +180,7 @@ class RoomVideoRepositoryTest :
                 videoId = "new_vid",
                 title = "New Video",
                 thumbnailUrl = "",
-                videoUrl = "",
+                pageUrl = "",
                 domain = "youtube.com",
                 state = Video.State.Information(isStreamable = true),
                 creationDate = Instant.fromEpochMilliseconds(0)
@@ -197,7 +197,7 @@ class RoomVideoRepositoryTest :
                     videoId = "v1",
                     title = "V1",
                     thumbnailUrl = "",
-                    videoUrl = "",
+                    pageUrl = "",
                     domain = "youtube.com",
                     state = Video.State.Information(),
                     creationDate = Instant.fromEpochMilliseconds(0)
@@ -207,7 +207,7 @@ class RoomVideoRepositoryTest :
                     videoId = "v2",
                     title = "V2",
                     thumbnailUrl = "",
-                    videoUrl = "",
+                    pageUrl = "",
                     domain = "youtube.com",
                     state = Video.State.Information(),
                     creationDate = Instant.fromEpochMilliseconds(0)
@@ -225,7 +225,7 @@ class RoomVideoRepositoryTest :
                 videoId = "vid_1",
                 title = "Updated Title",
                 thumbnailUrl = "",
-                videoUrl = "",
+                pageUrl = "",
                 domain = "youtube.com",
                 state = Video.State.Downloading,
                 creationDate = Instant.fromEpochMilliseconds(0)
@@ -244,7 +244,7 @@ class RoomVideoRepositoryTest :
                 videoId = "vid_1",
                 title = "",
                 thumbnailUrl = "",
-                videoUrl = "",
+                pageUrl = "",
                 domain = "",
                 state = Video.State.Importing,
                 creationDate = Instant.fromEpochMilliseconds(0)
@@ -264,7 +264,7 @@ class RoomVideoRepositoryTest :
                     videoId = "",
                     title = "",
                     thumbnailUrl = "",
-                    videoUrl = "",
+                    pageUrl = "",
                     domain = "",
                     state = Video.State.Importing,
                     creationDate = Instant.fromEpochMilliseconds(0)
@@ -274,7 +274,7 @@ class RoomVideoRepositoryTest :
                     videoId = "",
                     title = "",
                     thumbnailUrl = "",
-                    videoUrl = "",
+                    pageUrl = "",
                     domain = "",
                     state = Video.State.Importing,
                     creationDate = Instant.fromEpochMilliseconds(0)

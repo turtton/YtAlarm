@@ -108,9 +108,9 @@ interface ImportUseCase<LExec, RExec, LDS, RDS>
                     videoId = info.id,
                     title = typeData.fullTitle,
                     thumbnailUrl = typeData.thumbnailUrl,
-                    videoUrl = typeData.videoUrl,
+                    pageUrl = info.pageUrl,
                     domain = info.domain,
-                    state = Video.State.Information()
+                    state = Video.State.Information(typeData.streamUrl.startsWith("http"))
                 )
 
                 if (placeholderVideoId != null) {
@@ -326,9 +326,9 @@ interface ImportUseCase<LExec, RExec, LDS, RDS>
                     videoId = info.id,
                     title = typeData.fullTitle,
                     thumbnailUrl = typeData.thumbnailUrl,
-                    videoUrl = typeData.videoUrl,
+                    pageUrl = info.pageUrl,
                     domain = info.domain,
-                    state = Video.State.Information()
+                    state = Video.State.Information(typeData.streamUrl.startsWith("http"))
                 )
                 val newId = localDataSource.videoRepository.insert(executor, video)
                 resultIds += newId

@@ -10,12 +10,12 @@ class VideoInformationTest :
             val videoType = VideoInformation.Type.Video(
                 fullTitle = "Test Video",
                 thumbnailUrl = "http://example.com/thumb.jpg",
-                videoUrl = "http://example.com/video.mp4"
+                streamUrl = "http://example.com/video.mp4"
             )
             val info = VideoInformation(
                 id = "abc123",
                 title = "Test Video",
-                url = "http://example.com/video",
+                pageUrl = "http://example.com/video",
                 domain = "example.com",
                 typeData = videoType
             )
@@ -28,7 +28,7 @@ class VideoInformationTest :
             val entries = listOf(
                 VideoInformation(
                     id = "vid1",
-                    url = "http://example.com/vid1",
+                    pageUrl = "http://example.com/vid1",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video(
                         "Title 1",
@@ -41,7 +41,7 @@ class VideoInformationTest :
             val info = VideoInformation(
                 id = "playlist1",
                 title = "My Playlist",
-                url = "http://example.com/playlist",
+                pageUrl = "http://example.com/playlist",
                 domain = "example.com",
                 typeData = playlistType
             )

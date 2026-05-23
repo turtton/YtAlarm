@@ -69,7 +69,7 @@ interface DownloadUseCase<LExec, RExec, LDS, RDS>
         val result = try {
             remoteDataSource.videoDownloadRepository.downloadVideo(
                 executor = rExecutor,
-                videoUrl = video.videoUrl,
+                videoUrl = video.pageUrl,
                 outputPath = outputPath,
                 formatSelector = DEFAULT_FORMAT_SELECTOR,
                 onProgress = onProgress

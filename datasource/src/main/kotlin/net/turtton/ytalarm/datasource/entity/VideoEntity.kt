@@ -17,7 +17,7 @@ data class VideoEntity(
     @ColumnInfo(name = "thumbnail_link")
     val thumbnailUrl: String = "",
     @ColumnInfo(name = "video_url")
-    val videoUrl: String = "",
+    val pageUrl: String = "",
     val domain: String = "",
     @ColumnInfo(name = "state_data", typeAffinity = ColumnInfo.BLOB)
     val stateData: State,

@@ -33,12 +33,12 @@ class VideoInformationSerializerTest :
                 val decoded = json.decodeFromString(VideoInformationSerializer, rawVideoJson)
                 decoded.id shouldBe "abc"
                 decoded.title shouldBe "title"
-                decoded.url shouldBe "example.com/abc"
+                decoded.pageUrl shouldBe "example.com/abc"
                 decoded.domain shouldBe "example.com"
                 val typeData = decoded.typeData as VideoInformation.Type.Video
                 typeData.fullTitle shouldBe "fullTitle"
                 typeData.thumbnailUrl shouldBe "thumbnail.example.com/abc"
-                typeData.videoUrl shouldBe "video.example.com/abc"
+                typeData.streamUrl shouldBe "video.example.com/abc"
             }
 
             test("uses id as fullTitle when fulltitle and title are null") {
@@ -85,6 +85,22 @@ class VideoInformationSerializerTest :
                 val decoded = json.decodeFromString(VideoInformationSerializer, rawJson)
                 val typeData = decoded.typeData as VideoInformation.Type.Video
                 typeData.thumbnailUrl shouldBe ""
+            }
+
+            test("does not fall back streamUrl to webpage_url when yt-dlp url is missing") {
+                val rawJson = """
+                {
+                    "id": "no_stream_url",
+                    "webpage_url": "example.com/no_stream_url",
+                    "webpage_url_domain": "example.com",
+                    "_type": "video"
+                }
+                """.trimIndent()
+                val decoded = json.decodeFromString(VideoInformationSerializer, rawJson)
+                val typeData = decoded.typeData as VideoInformation.Type.Video
+
+                decoded.pageUrl shouldBe "example.com/no_stream_url"
+                typeData.streamUrl shouldBe ""
             }
         }
 

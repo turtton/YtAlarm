@@ -98,7 +98,7 @@ abstract class AppDatabase : RoomDatabase() {
                     videoId = "1789054948",
                     title = "dancinwithsomebawdy",
                     thumbnailUrl = thumbnailUrl,
-                    videoUrl = "https://soundcloud.com/lookatcurren/dancinwithsomebawdy",
+                    pageUrl = "https://soundcloud.com/lookatcurren/dancinwithsomebawdy",
                     domain = "soundcloud.com",
                     stateData = VideoEntity.State.Information()
                 )

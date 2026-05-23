@@ -19,7 +19,7 @@ import net.turtton.ytalarm.kernel.dto.VideoInformation
  * yt-dlp の JSON 出力を [VideoInformation] にデシリアライズするカスタム Serializer。
  *
  * yt-dlp は `_type` フィールドで "video" / "playlist" を区別する。
- * video の場合: fulltitle, thumbnail, url (videoUrl) を取り出す。
+ * video の場合: fulltitle, thumbnail, url (streamUrl) を取り出す。
  * playlist の場合: entries (List<VideoInformation>) を取り出す。
  *
  * `entries` 内の要素も [VideoInformation] であるため、再帰的にこの Serializer を使う。
@@ -53,11 +53,11 @@ object VideoInformationSerializer : KSerializer<VideoInformation> {
                 val thumbnailUrl =
                     obj["thumbnail"]?.takeIf { it != JsonNull }?.jsonPrimitive?.content ?: ""
                 val videoUrl =
-                    obj["url"]?.takeIf { it != JsonNull }?.jsonPrimitive?.content ?: url
+                    obj["url"]?.takeIf { it != JsonNull }?.jsonPrimitive?.content ?: ""
                 VideoInformation.Type.Video(
                     fullTitle = fullTitle,
                     thumbnailUrl = thumbnailUrl,
-                    videoUrl = videoUrl
+                    streamUrl = videoUrl
                 )
             }
 
@@ -76,7 +76,7 @@ object VideoInformationSerializer : KSerializer<VideoInformation> {
         return VideoInformation(
             id = id,
             title = title,
-            url = url,
+            pageUrl = url,
             domain = domain,
             typeData = typeData
         )

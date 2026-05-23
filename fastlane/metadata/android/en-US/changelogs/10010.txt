@@ -1,0 +1,7 @@
+v1.0.9
+
+Bug fixes:
+- Fixed alarm/playback failing when the stored video URL was a temporary signed stream URL (for example, SoundCloud). New imports now save the canonical webpage URL.
+
+Known issue / action required:
+- Existing videos imported before this update may still have broken URLs and may need to be deleted and re-imported manually.

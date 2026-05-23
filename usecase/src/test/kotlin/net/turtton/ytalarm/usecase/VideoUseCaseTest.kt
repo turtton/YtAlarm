@@ -1,9 +1,11 @@
 package net.turtton.ytalarm.usecase
 
 import arrow.core.Either
+import arrow.core.right
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import net.turtton.ytalarm.kernel.dto.VideoInformation
 import net.turtton.ytalarm.kernel.entity.Alarm
 import net.turtton.ytalarm.kernel.entity.Video
@@ -56,12 +58,12 @@ class VideoUseCaseTest :
                 val fetchedInfo = VideoInformation(
                     id = "newId",
                     title = "New Title",
-                    url = "http://example.com/video",
+                    pageUrl = "http://example.com/video",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video(
                         fullTitle = "New Title",
                         thumbnailUrl = "http://thumb.com",
-                        videoUrl = "http://example.com/video.mp4"
+                        streamUrl = "http://example.com/video.mp4"
                     )
                 )
                 fakeVideoRepo.resetWith(failedVideo)
@@ -72,6 +74,40 @@ class VideoUseCaseTest :
 
                 result shouldBe ReimportResult.Success
                 fakeVideoRepo.currentData.first { it.id == 1L }.videoId shouldBe "newId"
+            }
+
+            test(
+                "reimport preserves webpage_url (not yt-dlp resolved stream url) in Video.pageUrl"
+            ) {
+                val oldPageUrl = "https://example.com/old"
+                val webpageUrl = "https://soundcloud.com/osagechanmusic/ebrquaepj4uv"
+                val streamUrl = "https://playback.media-streaming.soundcloud.cloud/abc/aac_160k/sig"
+                val video = Video(
+                    id = 1L,
+                    videoId = "oldId",
+                    pageUrl = oldPageUrl,
+                    state = Video.State.Information()
+                )
+                val fetchedInfo = VideoInformation(
+                    id = "2266842407",
+                    title = "test",
+                    pageUrl = webpageUrl,
+                    domain = "soundcloud.com",
+                    typeData = VideoInformation.Type.Video(
+                        fullTitle = "test",
+                        thumbnailUrl = "https://example.com/thumb.jpg",
+                        streamUrl = streamUrl
+                    )
+                )
+                fakeVideoRepo.resetWith(video)
+                fakeVideoInfoRepo.videoInfoResponses[oldPageUrl] = Either.Right(fetchedInfo)
+
+                val result = useCase.reimportVideo(video)
+
+                result shouldBe ReimportResult.Success
+                val saved = fakeVideoRepo.currentData.first { it.id == 1L }
+                saved.pageUrl shouldBe webpageUrl
+                saved.pageUrl shouldNotBe streamUrl
             }
 
             test("reimport with no url: returns NoUrl error") {
@@ -104,6 +140,19 @@ class VideoUseCaseTest :
                 result shouldBe ReimportResult.Error.Network
                 fakeVideoRepo.currentData.first { it.id == 1L }.state shouldBe
                     Video.State.Failed("http://example.com/video")
+            }
+        }
+
+        context("getStreamUrl") {
+            test("delegates pageUrl and format selector to video info repository") {
+                val pageUrl = "https://soundcloud.com/x/y"
+                val streamUrl = "https://playback.media-streaming.soundcloud.cloud/signed"
+                val formatSelector = "b[height<=720]/b[height>0]/ba[abr<=320]/ba/b"
+                fakeVideoInfoRepo.streamUrlResponses[pageUrl] = streamUrl.right()
+
+                val result = useCase.getStreamUrl(pageUrl, formatSelector)
+
+                result shouldBe Either.Right(streamUrl)
             }
         }
 
