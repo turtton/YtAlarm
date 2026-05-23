@@ -86,7 +86,7 @@ class VideoFileDownloadWorker(appContext: Context, workerParams: WorkerParameter
             .getUseCaseContainer()
         val video = useCaseContainer.getVideoByIdSync(videoId) ?: return
         useCaseContainer.updateVideo(
-            video.copy(state = Video.State.Failed(video.videoUrl))
+            video.copy(state = Video.State.Failed(video.pageUrl))
         )
     }
 

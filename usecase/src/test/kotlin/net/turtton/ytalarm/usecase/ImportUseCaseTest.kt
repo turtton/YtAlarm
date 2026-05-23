@@ -3,6 +3,7 @@ package net.turtton.ytalarm.usecase
 import arrow.core.Either
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import net.turtton.ytalarm.kernel.dto.VideoInformation
 import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.kernel.entity.Video
@@ -87,12 +88,12 @@ class ImportUseCaseTest :
                 val videoInfo = VideoInformation(
                     id = "vid1",
                     title = "Test Video",
-                    url = "http://example.com/video",
+                    pageUrl = "http://example.com/video",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video(
                         fullTitle = "Test Video",
                         thumbnailUrl = "http://thumb.com",
-                        videoUrl = "http://example.com/video.mp4"
+                        streamUrl = "http://example.com/video.mp4"
                     )
                 )
                 fakeVideoInfoRepo.videoInfoResponses["http://example.com/video"] =
@@ -108,12 +109,12 @@ class ImportUseCaseTest :
                 val videoInfo = VideoInformation(
                     id = "vid1",
                     title = "Test Video",
-                    url = "http://example.com/video",
+                    pageUrl = "http://example.com/video",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video(
                         fullTitle = "Test Video",
                         thumbnailUrl = "http://thumb.com",
-                        videoUrl = "http://example.com/video.mp4"
+                        streamUrl = "http://example.com/video.mp4"
                     )
                 )
                 val existingVideo = Video(
@@ -140,6 +141,30 @@ class ImportUseCaseTest :
 
                 result shouldBe ImportResult.Failure.Network
             }
+
+            test("preserves webpage_url (not yt-dlp resolved stream url) in Video.pageUrl") {
+                val webpageUrl = "https://soundcloud.com/osagechanmusic/ebrquaepj4uv"
+                val streamUrl = "https://playback.media-streaming.soundcloud.cloud/abc/aac_160k/sig"
+                val info = VideoInformation(
+                    id = "2266842407",
+                    title = "test",
+                    pageUrl = webpageUrl,
+                    domain = "soundcloud.com",
+                    typeData = VideoInformation.Type.Video(
+                        fullTitle = "test",
+                        thumbnailUrl = "https://example.com/thumb.jpg",
+                        streamUrl = streamUrl
+                    )
+                )
+                fakeVideoInfoRepo.videoInfoResponses[webpageUrl] = Either.Right(info)
+
+                val result = useCase.fetchAndImportVideo(webpageUrl)
+
+                result shouldBe ImportResult.Success(1L)
+                val saved = fakeVideoRepo.getFromIdSync(Unit, 1L)!!
+                saved.pageUrl shouldBe webpageUrl
+                saved.pageUrl shouldNotBe streamUrl
+            }
         }
 
         context("importCloudPlaylist") {
@@ -148,21 +173,21 @@ class ImportUseCaseTest :
                 val entry1 = VideoInformation(
                     id = "vid1",
                     title = "First Song Title",
-                    url = "http://example.com/vid1",
+                    pageUrl = "http://example.com/vid1",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video("First Song Title", "", "")
                 )
                 val entry2 = VideoInformation(
                     id = "vid2",
                     title = "Second Song Title",
-                    url = "http://example.com/vid2",
+                    pageUrl = "http://example.com/vid2",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video("Second Song Title", "", "")
                 )
                 val playlistInfo = VideoInformation(
                     id = "playlist1",
                     title = "My Awesome Playlist",
-                    url = playlistUrl,
+                    pageUrl = playlistUrl,
                     domain = "example.com",
                     typeData = VideoInformation.Type.Playlist(listOf(entry1, entry2))
                 )
@@ -183,14 +208,14 @@ class ImportUseCaseTest :
                 val entry = VideoInformation(
                     id = "vid1",
                     title = "Song Title",
-                    url = "http://example.com/vid1",
+                    pageUrl = "http://example.com/vid1",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video("Song Title", "", "")
                 )
                 val playlistInfo = VideoInformation(
                     id = "playlist1",
                     title = null,
-                    url = playlistUrl,
+                    pageUrl = playlistUrl,
                     domain = "example.com",
                     typeData = VideoInformation.Type.Playlist(listOf(entry))
                 )
@@ -206,11 +231,11 @@ class ImportUseCaseTest :
             }
 
             test("single video URL: uses video title as playlist name") {
-                val videoUrl = "http://example.com/video"
+                val pageUrl = "http://example.com/video"
                 val videoInfo = VideoInformation(
                     id = "vid1",
                     title = "Single Video Title",
-                    url = videoUrl,
+                    pageUrl = pageUrl,
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video(
                         "Single Video Title",
@@ -218,9 +243,9 @@ class ImportUseCaseTest :
                         "http://example.com/video.mp4"
                     )
                 )
-                fakeVideoInfoRepo.videoInfoResponses[videoUrl] = Either.Right(videoInfo)
+                fakeVideoInfoRepo.videoInfoResponses[pageUrl] = Either.Right(videoInfo)
 
-                val result = useCase.importCloudPlaylist(videoUrl)
+                val result = useCase.importCloudPlaylist(pageUrl)
 
                 result.isRight() shouldBe true
                 val playlistId = result.getOrNull()!!
@@ -228,6 +253,32 @@ class ImportUseCaseTest :
                     fakePlaylistRepo.currentData.find { it.id == playlistId }
                 createdPlaylist?.title shouldBe "Single Video Title"
                 createdPlaylist?.videos?.size shouldBe 1
+            }
+
+            test(
+                "single video URL preserves webpage_url (not yt-dlp resolved stream url) in Video.pageUrl"
+            ) {
+                val webpageUrl = "https://soundcloud.com/osagechanmusic/ebrquaepj4uv"
+                val streamUrl = "https://playback.media-streaming.soundcloud.cloud/abc/aac_160k/sig"
+                val info = VideoInformation(
+                    id = "2266842407",
+                    title = "test",
+                    pageUrl = webpageUrl,
+                    domain = "soundcloud.com",
+                    typeData = VideoInformation.Type.Video(
+                        fullTitle = "test",
+                        thumbnailUrl = "https://example.com/thumb.jpg",
+                        streamUrl = streamUrl
+                    )
+                )
+                fakeVideoInfoRepo.videoInfoResponses[webpageUrl] = Either.Right(info)
+
+                val result = useCase.importCloudPlaylist(webpageUrl)
+
+                result.isRight() shouldBe true
+                val saved = fakeVideoRepo.getFromIdSync(Unit, 1L)!!
+                saved.pageUrl shouldBe webpageUrl
+                saved.pageUrl shouldNotBe streamUrl
             }
 
             test("network error: returns failure") {
@@ -246,14 +297,14 @@ class ImportUseCaseTest :
                 val entry = VideoInformation(
                     id = "vid1",
                     title = "Song Title",
-                    url = "http://example.com/vid1",
+                    pageUrl = "http://example.com/vid1",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video("Song Title", "", "")
                 )
                 val playlistInfo = VideoInformation(
                     id = "playlist1",
                     title = "   ",
-                    url = playlistUrl,
+                    pageUrl = playlistUrl,
                     domain = "example.com",
                     typeData = VideoInformation.Type.Playlist(listOf(entry))
                 )
@@ -269,11 +320,11 @@ class ImportUseCaseTest :
             }
 
             test("single video URL with blank title: falls back to fullTitle") {
-                val videoUrl = "http://example.com/video"
+                val pageUrl = "http://example.com/video"
                 val videoInfo = VideoInformation(
                     id = "vid1",
                     title = "",
-                    url = videoUrl,
+                    pageUrl = pageUrl,
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video(
                         "Full Title From TypeData",
@@ -281,9 +332,9 @@ class ImportUseCaseTest :
                         "http://example.com/video.mp4"
                     )
                 )
-                fakeVideoInfoRepo.videoInfoResponses[videoUrl] = Either.Right(videoInfo)
+                fakeVideoInfoRepo.videoInfoResponses[pageUrl] = Either.Right(videoInfo)
 
-                val result = useCase.importCloudPlaylist(videoUrl)
+                val result = useCase.importCloudPlaylist(pageUrl)
 
                 result.isRight() shouldBe true
                 val playlistId = result.getOrNull()!!
@@ -304,14 +355,14 @@ class ImportUseCaseTest :
                 val entry = VideoInformation(
                     id = "vid1",
                     title = "Song",
-                    url = "http://example.com/vid1",
+                    pageUrl = "http://example.com/vid1",
                     domain = "example.com",
                     typeData = VideoInformation.Type.Video("Song", "", "")
                 )
                 val playlistInfo = VideoInformation(
                     id = "playlist1",
                     title = "Correct Playlist Name",
-                    url = playlistUrl,
+                    pageUrl = playlistUrl,
                     domain = "example.com",
                     typeData = VideoInformation.Type.Playlist(listOf(entry))
                 )
@@ -342,17 +393,51 @@ class ImportUseCaseTest :
                     Video(id = 1L, videoId = "existing1", state = Video.State.Information()),
                     Video(id = 2L, videoId = "existing2", state = Video.State.Information())
                 )
-                val newVideo1 = VideoInformation(
-                    id = "vid3",
-                    url = "http://example.com/vid3",
-                    domain = "example.com",
-                    typeData = VideoInformation.Type.Video("V3", "", "")
-                )
+                val newVideo1 =
+                    VideoInformation(
+                        id = "vid3",
+                        pageUrl = "http://example.com/vid3",
+                        domain = "example.com",
+                        typeData = VideoInformation.Type.Video("V3", "", "")
+                    )
 
                 useCase.syncCloudPlaylist(playlist, listOf(newVideo1))
 
                 val updatedPlaylist = fakePlaylistRepo.currentData.find { it.id == 1L }
                 updatedPlaylist?.videos?.containsAll(listOf(1L, 2L, 3L)) shouldBe true
+            }
+
+            test(
+                "ALWAYS_ADD preserves webpage_url (not yt-dlp resolved stream url) in Video.pageUrl"
+            ) {
+                val playlist = Playlist(
+                    id = 1L,
+                    type = Playlist.Type.CloudPlaylist(
+                        "https://soundcloud.com/example/sets/test",
+                        Playlist.SyncRule.ALWAYS_ADD
+                    )
+                )
+                val webpageUrl = "https://soundcloud.com/x/y"
+                val streamUrl = "https://playback.media-streaming.soundcloud.cloud/signed?token=abc"
+                fakePlaylistRepo.resetWith(playlist)
+
+                val newVideo = VideoInformation(
+                    id = "soundcloud-id",
+                    title = "SoundCloud track",
+                    pageUrl = webpageUrl,
+                    domain = "soundcloud.com",
+                    typeData = VideoInformation.Type.Video(
+                        fullTitle = "SoundCloud track",
+                        thumbnailUrl = "https://example.com/thumb.jpg",
+                        streamUrl = streamUrl
+                    )
+                )
+
+                useCase.syncCloudPlaylist(playlist, listOf(newVideo))
+
+                val saved = fakeVideoRepo.getFromIdSync(Unit, 1L)!!
+                saved.pageUrl shouldBe webpageUrl
+                saved.pageUrl shouldNotBe streamUrl
             }
 
             test("DELETE_IF_NOT_EXIST: replaces videos with new set") {
@@ -370,12 +455,13 @@ class ImportUseCaseTest :
                     Video(id = 1L, videoId = "existing1", state = Video.State.Information()),
                     Video(id = 2L, videoId = "existing2", state = Video.State.Information())
                 )
-                val newVideo = VideoInformation(
-                    id = "vid3",
-                    url = "http://example.com/vid3",
-                    domain = "example.com",
-                    typeData = VideoInformation.Type.Video("V3", "", "")
-                )
+                val newVideo =
+                    VideoInformation(
+                        id = "vid3",
+                        pageUrl = "http://example.com/vid3",
+                        domain = "example.com",
+                        typeData = VideoInformation.Type.Video("V3", "", "")
+                    )
 
                 useCase.syncCloudPlaylist(playlist, listOf(newVideo))
 

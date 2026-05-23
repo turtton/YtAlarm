@@ -8,6 +8,7 @@ import net.turtton.ytalarm.kernel.di.DependsOnVideoRepository
 import net.turtton.ytalarm.kernel.dto.VideoInformation
 import net.turtton.ytalarm.kernel.entity.Alarm
 import net.turtton.ytalarm.kernel.entity.Video
+import net.turtton.ytalarm.kernel.error.StreamError
 import net.turtton.ytalarm.kernel.error.VideoInfoError
 import kotlin.time.Duration
 
@@ -166,7 +167,7 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
 
     /**
      * 動画情報を再取得してDBを更新する。
-     * Failed状態の動画のsourceUrlか、videoUrlを使って再フェッチする。
+     * Failed状態の動画のsourceUrlか、pageUrlを使って再フェッチする。
      *
      * @param video 再インポート対象の動画
      * @return 再インポート結果
@@ -174,7 +175,7 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
     suspend fun reimportVideo(video: Video): ReimportResult {
         val url = when (val state = video.state) {
             is Video.State.Failed -> state.sourceUrl.ifEmpty { return ReimportResult.Error.NoUrl }
-            else -> video.videoUrl.ifEmpty { return ReimportResult.Error.NoUrl }
+            else -> video.pageUrl.ifEmpty { return ReimportResult.Error.NoUrl }
         }
 
         val lExecutor = localDataSource.dataSource.createExecutor()
@@ -201,15 +202,30 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
                     videoId = info.id,
                     title = typeData.fullTitle,
                     thumbnailUrl = typeData.thumbnailUrl,
-                    videoUrl = typeData.videoUrl,
+                    pageUrl = info.pageUrl,
                     domain = info.domain,
-                    state = Video.State.Information(),
+                    state = Video.State.Information(typeData.streamUrl.startsWith("http")),
                     creationDate = video.creationDate
                 )
                 localDataSource.videoRepository.update(lExecutor, updatedVideo)
                 ReimportResult.Success
             }
         }
+    }
+
+    /**
+     * 動画ページURLから再生用ストリームURLを解決する。
+     */
+    suspend fun getStreamUrl(
+        pageUrl: String,
+        formatSelector: String = "b"
+    ): Either<StreamError, String> {
+        val executor = remoteDataSource.dataSource.createExecutor()
+        return remoteDataSource.videoInfoRepository.getStreamUrl(
+            executor = executor,
+            videoUrl = pageUrl,
+            formatSelector = formatSelector
+        )
     }
 
     /**
@@ -255,7 +271,7 @@ interface VideoUseCase<LExec, RExec, LDS, RDS>
             .forEach { video ->
                 localDataSource.videoRepository.update(
                     executor,
-                    video.copy(state = Video.State.Failed(video.videoUrl))
+                    video.copy(state = Video.State.Failed(video.pageUrl))
                 )
             }
     }

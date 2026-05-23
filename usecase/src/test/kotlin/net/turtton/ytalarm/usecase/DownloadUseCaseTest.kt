@@ -70,7 +70,7 @@ class DownloadUseCaseTest :
                 val video = Video(
                     id = 1L,
                     videoId = "v1",
-                    videoUrl = "http://example.com/video",
+                    pageUrl = "http://example.com/video",
                     state = Video.State.Downloading
                 )
                 fakeVideoRepo.resetWith(video)
@@ -92,7 +92,7 @@ class DownloadUseCaseTest :
                 val video = Video(
                     id = 1L,
                     videoId = "v1",
-                    videoUrl = "http://example.com/video",
+                    pageUrl = "http://example.com/video",
                     state = Video.State.Information(isStreamable = true)
                 )
                 fakeVideoRepo.resetWith(video)
@@ -130,7 +130,7 @@ class DownloadUseCaseTest :
                 val video = Video(
                     id = 1L,
                     videoId = "v1",
-                    videoUrl = "http://example.com/video",
+                    pageUrl = "http://example.com/video",
                     state = Video.State.Information(isStreamable = false)
                 )
                 fakeVideoRepo.resetWith(video)

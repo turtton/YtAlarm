@@ -19,7 +19,7 @@ class VideoMapperTest :
                 videoId = "abc123",
                 title = "Test Video",
                 thumbnailUrl = "https://example.com/thumb.jpg",
-                videoUrl = "https://example.com/video",
+                pageUrl = "https://example.com/video",
                 domain = "youtube.com",
                 stateData = VideoEntity.State.Importing,
                 creationDate = calendar
@@ -29,7 +29,7 @@ class VideoMapperTest :
             domain.videoId shouldBe "abc123"
             domain.title shouldBe "Test Video"
             domain.thumbnailUrl shouldBe "https://example.com/thumb.jpg"
-            domain.videoUrl shouldBe "https://example.com/video"
+            domain.pageUrl shouldBe "https://example.com/video"
             domain.domain shouldBe "youtube.com"
             domain.state shouldBe Video.State.Importing
             domain.creationDate shouldBe Instant.fromEpochMilliseconds(1000L)
@@ -41,7 +41,7 @@ class VideoMapperTest :
                 videoId = "def456",
                 title = "Info Video",
                 thumbnailUrl = "",
-                videoUrl = "",
+                pageUrl = "",
                 domain = "",
                 stateData = VideoEntity.State.Information(isStreamable = true),
                 creationDate = Calendar.getInstance()
@@ -56,7 +56,7 @@ class VideoMapperTest :
                 videoId = "ghi789",
                 title = "Downloading Video",
                 thumbnailUrl = "",
-                videoUrl = "",
+                pageUrl = "",
                 domain = "",
                 stateData = VideoEntity.State.Downloading,
                 creationDate = Calendar.getInstance()
@@ -71,7 +71,7 @@ class VideoMapperTest :
                 videoId = "jkl012",
                 title = "Downloaded Video",
                 thumbnailUrl = "",
-                videoUrl = "",
+                pageUrl = "",
                 domain = "",
                 stateData = VideoEntity.State.Downloaded(
                     internalLink = "/storage/video.mp4",
@@ -94,7 +94,7 @@ class VideoMapperTest :
                 videoId = "mno345",
                 title = "Failed Video",
                 thumbnailUrl = "",
-                videoUrl = "",
+                pageUrl = "",
                 domain = "",
                 stateData = VideoEntity.State.Failed(sourceUrl = "https://example.com/video"),
                 creationDate = Calendar.getInstance()
@@ -110,7 +110,7 @@ class VideoMapperTest :
                 videoId = "pqr678",
                 title = "Roundtrip Video",
                 thumbnailUrl = "https://example.com/thumb2.jpg",
-                videoUrl = "https://example.com/video2",
+                pageUrl = "https://example.com/video2",
                 domain = "vimeo.com",
                 state = Video.State.Information(isStreamable = true),
                 creationDate = instant
@@ -122,7 +122,7 @@ class VideoMapperTest :
             backToDomain.videoId shouldBe video.videoId
             backToDomain.title shouldBe video.title
             backToDomain.thumbnailUrl shouldBe video.thumbnailUrl
-            backToDomain.videoUrl shouldBe video.videoUrl
+            backToDomain.pageUrl shouldBe video.pageUrl
             backToDomain.domain shouldBe video.domain
             backToDomain.state shouldBe video.state
             backToDomain.creationDate shouldBe video.creationDate
@@ -134,7 +134,7 @@ class VideoMapperTest :
                 videoId = "stu901",
                 title = "Failed",
                 thumbnailUrl = "",
-                videoUrl = "",
+                pageUrl = "",
                 domain = "",
                 state = Video.State.Failed(sourceUrl = "https://source.com"),
                 creationDate = Instant.fromEpochMilliseconds(0)

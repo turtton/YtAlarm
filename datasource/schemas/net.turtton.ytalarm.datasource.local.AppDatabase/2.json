@@ -125,7 +125,7 @@
             "notNull": true
           },
           {
-            "fieldPath": "videoUrl",
+            "fieldPath": "pageUrl",
             "columnName": "video_url",
             "affinity": "TEXT",
             "notNull": true

@@ -23,35 +23,35 @@ object TestDataHelper {
             videoId = "1789054948",
             title = "dancinwithsomebawdy",
             thumbnailUrl = "https://i1.sndcdn.com/artworks-5qgAgVY4upyMy8uY-NYXH5w-original.jpg",
-            videoUrl = "https://soundcloud.com/lookatcurren/dancinwithsomebawdy",
+            pageUrl = "https://soundcloud.com/lookatcurren/dancinwithsomebawdy",
             domain = "soundcloud.com"
         ),
         TrackInfo(
             videoId = "2231400578",
             title = "B4LLooN - \u2800",
             thumbnailUrl = "https://i1.sndcdn.com/artworks-idsxjqvK6cjedLNx-pad9OA-original.png",
-            videoUrl = "https://soundcloud.com/noah_b4lloon/c4b08f0d-936b-4ec0-a47a-16e3d3b4c69a",
+            pageUrl = "https://soundcloud.com/noah_b4lloon/c4b08f0d-936b-4ec0-a47a-16e3d3b4c69a",
             domain = "soundcloud.com"
         ),
         TrackInfo(
             videoId = "2200041203",
             title = "XxKOYUKIxX - \u2606\u3002.:\uff0a\u30fb\u309c @koy #jc",
             thumbnailUrl = "https://i1.sndcdn.com/artworks-4j1WxaU8yrZNklBR-yYFOQw-original.png",
-            videoUrl = "https://soundcloud.com/koyuki214/koy-jc",
+            pageUrl = "https://soundcloud.com/koyuki214/koy-jc",
             domain = "soundcloud.com"
         ),
         TrackInfo(
             videoId = "2140727487",
             title = "A\u0418BY - DON'T YOU WA\u0418T ICECREAM???",
             thumbnailUrl = "https://i1.sndcdn.com/artworks-zVhzHLHiKd4IIhyO-5FDqKg-original.png",
-            videoUrl = "https://soundcloud.com/anbyflip/dont-you-want-icecream",
+            pageUrl = "https://soundcloud.com/anbyflip/dont-you-want-icecream",
             domain = "soundcloud.com"
         ),
         TrackInfo(
             videoId = "3UJZ8CndI8Y",
             title = "ariiol - typing\uff08ft.\u6b4c\u611b\u30e6\u30ad\uff09",
             thumbnailUrl = "https://i.ytimg.com/vi/3UJZ8CndI8Y/sddefault.jpg",
-            videoUrl = "https://www.youtube.com/watch?v=3UJZ8CndI8Y",
+            pageUrl = "https://www.youtube.com/watch?v=3UJZ8CndI8Y",
             domain = "www.youtube.com"
         )
     )
@@ -63,49 +63,49 @@ object TestDataHelper {
             title = "\ud835\udE82\ud835\udE8e\ud835\udE9b\ud835\udE92\ud835\udea0\ud835\udE8a" +
                 " - Because I can relief you!",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/because-i-can-relief-you",
+            pageUrl = "https://memoryscape.bandcamp.com/track/because-i-can-relief-you",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "3022656617",
             title = "deadbeak - the light through the display",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/the-light-through-the-display",
+            pageUrl = "https://memoryscape.bandcamp.com/track/the-light-through-the-display",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "1216220770",
             title = "ralker - I reached wisp planet now",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/i-reached-wisp-planet-now",
+            pageUrl = "https://memoryscape.bandcamp.com/track/i-reached-wisp-planet-now",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "3619514216",
             title = "MiaplaK - dreams that defy calculation",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/dreams-that-defy-calculation",
+            pageUrl = "https://memoryscape.bandcamp.com/track/dreams-that-defy-calculation",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "3361629336",
             title = "DJ\u85e4\u7530\u3053\u3068\u306d - i just wanna dance like this!",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/i-just-wanna-dance-like-this",
+            pageUrl = "https://memoryscape.bandcamp.com/track/i-just-wanna-dance-like-this",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "3936001422",
             title = "Yutori(Natsu) - \u22c6\u02d9\u27e1H\u00caLP\u2727_\uff61",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/h-p",
+            pageUrl = "https://memoryscape.bandcamp.com/track/h-p",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "4176697816",
             title = "FTN-NKNK - A dance that never ends.",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/a-dance-that-never-ends",
+            pageUrl = "https://memoryscape.bandcamp.com/track/a-dance-that-never-ends",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
@@ -113,63 +113,63 @@ object TestDataHelper {
             title = "~\ud835\udcee\ud835\udcf8\ud835\udcf7\ud835\udced\ud835\udcee\ud835\udcfb " +
                 "\ud835\udcd0\ud835\udcec\ud835\udcfe\ud835\udcfd\ud835\udcee~ - Ain't nobody that can do it like you",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/aint-nobody-that-can-do-it-like-you",
+            pageUrl = "https://memoryscape.bandcamp.com/track/aint-nobody-that-can-do-it-like-you",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "2573770918",
             title = "P1PER - NOTHING BEATS A JET2 HOLIDAY",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/nothing-beats-a-jet2-holiday",
+            pageUrl = "https://memoryscape.bandcamp.com/track/nothing-beats-a-jet2-holiday",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "1228386713",
             title = "vivlos - no end to what we wish for",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/no-end-to-what-we-wish-for",
+            pageUrl = "https://memoryscape.bandcamp.com/track/no-end-to-what-we-wish-for",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "1696560815",
             title = "XxKOYUKIxX - DJwon'tyou(come)again",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/djwontyou-come-again",
+            pageUrl = "https://memoryscape.bandcamp.com/track/djwontyou-come-again",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "3785876337",
             title = "<* ))><< - you are in my -",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/you-are-in-my",
+            pageUrl = "https://memoryscape.bandcamp.com/track/you-are-in-my",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "2921878164",
             title = "\u30a6\u304a\u304a\u3042\u3042 - v^~^v",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/v-v",
+            pageUrl = "https://memoryscape.bandcamp.com/track/v-v",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "3935226314",
             title = "Chiffon - I'm warning you, don't do that.",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/im-warning-you-dont-do-that",
+            pageUrl = "https://memoryscape.bandcamp.com/track/im-warning-you-dont-do-that",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "2964798734",
             title = "FAILchan - Don't you want NRG\uff1f",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/dont-you-want-nrg",
+            pageUrl = "https://memoryscape.bandcamp.com/track/dont-you-want-nrg",
             domain = "memoryscape.bandcamp.com"
         ),
         TrackInfo(
             videoId = "2514688677",
             title = "Temenough - Urban Groove flip",
             thumbnailUrl = "https://f4.bcbits.com/img/a1553711738_5.jpg",
-            videoUrl = "https://memoryscape.bandcamp.com/track/urban-groove-flip",
+            pageUrl = "https://memoryscape.bandcamp.com/track/urban-groove-flip",
             domain = "memoryscape.bandcamp.com"
         )
     )
@@ -178,7 +178,7 @@ object TestDataHelper {
         val videoId: String,
         val title: String,
         val thumbnailUrl: String,
-        val videoUrl: String,
+        val pageUrl: String,
         val domain: String
     )
 
@@ -197,7 +197,7 @@ object TestDataHelper {
                     videoId = track.videoId,
                     title = track.title,
                     thumbnailUrl = track.thumbnailUrl,
-                    videoUrl = track.videoUrl,
+                    pageUrl = track.pageUrl,
                     domain = track.domain,
                     stateData = VideoEntity.State.Information()
                 )

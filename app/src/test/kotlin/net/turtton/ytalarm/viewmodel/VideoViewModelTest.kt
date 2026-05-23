@@ -16,7 +16,7 @@ class VideoViewModelTest :
             videoId = "test_video_1",
             title = "Test Video 1",
             thumbnailUrl = "https://example.com/thumb1.jpg",
-            videoUrl = "https://example.com/video1",
+            pageUrl = "https://example.com/video1",
             domain = "example.com",
             state = DomainVideo.State.Information()
         )
@@ -25,7 +25,7 @@ class VideoViewModelTest :
             videoId = "test_video_2",
             title = "Test Video 2",
             thumbnailUrl = "https://example.com/thumb2.jpg",
-            videoUrl = "https://example.com/video2",
+            pageUrl = "https://example.com/video2",
             domain = "example.com",
             state = DomainVideo.State.Importing
         )

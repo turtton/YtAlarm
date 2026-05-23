@@ -11,7 +11,7 @@ class VideoTest :
             video.id shouldBe 0L
             video.title shouldBe "No title"
             video.thumbnailUrl shouldBe ""
-            video.videoUrl shouldBe ""
+            video.pageUrl shouldBe ""
             video.domain shouldBe ""
         }
 
