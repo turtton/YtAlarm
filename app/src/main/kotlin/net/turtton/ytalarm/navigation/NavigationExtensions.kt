@@ -1,29 +1,27 @@
 package net.turtton.ytalarm.navigation
 
-import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 
-private fun NavBackStackEntry.isResumed(): Boolean =
-    lifecycle.currentState == Lifecycle.State.RESUMED
-
 /**
- * source となる [NavBackStackEntry] が RESUMED のときだけ navigate する。
+ * source となる [NavBackStackEntry] が現在のtop owner であるときだけ navigate する。
  *
  * Navigation Composeのnavigate/popBackStackは非同期に処理されるため、
  * 退場アニメーション中や遷移完了前のtap連打で、すでに退場済みの screen に
  * 紐づいたcallbackから多重navigateが入り、意図しない画面遷移が起きることがある
  * (playlist再タップで動画が直接再生される等)。
  *
- * `currentBackStackEntry`(global top) ではなく source entry の lifecycle を見ることで、
- * stale callback (= 退場済みscreenから遅れて発火するイベント) も含めて確実に遮断する。
+ * lifecycle state (RESUMED/STARTED) ではなく `currentBackStackEntry == from` を判定軸にすることで、
+ * - 退場済みscreenからの stale callback は確実に遮断 (top ではない)
+ * - top にいる正常画面からの tap は、復帰直後のアニメーション中(まだ STARTED)でも遮断しない
+ * という両立を実現する。
  */
-fun NavHostController.navigateResumed(
+fun NavHostController.navigateIfOwner(
     from: NavBackStackEntry,
     route: String,
     builder: NavOptionsBuilder.() -> Unit = {}
-): Boolean = if (from.isResumed()) {
+): Boolean = if (currentBackStackEntry?.id == from.id) {
     navigate(route, builder)
     true
 } else {
@@ -31,11 +29,11 @@ fun NavHostController.navigateResumed(
 }
 
 /**
- * source [NavBackStackEntry] が RESUMED かつ 戻り先がある場合のみ popBackStack する。
+ * source [NavBackStackEntry] が現在のtop owner かつ 戻り先がある場合のみ popBackStack する。
  * 返り値は実際に pop が実行されたかどうか。
  */
-fun NavHostController.popBackStackResumed(from: NavBackStackEntry): Boolean =
-    if (from.isResumed() && previousBackStackEntry != null) {
+fun NavHostController.popBackStackIfOwner(from: NavBackStackEntry): Boolean =
+    if (currentBackStackEntry?.id == from.id && previousBackStackEntry != null) {
         popBackStack()
     } else {
         false

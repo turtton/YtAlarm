@@ -46,7 +46,8 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.navigation.YtAlarmDestination
-import net.turtton.ytalarm.navigation.navigateResumed
+import net.turtton.ytalarm.navigation.navigateIfOwner
+import net.turtton.ytalarm.navigation.rememberNavigationLock
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
 import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
@@ -103,6 +104,7 @@ fun MainScreen(
     // 現在のルートを取得（Drawer選択状態の管理用）
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val drawerNavLock = rememberNavigationLock(navBackStackEntry)
 
     // 共有URL処理のState管理
     var pendingSharedUrl by remember { mutableStateOf<String?>(null) }
@@ -188,30 +190,26 @@ fun MainScreen(
                         DrawerContent(
                             currentRoute = currentRoute,
                             onNavigate = { route ->
-                                // 現在のルートを取得
-                                val current = navController.currentBackStackEntry
-                                    ?.destination
-                                    ?.route
-                                // ルートが異なる場合のみナビゲート
+                                val source = navController.currentBackStackEntry
+                                val current = source?.destination?.route
                                 if (current != route) {
-                                    // Drawerを非同期で閉じる（完了を待たない）
                                     scope.launch {
                                         drawerState.close()
                                     }
-                                    // 即座にナビゲーションを実行（タイムラグ解消）
-                                    val source = navController.currentBackStackEntry
-                                    if (source != null) {
-                                        navController.navigateResumed(source, route) {
-                                            // スタート画面まで戻り、状態を保存/復元してナビゲート
+                                    if (source != null && drawerNavLock.tryAcquire()) {
+                                        val accepted = navController.navigateIfOwner(
+                                            source,
+                                            route
+                                        ) {
                                             popUpTo(YtAlarmDestination.ALARM_LIST) {
                                                 saveState = true
                                             }
                                             launchSingleTop = true
                                             restoreState = true
                                         }
+                                        if (!accepted) drawerNavLock.release()
                                     }
                                 } else {
-                                    // 同じルートの場合はDrawerを閉じるのみ
                                     scope.launch {
                                         drawerState.close()
                                     }
