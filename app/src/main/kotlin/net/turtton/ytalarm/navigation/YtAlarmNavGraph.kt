@@ -144,7 +144,7 @@ private fun NavGraphBuilder.playlistScreen(
     onOpenDrawer: () -> Unit
 ) {
     composable(route = YtAlarmDestination.PLAYLIST) { backStackEntry ->
-        val lock = rememberNavigationLock(backStackEntry)
+        val lock = rememberNavigationLock(navController, backStackEntry)
         PlaylistScreen(
             onNavigateToVideoList = { playlistId ->
                 navController.navigateGuarded(
@@ -174,7 +174,7 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         )
     ) { backStackEntry ->
         val playlistId = backStackEntry.arguments?.getLong("playlistId") ?: 0L
-        val lock = rememberNavigationLock(backStackEntry)
+        val lock = rememberNavigationLock(navController, backStackEntry)
 
         VideoListScreen(
             playlistId = playlistId,
@@ -214,7 +214,7 @@ private fun NavGraphBuilder.allVideosScreen(
     onOpenDrawer: () -> Unit
 ) {
     composable(route = YtAlarmDestination.ALL_VIDEOS) { backStackEntry ->
-        val lock = rememberNavigationLock(backStackEntry)
+        val lock = rememberNavigationLock(navController, backStackEntry)
         AllVideosScreen(
             onOpenDrawer = onOpenDrawer,
             onNavigateToVideoPlayer = { videoId ->
@@ -257,7 +257,7 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
             return@composable
         }
 
-        val lock = rememberNavigationLock(backStackEntry)
+        val lock = rememberNavigationLock(navController, backStackEntry)
         VideoPlayerScreen(
             videoId = videoId,
             isAlarmMode = isAlarmMode,
@@ -273,7 +273,7 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
  */
 private fun NavGraphBuilder.aboutScreen(navController: NavHostController) {
     composable(route = YtAlarmDestination.ABOUT) { backStackEntry ->
-        val lock = rememberNavigationLock(backStackEntry)
+        val lock = rememberNavigationLock(navController, backStackEntry)
         AboutPageScreen(
             onNavigateBack = {
                 navController.popBackStackGuarded(backStackEntry, lock)
@@ -287,7 +287,7 @@ private fun NavGraphBuilder.aboutScreen(navController: NavHostController) {
  */
 private fun NavGraphBuilder.settingsScreen(navController: NavHostController) {
     composable(route = YtAlarmDestination.SETTINGS) { backStackEntry ->
-        val lock = rememberNavigationLock(backStackEntry)
+        val lock = rememberNavigationLock(navController, backStackEntry)
         SettingsScreen(
             onNavigateBack = {
                 navController.popBackStackGuarded(backStackEntry, lock)

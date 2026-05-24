@@ -104,7 +104,7 @@ fun MainScreen(
     // 現在のルートを取得（Drawer選択状態の管理用）
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val drawerNavLock = rememberNavigationLock(navBackStackEntry)
+    val drawerNavLock = rememberNavigationLock(navController, navBackStackEntry)
 
     // 共有URL処理のState管理
     var pendingSharedUrl by remember { mutableStateOf<String?>(null) }
