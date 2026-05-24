@@ -46,6 +46,7 @@ import net.turtton.ytalarm.R
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.kernel.entity.Playlist
 import net.turtton.ytalarm.navigation.YtAlarmDestination
+import net.turtton.ytalarm.navigation.navigateResumed
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayData
 import net.turtton.ytalarm.ui.compose.dialogs.DisplayDataThumbnail
 import net.turtton.ytalarm.ui.compose.dialogs.MultiChoiceVideoDialog
@@ -198,13 +199,16 @@ fun MainScreen(
                                         drawerState.close()
                                     }
                                     // 即座にナビゲーションを実行（タイムラグ解消）
-                                    navController.navigate(route) {
-                                        // スタート画面まで戻り、状態を保存/復元してナビゲート
-                                        popUpTo(YtAlarmDestination.ALARM_LIST) {
-                                            saveState = true
+                                    val source = navController.currentBackStackEntry
+                                    if (source != null) {
+                                        navController.navigateResumed(source, route) {
+                                            // スタート画面まで戻り、状態を保存/復元してナビゲート
+                                            popUpTo(YtAlarmDestination.ALARM_LIST) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
                                 } else {
                                     // 同じルートの場合はDrawerを閉じるのみ

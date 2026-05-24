@@ -1,6 +1,5 @@
 package net.turtton.ytalarm.ui.compose.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import net.turtton.ytalarm.R
+import net.turtton.ytalarm.ui.compose.modifier.debouncedClickable
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.ui.model.VideoUiModel
 
@@ -54,7 +54,7 @@ fun VideoItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .debouncedClickable(onClick = onClick)
             .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically

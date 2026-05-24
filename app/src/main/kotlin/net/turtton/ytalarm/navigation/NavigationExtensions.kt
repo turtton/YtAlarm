@@ -1,15 +1,46 @@
 package net.turtton.ytalarm.navigation
 
+import androidx.lifecycle.Lifecycle
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptionsBuilder
+
+private fun NavBackStackEntry.isResumed(): Boolean =
+    lifecycle.currentState == Lifecycle.State.RESUMED
 
 /**
- * 指定したrouteへナビゲートし、backStackから前の画面をポップする
+ * source となる [NavBackStackEntry] が RESUMED のときだけ navigate する。
  *
- * 例: ログイン後にログイン画面を履歴から削除する場合
+ * Navigation Composeのnavigate/popBackStackは非同期に処理されるため、
+ * 退場アニメーション中や遷移完了前のtap連打で、すでに退場済みの screen に
+ * 紐づいたcallbackから多重navigateが入り、意図しない画面遷移が起きることがある
+ * (playlist再タップで動画が直接再生される等)。
  *
- * @param route ナビゲート先のルート
- * @param popUpToRoute ポップする画面のルート
+ * `currentBackStackEntry`(global top) ではなく source entry の lifecycle を見ることで、
+ * stale callback (= 退場済みscreenから遅れて発火するイベント) も含めて確実に遮断する。
  */
+fun NavHostController.navigateResumed(
+    from: NavBackStackEntry,
+    route: String,
+    builder: NavOptionsBuilder.() -> Unit = {}
+): Boolean = if (from.isResumed()) {
+    navigate(route, builder)
+    true
+} else {
+    false
+}
+
+/**
+ * source [NavBackStackEntry] が RESUMED かつ 戻り先がある場合のみ popBackStack する。
+ * 返り値は実際に pop が実行されたかどうか。
+ */
+fun NavHostController.popBackStackResumed(from: NavBackStackEntry): Boolean =
+    if (from.isResumed() && previousBackStackEntry != null) {
+        popBackStack()
+    } else {
+        false
+    }
+
 fun NavHostController.navigateAndPopUp(route: String, popUpToRoute: String) {
     navigate(route) {
         popUpTo(popUpToRoute) {
