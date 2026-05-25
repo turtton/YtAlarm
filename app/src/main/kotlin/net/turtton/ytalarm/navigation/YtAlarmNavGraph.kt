@@ -53,6 +53,32 @@ fun YtAlarmNavGraph(
 }
 
 /**
+ * source backStackEntryがtop owner ならlockを経由して navigate する。
+ *
+ * lock取得失敗時は何もしない(進行中のnav遷移を尊重)、
+ * navigateIfOwner が拒否した場合は即lock解放(stale callback時に永続lockを避ける)。
+ */
+private fun NavHostController.navigateGuarded(
+    from: androidx.navigation.NavBackStackEntry,
+    lock: NavigationLock,
+    route: String,
+    builder: androidx.navigation.NavOptionsBuilder.() -> Unit = {}
+) {
+    if (!lock.tryAcquire()) return
+    val accepted = navigateIfOwner(from, route, builder)
+    if (!accepted) lock.release()
+}
+
+private fun NavHostController.popBackStackGuarded(
+    from: androidx.navigation.NavBackStackEntry,
+    lock: NavigationLock
+) {
+    if (!lock.tryAcquire()) return
+    val accepted = popBackStackIfOwner(from)
+    if (!accepted) lock.release()
+}
+
+/**
  * アラーム一覧画面のルート定義
  *
  * Deep link（ytalarm://alarm/{alarmId}）にも対応し、
@@ -117,10 +143,17 @@ private fun NavGraphBuilder.playlistScreen(
     navController: NavHostController,
     onOpenDrawer: () -> Unit
 ) {
-    composable(route = YtAlarmDestination.PLAYLIST) {
+    composable(route = YtAlarmDestination.PLAYLIST) { backStackEntry ->
+        val lock = rememberNavigationLock(navController, backStackEntry)
         PlaylistScreen(
             onNavigateToVideoList = { playlistId ->
-                navController.navigate(YtAlarmDestination.videoList(playlistId))
+                navController.navigateGuarded(
+                    backStackEntry,
+                    lock,
+                    YtAlarmDestination.videoList(playlistId)
+                ) {
+                    launchSingleTop = true
+                }
             },
             onOpenDrawer = onOpenDrawer
         )
@@ -141,19 +174,29 @@ private fun NavGraphBuilder.videoListScreen(navController: NavHostController) {
         )
     ) { backStackEntry ->
         val playlistId = backStackEntry.arguments?.getLong("playlistId") ?: 0L
+        val lock = rememberNavigationLock(navController, backStackEntry)
 
         VideoListScreen(
             playlistId = playlistId,
             onNavigateBack = {
-                navController.popBackStackSafely()
+                navController.popBackStackGuarded(backStackEntry, lock)
             },
             onNavigateToVideoPlayer = { videoId ->
-                navController.navigate(
+                navController.navigateGuarded(
+                    backStackEntry,
+                    lock,
                     YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false)
-                )
+                ) {
+                    launchSingleTop = true
+                }
             },
             onNavigateToVideoList = { newPlaylistId ->
-                navController.navigate(YtAlarmDestination.videoList(newPlaylistId)) {
+                navController.navigateGuarded(
+                    backStackEntry,
+                    lock,
+                    YtAlarmDestination.videoList(newPlaylistId)
+                ) {
+                    launchSingleTop = true
                     popUpTo(YtAlarmDestination.videoList(0L)) {
                         inclusive = true
                     }
@@ -170,13 +213,18 @@ private fun NavGraphBuilder.allVideosScreen(
     navController: NavHostController,
     onOpenDrawer: () -> Unit
 ) {
-    composable(route = YtAlarmDestination.ALL_VIDEOS) {
+    composable(route = YtAlarmDestination.ALL_VIDEOS) { backStackEntry ->
+        val lock = rememberNavigationLock(navController, backStackEntry)
         AllVideosScreen(
             onOpenDrawer = onOpenDrawer,
             onNavigateToVideoPlayer = { videoId ->
-                navController.navigate(
+                navController.navigateGuarded(
+                    backStackEntry,
+                    lock,
                     YtAlarmDestination.videoPlayer(videoId, isAlarmMode = false)
-                )
+                ) {
+                    launchSingleTop = true
+                }
             }
         )
     }
@@ -209,11 +257,12 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
             return@composable
         }
 
+        val lock = rememberNavigationLock(navController, backStackEntry)
         VideoPlayerScreen(
             videoId = videoId,
             isAlarmMode = isAlarmMode,
             onDismiss = {
-                navController.popBackStackSafely()
+                navController.popBackStackGuarded(backStackEntry, lock)
             }
         )
     }
@@ -223,10 +272,11 @@ private fun NavGraphBuilder.videoPlayerScreen(navController: NavHostController) 
  * About画面のルート定義
  */
 private fun NavGraphBuilder.aboutScreen(navController: NavHostController) {
-    composable(route = YtAlarmDestination.ABOUT) {
+    composable(route = YtAlarmDestination.ABOUT) { backStackEntry ->
+        val lock = rememberNavigationLock(navController, backStackEntry)
         AboutPageScreen(
             onNavigateBack = {
-                navController.popBackStackSafely()
+                navController.popBackStackGuarded(backStackEntry, lock)
             }
         )
     }
@@ -236,10 +286,11 @@ private fun NavGraphBuilder.aboutScreen(navController: NavHostController) {
  * 設定画面のルート定義
  */
 private fun NavGraphBuilder.settingsScreen(navController: NavHostController) {
-    composable(route = YtAlarmDestination.SETTINGS) {
+    composable(route = YtAlarmDestination.SETTINGS) { backStackEntry ->
+        val lock = rememberNavigationLock(navController, backStackEntry)
         SettingsScreen(
             onNavigateBack = {
-                navController.popBackStackSafely()
+                navController.popBackStackGuarded(backStackEntry, lock)
             }
         )
     }
