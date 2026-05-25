@@ -1,7 +1,8 @@
-v1.0.9
+v1.0.10
 
 Bug fixes:
 - Fixed alarm/playback failing when the stored video URL was a temporary signed stream URL (for example, SoundCloud). New imports now save the canonical webpage URL.
+- Fixed a navigation race where rapidly tapping a playlist or video item right after going back could open the wrong screen (e.g. unexpectedly starting video playback). Taps during transitions are now ignored until the previous navigation settles.
 
 Known issue / action required:
 - Existing videos imported before this update may still have broken URLs and may need to be deleted and re-imported manually.
