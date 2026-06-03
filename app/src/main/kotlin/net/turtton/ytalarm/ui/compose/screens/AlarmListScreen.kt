@@ -337,8 +337,8 @@ fun AlarmListScreen(
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
-    val orderRule = preferences.alarmOrderRule
-    val orderUp = preferences.alarmOrderUp
+    var orderRule by remember { mutableStateOf(preferences.alarmOrderRule) }
+    var orderUp by remember { mutableStateOf(preferences.alarmOrderUp) }
 
     // スヌーズアラームを除外してソート
     val sortedAlarms = remember(allAlarms, orderRule, orderUp) {
@@ -440,9 +440,12 @@ fun AlarmListScreen(
         onOpenDrawer = onOpenDrawer,
         onSortRuleChange = { rule ->
             preferences.alarmOrderRule = rule
+            orderRule = rule
         },
         onOrderUpToggle = {
-            preferences.alarmOrderUp = !orderUp
+            val newOrderUp = !orderUp
+            preferences.alarmOrderUp = newOrderUp
+            orderUp = newOrderUp
         },
         onCreateAlarm = {
             editState = AlarmEditState.CreatingNew(createDefaultAlarm())

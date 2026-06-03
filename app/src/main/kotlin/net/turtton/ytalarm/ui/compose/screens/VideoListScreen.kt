@@ -593,8 +593,8 @@ private fun VideoListScreenInner(
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
-    val orderRule = preferences.videoOrderRule
-    val orderUp = preferences.videoOrderUp
+    var orderRule by remember { mutableStateOf(preferences.videoOrderRule) }
+    var orderUp by remember { mutableStateOf(preferences.videoOrderUp) }
 
     val playlistType = playlist?.type
     val isSyncMode = playlistType is Playlist.Type.CloudPlaylist
@@ -704,9 +704,12 @@ private fun VideoListScreenInner(
         },
         onSortRuleChange = { rule ->
             preferences.videoOrderRule = rule
+            orderRule = rule
         },
         onOrderUpToggle = {
-            preferences.videoOrderUp = !orderUp
+            val newOrderUp = !orderUp
+            preferences.videoOrderUp = newOrderUp
+            orderUp = newOrderUp
         },
         onSyncRuleChange = { rule ->
             scope.launch(Dispatchers.IO) {

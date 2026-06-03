@@ -78,8 +78,8 @@ fun AllVideosScreen(
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
-    val orderRule = preferences.videoOrderRule
-    val orderUp = preferences.videoOrderUp
+    var orderRule by remember { mutableStateOf(preferences.videoOrderRule) }
+    var orderUp by remember { mutableStateOf(preferences.videoOrderUp) }
 
     // 全動画を取得
     val videos by videoViewModel.allVideos.observeAsState(emptyList())
@@ -141,9 +141,12 @@ fun AllVideosScreen(
             onDeleteVideos = { /* Not applicable for all videos mode */ },
             onSortRuleChange = { rule ->
                 preferences.videoOrderRule = rule
+                orderRule = rule
             },
             onOrderUpToggle = {
-                preferences.videoOrderUp = !orderUp
+                val newOrderUp = !orderUp
+                preferences.videoOrderUp = newOrderUp
+                orderUp = newOrderUp
             },
             onSyncRuleChange = { /* Not applicable for all videos mode */ },
             onFabExpandToggle = { /* Not used in all videos mode */ },

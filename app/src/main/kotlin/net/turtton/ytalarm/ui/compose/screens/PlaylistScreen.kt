@@ -348,8 +348,8 @@ fun PlaylistScreen(
 
     val activity = context.findActivity() ?: return
     val preferences = activity.privatePreferences
-    val orderRule = preferences.playlistOrderRule
-    val orderUp = preferences.playlistOrderUp
+    var orderRule by remember { mutableStateOf(preferences.playlistOrderRule) }
+    var orderUp by remember { mutableStateOf(preferences.playlistOrderUp) }
 
     // ソート処理
     val sortedPlaylists = remember(playlists, orderRule, orderUp) {
@@ -473,9 +473,12 @@ fun PlaylistScreen(
         },
         onSortRuleChange = { rule ->
             preferences.playlistOrderRule = rule
+            orderRule = rule
         },
         onOrderUpToggle = {
-            preferences.playlistOrderUp = !orderUp
+            val newOrderUp = !orderUp
+            preferences.playlistOrderUp = newOrderUp
+            orderUp = newOrderUp
         },
         onCreatePlaylist = {
             onNavigateToVideoList(0L)
