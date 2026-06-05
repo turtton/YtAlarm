@@ -1,0 +1,5 @@
+v1.0.15
+
+- Updated dependencies
+- Fixed sort buttons to trigger recomposition on all list screens
+- Made sort dialog rows clickable with consistent spacing
