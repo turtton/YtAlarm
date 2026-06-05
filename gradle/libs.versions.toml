@@ -6,13 +6,13 @@ minSdk = "24"
 targetSdk = "36"
 
 # Kotlin
-kotlin = "2.3.21"
+kotlin = "2.4.0"
 ksp = "2.3.9"
 kotlinter = "5.5.0"
 detekt = "1.23.8"
 
 # AndroidX
-androidx-core = "1.18.0"
+androidx-core = "1.19.0"
 androidx-appcompat = "1.7.1"
 androidx-constraintlayout = "2.2.1"
 androidx-navigation = "2.9.8"
@@ -44,7 +44,7 @@ kotlinx-datetime = "0.8.0-0.6.x-compat"
 youtubedl-android = "0.18.1"
 media3 = "1.10.1"
 coil = "2.7.0"
-arrow = "2.2.2.1"
+arrow = "2.2.3"
 ktlint = "1.8.0"
 
 # Testing
