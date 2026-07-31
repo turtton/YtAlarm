@@ -1,20 +1,20 @@
 [versions]
 # Android
-agp = "9.2.1"
+agp = "9.3.1"
 compileSdk = "37"
 minSdk = "24"
 targetSdk = "36"
 
 # Kotlin
-kotlin = "2.4.0"
-ksp = "2.3.9"
-kotlinter = "5.5.0"
+kotlin = "2.4.10"
+ksp = "2.3.10"
+kotlinter = "5.6.0"
 detekt = "1.23.8"
 
 # AndroidX
 androidx-core = "1.19.0"
 androidx-appcompat = "1.7.1"
-androidx-constraintlayout = "2.2.1"
+androidx-constraintlayout = "2.2.2"
 androidx-navigation = "2.9.8"
 androidx-recyclerview = "1.4.0"
 androidx-recyclerview-selection = "1.2.0"
@@ -29,7 +29,7 @@ androidx-test-runner = "1.7.0"
 androidx-test-espresso = "3.7.0"
 
 # Compose
-compose-bom = "2026.06.00"
+compose-bom = "2026.06.01"
 androidx-compose-compiler = "1.5.15"
 
 # Material Design
@@ -49,13 +49,13 @@ ktlint = "1.8.0"
 
 # Testing
 junit = "4.13.2"
-kotest = "6.2.1"
+kotest = "6.2.3"
 mockito-kotlin = "6.3.0"
 robolectric = "4.16.1"
 screengrab = "2.1.1"
 
 # Other plugins
-kover = "0.9.8"
+kover = "0.9.9"
 
 [libraries]
 # AndroidX Core
