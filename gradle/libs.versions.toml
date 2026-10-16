@@ -6,7 +6,7 @@ minSdk = "24"
 targetSdk = "36"
 
 # Kotlin
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 ksp = "2.3.12"
 kotlinter = "5.7.0"
 detekt = "1.23.8"
@@ -49,7 +49,7 @@ ktlint = "1.8.0"
 
 # Testing
 junit = "4.13.2"
-kotest = "6.2.5"
+kotest = "6.2.6"
 mockito-kotlin = "6.4.0"
 robolectric = "4.17"
 screengrab = "2.1.1"
