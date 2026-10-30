@@ -1,6 +1,6 @@
 [versions]
 # Android
-agp = "9.4.1"
+agp = "9.5.0"
 compileSdk = "37"
 minSdk = "24"
 targetSdk = "36"
@@ -44,7 +44,7 @@ kotlinx-datetime = "0.8.0-0.6.x-compat"
 youtubedl-android = "0.18.1"
 media3 = "1.11.1"
 coil = "2.7.0"
-arrow = "2.2.3"
+arrow = "2.3.0"
 ktlint = "1.8.0"
 
 # Testing
