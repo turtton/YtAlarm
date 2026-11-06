@@ -30,7 +30,7 @@ class YtDlpVideoDownloadRepository : VideoDownloadRepository<YtDlpExecutor> {
                 .addOption("-f", formatSelector)
                 .addOption("-o", outputPath)
                 .addOption("--no-playlist")
-            executor.instance.execute(request) { progress, _, _ ->
+            executor.execute(request) { progress, _, _ ->
                 onProgress(progress)
             }
         }.fold(

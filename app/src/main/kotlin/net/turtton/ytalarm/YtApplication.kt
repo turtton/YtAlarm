@@ -11,10 +11,12 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
+import net.turtton.ytalarm.datasource.remote.YtDlpExecutor
 import net.turtton.ytalarm.di.DataContainerProvider
 import net.turtton.ytalarm.di.DefaultDataContainerProvider
 import net.turtton.ytalarm.idling.CoilIdlingResourceContainer
 import net.turtton.ytalarm.idling.CoilIdlingResourceController
+import net.turtton.ytalarm.worker.YtDlpUpdateScheduler
 
 class YtApplication :
     Application(),
@@ -45,11 +47,12 @@ class YtApplication :
         super.onCreate()
         ytDlInitJob = appCoroutineScope.async(Dispatchers.IO) {
             runCatching {
-                YoutubeDL.getInstance().init(applicationContext)
+                YtDlpExecutor.initialize(applicationContext)
             }.onFailure {
                 Log.e(APP_TAG, "YtDL initialization failed", it)
             }
         }
+        YtDlpUpdateScheduler.reconcile(this)
     }
 
     override fun newImageLoader(): ImageLoader {

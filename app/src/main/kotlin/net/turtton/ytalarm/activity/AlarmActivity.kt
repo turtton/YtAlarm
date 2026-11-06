@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import net.turtton.ytalarm.YtApplication.Companion.ytDlInitJob
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceContainer
 import net.turtton.ytalarm.idling.VideoPlayerLoadingResourceController
+import net.turtton.ytalarm.platform.AlarmPlaybackState
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
 import net.turtton.ytalarm.ui.compose.screens.VideoPlayerScreen
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
@@ -24,6 +25,7 @@ class AlarmActivity :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AlarmPlaybackState.started(AlarmActivity::class.java)
 
         // 再生中は画面をオンに保つ
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -49,6 +51,14 @@ class AlarmActivity :
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        // Preserve ringing state across recreation; singleInstance has one logical owner.
+        if (!isChangingConfigurations) {
+            AlarmPlaybackState.stopped(AlarmActivity::class.java)
+        }
+        super.onDestroy()
     }
 
     private fun observeYtDlInit() = lifecycleScope.launch {

@@ -51,7 +51,7 @@ class YtDlpVideoInfoRepository : VideoInfoRepository<YtDlpExecutor> {
         runCatching {
             val request = YoutubeDLRequest(videoUrl)
                 .addOption("-f", formatSelector)
-            executor.instance.getInfo(request)
+            executor.getInfo(request)
         }.fold(
             onSuccess = { info ->
                 val streamUrl = info.url
@@ -78,7 +78,7 @@ class YtDlpVideoInfoRepository : VideoInfoRepository<YtDlpExecutor> {
             val request = YoutubeDLRequest(url)
                 .addOption("--dump-single-json")
                 .addOption("-f", "b")
-            executor.instance.execute(request) { _, _, _ -> }
+            executor.execute(request) { _, _, _ -> }
         }.fold(
             onSuccess = { it.right() },
             onFailure = { error -> VideoInfoError.NetworkError(cause = error).left() }

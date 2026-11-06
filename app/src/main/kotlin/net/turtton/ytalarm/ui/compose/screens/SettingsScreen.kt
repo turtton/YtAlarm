@@ -48,7 +48,9 @@ import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.extensions.appSettings
 import net.turtton.ytalarm.util.extensions.downloadStorageLimitBytes
 import net.turtton.ytalarm.util.extensions.downloadWifiOnly
+import net.turtton.ytalarm.util.extensions.ytDlpAutoUpdate
 import net.turtton.ytalarm.util.extensions.ytDlpUpdateChannel
+import net.turtton.ytalarm.worker.YtDlpUpdateScheduler
 import net.turtton.ytalarm.worker.YtDlpUpdateWorker
 
 /**
@@ -76,6 +78,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
     }
 
     // ダウンロード設定の状態
+    var autoUpdate by remember { mutableStateOf(preferences.ytDlpAutoUpdate) }
     var wifiOnly by remember { mutableStateOf(preferences.downloadWifiOnly) }
     var storageLimitBytes by remember { mutableLongStateOf(preferences.downloadStorageLimitBytes) }
     val scope = rememberCoroutineScope()
@@ -127,6 +130,19 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
             // yt-dlp セクションヘッダー
             item {
                 SectionHeader(title = stringResource(R.string.settings_ytdlp_section))
+            }
+
+            item {
+                SwitchSettingItem(
+                    title = stringResource(R.string.settings_ytdlp_auto_update),
+                    description = stringResource(R.string.settings_ytdlp_auto_update_description),
+                    checked = autoUpdate,
+                    onCheckedChange = { enabled ->
+                        preferences.ytDlpAutoUpdate = enabled
+                        autoUpdate = enabled
+                        YtDlpUpdateScheduler.reconcile(context)
+                    }
+                )
             }
 
             // 更新チャンネル設定
