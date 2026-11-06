@@ -80,6 +80,7 @@ import net.turtton.ytalarm.kernel.entity.Video
 import net.turtton.ytalarm.kernel.port.AlarmScheduleError
 import net.turtton.ytalarm.ui.LocalVideoPlayerResourceContainer
 import net.turtton.ytalarm.ui.compose.theme.AppTheme
+import net.turtton.ytalarm.util.AlarmPlaybackQueue
 import net.turtton.ytalarm.util.extensions.findActivity
 import net.turtton.ytalarm.viewmodel.AlarmViewModel
 import net.turtton.ytalarm.viewmodel.AlarmViewModelFactory
@@ -181,6 +182,10 @@ fun VideoPlayerScreen(
 
     // Player.Listenerの状態管理用（State型で競合状態を回避）
     val onPlaybackEndedState = remember { mutableStateOf<(() -> Unit)?>(null) }
+    // アラームモードのキュー初期化後のみ設定される。設定されている間は、再生失敗時に
+    // デフォルトアラーム音を鳴らしつつ次の動画へ進む処理が呼ばれる
+    val onPlaybackFailedState = remember { mutableStateOf<(() -> Unit)?>(null) }
+    val onStartedPlayingState = remember { mutableStateOf<(() -> Unit)?>(null) }
 
     // 統合されたPlayer.Listener
     val playerListener = remember(exoPlayer, resourceContainer) {
@@ -209,9 +214,20 @@ fun VideoPlayerScreen(
                 }
             }
 
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                if (isPlaying) {
+                    onStartedPlayingState.value?.invoke()
+                }
+            }
+
             override fun onPlayerError(error: PlaybackException) {
                 Log.e(LOG_TAG, "ExoPlayer error: ${error.message}", error)
                 isLoading = false
+                val onPlaybackFailed = onPlaybackFailedState.value
+                if (onPlaybackFailed != null) {
+                    onPlaybackFailed()
+                    return
+                }
                 hasError = true
                 scope.launch {
                     snackbarHostState.showSnackbar(errorFailedToImportVideo)
@@ -221,6 +237,12 @@ fun VideoPlayerScreen(
                 }
             }
         }
+    }
+
+    // フォールバックアラーム音を停止して解放
+    fun stopFallbackAlarm() {
+        fallbackMediaPlayer?.release()
+        fallbackMediaPlayer = null
     }
 
     // ExoPlayerのライフサイクル管理
@@ -499,64 +521,81 @@ fun VideoPlayerScreen(
             // 音量設定
             currentVolume = setVolume(audioManager, alarm.volume.volume)
 
-            // 動画キューの準備
-            var queue = if (alarm.shouldShuffle) {
-                videos.shuffled().iterator()
-            } else {
-                videos.iterator()
+            // 動画キューの準備（進行ロジックはAlarmPlaybackQueueに集約）
+            val queue = AlarmPlaybackQueue(
+                items = if (alarm.shouldShuffle) videos.shuffled() else videos,
+                loop = alarm.shouldLoop
+            )
+
+            // 再生失敗時: 即座にデフォルトアラーム音を鳴らす（既に鳴っていれば何もしない）
+            fun notifyPlaybackFailure() {
+                scope.launch {
+                    snackbarHostState.currentSnackbarData?.dismiss()
+                    snackbarHostState.showSnackbar(errorFailedToImportVideo)
+                }
+                if (fallbackMediaPlayer == null) {
+                    fallbackMediaPlayer = playFallbackAlarm(context)
+                }
             }
 
-            // 再生完了時のコールバックを設定
-            onPlaybackEndedState.value = playbackEnded@{
-                if (!queue.hasNext()) {
-                    if (alarm.shouldLoop) {
-                        queue = videos.iterator()
-                    } else {
-                        onDismiss()
-                        return@playbackEnded
-                    }
-                }
-                scope.launch {
-                    playVideo(
-                        context = context,
-                        videoViewModel = videoViewModel,
-                        exoPlayer = exoPlayer,
-                        video = queue.next(),
-                        onLoading = { isLoading = it },
-                        onThumbnailChange = { thumbnailUrl = it },
-                        onShowThumbnail = { showThumbnail = it },
-                        onTitleChange = { currentTitle = it },
-                        onError = {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(errorFailedToImportVideo)
-                            }
-                            if (fallbackMediaPlayer == null) {
-                                fallbackMediaPlayer = playFallbackAlarm(context)
-                            }
+            // キューの指示に従って次の動画を試行する。失敗時はアラーム音を鳴らしたまま次へ進む
+            fun playStep(step: AlarmPlaybackQueue.Step<Video>) {
+                when (step) {
+                    is AlarmPlaybackQueue.Step.Play -> {
+                        hasError = false
+                        scope.launch {
+                            playVideo(
+                                context = context,
+                                videoViewModel = videoViewModel,
+                                exoPlayer = exoPlayer,
+                                video = step.item,
+                                onLoading = { isLoading = it },
+                                onThumbnailChange = { thumbnailUrl = it },
+                                onShowThumbnail = { showThumbnail = it },
+                                onTitleChange = { currentTitle = it },
+                                onError = {
+                                    notifyPlaybackFailure()
+                                    playStep(queue.onFailed())
+                                }
+                            )
                         }
-                    )
+                    }
+
+                    AlarmPlaybackQueue.Step.Finished -> onDismiss()
+
+                    AlarmPlaybackQueue.Step.Exhausted -> {
+                        // 全動画が失敗。デフォルトアラーム音を鳴らしたまま停止する
+                        Log.e(LOG_TAG, "All videos failed to play, keeping fallback alarm")
+                        isLoading = false
+                        hasError = true
+                    }
+
+                    AlarmPlaybackQueue.Step.Ignored -> Unit
+                }
+            }
+
+            onPlaybackEndedState.value = {
+                // 再生状態にならないまま終了した場合はキューが失敗扱いにするため、アラーム音も鳴らす
+                val playedBeforeEnd = queue.isPlaying
+                val step = queue.onEnded()
+                if (!playedBeforeEnd && step != AlarmPlaybackQueue.Step.Ignored) {
+                    notifyPlaybackFailure()
+                }
+                playStep(step)
+            }
+            onPlaybackFailedState.value = {
+                notifyPlaybackFailure()
+                playStep(queue.onFailed())
+            }
+            // 動画が実際に再生状態になったらデフォルトアラーム音を止める
+            onStartedPlayingState.value = {
+                if (queue.onPlaying()) {
+                    stopFallbackAlarm()
                 }
             }
 
             // 最初の動画を再生
-            playVideo(
-                context = context,
-                videoViewModel = videoViewModel,
-                exoPlayer = exoPlayer,
-                video = queue.next(),
-                onLoading = { isLoading = it },
-                onThumbnailChange = { thumbnailUrl = it },
-                onShowThumbnail = { showThumbnail = it },
-                onTitleChange = { currentTitle = it },
-                onError = {
-                    scope.launch {
-                        snackbarHostState.showSnackbar(errorFailedToImportVideo)
-                    }
-                    if (fallbackMediaPlayer == null) {
-                        fallbackMediaPlayer = playFallbackAlarm(context)
-                    }
-                }
-            )
+            playStep(queue.start())
         } else {
             // 非アラームモード
             val video = videoViewModel.getFromVideoIdAsync(videoId).await()
