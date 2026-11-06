@@ -52,7 +52,7 @@ jobs:
       - name: Set up jdk
         uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
         with:
-          java-version: '11'
+          java-version: '25'
           distribution: 'temurin'
           cache: gradle
 
