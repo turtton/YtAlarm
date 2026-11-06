@@ -1,13 +1,13 @@
 [versions]
 # Android
-agp = "9.5.0"
+agp = "9.5.1"
 compileSdk = "37"
 minSdk = "24"
 targetSdk = "36"
 
 # Kotlin
 kotlin = "2.4.21"
-ksp = "2.3.12"
+ksp = "2.3.13"
 kotlinter = "5.7.0"
 detekt = "1.23.8"
 
