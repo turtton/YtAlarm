@@ -7,6 +7,7 @@ import net.turtton.ytalarm.kernel.di.DataSource
  *
  * yt-dlp (youtubedl-android) へのアクセスを提供する Executor を生成する。
  */
-class YtDlpDataSource : DataSource<YtDlpExecutor> {
-    override fun createExecutor(): YtDlpExecutor = YtDlpExecutor()
+class YtDlpDataSource(private val isAlarmRinging: () -> Boolean = { false }) :
+    DataSource<YtDlpExecutor> {
+    override fun createExecutor(): YtDlpExecutor = YtDlpExecutor(isAlarmRinging)
 }
