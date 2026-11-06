@@ -4,6 +4,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
 import com.yausername.youtubedl_android.YoutubeDLRequest
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.turtton.ytalarm.datasource.remote.YtDlpExecutor
@@ -33,7 +34,7 @@ class YtDlpVideoDownloadRepository : VideoDownloadRepository<YtDlpExecutor> {
             executor.execute(request) { progress, _, _ ->
                 onProgress(progress)
             }
-        }.fold(
+        }.onFailure { if (it is CancellationException) throw it }.fold(
             onSuccess = {
                 // outputPathはyt-dlpテンプレート（例: /path/1.%(ext)s）なので、
                 // DL後に実ファイルを親ディレクトリから探す

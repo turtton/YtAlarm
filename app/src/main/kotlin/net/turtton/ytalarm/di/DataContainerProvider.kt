@@ -10,6 +10,7 @@ import net.turtton.ytalarm.datasource.repository.RoomPlaylistRepository
 import net.turtton.ytalarm.datasource.repository.RoomVideoRepository
 import net.turtton.ytalarm.datasource.repository.YtDlpVideoDownloadRepository
 import net.turtton.ytalarm.datasource.repository.YtDlpVideoInfoRepository
+import net.turtton.ytalarm.platform.AlarmPlaybackState
 import net.turtton.ytalarm.platform.AndroidAlarmScheduler
 import net.turtton.ytalarm.platform.AndroidFileStorageAdapter
 import net.turtton.ytalarm.usecase.LocalDataSourceContainer
@@ -39,7 +40,7 @@ class DefaultDataContainerProvider(private val context: Context) : DataContainer
     }
 
     private val remoteContainer = object : RemoteDataSourceContainer<YtDlpExecutor> {
-        override val dataSource = YtDlpDataSource()
+        override val dataSource = YtDlpDataSource(AlarmPlaybackState::isRinging)
         override val videoInfoRepository = YtDlpVideoInfoRepository()
         override val videoDownloadRepository = YtDlpVideoDownloadRepository()
     }

@@ -1,5 +1,7 @@
 package net.turtton.ytalarm.datasource.remote
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
@@ -7,15 +9,21 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 internal class YtDlpGate {
     private val lock = ReentrantReadWriteLock(true)
 
-    fun <T> execute(block: () -> T): T {
-        val read = lock.readLock()
-        check(read.tryLock(WAIT_SECONDS, TimeUnit.SECONDS)) { "yt-dlp is busy updating" }
-        return try {
-            block()
-        } finally {
-            read.unlock()
+    suspend fun <T> execute(shortWait: Boolean = false, block: () -> T): T =
+        runInterruptible(Dispatchers.IO) {
+            val read = lock.readLock()
+            if (shortWait) {
+                check(read.tryLock(WAIT_SECONDS, TimeUnit.SECONDS)) { "yt-dlp is busy updating" }
+            } else {
+                // Imports/downloads must not be permanently marked Failed just because of an update.
+                read.lockInterruptibly()
+            }
+            try {
+                block()
+            } finally {
+                read.unlock()
+            }
         }
-    }
 
     // Never queue an updater behind a long download (or an alarm's stream request).
     fun <T> tryUpdate(block: () -> T): T? {

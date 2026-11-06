@@ -8,13 +8,15 @@ import com.yausername.youtubedl_android.mapper.VideoInfo
 import java.io.File
 
 /** All production yt-dlp entry points share this gate, even across Executor instances. */
-class YtDlpExecutor {
-    fun getInfo(request: YoutubeDLRequest): VideoInfo = gate.execute {
+class YtDlpExecutor(private val isAlarmRinging: () -> Boolean = { false }) {
+    suspend fun getInfo(request: YoutubeDLRequest): VideoInfo = gate.execute(
+        shortWait = isAlarmRinging()
+    ) {
         checkReady()
         YoutubeDL.getInstance().getInfo(request)
     }
 
-    fun execute(
+    suspend fun execute(
         request: YoutubeDLRequest,
         callback: ((Float, Long, String) -> Unit)? = null
     ): YoutubeDLResponse = gate.execute {

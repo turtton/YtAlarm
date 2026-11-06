@@ -102,9 +102,8 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
             ?.let { YtDlpUpdateWorker.observeWorkInfo(it) }
             ?: emptyFlow()
     }.collectAsState(initial = emptyList())
-    val isUpdating = workInfos.any {
-        it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING
-    }
+    val isUpdating = workInfos.any { it.state == WorkInfo.State.RUNNING }
+    val isUpdateQueued = workInfos.any { it.state == WorkInfo.State.ENQUEUED }
 
     Scaffold(
         topBar = {
@@ -167,6 +166,8 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
             item {
                 val description = if (isUpdating) {
                     stringResource(R.string.settings_ytdlp_updating)
+                } else if (isUpdateQueued) {
+                    stringResource(R.string.settings_ytdlp_update_waiting)
                 } else {
                     stringResource(R.string.settings_ytdlp_update_now_description)
                 }
@@ -174,7 +175,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
                     title = stringResource(R.string.settings_ytdlp_update_now),
                     description = description,
                     onClick = {
-                        if (!isUpdating) {
+                        if (!isUpdating && !isUpdateQueued) {
                             val app = context.applicationContext as? YtApplication
                             if (app != null) {
                                 scope.launch {

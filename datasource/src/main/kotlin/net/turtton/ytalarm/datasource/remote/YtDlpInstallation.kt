@@ -15,20 +15,19 @@ import java.util.concurrent.TimeoutException
  * YoutubeDL.kt, YoutubeDLUpdater.kt and common/SharedPrefsHelper.kt.
  * Recheck paths, raw resource and BOTH version keys when upgrading that dependency.
  */
-internal class YtDlpInstallation(private val context: Context) {
+internal class YtDlpInstallation(
+    private val context: Context,
+    private val initializeRuntime: () -> Unit = { YoutubeDL.getInstance().init(context) },
+    private val verify: () -> Unit = ::verifyYtDlpVersion
+) {
     private val base = File(context.noBackupFilesDir, "youtubedl-android")
     private val binary = File(base, "yt-dlp/yt-dlp")
     val pending = File(context.noBackupFilesDir, "yt-dlp-update-pending")
     val transaction = YtDlpUpdateTransaction(
-        markPending = {
-            FileOutputStream(pending).use {
-                it.write(1)
-                it.fd.sync()
-            }
-        },
+        markPending = ::markPending,
         clearPending = { check(!pending.exists() || pending.delete()) },
         restoreBundled = ::restoreBundled,
-        verify = ::verify
+        verify = verify
     )
 
     fun isUsable(): Boolean = !pending.exists()
@@ -36,11 +35,22 @@ internal class YtDlpInstallation(private val context: Context) {
     fun initialize() {
         // init() is a no-op after its first call; it cannot repair a partially copied binary.
         val needsRecovery = pending.exists() || !binary.isFile || binary.length() == 0L
-        if (needsRecovery) restoreBundled()
-        YoutubeDL.getInstance().init(context)
+        if (needsRecovery) {
+            // A failed startup probe must be retried, not accepted as a healthy nonempty file.
+            markPending()
+            restoreBundled()
+        }
+        initializeRuntime()
         if (needsRecovery) {
             verify()
             check(!pending.exists() || pending.delete())
+        }
+    }
+
+    private fun markPending() {
+        FileOutputStream(pending).use {
+            it.write(1)
+            it.fd.sync()
         }
     }
 
@@ -64,32 +74,30 @@ internal class YtDlpInstallation(private val context: Context) {
                 .edit().remove("dlpVersion").remove("dlpVersionName").commit()
         ) { "Cannot clear yt-dlp version metadata" }
     }
+}
 
-    private fun verify() {
-        // A coroutine timeout alone cannot stop this blocking API. Interrupting execute()
-        // makes 0.18.1 destroy its child process. Join before releasing the update gate.
-        val task = FutureTask {
-            val request = YoutubeDLRequest(emptyList<String>()).addOption("--version")
-            val response = YoutubeDL.getInstance().execute(request)
-            check(response.exitCode == 0 && response.out.trim().isNotEmpty()) {
-                "yt-dlp version probe failed"
-            }
-        }
-        val thread = Thread(task, "yt-dlp-version-probe")
-        thread.start()
-        try {
-            task.get(VERIFY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        } catch (error: TimeoutException) {
-            throw IllegalStateException("yt-dlp version probe timed out", error)
-        } catch (error: ExecutionException) {
-            throw IllegalStateException("yt-dlp version probe failed", error)
-        } finally {
-            task.cancel(true)
-            thread.join()
+private const val VERIFY_TIMEOUT_SECONDS = 10L
+
+private fun verifyYtDlpVersion() {
+    // A coroutine timeout alone cannot stop this blocking API. Interrupting execute()
+    // makes 0.18.1 destroy its child process. Join before releasing the update gate.
+    val task = FutureTask {
+        val request = YoutubeDLRequest(emptyList<String>()).addOption("--version")
+        val response = YoutubeDL.getInstance().execute(request)
+        check(response.exitCode == 0 && response.out.trim().isNotEmpty()) {
+            "yt-dlp version probe failed"
         }
     }
-
-    private companion object {
-        const val VERIFY_TIMEOUT_SECONDS = 10L
+    val thread = Thread(task, "yt-dlp-version-probe")
+    thread.start()
+    try {
+        task.get(VERIFY_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    } catch (error: TimeoutException) {
+        throw IllegalStateException("yt-dlp version probe timed out", error)
+    } catch (error: ExecutionException) {
+        throw IllegalStateException("yt-dlp version probe failed", error)
+    } finally {
+        task.cancel(true)
+        thread.join()
     }
 }

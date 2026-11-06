@@ -189,4 +189,5 @@
 
     <string name="settings_ytdlp_auto_update">yt-dlpを自動更新</string>
     <string name="settings_ytdlp_auto_update_description">充電中で、バッテリーと空き容量に余裕があるときに、従量制でないネットワークで毎日確認します。アラーム直前は延期します。</string>
+    <string name="settings_ytdlp_update_waiting">更新を待機中です。ネットワーク接続や、アラーム後の再試行を待っています。</string>
 </resources>

@@ -246,4 +246,5 @@
     <string name="notification_ytdlp_update_failed_description">Could not update yt-dlp. Check your network connection.</string>
     <string name="settings_ytdlp_auto_update">Automatically update yt-dlp</string>
     <string name="settings_ytdlp_auto_update_description">Check daily on an unmetered network while charging, with sufficient battery and storage. Updates are postponed near alarms.</string>
+    <string name="settings_ytdlp_update_waiting">Update queued. Waiting for network access or a safe time to retry after an alarm.</string>
 </resources>

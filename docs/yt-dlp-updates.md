@@ -17,14 +17,21 @@ other apps' alarm clocks. Past date alarms do not hide future alarms.
 YtDlpExecutor owns a process-wide read/write gate: imports, information/stream requests and
 downloads take read access; init, update, verification and recovery take exclusive access.
 Readers can run concurrently. An update never waits for existing readers: it retries instead.
-Readers wait at most **3 seconds** for exclusive work, then return an error through existing
-repository error handling. This bounds gate waiting, not network execution time. The merged
+Only stream requests made while an alarm is ringing wait at most **3 seconds** for exclusive
+work, then return an error through existing repository error handling. DI supplies the live
+ringing predicate to each Executor without changing the playback screen. Normal streams,
+imports and downloads wait cancellably (runInterruptible) until exclusive work completes;
+cancellation propagates rather than becoming a permanent NetworkError/Failed import. The
+3-second limit bounds gate waiting, not network execution time. The merged
 manifest currently contains no android:process components; adding another process requires
 cross-process locking. VideoPlayerScreen and its playback/fallback logic are unchanged.
 
 The previous auto-update removal (fb0394b, PR #309) also fixed an init/getInfo race and loading
 state cleanup on errors. Keep the application's init Deferred and the existing stream path's
-await: scheduling an update is not a substitute for initialization.
+await: scheduling an update is not a substitute for initialization. The initialization accessor
+shares an in-flight or successful attempt, but retries a completed failed attempt. Both playback
+and update workers obtain the latest attempt, so a temporary startup recovery failure does not
+poison the process until restart. Each attempt still uses the common exclusive gate.
 
 ## Installation transaction
 
@@ -45,7 +52,9 @@ The adapter is explicitly coupled to youtubedl-android **0.18.1** (tag SHA
 4. Verify the bundled installation before removing the marker. Report retry even after a
    successful rollback. If recovery fails, retain the marker and reject readers; a subsequent
    updater can retry recovery. On next process startup, repair marked/missing/empty installs
-   before exposing the executor. Do not rely on init(), which becomes a same-process no-op.
+   before exposing the executor. Startup recovery also writes the marker before restoration;
+   if its runtime initialization or probe fails, the next attempt must restore/verify again
+   even when a nonempty binary now exists. Do not rely on init(), which becomes a same-process no-op.
 
 The marker protects against process kill, not all filesystem/power-loss scenarios. --version
 only proves startup, not that extraction works on YouTube. The bundled fallback can itself be

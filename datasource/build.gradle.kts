@@ -73,6 +73,7 @@ dependencies {
     implementation(libs.bundles.youtubedl)
 
     testImplementation(libs.bundles.kotest)
+    testImplementation(libs.mockito.kotlin)
     testImplementation(libs.robolectric)
 
     androidTestImplementation(libs.androidx.room.testing)
