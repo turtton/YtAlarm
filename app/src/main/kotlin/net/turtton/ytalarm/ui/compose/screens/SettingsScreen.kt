@@ -48,7 +48,9 @@ import net.turtton.ytalarm.ui.compose.theme.AppTheme
 import net.turtton.ytalarm.util.extensions.appSettings
 import net.turtton.ytalarm.util.extensions.downloadStorageLimitBytes
 import net.turtton.ytalarm.util.extensions.downloadWifiOnly
+import net.turtton.ytalarm.util.extensions.ytDlpAutoUpdate
 import net.turtton.ytalarm.util.extensions.ytDlpUpdateChannel
+import net.turtton.ytalarm.worker.YtDlpUpdateScheduler
 import net.turtton.ytalarm.worker.YtDlpUpdateWorker
 
 /**
@@ -76,6 +78,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
     }
 
     // ダウンロード設定の状態
+    var autoUpdate by remember { mutableStateOf(preferences.ytDlpAutoUpdate) }
     var wifiOnly by remember { mutableStateOf(preferences.downloadWifiOnly) }
     var storageLimitBytes by remember { mutableLongStateOf(preferences.downloadStorageLimitBytes) }
     val scope = rememberCoroutineScope()
@@ -99,9 +102,8 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
             ?.let { YtDlpUpdateWorker.observeWorkInfo(it) }
             ?: emptyFlow()
     }.collectAsState(initial = emptyList())
-    val isUpdating = workInfos.any {
-        it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING
-    }
+    val isUpdating = workInfos.any { it.state == WorkInfo.State.RUNNING }
+    val isUpdateQueued = workInfos.any { it.state == WorkInfo.State.ENQUEUED }
 
     Scaffold(
         topBar = {
@@ -129,6 +131,19 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
                 SectionHeader(title = stringResource(R.string.settings_ytdlp_section))
             }
 
+            item {
+                SwitchSettingItem(
+                    title = stringResource(R.string.settings_ytdlp_auto_update),
+                    description = stringResource(R.string.settings_ytdlp_auto_update_description),
+                    checked = autoUpdate,
+                    onCheckedChange = { enabled ->
+                        preferences.ytDlpAutoUpdate = enabled
+                        autoUpdate = enabled
+                        YtDlpUpdateScheduler.reconcile(context)
+                    }
+                )
+            }
+
             // 更新チャンネル設定
             item {
                 val channelDisplayName = when (currentChannel) {
@@ -151,6 +166,8 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
             item {
                 val description = if (isUpdating) {
                     stringResource(R.string.settings_ytdlp_updating)
+                } else if (isUpdateQueued) {
+                    stringResource(R.string.settings_ytdlp_update_waiting)
                 } else {
                     stringResource(R.string.settings_ytdlp_update_now_description)
                 }
@@ -158,7 +175,7 @@ fun SettingsScreen(modifier: Modifier = Modifier, onNavigateBack: () -> Unit = {
                     title = stringResource(R.string.settings_ytdlp_update_now),
                     description = description,
                     onClick = {
-                        if (!isUpdating) {
+                        if (!isUpdating && !isUpdateQueued) {
                             val app = context.applicationContext as? YtApplication
                             if (app != null) {
                                 scope.launch {

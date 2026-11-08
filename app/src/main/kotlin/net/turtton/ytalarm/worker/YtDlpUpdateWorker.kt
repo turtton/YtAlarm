@@ -1,11 +1,13 @@
 package net.turtton.ytalarm.worker
 
+import android.app.AlarmManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -16,15 +18,22 @@ import androidx.work.Operation
 import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDL.UpdateChannel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.TimeZone
 import net.turtton.ytalarm.R
+import net.turtton.ytalarm.YtApplication
+import net.turtton.ytalarm.datasource.remote.YtDlpExecutor
+import net.turtton.ytalarm.platform.AlarmPlaybackState
 import net.turtton.ytalarm.util.extensions.appSettings
+import net.turtton.ytalarm.util.extensions.ytDlpAutoUpdate
 import net.turtton.ytalarm.util.extensions.ytDlpUpdateChannel
+import java.util.concurrent.TimeUnit
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 const val YTDLP_UPDATE_NOTIFICATION = "net.turtton.ytalarm.YtDlpUpdateNotification"
 
@@ -32,28 +41,52 @@ class YtDlpUpdateWorker(appContext: Context, workerParams: WorkerParameters) :
     CoroutineWorker(appContext, workerParams) {
 
     @Suppress("TooGenericExceptionCaught")
-    override suspend fun doWork(): Result = try {
-        setForeground(createForegroundInfo())
-        withContext(Dispatchers.IO) {
-            YoutubeDL.getInstance().init(applicationContext)
-            val channelName = applicationContext.appSettings.ytDlpUpdateChannel
-            val channel = when (channelName) {
-                "NIGHTLY" -> UpdateChannel.NIGHTLY
-                else -> UpdateChannel.STABLE
+    override suspend fun doWork(): Result {
+        return try {
+            val automatic = inputData.getBoolean(YtDlpUpdateScheduler.AUTOMATIC, false)
+            if (automatic &&
+                !applicationContext.appSettings.ytDlpAutoUpdate
+            ) {
+                return Result.success()
             }
-            val status = YoutubeDL.getInstance()
-                .updateYoutubeDL(applicationContext, channel)
+            val app = applicationContext as YtApplication
+            val alarms = withContext(Dispatchers.IO) {
+                app.dataContainerProvider.getUseCaseContainer().getAllAlarmsSync()
+            }
+            val manager = applicationContext.getSystemService(AlarmManager::class.java)
+            val shouldDefer = {
+                shouldDeferYtDlpUpdate(
+                    AlarmPlaybackState.isRinging(),
+                    alarms,
+                    Clock.System.now(),
+                    TimeZone.currentSystemDefault(),
+                    manager?.nextAlarmClock?.triggerTime?.let(Instant::fromEpochMilliseconds)
+                ) || (automatic && !applicationContext.appSettings.ytDlpAutoUpdate)
+            }
+            if (shouldDefer()) return Result.retry()
+            if (app.ytDlInitJob.await().isFailure) return Result.retry()
+            // Periodic work stays a normal background worker; no background FGS launch required.
+            if (!automatic) setForeground(createForegroundInfo())
+            val status = withContext(Dispatchers.IO) {
+                val channelName = applicationContext.appSettings.ytDlpUpdateChannel
+                val channel = when (channelName) {
+                    "NIGHTLY" -> UpdateChannel.NIGHTLY
+                    else -> UpdateChannel.STABLE
+                }
+                YtDlpExecutor.update(applicationContext, channel, shouldDefer)
+            }
+            if (status == null) return Result.retry()
             Log.i(TAG, "YtDL update status: $status")
+            NotificationManagerCompat.from(applicationContext)
+                .cancel(FAILURE_NOTIFICATION_ID)
+            Result.success()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "YtDL update failed", e)
+            showUpdateFailedNotification()
+            Result.retry()
         }
-        NotificationManagerCompat.from(applicationContext)
-            .cancel(FAILURE_NOTIFICATION_ID)
-        Result.success()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        Log.w(TAG, "YtDL update failed", e)
-        showUpdateFailedNotification()
-        Result.failure()
     }
 
     private fun createForegroundInfo(): ForegroundInfo {
@@ -114,6 +147,7 @@ class YtDlpUpdateWorker(appContext: Context, workerParams: WorkerParameters) :
     }
 
     companion object {
+        private const val UPDATE_BACKOFF_MINUTES = 30L
         private const val TAG = "YtDlpUpdateWorker"
         private const val WORKER_ID = "YtDlpUpdateWorker"
         private const val FOREGROUND_NOTIFICATION_ID = 1001
@@ -125,6 +159,11 @@ class YtDlpUpdateWorker(appContext: Context, workerParams: WorkerParameters) :
                 .build()
             val request = OneTimeWorkRequestBuilder<YtDlpUpdateWorker>()
                 .setConstraints(constraints)
+                .setBackoffCriteria(
+                    BackoffPolicy.EXPONENTIAL,
+                    UPDATE_BACKOFF_MINUTES,
+                    TimeUnit.MINUTES
+                )
                 .build()
             return WorkManager.getInstance(context)
                 .enqueueUniqueWork(WORKER_ID, ExistingWorkPolicy.KEEP, request)

@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import com.yausername.youtubedl_android.YoutubeDLResponse
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -51,8 +52,8 @@ class YtDlpVideoInfoRepository : VideoInfoRepository<YtDlpExecutor> {
         runCatching {
             val request = YoutubeDLRequest(videoUrl)
                 .addOption("-f", formatSelector)
-            executor.instance.getInfo(request)
-        }.fold(
+            executor.getInfo(request)
+        }.onFailure { if (it is CancellationException) throw it }.fold(
             onSuccess = { info ->
                 val streamUrl = info.url
                 if (streamUrl.isNullOrEmpty()) {
@@ -70,7 +71,7 @@ class YtDlpVideoInfoRepository : VideoInfoRepository<YtDlpExecutor> {
         )
     }
 
-    private fun executeAndParse(
+    private suspend fun executeAndParse(
         executor: YtDlpExecutor,
         url: String
     ): Either<VideoInfoError, VideoInformation> {
@@ -78,8 +79,8 @@ class YtDlpVideoInfoRepository : VideoInfoRepository<YtDlpExecutor> {
             val request = YoutubeDLRequest(url)
                 .addOption("--dump-single-json")
                 .addOption("-f", "b")
-            executor.instance.execute(request) { _, _, _ -> }
-        }.fold(
+            executor.execute(request) { _, _, _ -> }
+        }.onFailure { if (it is CancellationException) throw it }.fold(
             onSuccess = { it.right() },
             onFailure = { error -> VideoInfoError.NetworkError(cause = error).left() }
         )
@@ -91,7 +92,7 @@ class YtDlpVideoInfoRepository : VideoInfoRepository<YtDlpExecutor> {
                 val response = executeResult.value
                 runCatching {
                     json.decodeFromString(VideoInformationSerializer, response.out)
-                }.fold(
+                }.onFailure { if (it is CancellationException) throw it }.fold(
                     onSuccess = { it.right() },
                     onFailure = { error -> VideoInfoError.ParseError(cause = error).left() }
                 )

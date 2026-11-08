@@ -60,6 +60,11 @@ var SharedPreferences.ytDlpUpdateChannel: String
     get() = getString(YTDLP_UPDATE_CHANNEL, "STABLE") ?: "STABLE"
     set(value) = edit { putString(YTDLP_UPDATE_CHANNEL, value) }
 
+private const val YTDLP_AUTO_UPDATE = "YtDlpAutoUpdate"
+var SharedPreferences.ytDlpAutoUpdate: Boolean
+    get() = getBoolean(YTDLP_AUTO_UPDATE, true)
+    set(value) = edit { putBoolean(YTDLP_AUTO_UPDATE, value) }
+
 private const val DOWNLOAD_WIFI_ONLY = "DownloadWifiOnly"
 var SharedPreferences.downloadWifiOnly: Boolean
     get() = getBoolean(DOWNLOAD_WIFI_ONLY, true)
